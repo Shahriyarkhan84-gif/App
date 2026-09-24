@@ -98,6 +98,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={{ borderRadius: 18, backgroundColor: c.surface, overflow: 'hidden' }}>
+          {!verified && <ListRow icon="shield-checkmark-outline" label="Verification for hosting" color={c.gold} onPress={() => router.push('/create')} />}
           <ListRow icon="wallet-outline" label="Wallet & history" onPress={() => router.push('/wallet')} />
           <ListRow icon="trophy-outline" label="Rankings" onPress={() => router.push('/rankings')} />
           <ListRow icon="help-buoy-outline" label="Help & support" onPress={() => router.push('/support')} />
