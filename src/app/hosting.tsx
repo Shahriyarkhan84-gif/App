@@ -95,22 +95,6 @@ export default function HostingScreen() {
           <Text muted>Every host on Zynalive is identity-verified. It keeps viewers safe and protects your earnings.</Text>
         </FadeIn>
 
-        {status === 'declined' && (
-          <Card style={{ borderColor: c.danger }}>
-            <Text variant="label" color={c.danger}>Your last check wasn’t approved</Text>
-            <Text muted>Usually the ID was blurred, cut off or expired, or the selfie was too dark. Check the tips below and try again.</Text>
-          </Card>
-        )}
-
-        <FadeIn delay={80}>
-          <Card style={{ gap: 0, paddingVertical: 8 }}>
-            {steps.map((s, i) => <Step key={s.title} n={i + 1} last={i === steps.length - 1} {...s} />)}
-          </Card>
-        </FadeIn>
-
-        <Button title={cta.title} onPress={cta.onPress} loading={cta.loading} disabled={offline} />
-        {offline && <Text variant="caption" muted>You need a connection to continue.</Text>}
-
         <Section title="What you need">
           {REQUIREMENTS.map((r) => (
             <Row key={r.text} gap={10} style={{ alignItems: 'flex-start' }}>
@@ -128,6 +112,22 @@ export default function HostingScreen() {
             </Row>
           ))}
         </Section>
+
+        {status === 'declined' && (
+          <Card style={{ borderColor: c.danger }}>
+            <Text variant="label" color={c.danger}>Your last check wasn’t approved</Text>
+            <Text muted>Usually the ID was blurred, cut off or expired, or the selfie was too dark. Check the tips below and try again.</Text>
+          </Card>
+        )}
+
+        <FadeIn delay={80}>
+          <Card style={{ gap: 0, paddingVertical: 8 }}>
+            {steps.map((s, i) => <Step key={s.title} n={i + 1} last={i === steps.length - 1} {...s} />)}
+          </Card>
+        </FadeIn>
+
+        <Button title={cta.title} onPress={cta.onPress} loading={cta.loading} disabled={offline} />
+        {offline && <Text variant="caption" muted>You need a connection to continue.</Text>}
 
         <Section title="Your privacy">
           <Text muted>Didit, our verification partner, processes your ID and selfie. Zynalive only receives the result (approved or not) and the document type — never your ID photos or selfie.</Text>
