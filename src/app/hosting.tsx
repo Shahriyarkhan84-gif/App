@@ -116,7 +116,7 @@ export default function HostingScreen() {
         {status === 'declined' && (
           <Card style={{ borderColor: c.danger }}>
             <Text variant="label" color={c.danger}>Your last check wasn’t approved</Text>
-            <Text muted>Usually the ID was blurred, cut off or expired, or the selfie was too dark. Check the tips below and try again.</Text>
+            <Text muted>Usually the ID was blurred, cut off or expired, or the selfie was too dark. Check the tips above and try again.</Text>
           </Card>
         )}
 
