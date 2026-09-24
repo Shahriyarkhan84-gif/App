@@ -53,6 +53,7 @@ export default function ProfileScreen() {
   if (!profile) return <Screen><StateView state={error ? { kind: 'error', error, onRetry: reload } : { kind: 'loading' }} /></Screen>;
 
   const verified = host?.verification_status === 'approved';
+  const isAgencyStaff = profile?.role === 'AGENCY_ADMIN' || profile?.role === 'AGENCY_MEMBER';
 
   return (
     <Screen>
@@ -109,6 +110,7 @@ export default function ProfileScreen() {
           <ListRow icon="trophy-outline" label="Rankings" onPress={() => router.push('/rankings')} />
           <ListRow icon="help-buoy-outline" label="Help & support" onPress={() => router.push('/support')} />
           <ListRow icon="megaphone-outline" label="Share feedback" onPress={openFeedback} />
+          {isAgencyStaff && <ListRow icon="business-outline" label="Agency portal" color={c.gold} onPress={() => router.push('/agency')} />}
           <ListRow icon="lock-closed-outline" label="Privacy policy" onPress={() => router.push('/privacy')} last={!isPlatformAdmin} />
           {isPlatformAdmin && <ListRow icon="analytics-outline" label="Owner command center" onPress={() => router.push('/admin')} last />}
         </View>

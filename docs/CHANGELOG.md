@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0 — Agency portal & 4-digit agency codes
+
+- Agency codes are now random 4-digit numbers (e.g. `4821`); old `AG-XXXXXX` codes are reissued. The verification form takes 4 digits only.
+- New **Agency portal** (Profile → Agency portal, for agency staff): agency code with Share / New code, stats (hosts, verified, live now, in review, host earnings), hosts list and host applications that used the code.
+- Owner command center → **Agencies**: create an agency from the manager's 8-digit user ID, see every code, issue new codes.
+- Migration `…130000_agency_portal.sql`; `host-application` checks the 4-digit format before calling Didit.
+
 ## 0.5.0 — In-app host application
 
 - Hosting → "Continue verification" opens a form: name, phone, CNIC number, CNIC front/back photos, face photo with CNIC, agency code (required).

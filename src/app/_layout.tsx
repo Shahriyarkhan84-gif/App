@@ -109,6 +109,7 @@ function RootNavigator() {
         <Stack.Screen name="earnings" options={{ title: 'Earnings' }} />
         <Stack.Screen name="support" options={{ title: 'Help & support' }} />
         <Stack.Screen name="profile-edit" options={{ title: 'Edit profile', presentation: 'modal' }} />
+        <Stack.Screen name="agency" options={{ title: 'Agency portal' }} />
         <Stack.Screen name="admin/index" options={{ title: 'Owner command center' }} />
       </Stack.Protected>
       <Stack.Protected guard={!isSignedIn}>

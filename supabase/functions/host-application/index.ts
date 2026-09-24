@@ -56,11 +56,12 @@ Deno.serve(
     const fullName = String(form.get('full_name') ?? '').trim();
     const phone = normalizePkMobile(String(form.get('phone') ?? ''));
     const cnic = normalizeCnic(String(form.get('cnic') ?? ''));
-    const agencyCode = String(form.get('agency_code') ?? '').trim().toUpperCase();
+    const agencyCode = String(form.get('agency_code') ?? '').trim();
     if (fullName.length < 3 || fullName.length > 80) throw new HttpError(400, 'invalid_name', 'Enter your full name as on your CNIC.');
     if (!phone) throw new HttpError(400, 'invalid_phone', 'Enter a valid mobile number.');
     if (!cnic) throw new HttpError(400, 'invalid_cnic', 'CNIC number must be 13 digits.');
     if (!agencyCode) throw new HttpError(400, 'agency_code_required', 'Enter your agency code.');
+    if (!/^[1-9][0-9]{3}$/.test(agencyCode)) throw new HttpError(400, 'invalid_agency_code', 'Agency code is 4 digits.');
     const front = image(form, 'cnic_front');
     const back = image(form, 'cnic_back');
     const selfie = image(form, 'selfie');

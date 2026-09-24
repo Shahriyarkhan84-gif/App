@@ -14,14 +14,14 @@ const REQUIREMENTS: { icon: IconName; text: string }[] = [
   { icon: 'person-outline', text: 'You are 18 or older' },
   { icon: 'card-outline', text: 'Your own original CNIC — not expired, no photocopies or screenshots' },
   { icon: 'call-outline', text: 'A Pakistani mobile number (+92 3XX XXXXXXX)' },
-  { icon: 'business-outline', text: 'An agency code from the Zynalive agency you host with — ask your agency for it, you can\'t continue without one' },
+  { icon: 'business-outline', text: 'The 4-digit agency code from the Zynalive agency you host with — ask your agency for it, you can\'t continue without one' },
   { icon: 'camera-outline', text: 'A phone camera for 3 photos: CNIC front, CNIC back, and your face holding your CNIC' },
   { icon: 'sunny-outline', text: 'Good light and about 3 minutes' },
 ];
 
 const TIPS = [
   'Type your name and CNIC number exactly as printed on the card.',
-  'Enter the agency code exactly as your agency gave it (e.g. AG-1A2B3C).',
+  'Enter your agency’s 4-digit code exactly as they gave it (e.g. 4821).',
   'No glare: tilt the card away from lamps and windows, and fit all 4 corners in the photo.',
   'For the face photo, hold your CNIC next to your face; remove sunglasses, hats and masks.',
 ];

@@ -36,7 +36,9 @@ the last 4 CNIC digits and the result (`host_applications`). Needs `DIDIT_API_KE
   matched against `agencies.code` with `status = 'active'`; anything else is
   `invalid_agency_code`. This is checked **before** the photos are sent to Didit,
   so a wrong code costs no Didit check.
-- **Format in the app:** letters, digits and `-`, up to 12 characters (e.g. `AG-1A2B3C`).
+- **Format:** exactly 4 digits, 1000–9999 (e.g. `4821`), random and unique per agency. Checked in the app,
+  in `host-application` and by a table constraint. Agencies find and share their code in the **Agency portal**
+  (Profile → Agency portal) and can issue a new one there.
 - **On approval** the host is linked to that agency, unless already linked to one.
 - Hosting → "What you need" tells users to get the code from their agency first.
 

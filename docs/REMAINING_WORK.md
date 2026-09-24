@@ -7,7 +7,7 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 |---|---|---|---|
 | 1 | User/viewer app | ✅ | Login, profile, home feeds (following/popular/nearby/new), Party search (rooms, people, 8-digit ID), rankings, watch live, chat, gifts, follow, DMs, notifications, wallet |
 | 2 | Creator/host system | ✅ | Become host, Didit identity verification, go live (camera/mic), room admins (≤5), moderation actions, stream summary + AI coaching, earnings & withdrawals |
-| 3 | Agency system | 🟡 | Schema, isolation, RPCs (create agency, members, recruit unassigned hosts). **Missing: agency web dashboard, host applications/invites** |
+| 3 | Agency system | 🟡 | Schema, isolation, RPCs (create agency, members, recruit unassigned hosts). 4-digit agency codes used in host verification; in-app **Agency portal** (code + share/rotate, stats, hosts, applications); owner creates agencies by manager's 8-digit ID. **Missing: agency web dashboard (9 sections), adding agents/managers from the portal** |
 | 4 | Agent system | 🟡 | Agent membership role with no financial access. **Missing: recruitment UI** |
 | 5 | Owner/admin platform | 🟡 | Owner command center (AI CEO briefing, AI proposals, reports, withdrawals, settings). **Missing: users/hosts/agencies/rooms/coins/gifts/transactions/audit-log screens (~28 owner screens)** |
 | 6 | Live streaming infra | 🟡 | LiveKit tokens/webhooks, adaptive stream, dynacast, 1080p simulcast with 360p/720p fallbacks. **Missing: HDR detection → HDR10/HLG pipeline and 4K (needs LiveKit egress + a transcoding service); upload/VOD pipeline** |

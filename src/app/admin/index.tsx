@@ -25,7 +25,7 @@ type Briefing = {
   };
 };
 
-const SECTIONS = ['Briefing', 'Host applications', 'AI proposals', 'Reports', 'Withdrawals', 'Settings'] as const;
+const SECTIONS = ['Briefing', 'Host applications', 'Agencies', 'AI proposals', 'Reports', 'Withdrawals', 'Settings'] as const;
 const DOMAIN_TITLES: Record<string, string> = { finance_ai: '💰 Finance AI', economy_ai: '🎁 Economy AI', streaming_ai: '📡 Streaming AI' };
 
 /** Owner command center: AI CEO output + the human-approval queue. */
@@ -40,6 +40,7 @@ export default function AdminScreen() {
       </ScrollView>
       {section === 'Briefing' && <BriefingSection />}
       {section === 'Host applications' && <HostApplicationsSection />}
+      {section === 'Agencies' && <AgenciesSection />}
       {section === 'AI proposals' && <ProposalsSection />}
       {section === 'Reports' && <ReportsSection />}
       {section === 'Withdrawals' && <WithdrawalsSection />}
@@ -225,6 +226,49 @@ function HostApplicationsSection() {
               <Button title="Approve" size="sm" onPress={() => act('review_host_application', { p_id: a.id, p_approve: true }, reload)} />
               <Button title="Decline" size="sm" variant="secondary" onPress={() => act('review_host_application', { p_id: a.id, p_approve: false, p_note: 'Declined by owner' }, reload)} />
             </Row>
+          </Card>
+        ))}
+      </ScrollView>
+    </StateView>
+  );
+}
+
+type AgencyRow = { id: string; name: string; code: string; status: string; manager_id: string | null; created_at: string };
+
+/** Owner creates agencies (manager by 8-digit user ID); each gets a random 4-digit code. */
+function AgenciesSection() {
+  const supabase = useSupabase();
+  const { c } = useTheme();
+  const offline = useOffline();
+  const act = useAct();
+  const [name, setName] = useState('');
+  const [manager, setManager] = useState('');
+  const { data, error, loading, reload } = useFocusedAsync(async () => {
+    const { data, error } = await supabase.from('agencies').select('id,name,code,status,manager_id,created_at').order('created_at', { ascending: false }).limit(200);
+    if (error) throw error;
+    return data as AgencyRow[];
+  }, []);
+  const canCreate = name.trim().length >= 2 && /^[1-9]\d{7}$/.test(manager);
+  return (
+    <StateView state={resolveState({ offline, loading, error, data, onRetry: reload })}>
+      <ScrollView contentContainerStyle={listStyle}>
+        <Card>
+          <Text variant="h3">New agency</Text>
+          <Input value={name} onChangeText={setName} placeholder="Agency name" maxLength={80} />
+          <Input value={manager} onChangeText={(v) => setManager(v.replace(/\D/g, '').slice(0, 8))} placeholder="Manager's 8-digit user ID" keyboardType="number-pad" />
+          <Button title="Create agency" disabled={!canCreate || offline}
+            onPress={() => act('create_agency_by_user_number', { p_name: name.trim(), p_user_number: Number(manager) }, () => { setName(''); setManager(''); void reload(); })} />
+          <Text variant="caption" muted>The manager becomes the agency admin and sees the 4-digit code in their Agency portal.</Text>
+        </Card>
+        {(data ?? []).length === 0 && <Text muted style={{ textAlign: 'center' }}>No agencies yet.</Text>}
+        {(data ?? []).map((a) => (
+          <Card key={a.id}>
+            <Row style={{ justifyContent: 'space-between' }}>
+              <Text variant="h3" style={{ flexShrink: 1 }}>{a.name}</Text>
+              <Text variant="h3" color={c.gold} selectable style={{ letterSpacing: 4 }}>{a.code}</Text>
+            </Row>
+            <Text variant="caption" muted>{a.status} · since {new Date(a.created_at).toLocaleDateString()}</Text>
+            <Button title="New code" size="sm" variant="secondary" onPress={() => act('regenerate_agency_code', { p_agency: a.id }, reload)} />
           </Card>
         ))}
       </ScrollView>

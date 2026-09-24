@@ -73,7 +73,7 @@ export default function VerifyFormScreen() {
     name: name.trim().length >= 3,
     phone: /^3\d{9}$/.test(phoneDigits),
     cnic: cnic.replace(/\D/g, '').length === 13,
-    agency: agency.trim().length >= 3,
+    agency: /^[1-9]\d{3}$/.test(agency),
     photos: PHOTOS.every((p) => !!photos[p.key]),
     agreed,
   };
@@ -115,7 +115,7 @@ export default function VerifyFormScreen() {
     if (!ok.phone) return setError('Enter a valid mobile number, e.g. 300 1234567.');
     if (!ok.cnic) return setError('CNIC number must be 13 digits.');
     if (!ok.photos) return setError('Add all three photos.');
-    if (!ok.agency) return setError('Enter your agency code.');
+    if (!ok.agency) return setError('Enter your agency’s 4-digit code.');
     if (!ok.agreed) return setError('Tick the box to agree to verification by Didit.');
     setError(null);
     setSubmitting(true);
@@ -124,7 +124,7 @@ export default function VerifyFormScreen() {
       form.append('full_name', name.trim());
       form.append('phone', phoneDigits);
       form.append('cnic', cnic.replace(/\D/g, ''));
-      form.append('agency_code', agency.trim().toUpperCase());
+      form.append('agency_code', agency);
       for (const p of PHOTOS) await appendPhoto(form, p.key, photos[p.key]!);
       const res = await submitHostApplication(supabase, form);
       track('host_application_submitted', { status: res.status });
@@ -207,9 +207,9 @@ export default function VerifyFormScreen() {
 
           <FadeIn delay={150}>
             <Field label="Agency code">
-              <TextInput value={agency} onChangeText={(v) => setAgency(v.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 12))} placeholder="e.g. AG-1A2B3C" placeholderTextColor={c.textFaint} autoCapitalize="characters" autoCorrect={false} style={[inputStyle(ok.agency), { letterSpacing: 1 }]} accessibilityLabel="Agency code" />
+              <TextInput value={agency} onChangeText={(v) => setAgency(v.replace(/\D/g, '').slice(0, 4))} placeholder="4-digit code, e.g. 4821" placeholderTextColor={c.textFaint} keyboardType="number-pad" maxLength={4} autoCorrect={false} style={[inputStyle(ok.agency), { letterSpacing: 4 }]} accessibilityLabel="Agency code, 4 digits" />
             </Field>
-            <Text variant="caption" faint style={{ marginTop: 6 }}>Ask your agency for this code.</Text>
+            <Text variant="caption" faint style={{ marginTop: 6 }}>Ask your agency for its 4-digit code.</Text>
           </FadeIn>
 
           <Pressable onPress={() => setAgreed((a) => !a)} accessibilityRole="checkbox" accessibilityState={{ checked: agreed }} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>

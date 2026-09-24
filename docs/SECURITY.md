@@ -19,6 +19,12 @@
 - Agency admins/managers see earnings, withdrawals, reports and moderation for
   **their own hosts only**; agents see their agency but **no financials**.
 - Agency staff can recruit only **unassigned** hosts, only into their agency.
+- The Agency portal reads everything through `agency_portal()` (security definer): only the caller's own agency;
+  earnings totals and applicant phone numbers only for admins/managers; never CNIC digits, photos or Didit data.
+- Agency codes are 4 random digits. They are not secret credentials — a code only links a host who
+  **passes Didit verification** to that agency. Admins can issue a new code (`regenerate_agency_code`);
+  hosts already linked stay linked. Wrong codes are rejected before any photo is sent to Didit, and
+  `host-application` is rate-limited (5/day per user), which limits code guessing.
 
 ## Financial trust boundary
 
