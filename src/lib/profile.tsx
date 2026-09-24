@@ -6,7 +6,8 @@ import { Sentry } from './sentry';
 import { useSupabase } from './supabase';
 import type { Profile } from './types';
 
-export type HostInfo = { host_code: string; agency_id: string | null; status: string };
+export type VerificationStatus = 'unverified' | 'pending' | 'in_review' | 'approved' | 'declined';
+export type HostInfo = { host_code: string; agency_id: string | null; status: string; verification_status: VerificationStatus };
 
 type ProfileState = {
   profile: Profile | null;
@@ -35,7 +36,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const p = await rpc<Profile>(supabase, 'ensure_profile', { p_display_name: fullName });
-      const { data: h } = await supabase.from('hosts').select('host_code,agency_id,status').eq('user_id', p.id).maybeSingle();
+      const { data: h } = await supabase.from('hosts').select('host_code,agency_id,status,verification_status').eq('user_id', p.id).maybeSingle();
       setProfile(p);
       setHost(h ?? null);
       setError(null);

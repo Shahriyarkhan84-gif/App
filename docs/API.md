@@ -12,6 +12,8 @@ All return `{ error: { code, message } }` on failure. User-facing functions requ
 | `stripe-webhook` | Stripe event | — | Signature-verified; credits coins, refunds, disputes. |
 | `livekit-webhook` | LiveKit event | — | Viewer counts, viewer records, stream end. |
 | `clerk-webhook` | Svix event | — | Profile sync + welcome email. Never sets roles. |
+| `didit-session` | `{ returnTo?, language? }` | `{ url }` | Hosts only; starts Didit ID + selfie verification. 5/hour. |
+| `didit-webhook` | Didit event | — | Signature-verified; re-reads the decision from Didit, then updates `hosts.verification_status`. |
 
 ## Postgres RPCs (call with `supabase.rpc(name, args)`)
 
@@ -24,4 +26,4 @@ All return `{ error: { code, message } }` on failure. User-facing functions requ
 | Economy | `send_gift(p_room_id, p_gift_id, p_quantity, p_idempotency_key)`, `request_refund(p_payment_id, p_reason)`, `request_withdrawal(p_coins, p_payout_method)` |
 | Discovery | `get_rankings(p_kind: live/creator/gifter/country, p_period: day/week/month)` |
 | Owner/admin | `review_withdrawal`, `mark_withdrawal_paid`, `review_refund`, `apply_moderation_action`, `dismiss_report`, `review_ai_action`, `request_ceo_briefing`, `set_platform_setting`, `set_user_role` (super admin), `create_agency`, `add_agency_member`, `assign_host_to_agency` |
-| Service role only | `internal_create_payment`, `internal_attach_payment_ref`, `internal_credit_payment`, `internal_refund_payment`, `internal_dispute_payment`, `internal_viewer_event`, `internal_end_stream_by_livekit_room`, `internal_hide_message`, `internal_ai_moderation`, `internal_execute_ai_action` |
+| Service role only | `internal_create_payment`, `internal_attach_payment_ref`, `internal_credit_payment`, `internal_refund_payment`, `internal_dispute_payment`, `internal_viewer_event`, `internal_start_host_verification`, `internal_apply_host_verification`, `internal_end_stream_by_livekit_room`, `internal_hide_message`, `internal_ai_moderation`, `internal_execute_ai_action` |

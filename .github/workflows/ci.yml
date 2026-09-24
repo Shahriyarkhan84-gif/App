@@ -30,6 +30,7 @@ jobs:
         with:
           deno-version: v2.x
       - run: deno check --no-lock */index.ts
+      - run: deno test --no-lock --allow-read _shared/
 
   database:
     # Schema + RLS + financial must-pass tests on a throwaway Postgres.

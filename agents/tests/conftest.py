@@ -94,6 +94,7 @@ def world(db):
       insert into public.wallets (user_id, coin_balance) values ('viewer1', 5000), ('viewer2', 5000);
     """)
     as_user(db, "host1", "select public.become_host()")
+    db.run("update public.hosts set verification_status = 'approved' where user_id = 'host1'")
     as_user(db, "host1", "select public.go_live('Chai & chat', 'chat')")
     room = db.one("select id from public.rooms where host_id = 'host1'")["id"]
     return {"room": room}

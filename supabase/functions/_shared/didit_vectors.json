@@ -1,0 +1,14 @@
+[
+ {
+  "raw": "{\n  \"session_id\": \"ses_1\",\n  \"status\": \"Approved\",\n  \"webhook_type\": \"status.updated\",\n  \"vendor_data\": \"user_2abc\",\n  \"timestamp\": 1790270000,\n  \"decision\": {\n    \"id_verifications\": [\n      {\n        \"document_type\": \"Identity Card\",\n        \"issuing_country\": \"PAK\",\n        \"score\": 98.0,\n        \"age\": 27.5\n      }\n    ],\n    \"z\": null,\n    \"a\": true\n  }\n}",
+  "canonical": "{\"decision\":{\"a\":true,\"id_verifications\":[{\"age\":27.5,\"document_type\":\"Identity Card\",\"issuing_country\":\"PAK\",\"score\":98}],\"z\":null},\"session_id\":\"ses_1\",\"status\":\"Approved\",\"timestamp\":1790270000,\"vendor_data\":\"user_2abc\",\"webhook_type\":\"status.updated\"}",
+  "signature": "cb8254ec97c95dab7e40b073b124f475c96c183de7a6f16a2fc9ebde6f6a81b6",
+  "simple": "fe05169e858613535ad379dd245d1e809720f7f19d1e21290732007951ff585e"
+ },
+ {
+  "raw": "{\n  \"session_id\": \"ses_2\",\n  \"status\": \"In Review\",\n  \"webhook_type\": \"status.updated\",\n  \"vendor_data\": \"\\u0645\\u0633\\u062a\\u062e\\u062f\\u0645 \\u2728 \\u00dcn\\u00efc\\u00f8d\\u00e9\",\n  \"timestamp\": 1790270000,\n  \"decision\": {\n    \"notes\": \"line\\nbreak \\\"quoted\\\" / slash\",\n    \"nested\": {\n      \"b\": [\n        1,\n        2.0,\n        {\n          \"y\": 0.1,\n          \"x\": -3\n        }\n      ],\n      \"a\": []\n    }\n  }\n}",
+  "canonical": "{\"decision\":{\"nested\":{\"a\":[],\"b\":[1,2,{\"x\":-3,\"y\":0.1}]},\"notes\":\"line\\nbreak \\\"quoted\\\" / slash\"},\"session_id\":\"ses_2\",\"status\":\"In Review\",\"timestamp\":1790270000,\"vendor_data\":\"مستخدم ✨ Ünïcødé\",\"webhook_type\":\"status.updated\"}",
+  "signature": "ab093100ae99121576ec6da595ffabe71f08de8ee5859b8529549533ab17287f",
+  "simple": "a70e0fc00c96a932f5b8bf24cdb369af84c6cc4139e287f24621eafef8d32433"
+ }
+]

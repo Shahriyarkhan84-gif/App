@@ -26,6 +26,10 @@ const MESSAGES: Record<string, string> = {
   blocked: "You can't message this person.",
   payment_not_refundable: 'This purchase cannot be refunded.',
   not_configured: 'This feature is not configured yet.',
+  verification_required: 'Verify your identity first (Create tab → Verify identity).',
+  already_verified: "You're already verified.",
+  verification_in_review: 'Your verification is being reviewed.',
+  verification_unavailable: 'Verification is temporarily unavailable. Please try again.',
 };
 
 export function errorCode(e: unknown): string {

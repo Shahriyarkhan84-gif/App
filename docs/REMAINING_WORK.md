@@ -6,7 +6,7 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 | # | Product | Status | What exists / what's missing |
 |---|---|---|---|
 | 1 | User/viewer app | ✅ | Login, profile, discover (search, HOST-ID lookup, rankings), watch live, chat, gifts, follow, DMs, notifications, wallet |
-| 2 | Creator/host system | ✅ | Become host, go live (camera/mic), room admins (≤5), moderation actions, stream summary + AI coaching, earnings & withdrawals |
+| 2 | Creator/host system | ✅ | Become host, Didit identity verification, go live (camera/mic), room admins (≤5), moderation actions, stream summary + AI coaching, earnings & withdrawals |
 | 3 | Agency system | 🟡 | Schema, isolation, RPCs (create agency, members, recruit unassigned hosts). **Missing: agency web dashboard, host applications/invites** |
 | 4 | Agent system | 🟡 | Agent membership role with no financial access. **Missing: recruitment UI** |
 | 5 | Owner/admin platform | 🟡 | Owner command center (AI CEO briefing, AI proposals, reports, withdrawals, settings). **Missing: users/hosts/agencies/rooms/coins/gifts/transactions/audit-log screens (~28 owner screens)** |

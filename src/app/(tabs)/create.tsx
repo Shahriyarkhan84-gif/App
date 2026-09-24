@@ -3,12 +3,13 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Platform, ScrollView, View } from 'react-native';
 
+import { HostVerificationCard } from '@/components/HostVerificationCard';
 import { StateView, type ViewState } from '@/components/StateView';
 import { Button, Card, Chip, Input, Row, Screen, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
-import { useFocusedAsync, useOffline } from '@/lib/hooks';
+import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 
@@ -27,9 +28,22 @@ export default function CreateScreen() {
 
   const room = useFocusedAsync(async () => {
     if (!profile) return null;
-    const { data } = await supabase.from('rooms').select('id,status,title,category').eq('host_id', profile.id).maybeSingle();
-    return data;
+    const [{ data }, { data: setting }] = await Promise.all([
+      supabase.from('rooms').select('id,status,title,category').eq('host_id', profile.id).maybeSingle(),
+      supabase.from('platform_settings').select('value').eq('key', 'host_verification').maybeSingle(),
+    ]);
+    const verificationRequired = (setting?.value as { required_to_go_live?: boolean } | undefined)?.required_to_go_live !== false;
+    return data ? { ...data, verificationRequired } : { verificationRequired, status: null, title: '' };
   }, [profile?.id, isHost]);
+
+  // Didit results arrive as a notification; refresh the host's status when one lands.
+  useRealtime('notifications', profile ? `user_id=eq.${profile.id}` : undefined, (p) => {
+    if ((p.new as { type?: string }).type === 'verification') void reloadProfile();
+  }, !!profile);
+
+  const verification = host?.verification_status ?? 'unverified';
+  const verifiedBadge = verification === 'approved' ? ' · ✓ Verified' : '';
+  const needsVerification = isHost && room.data?.verificationRequired !== false && verification !== 'approved';
 
   const becomeHost = async () => {
     setBusy(true);
@@ -64,7 +78,7 @@ export default function CreateScreen() {
   if (!profile) state = offline ? { kind: 'offline', onRetry: reloadProfile } : { kind: 'loading' };
   else if (profile.status !== 'active') state = { kind: 'disabled', title: 'Going live is paused', body: 'Your account is currently restricted. Check Messages for details.' };
   else if (host && host.status !== 'active') state = { kind: 'disabled', title: 'Hosting suspended', body: 'Contact support or your agency for details.' };
-  else if (isHost && needsPermission && (camera?.canAskAgain !== false || mic?.canAskAgain !== false)) {
+  else if (isHost && !needsVerification && needsPermission && (camera?.canAskAgain !== false || mic?.canAskAgain !== false)) {
     state = {
       kind: 'permission',
       title: 'Camera & microphone',
@@ -74,7 +88,7 @@ export default function CreateScreen() {
         await requestMic();
       },
     };
-  } else if (isHost && needsPermission) {
+  } else if (isHost && !needsVerification && needsPermission) {
     state = { kind: 'disabled', title: 'Permissions blocked', body: 'Enable camera and microphone for Zynalive in your device settings.' };
   }
 
@@ -89,6 +103,8 @@ export default function CreateScreen() {
               <Text muted>{"Stream to your followers, receive gifts, and earn 90% of every gift's coins. You'll get a permanent Host ID."}</Text>
               <Button title="Become a host" onPress={becomeHost} loading={busy} disabled={offline} />
             </Card>
+          ) : needsVerification ? (
+            <HostVerificationCard status={verification} onChanged={() => void reloadProfile()} />
           ) : room.data?.status === 'live' ? (
             <Card>
               <Text variant="h3">{"You're live"}</Text>
@@ -97,7 +113,7 @@ export default function CreateScreen() {
             </Card>
           ) : (
             <>
-              <Text muted>Host ID {host?.host_code}</Text>
+              <Text muted>Host ID {host?.host_code}{verifiedBadge}</Text>
               <Input label="Title" value={title} onChangeText={setTitle} placeholder="What's happening?" maxLength={80} />
               <View style={{ gap: 8 }}>
                 <Text variant="label" muted>Category</Text>

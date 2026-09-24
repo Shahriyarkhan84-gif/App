@@ -13,7 +13,7 @@ App (Expo) ──> Supabase (Postgres + RLS + RPCs + Realtime + Edge Functions) 
 |---|---|
 | `src/` | Expo Router app — Home · Discover · Create · Messages · Profile, live room, host broadcast, wallet, earnings, DMs, support, Owner command center |
 | `supabase/migrations/` | Schema, RLS, money/moderation RPCs |
-| `supabase/functions/` | `livekit-token`, `livekit-webhook`, `coins-checkout`, `stripe-webhook`, `clerk-webhook` |
+| `supabase/functions/` | `livekit-token`, `livekit-webhook`, `coins-checkout`, `stripe-webhook`, `clerk-webhook`, `didit-session`, `didit-webhook` |
 | `supabase/tests/` | Must-pass security & financial tests (`run.sh`) |
 | `agents/` | LangGraph worker: AI CEO (Finance · Economy · Streaming AI), moderation, fraud, support, creator assist, translation, recommendations |
 | `docs/` | [Architecture](docs/ARCHITECTURE.md) · [Database](docs/DATABASE.md) · [API](docs/API.md) · [Economy](docs/ECONOMY.md) · [Security](docs/SECURITY.md) · [AI](docs/AI.md) · [Environment](docs/ENVIRONMENT.md) · [Remaining work](docs/REMAINING_WORK.md) · [Changelog](docs/CHANGELOG.md) |
@@ -46,7 +46,8 @@ npx eas-cli@latest build --profile development --platform android   # native dev
    `charge.refunded`, `charge.dispute.created`, `charge.dispute.closed`.
 5. **First owner**: sign up in the app, then in the SQL editor
    `update profiles set role = 'SUPER_ADMIN' where id = '<your clerk user id>';`
-6. **Set the coin → PKR withdrawal rate** in Profile → Owner command center → Settings.
+6. **Didit** (host identity verification): see [docs/HOST_VERIFICATION.md](docs/HOST_VERIFICATION.md).
+7. **Set the coin → PKR withdrawal rate** in Profile → Owner command center → Settings.
 
 ### AI agents (background)
 

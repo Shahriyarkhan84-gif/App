@@ -52,6 +52,9 @@ set role authenticated;
 select public.become_host();
 reset role;
 
+-- Identity verification is covered in 20_host_verification.sql; approve these hosts.
+update public.hosts set verification_status = 'approved', verified_at = now() where user_id in ('bob', 'carol');
+
 -- Owner creates two agencies; dave runs A (with an agent), erin runs B.
 select set_config('request.jwt.claims', '{"sub":"owner"}', false);
 set role authenticated;

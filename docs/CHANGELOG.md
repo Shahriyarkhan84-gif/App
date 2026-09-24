@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0 — Host verification
+
+- Didit identity verification for hosts (ID + liveness + face match); required to go live and to withdraw (configurable).
+- `didit-session` / `didit-webhook` edge functions; tests for the database rules and webhook signatures.
+
 ## 0.2.0 — Zynalive foundation
 
 - Replaced the Streamly VOD prototype with the Zynalive live-streaming app

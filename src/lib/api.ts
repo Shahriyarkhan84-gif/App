@@ -32,6 +32,11 @@ export function startCoinCheckout(supabase: SupabaseClient, packageId: number, r
   return invokeFn<{ url: string }>(supabase, 'coins-checkout', { packageId, returnTo });
 }
 
+/** Starts Didit identity verification for the signed-in host; returns the hosted URL. */
+export function startHostVerification(supabase: SupabaseClient, returnTo: string, language?: string) {
+  return invokeFn<{ url: string }>(supabase, 'didit-session', { returnTo, language });
+}
+
 /** Random idempotency key for money-moving requests (gifts). */
 export function idempotencyKey() {
   return randomUUID();

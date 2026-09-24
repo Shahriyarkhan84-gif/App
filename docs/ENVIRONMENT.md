@@ -29,6 +29,7 @@ token plus `LIVEKIT_URL`.
 | `SITE_URL` | Stripe return URLs |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | rate limiting (optional; limits off without it) |
 | `RESEND_API_KEY`, `EMAIL_FROM` | welcome email (optional) |
+| `DIDIT_API_KEY`, `DIDIT_WORKFLOW_ID`, `DIDIT_WEBHOOK_SECRET` | `didit-session`, `didit-webhook` (host identity verification) |
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected automatically.
 

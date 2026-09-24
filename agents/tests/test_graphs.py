@@ -80,6 +80,7 @@ def test_report_graph_proposes_ladder_action(db, llm, world):
 
 def test_fraud_sweep_flags_circular_gifting(db, llm, world):
     as_user(db, "viewer1", "select public.become_host()")
+    db.run("update public.hosts set verification_status = 'approved' where user_id = 'viewer1'")
     as_user(db, "viewer1", "select public.go_live('alt', 'chat')")
     room_v1 = db.one("select id from public.rooms where host_id = 'viewer1'")["id"]
     db.run("insert into public.wallets (user_id, coin_balance) values ('host1', 5000) on conflict (user_id) do update set coin_balance = 5000")

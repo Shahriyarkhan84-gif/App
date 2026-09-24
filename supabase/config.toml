@@ -19,3 +19,7 @@ verify_jwt = false
 verify_jwt = false
 [functions.clerk-webhook]
 verify_jwt = false
+[functions.didit-session]
+verify_jwt = false
+[functions.didit-webhook]
+verify_jwt = false

@@ -1,4 +1,5 @@
 import { useAuth } from '@clerk/clerk-expo';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 
@@ -8,6 +9,7 @@ import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline } from '@/lib/hooks';
+import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 import { formatMoney } from '@/lib/types';
@@ -30,6 +32,8 @@ export default function EarningsScreen() {
   const [method, setMethod] = useState<(typeof METHODS)[number]['id']>('easypaisa');
   const [account, setAccount] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const { host } = useProfile();
+  const verified = host?.verification_status === 'approved';
 
   const { data, error, loading, reload } = useFocusedAsync(async () => {
     const [earnings, withdrawals, settings] = await Promise.all([
@@ -77,7 +81,12 @@ export default function EarningsScreen() {
 
             <Card>
               <Text variant="h3">Withdraw</Text>
-              {data.rate === null ? (
+              {!verified ? (
+                <>
+                  <Text muted>Verify your identity before withdrawing — it takes about 2 minutes.</Text>
+                  <Button title="Verify identity" variant="secondary" onPress={() => router.push('/create')} />
+                </>
+              ) : data.rate === null ? (
                 <Text muted>Withdrawals open soon — the coin payout rate is being finalised.</Text>
               ) : (
                 <>

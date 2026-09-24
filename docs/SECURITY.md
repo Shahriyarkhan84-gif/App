@@ -30,6 +30,12 @@
 - Prices come from `coin_packages` / `gift_catalog`; amount + currency are
   re-checked against the Stripe session before crediting.
 
+## Host identity verification
+
+Verification status is written only by the service role from a signature-verified
+Didit webhook, after re-reading the decision from Didit's API. Clients can't write
+`hosts` or `host_verifications`. Only a non-PII summary is stored. See HOST_VERIFICATION.md.
+
 ## Secrets
 
 - `LIVEKIT_API_SECRET`, `STRIPE_SECRET_KEY`, webhook secrets, Upstash, Resend
