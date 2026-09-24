@@ -1,98 +1,79 @@
-// Stripe webhook → keeps public.subscriptions in sync and sends Resend emails.
-// Subscribe to: checkout.session.completed, customer.subscription.created,
-// customer.subscription.updated, customer.subscription.deleted
+// Stripe webhook: the only path that credits coins. Signature-verified,
+// replay-protected (processed_webhook_events) and backed by idempotent RPCs.
+// Subscribe to: checkout.session.completed, checkout.session.async_payment_succeeded,
+// charge.refunded, charge.dispute.created, charge.dispute.closed
 import type Stripe from 'npm:stripe@18';
 
 import { json, requireEnv } from '../_shared/cors.ts';
-import { emails, sendEmail } from '../_shared/email.ts';
 import { cryptoProvider, getStripe } from '../_shared/stripe.ts';
-import { adminClient } from '../_shared/supabase.ts';
-
-const ACTIVE = ['active', 'trialing'];
+import { adminClient, alreadyProcessed, markEventProcessed } from '../_shared/supabase.ts';
 
 Deno.serve(async (req) => {
   const stripe = getStripe();
-  const signature = req.headers.get('Stripe-Signature');
   const body = await req.text();
 
   let event: Stripe.Event;
   try {
     event = await stripe.webhooks.constructEventAsync(
       body,
-      signature ?? '',
+      req.headers.get('Stripe-Signature') ?? '',
       requireEnv('STRIPE_WEBHOOK_SECRET'),
       undefined,
       cryptoProvider,
     );
-  } catch (err) {
-    console.error('Bad signature', err);
-    return json({ error: 'Invalid signature' }, 400);
+  } catch {
+    return json({ error: { code: 'invalid_signature', message: 'Invalid signature' } }, 400);
   }
+
+  if (await alreadyProcessed('stripe', event.id)) return json({ duplicate: true });
 
   try {
-    switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object;
-        if (session.mode === 'subscription' && typeof session.subscription === 'string') {
-          await sync(stripe, await stripe.subscriptions.retrieve(session.subscription));
-        }
-        break;
-      }
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated':
-      case 'customer.subscription.deleted':
-        await sync(stripe, event.data.object);
-        break;
-    }
+    await handle(event);
   } catch (err) {
-    console.error('Webhook handling failed', err);
-    return json({ error: 'Handler failed' }, 500); // Stripe will retry
+    console.error('stripe webhook failed', event.type, err);
+    return json({ error: { code: 'internal', message: 'Handler failed' } }, 500); // Stripe retries
   }
 
+  await markEventProcessed('stripe', event.id);
   return json({ received: true });
 });
 
-async function sync(stripe: Stripe, sub: Stripe.Subscription) {
-  const db = adminClient();
-  const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
+const intentId = (pi: string | Stripe.PaymentIntent | null) => (typeof pi === 'string' ? pi : pi?.id ?? null);
 
-  let userId = sub.metadata?.clerk_user_id;
-  if (!userId) {
-    const { data } = await db.from('subscriptions').select('user_id').eq('stripe_customer_id', customerId).maybeSingle();
-    userId = data?.user_id;
+async function rpc(name: string, args: Record<string, unknown>) {
+  const { data, error } = await adminClient().rpc(name, args);
+  if (error) throw new Error(`${name}: ${error.message}`);
+  console.log(name, JSON.stringify(data));
+}
+
+async function handle(event: Stripe.Event) {
+  switch (event.type) {
+    case 'checkout.session.completed':
+    case 'checkout.session.async_payment_succeeded': {
+      const session = event.data.object;
+      if (session.mode !== 'payment' || session.payment_status !== 'paid') return;
+      await rpc('internal_credit_payment', {
+        p_provider_ref: session.id,
+        p_payment_intent: intentId(session.payment_intent),
+        p_amount_minor: session.amount_total,
+        p_currency: session.currency,
+      });
+      break;
+    }
+    case 'charge.refunded': {
+      const charge = event.data.object;
+      if (!charge.refunded) return; // partial refunds are handled manually
+      await rpc('internal_refund_payment', { p_payment_intent: intentId(charge.payment_intent) });
+      break;
+    }
+    case 'charge.dispute.created':
+      await rpc('internal_dispute_payment', { p_payment_intent: intentId(event.data.object.payment_intent), p_stage: 'opened' });
+      break;
+    case 'charge.dispute.closed': {
+      const dispute = event.data.object;
+      if (dispute.status !== 'won' && dispute.status !== 'lost') return;
+      await rpc('internal_dispute_payment', { p_payment_intent: intentId(dispute.payment_intent), p_stage: dispute.status });
+      break;
+    }
   }
-  if (!userId) {
-    console.warn('No user for customer', customerId);
-    return;
-  }
-
-  const { data: previous } = await db.from('subscriptions').select('status').eq('user_id', userId).maybeSingle();
-
-  const item = sub.items.data[0];
-  const periodEnd = item?.current_period_end ? new Date(item.current_period_end * 1000).toISOString() : null;
-
-  const { error } = await db.from('subscriptions').upsert({
-    user_id: userId,
-    stripe_customer_id: customerId,
-    stripe_subscription_id: sub.id,
-    status: sub.status,
-    price_id: item?.price.id ?? null,
-    current_period_end: periodEnd,
-    cancel_at_period_end: sub.cancel_at_period_end,
-    updated_at: new Date().toISOString(),
-  });
-  if (error) throw error;
-
-  const wasActive = !!previous && ACTIVE.includes(previous.status);
-  const isActive = ACTIVE.includes(sub.status);
-  if (wasActive === isActive) return;
-
-  const customer = await stripe.customers.retrieve(customerId);
-  const email = !customer.deleted ? customer.email : null;
-  if (!email) return;
-
-  const message = isActive
-    ? emails.subscriptionStarted(periodEnd ? new Date(periodEnd).toDateString() : 'your next billing date')
-    : emails.subscriptionCanceled();
-  await sendEmail({ to: email, ...message });
 }

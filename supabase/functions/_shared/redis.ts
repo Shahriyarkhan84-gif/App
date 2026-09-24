@@ -27,7 +27,5 @@ export async function rateLimit(action: string, userId: string, limit: number, w
     limiters.set(key, limiter);
   }
   const { success } = await limiter.limit(userId);
-  if (!success) throw new HttpError(429, 'Too many requests, slow down');
+  if (!success) throw new HttpError(429, 'rate_limited', 'Too many requests, slow down');
 }
-
-export const TRENDING_KEY = 'trending:views';

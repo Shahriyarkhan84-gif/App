@@ -1,5 +1,6 @@
-// Public, client-side configuration. Values come from EXPO_PUBLIC_* env vars
-// (see .env.example). Must be referenced statically so Metro can inline them.
+// Public, client-side configuration (EXPO_PUBLIC_* only — never secrets).
+// LiveKit's URL is returned by the livekit-token function; its API secret
+// lives only in Supabase function secrets.
 export const env = {
   clerkPublishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '',
   supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',

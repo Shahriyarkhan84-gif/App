@@ -1,9 +1,8 @@
-import { useAuth } from '@clerk/clerk-expo';
 import { useFocusEffect } from 'expo-router';
+import { useNetworkState } from 'expo-network';
 import { useCallback, useEffect, useState, type DependencyList } from 'react';
 
 import { useSupabase } from './supabase';
-import { ACTIVE_SUBSCRIPTION_STATUSES, type Subscription } from './types';
 
 type AsyncState<T> = { data: T | undefined; error: Error | null; loading: boolean; reload: () => void };
 
@@ -49,21 +48,34 @@ export function useFocusedAsync<T>(fn: () => Promise<T>, deps: DependencyList) {
   return state;
 }
 
-/** Current user's Stripe subscription row (written by the stripe-webhook function). */
-export function useSubscription() {
-  const supabase = useSupabase();
-  const { userId } = useAuth();
-  const state = useFocusedAsync(async () => {
-    if (!userId) return null;
-    const { data, error } = await supabase
-      .from('subscriptions')
-      .select('user_id,status,price_id,current_period_end,cancel_at_period_end')
-      .eq('user_id', userId)
-      .maybeSingle();
-    if (error) throw error;
-    return data as Subscription | null;
-  }, [userId]);
+/** True when the device reports no internet connection. */
+export function useOffline() {
+  const network = useNetworkState();
+  return network.isConnected === false || network.isInternetReachable === false;
+}
 
-  const isSubscribed = !!state.data && ACTIVE_SUBSCRIPTION_STATUSES.includes(state.data.status);
-  return { ...state, subscription: state.data ?? null, isSubscribed };
+/**
+ * Subscribes to Postgres changes for a table (Supabase Realtime, RLS-filtered)
+ * and calls `onChange` for each event.
+ */
+export function useRealtime(
+  table: string,
+  filter: string | undefined,
+  onChange: (payload: { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }) => void,
+  enabled = true,
+) {
+  const supabase = useSupabase();
+  useEffect(() => {
+    if (!enabled) return;
+    const channel = supabase
+      .channel(`${table}:${filter ?? 'all'}:${Math.random().toString(36).slice(2)}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table, filter }, (payload) =>
+        onChange(payload as unknown as { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }),
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase, table, filter, enabled]);
 }

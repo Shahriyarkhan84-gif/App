@@ -2,12 +2,12 @@ import { isClerkAPIResponseError, useSSO } from '@clerk/clerk-expo';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type TextInputProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, radius, spacing } from '@/lib/theme';
+import { useTheme } from '@/lib/theme';
 
-import { Button } from './Button';
+import { Button, Input, Text } from './ui';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -28,14 +28,15 @@ export function clerkErrorMessage(err: unknown) {
 }
 
 export function AuthShell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
+  const { c } = useTheme();
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: c.background }}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <Text style={styles.brand}>STREAMLY</Text>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.subtitle}>{subtitle}</Text>
-          <View style={{ gap: spacing.md }}>{children}</View>
+          <Text variant="display" color={c.primary} style={{ marginBottom: 32 }}>Zynalive</Text>
+          <Text variant="h1">{title}</Text>
+          <Text muted style={{ marginTop: 4, marginBottom: 24 }}>{subtitle}</Text>
+          <View style={{ gap: 12 }}>{children}</View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -43,23 +44,20 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
 }
 
 export function Field(props: TextInputProps & { label: string }) {
-  return (
-    <View style={{ gap: spacing.xs }}>
-      <Text style={styles.label}>{props.label}</Text>
-      <TextInput placeholderTextColor={colors.textMuted} style={styles.input} autoCapitalize="none" {...props} />
-    </View>
-  );
+  return <Input autoCapitalize="none" {...props} />;
 }
 
 export function FormError({ message }: { message: string | null }) {
+  const { c } = useTheme();
   if (!message) return null;
-  return <Text style={styles.error}>{message}</Text>;
+  return <Text color={c.danger}>{message}</Text>;
 }
 
 /** Google / Apple sign-in through Clerk's SSO flow. */
 export function SocialButtons({ onError }: { onError: (message: string) => void }) {
   useWarmUpBrowser();
   const { startSSOFlow } = useSSO();
+  const { c } = useTheme();
   const [pending, setPending] = useState<string | null>(null);
 
   const start = async (strategy: 'oauth_google' | 'oauth_apple') => {
@@ -78,39 +76,22 @@ export function SocialButtons({ onError }: { onError: (message: string) => void 
   };
 
   return (
-    <View style={{ gap: spacing.md }}>
+    <View style={{ gap: 12 }}>
       <Button title="Continue with Google" variant="secondary" loading={pending === 'oauth_google'} onPress={() => start('oauth_google')} />
       {Platform.OS !== 'android' && (
         <Button title="Continue with Apple" variant="secondary" loading={pending === 'oauth_apple'} onPress={() => start('oauth_apple')} />
       )}
       <View style={styles.dividerRow}>
-        <View style={styles.divider} />
-        <Text style={styles.dividerText}>or</Text>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: c.border }]} />
+        <Text muted>or</Text>
+        <View style={[styles.divider, { backgroundColor: c.border }]} />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
-  container: { flexGrow: 1, justifyContent: 'center', padding: spacing.xl, maxWidth: 480, width: '100%', alignSelf: 'center' },
-  brand: { color: colors.accent, fontSize: 28, fontWeight: '900', letterSpacing: 4, marginBottom: spacing.xxl },
-  title: { color: colors.text, fontSize: 28, fontWeight: '800' },
-  subtitle: { color: colors.textMuted, fontSize: 15, marginTop: spacing.xs, marginBottom: spacing.xl },
-  label: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
-  input: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    color: colors.text,
-    paddingHorizontal: spacing.lg,
-    height: 50,
-    fontSize: 16,
-  },
-  error: { color: '#FF6B6B', fontSize: 14 },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginVertical: spacing.xs },
-  divider: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
-  dividerText: { color: colors.textMuted },
+  container: { flexGrow: 1, justifyContent: 'center', padding: 24, maxWidth: 480, width: '100%', alignSelf: 'center' },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 4 },
+  divider: { flex: 1, height: StyleSheet.hairlineWidth },
 });

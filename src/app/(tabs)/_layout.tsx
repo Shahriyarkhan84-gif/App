@@ -3,7 +3,7 @@ import { Tabs } from 'expo-router';
 import type { ComponentProps } from 'react';
 import type { ColorValue } from 'react-native';
 
-import { colors } from '@/lib/theme';
+import { useTheme } from '@/lib/theme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -13,20 +13,23 @@ function icon(name: IconName) {
   return TabIcon;
 }
 
+// User app navigation (architecture §09): Home · Discover · Create · Messages · Profile
 export default function TabsLayout() {
+  const { c } = useTheme();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.text,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { backgroundColor: colors.background, borderTopColor: colors.border },
-        sceneStyle: { backgroundColor: colors.background },
+        tabBarActiveTintColor: c.primary,
+        tabBarInactiveTintColor: c.textMuted,
+        tabBarStyle: { backgroundColor: c.surface, borderTopColor: c.border },
+        sceneStyle: { backgroundColor: c.background },
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: icon('home') }} />
-      <Tabs.Screen name="search" options={{ title: 'Search', tabBarIcon: icon('search') }} />
-      <Tabs.Screen name="library" options={{ title: 'My List', tabBarIcon: icon('bookmark') }} />
+      <Tabs.Screen name="discover" options={{ title: 'Discover', tabBarIcon: icon('compass') }} />
+      <Tabs.Screen name="create" options={{ title: 'Create', tabBarIcon: icon('radio') }} />
+      <Tabs.Screen name="messages" options={{ title: 'Messages', tabBarIcon: icon('chatbubbles') }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: icon('person-circle') }} />
     </Tabs>
   );

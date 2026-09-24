@@ -39,3 +39,16 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+## Zynalive project rules
+
+Read `docs/ARCHITECTURE.md` first. Status of every product: `docs/REMAINING_WORK.md`.
+
+- **Smallest safe change.** Don't rebuild for one feature: locate the relevant code, change it, keep existing behaviour.
+- **Never trust the client** for roles, balances, prices or payment success. Money, roles and moderation go through `security definer` RPCs; clients get no write grants on those tables. Coins are credited only by `internal_credit_payment()` from the verified Stripe webhook.
+- **Every schema change** gets RLS policies and, for money or authorization, a case in `supabase/tests/10_must_pass.sql`.
+- **Secrets stay server-side.** Only `EXPO_PUBLIC_*` values reach the app; `LIVEKIT_API_SECRET` never does.
+- **AI proposes, owners approve.** Agents may hide content or warn automatically; anything heavier becomes an `ai_actions` proposal.
+- **Every screen handles 7 states**: loading · success · error · empty · offline · permission · disabled (`src/components/StateView.tsx`).
+- **Update `docs/` in the same change** (architecture, database, API, economy, security, environment, changelog).
+- **Definition of done:** `npm run typecheck`, `npm run lint`, `npm run build:web`, `bash supabase/tests/run.sh`, and the agent tests (`cd agents && pytest`) all pass.

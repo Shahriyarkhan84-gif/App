@@ -10,10 +10,10 @@ export function getStripe() {
 
 export const cryptoProvider = Stripe.createSubtleCryptoProvider();
 
-/** Builds a Stripe return URL on the web app that can bounce back into the native app. */
+/** Stripe return URL on the web app that can bounce back into the native app. */
 export function returnUrl(path: string, appReturnTo?: string, extra = '') {
   const site = requireEnv('SITE_URL').replace(/\/$/, '');
-  const to = appReturnTo && /^(streamly|exps?):\/\//.test(appReturnTo) ? `to=${encodeURIComponent(appReturnTo)}` : '';
+  const to = appReturnTo && /^(zynalive|exps?):\/\//.test(appReturnTo) ? `to=${encodeURIComponent(appReturnTo)}` : '';
   const query = [to, extra].filter(Boolean).join('&');
   return `${site}${path}${query ? `?${query}` : ''}`;
 }

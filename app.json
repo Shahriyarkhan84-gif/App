@@ -1,24 +1,26 @@
 {
   "expo": {
-    "name": "Streamly",
-    "slug": "streamly",
-    "scheme": "streamly",
+    "name": "Zynalive",
+    "slug": "zynalive",
+    "scheme": "zynalive",
     "version": "1.0.0",
-    "orientation": "default",
+    "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#0B0B0F",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.streamly.app",
+      "bundleIdentifier": "com.zynalive.app",
       "infoPlist": {
+        "NSCameraUsageDescription": "Zynalive uses your camera when you go live.",
+        "NSMicrophoneUsageDescription": "Zynalive uses your microphone when you go live.",
         "UIBackgroundModes": ["audio"]
       }
     },
     "android": {
-      "package": "com.streamly.app",
+      "package": "com.zynalive.app",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#0B0B0F",
+        "backgroundColor": "#0E0C14",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -34,11 +36,14 @@
       "expo-router",
       "expo-secure-store",
       "expo-web-browser",
+      "@livekit/react-native-expo-plugin",
+      "@config-plugins/react-native-webrtc",
       [
-        "expo-video",
+        "expo-camera",
         {
-          "supportsBackgroundPlayback": true,
-          "supportsPictureInPicture": true
+          "cameraPermission": "Zynalive uses your camera when you go live.",
+          "microphonePermission": "Zynalive uses your microphone when you go live.",
+          "recordAudioAndroid": true
         }
       ],
       [
@@ -46,7 +51,7 @@
         {
           "url": "https://sentry.io/",
           "organization": "YOUR_SENTRY_ORG",
-          "project": "streamly"
+          "project": "zynalive"
         }
       ]
     ],

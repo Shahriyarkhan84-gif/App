@@ -1,13 +1,13 @@
 import { useSignUp } from '@clerk/clerk-expo';
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { Text } from 'react-native';
 
 import { AuthShell, clerkErrorMessage, Field, FormError, SocialButtons } from '@/components/AuthForm';
-import { Button } from '@/components/Button';
-import { colors } from '@/lib/theme';
+import { Button, Text } from '@/components/ui';
+import { useTheme } from '@/lib/theme';
 
 export default function SignUpScreen() {
+  const { c } = useTheme();
   const { signUp, setActive, isLoaded } = useSignUp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -51,21 +51,21 @@ export default function SignUpScreen() {
       <AuthShell title="Check your email" subtitle={`We sent a 6-digit code to ${email}.`}>
         <Field label="Verification code" value={code} onChangeText={setCode} keyboardType="number-pad" autoComplete="one-time-code" placeholder="123456" />
         <FormError message={error} />
-        <Button title="Verify & start watching" loading={loading} disabled={code.length < 6} onPress={onVerify} />
+        <Button title="Verify & continue" loading={loading} disabled={code.length < 6} onPress={onVerify} />
       </AuthShell>
     );
   }
 
   return (
-    <AuthShell title="Create your account" subtitle="Free titles to start. Upgrade anytime for the full library.">
+    <AuthShell title="Create your account" subtitle="Watch live, chat, send gifts — or go live yourself.">
       <SocialButtons onError={setError} />
       <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoComplete="email" placeholder="you@example.com" />
       <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry autoComplete="new-password" placeholder="At least 8 characters" />
       <FormError message={error} />
       <Button title="Continue" loading={loading} disabled={!email || password.length < 8} onPress={onCreate} />
-      <Text style={{ color: colors.textMuted, textAlign: 'center' }}>
+      <Text muted style={{ textAlign: 'center' }}>
         Already have an account?{' '}
-        <Link href="/sign-in" style={{ color: colors.text, fontWeight: '700' }}>
+        <Link href="/sign-in" style={{ color: c.text, fontWeight: '700' }}>
           Sign in
         </Link>
       </Text>

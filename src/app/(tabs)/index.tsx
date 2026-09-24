@@ -1,99 +1,107 @@
 import { useAuth } from '@clerk/clerk-expo';
-import { useMemo } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FlatList, RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
 
-import { Hero } from '@/components/Hero';
-import { ErrorState, Loading } from '@/components/States';
-import { VideoRow } from '@/components/VideoRow';
-import { getRecommendations, getTrending } from '@/lib/api';
-import { useAsync, useFocusedAsync } from '@/lib/hooks';
+import { RoomCard } from '@/components/RoomCard';
+import { resolveState, StateView } from '@/components/StateView';
+import { Screen, Text } from '@/components/ui';
+import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
-import { colors, spacing } from '@/lib/theme';
-import type { Video, WatchProgress } from '@/lib/types';
+import { useTheme } from '@/lib/theme';
+import { normalizeRooms, ROOM_SELECT, type Room } from '@/lib/types';
+
+type HomeData = { recommended: (Room & { reason: string | null })[]; following: Room[]; live: Room[] };
 
 export default function HomeScreen() {
   const supabase = useSupabase();
   const { userId } = useAuth();
-  const insets = useSafeAreaInsets();
+  const { c } = useTheme();
+  const offline = useOffline();
+  const { width } = useWindowDimensions();
+  const columns = width > 700 ? 4 : 2;
+  const cardWidth = (Math.min(width, 1100) - 16 * 2 - 12 * (columns - 1)) / columns;
 
-  const catalog = useAsync(async () => {
-    const { data, error } = await supabase.from('videos').select('*').order('created_at', { ascending: false });
-    if (error) throw error;
-    return data as Video[];
-  }, []);
-
-  const continueWatching = useFocusedAsync(async () => {
-    const { data, error } = await supabase
-      .from('watch_progress')
-      .select('video_id,position_seconds,duration_seconds,updated_at,videos(*)')
-      .eq('user_id', userId!)
-      .order('updated_at', { ascending: false })
-      .limit(20);
-    if (error) throw error;
-    // Hide titles that are basically finished.
-    return (data as unknown as WatchProgress[]).filter(
-      (p) => p.videos && p.duration_seconds > 0 && p.position_seconds / p.duration_seconds < 0.95,
-    );
+  const { data, error, loading, reload } = useFocusedAsync<HomeData>(async () => {
+    const [live, follows, recs] = await Promise.all([
+      supabase.from('rooms').select(ROOM_SELECT).eq('status', 'live').order('viewer_count', { ascending: false }).limit(60),
+      supabase.from('follows').select('followee_id').eq('follower_id', userId!),
+      // Written by the Recommendations agent (LangGraph worker).
+      supabase.from('user_recommendations').select('room_id,reason,score').eq('user_id', userId!).order('score', { ascending: false }).limit(10),
+    ]);
+    if (live.error) throw live.error;
+    const rooms = normalizeRooms(live.data);
+    const followed = new Set((follows.data ?? []).map((f) => f.followee_id));
+    const byId = new Map(rooms.map((r) => [r.id, r]));
+    const recommended = (recs.data ?? []).flatMap((r) => (byId.has(r.room_id) ? [{ ...byId.get(r.room_id)!, reason: r.reason }] : []));
+    return { live: rooms, following: rooms.filter((r) => followed.has(r.host_id)), recommended };
   }, [userId]);
 
-  // Trending (Upstash) and recommendations (Pinecone) are optional extras:
-  // if those services aren't configured the rows simply don't render.
-  const trending = useAsync(() => getTrending(supabase).catch(() => [] as Video[]), []);
-  const recs = useFocusedAsync(() => getRecommendations(supabase).catch(() => null), []);
+  // Rooms going live/offline update the feed in real time.
+  useRealtime('rooms', undefined, (p) => {
+    const before = (p.old as { status?: string }).status;
+    const after = (p.new as { status?: string }).status;
+    if (before !== after) reload();
+  });
 
-  const byGenre = useMemo(() => {
-    const groups = new Map<string, Video[]>();
-    for (const video of catalog.data ?? []) {
-      for (const genre of video.genres) groups.set(genre, [...(groups.get(genre) ?? []), video]);
-    }
-    return [...groups.entries()].sort((a, b) => b[1].length - a[1].length);
-  }, [catalog.data]);
-
-  if (catalog.loading && !catalog.data) return <Loading />;
-  if (catalog.error) return <ErrorState error={catalog.error} onRetry={catalog.reload} />;
-
-  const videos = catalog.data ?? [];
-  const featured = videos.find((v) => v.featured) ?? videos[0];
-  const progress = Object.fromEntries(
-    (continueWatching.data ?? []).map((p) => [p.video_id, p.position_seconds / p.duration_seconds]),
-  );
-
-  const refresh = () => {
-    catalog.reload();
-    continueWatching.reload();
-    trending.reload();
-    recs.reload();
-  };
+  const state = resolveState({
+    offline, loading, error, data, onRetry: reload,
+    isEmpty: (d) => d.live.length === 0,
+    empty: { title: 'No one is live right now', body: 'Be the first — tap Create to go live.' },
+  });
 
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={{ paddingBottom: spacing.xxl }}
-      refreshControl={<RefreshControl refreshing={false} onRefresh={refresh} tintColor={colors.text} />}
-    >
-      {featured ? <Hero video={featured} /> : <View style={{ height: insets.top + spacing.xl }} />}
-      <View style={[styles.brandBar, { top: insets.top + spacing.sm }]} pointerEvents="none">
-        <Text style={styles.brand}>STREAMLY</Text>
+    <Screen>
+      <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
+        <Text variant="h1" color={c.primary}>Zynalive</Text>
       </View>
-
-      <VideoRow
-        title="Continue watching"
-        videos={(continueWatching.data ?? []).map((p) => p.videos!)}
-        progress={progress}
-      />
-      <VideoRow title="Trending now" videos={trending.data ?? []} />
-      {recs.data?.basedOn && <VideoRow title={`Because you watched ${recs.data.basedOn.title}`} videos={recs.data.videos} />}
-      <VideoRow title="New releases" videos={videos.slice(0, 12)} />
-      {byGenre.map(([genre, list]) => (
-        <VideoRow key={genre} title={genre} videos={list} />
-      ))}
-    </ScrollView>
+      <StateView state={state}>
+        {data && (
+          <ScrollView
+            contentContainerStyle={{ paddingBottom: 32, gap: 24, maxWidth: 1100, width: '100%', alignSelf: 'center' }}
+            refreshControl={<RefreshControl refreshing={loading && !!data} onRefresh={reload} tintColor={c.text} />}
+          >
+            {data.recommended.length > 0 && (
+              <Section title="For you">
+                <FlatList
+                  horizontal
+                  data={data.recommended}
+                  keyExtractor={(r) => r.id}
+                  contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+                  showsHorizontalScrollIndicator={false}
+                  renderItem={({ item }) => <RoomCard room={item} width={150} reason={item.reason} />}
+                />
+              </Section>
+            )}
+            {data.following.length > 0 && (
+              <Section title="Following">
+                <FlatList
+                  horizontal
+                  data={data.following}
+                  keyExtractor={(r) => r.id}
+                  contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+                  showsHorizontalScrollIndicator={false}
+                  renderItem={({ item }) => <RoomCard room={item} width={150} />}
+                />
+              </Section>
+            )}
+            <Section title="Live now">
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16 }}>
+                {data.live.map((r) => (
+                  <RoomCard key={r.id} room={r} width={cardWidth} />
+                ))}
+              </View>
+            </Section>
+          </ScrollView>
+        )}
+      </StateView>
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  brandBar: { position: 'absolute', left: spacing.lg },
-  brand: { color: colors.accent, fontSize: 22, fontWeight: '900', letterSpacing: 3 },
-});
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={{ gap: 12 }}>
+      <Text variant="h3" style={{ paddingHorizontal: 16 }}>{title}</Text>
+      {children}
+    </View>
+  );
+}

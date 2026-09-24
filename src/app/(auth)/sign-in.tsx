@@ -1,13 +1,13 @@
 import { useSignIn } from '@clerk/clerk-expo';
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { Text } from 'react-native';
 
 import { AuthShell, clerkErrorMessage, Field, FormError, SocialButtons } from '@/components/AuthForm';
-import { Button } from '@/components/Button';
-import { colors } from '@/lib/theme';
+import { Button, Text } from '@/components/ui';
+import { useTheme } from '@/lib/theme';
 
 export default function SignInScreen() {
+  const { c } = useTheme();
   const { signIn, setActive, isLoaded } = useSignIn();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,15 +33,15 @@ export default function SignInScreen() {
   };
 
   return (
-    <AuthShell title="Welcome back" subtitle="Sign in to keep watching.">
+    <AuthShell title="Welcome back" subtitle="Sign in to join the live rooms.">
       <SocialButtons onError={setError} />
       <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoComplete="email" placeholder="you@example.com" />
       <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" placeholder="••••••••" />
       <FormError message={error} />
       <Button title="Sign in" loading={loading} disabled={!email || !password} onPress={onSubmit} />
-      <Text style={{ color: colors.textMuted, textAlign: 'center' }}>
+      <Text muted style={{ textAlign: 'center' }}>
         New here?{' '}
-        <Link href="/sign-up" style={{ color: colors.text, fontWeight: '700' }}>
+        <Link href="/sign-up" style={{ color: c.text, fontWeight: '700' }}>
           Create an account
         </Link>
       </Text>

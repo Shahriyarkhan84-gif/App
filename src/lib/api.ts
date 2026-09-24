@@ -1,59 +1,38 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { FunctionsHttpError } from '@supabase/supabase-js';
+import { randomUUID } from 'expo-crypto';
 
-import type { Video } from './types';
+type ErrorBody = { error?: { code?: string; message?: string } };
 
-/**
- * Thin wrappers around Supabase Edge Functions (supabase/functions/*).
- * The Supabase client attaches the Clerk session token automatically.
- */
-async function invoke<T>(supabase: SupabaseClient, name: string, body?: unknown): Promise<T> {
-  const { data, error } = await supabase.functions.invoke<T>(name, { body: body ?? {} });
-  if (error) throw error;
+/** Calls a Supabase Edge Function and surfaces its `{ error: { code } }` shape as Error(code). */
+export async function invokeFn<T>(supabase: SupabaseClient, name: string, body: Record<string, unknown>): Promise<T> {
+  const { data, error } = await supabase.functions.invoke<T>(name, { body });
+  if (error) {
+    if (error instanceof FunctionsHttpError) {
+      const payload = (await error.context.json().catch(() => ({}))) as ErrorBody;
+      throw new Error(payload.error?.code ?? 'unknown');
+    }
+    throw error;
+  }
   return data as T;
 }
 
-/** Pinecone semantic search, falling back to a Postgres keyword search. */
-export async function searchVideos(supabase: SupabaseClient, query: string) {
-  try {
-    const { videos } = await invoke<{ videos: Video[] }>(supabase, 'search', { query });
-    return { videos, source: 'semantic' as const };
-  } catch {
-    const pattern = `%${query.replace(/[%_,()]/g, ' ')}%`;
-    const { data, error } = await supabase
-      .from('videos')
-      .select('*')
-      .or(`title.ilike.${pattern},description.ilike.${pattern}`)
-      .limit(30);
-    if (error) throw error;
-    return { videos: (data ?? []) as Video[], source: 'keyword' as const };
-  }
+/** Calls a Postgres RPC; throws Error(<exception code>) on failure. */
+export async function rpc<T = unknown>(supabase: SupabaseClient, fn: string, args?: Record<string, unknown>): Promise<T> {
+  const { data, error } = await supabase.rpc(fn, args);
+  if (error) throw new Error(error.message);
+  return data as T;
 }
 
-/** "Because you watched" recommendations powered by Pinecone. */
-export async function getRecommendations(supabase: SupabaseClient) {
-  return invoke<{ basedOn: Pick<Video, 'id' | 'title'> | null; videos: Video[] }>(
-    supabase,
-    'recommendations',
-  );
+export function getLiveKitToken(supabase: SupabaseClient, roomId: string, as: 'viewer' | 'host') {
+  return invokeFn<{ token: string; url: string }>(supabase, 'livekit-token', { roomId, as });
 }
 
-/** Trending titles, ranked by view counts kept in Upstash Redis. */
-export async function getTrending(supabase: SupabaseClient) {
-  const { videos } = await invoke<{ videos: Video[] }>(supabase, 'trending');
-  return videos;
+export function startCoinCheckout(supabase: SupabaseClient, packageId: number, returnTo: string) {
+  return invokeFn<{ url: string }>(supabase, 'coins-checkout', { packageId, returnTo });
 }
 
-/** Records a view in Upstash (deduped per user/video server-side). Fire-and-forget. */
-export function trackView(supabase: SupabaseClient, videoId: string) {
-  invoke(supabase, 'track-view', { videoId }).catch(() => {});
-}
-
-/** Creates a Stripe Checkout session and returns its hosted URL. */
-export async function createCheckoutSession(supabase: SupabaseClient, plan: 'monthly' | 'yearly', returnTo?: string) {
-  return invoke<{ url: string }>(supabase, 'create-checkout-session', { plan, returnTo });
-}
-
-/** Opens the Stripe billing portal so subscribers can manage/cancel. */
-export async function createPortalSession(supabase: SupabaseClient, returnTo?: string) {
-  return invoke<{ url: string }>(supabase, 'create-portal-session', { returnTo });
+/** Random idempotency key for money-moving requests (gifts). */
+export function idempotencyKey() {
+  return randomUUID();
 }

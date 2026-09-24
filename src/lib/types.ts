@@ -1,32 +1,63 @@
-export type Video = {
+export type AppRole = 'USER' | 'HOST' | 'AGENCY_MEMBER' | 'AGENCY_ADMIN' | 'OWNER_ADMIN' | 'SUPER_ADMIN';
+
+export type Profile = {
   id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  country: string | null;
+  language: string;
+  role: AppRole;
+  status: 'active' | 'restricted' | 'banned';
+  status_until: string | null;
+};
+
+export type Room = {
+  id: string;
+  host_id: string;
   title: string;
-  description: string;
-  genres: string[];
-  release_year: number | null;
-  duration_seconds: number | null;
-  maturity_rating: string | null;
-  poster_url: string;
-  backdrop_url: string;
-  is_premium: boolean;
-  featured: boolean;
+  category: string;
+  cover_url: string | null;
+  status: 'offline' | 'live';
+  viewer_count: number;
+  current_stream_id: string | null;
+  host?: Pick<Profile, 'id' | 'display_name' | 'username' | 'avatar_url' | 'country'> | null;
+};
+
+export type ChatMessage = {
+  id: number;
+  room_id: string;
+  sender_id: string;
+  body: string;
+  status: 'visible' | 'hidden';
   created_at: string;
+  sender?: Pick<Profile, 'display_name' | 'username' | 'avatar_url'> | null;
 };
 
-export type WatchProgress = {
-  video_id: string;
-  position_seconds: number;
-  duration_seconds: number;
-  updated_at: string;
-  videos?: Video;
-};
+export type GiftItem = { id: number; name: string; icon: string; coin_price: number };
 
-export type Subscription = {
-  user_id: string;
-  status: string;
-  price_id: string | null;
-  current_period_end: string | null;
-  cancel_at_period_end: boolean;
-};
+export type CoinPackage = { id: number; name: string; coins: number; price_minor: number; currency: string };
 
-export const ACTIVE_SUBSCRIPTION_STATUSES = ['active', 'trialing'];
+// rooms.host_id -> hosts.user_id -> profiles.id
+export const ROOM_SELECT =
+  'id,host_id,title,category,cover_url,status,viewer_count,current_stream_id,hostRow:hosts(profile:profiles(id,display_name,username,avatar_url,country))';
+
+type RawRoom = Omit<Room, 'host'> & { hostRow?: { profile: Room['host'] } | null };
+
+export function normalizeRoom(raw: RawRoom): Room {
+  const { hostRow, ...room } = raw;
+  return { ...room, host: hostRow?.profile ?? null };
+}
+
+export function normalizeRooms(raw: unknown): Room[] {
+  return ((raw ?? []) as RawRoom[]).map(normalizeRoom);
+}
+
+export function displayName(p?: { display_name?: string | null; username?: string | null } | null) {
+  return p?.display_name || (p?.username ? `@${p.username}` : 'Zynalive user');
+}
+
+export function formatMoney(minor: number, currency: string) {
+  return `${currency.toUpperCase() === 'PKR' ? 'Rs' : currency.toUpperCase()} ${(minor / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+}

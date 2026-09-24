@@ -1,0 +1,27 @@
+[project]
+name = "zynalive-agents"
+version = "0.1.0"
+description = "Zynalive AI platform: LangGraph background agents (AI CEO + 7 branches)"
+requires-python = ">=3.11"
+dependencies = [
+  "langgraph>=1.2,<2",
+  "anthropic>=1.8,<2",
+  "psycopg[binary,pool]>=3.2,<4",
+  "pydantic>=2.9,<3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+zynalive-agents = "zynalive_agents.worker:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["zynalive_agents*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
