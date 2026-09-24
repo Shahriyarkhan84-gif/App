@@ -30,6 +30,7 @@
     "expo-router": "~57.0.23",
     "expo-secure-store": "~57.0.4",
     "expo-status-bar": "~57.0.1",
+    "expo-system-ui": "~57.0.4",
     "expo-web-browser": "~57.0.3",
     "livekit-client": "^2.22.3",
     "posthog-react-native": "^4.77.0",

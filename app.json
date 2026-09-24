@@ -13,12 +13,13 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Zynalive uses your camera when you go live.",
         "NSMicrophoneUsageDescription": "Zynalive uses your microphone when you go live.",
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": [
+          "audio"
+        ]
       }
     },
     "android": {
       "package": "com.zynalive.app",
-      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#0E0C14",
         "foregroundImage": "./assets/android-icon-foreground.png",
