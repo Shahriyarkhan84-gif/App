@@ -24,7 +24,7 @@ export default function UserProfileScreen() {
 
   const { data, error, loading, reload } = useAsync(async () => {
     const [profile, host, room, followers, follow] = await Promise.all([
-      supabase.from('profiles').select('id,username,display_name,avatar_url,bio,country,language,role,status,status_until').eq('id', id).single(),
+      supabase.from('profiles').select('id,user_number,username,display_name,avatar_url,bio,country,language,role,status,status_until').eq('id', id).single(),
       supabase.from('hosts').select('host_code,total_live_seconds').eq('user_id', id).maybeSingle(),
       supabase.from('rooms').select('id,status,title,viewer_count').eq('host_id', id).maybeSingle(),
       supabase.from('follows').select('*', { count: 'exact', head: true }).eq('followee_id', id),
@@ -81,7 +81,7 @@ export default function UserProfileScreen() {
             <View style={{ alignItems: 'center', gap: 8 }}>
               <Avatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={96} />
               <Text variant="h2">{displayName(data.profile)}</Text>
-              <Text muted>{[data.profile.username && `@${data.profile.username}`, data.host?.host_code, data.profile.country].filter(Boolean).join(' · ')}</Text>
+              <Text muted>{[`ID ${data.profile.user_number}`, data.profile.username && `@${data.profile.username}`, data.host?.host_code, data.profile.country].filter(Boolean).join(' · ')}</Text>
               <Text variant="label">{data.followers.toLocaleString()} followers</Text>
               {data.profile.bio && <Text style={{ textAlign: 'center' }}>{data.profile.bio}</Text>}
             </View>

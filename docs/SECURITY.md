@@ -8,6 +8,7 @@
 - `profiles.role` / `status` have **no client UPDATE grant** (column-level
   grants allow only `username, display_name, avatar_url, bio, country, language`).
 - Only `SUPER_ADMIN` can call `set_user_role`, and never on themselves.
+- `profiles.user_number` (public 11-digit ID) is assigned by a trigger on insert and can't be changed by anyone, service role included.
 - `become_host`, `create_agency`, `add_agency_member` set roles as side effects
   of authorized actions, never from client input.
 

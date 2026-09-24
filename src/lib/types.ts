@@ -2,6 +2,8 @@ export type AppRole = 'USER' | 'HOST' | 'AGENCY_MEMBER' | 'AGENCY_ADMIN' | 'OWNE
 
 export type Profile = {
   id: string;
+  /** Public 11-digit ID, assigned by the database at sign-up. */
+  user_number: number;
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;

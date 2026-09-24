@@ -11,7 +11,7 @@ import { useSupabase } from '@/lib/supabase';
 import { fonts, useTheme } from '@/lib/theme';
 import { categoryLabel, displayName, normalizeRooms, ROOM_SELECT, type Profile, type Room } from '@/lib/types';
 
-type Person = Pick<Profile, 'id' | 'display_name' | 'username' | 'avatar_url' | 'country'> & { host_code?: string };
+type Person = Pick<Profile, 'id' | 'user_number' | 'display_name' | 'username' | 'avatar_url' | 'country'> & { host_code?: string };
 
 /** Party: find live rooms, hosts and Host IDs. Multi-guest voice/video parties plug in here next. */
 export default function PartyScreen() {
@@ -34,15 +34,18 @@ export default function PartyScreen() {
     let cancelled = false;
     const t = setTimeout(async () => {
       let rows: Person[] = [];
-      if (/^host-\d+$/i.test(q)) {
-        const { data } = await supabase.from('hosts').select('host_code,profile:profiles(id,display_name,username,avatar_url,country)').eq('host_code', q.toUpperCase()).limit(1);
+      if (/^\d{11}$/.test(q)) {
+        const { data } = await supabase.from('profiles').select('id,user_number,display_name,username,avatar_url,country').eq('user_number', Number(q)).limit(1);
+        rows = (data ?? []) as Person[];
+      } else if (/^host-\d+$/i.test(q)) {
+        const { data } = await supabase.from('hosts').select('host_code,profile:profiles(id,user_number,display_name,username,avatar_url,country)').eq('host_code', q.toUpperCase()).limit(1);
         rows = (data ?? []).flatMap((h) => {
           const p = h.profile as unknown as Person | null;
           return p ? [{ ...p, host_code: h.host_code }] : [];
         });
       } else {
         const term = q.replace(/[%_,()@]/g, ' ').trim();
-        const { data } = await supabase.from('profiles').select('id,display_name,username,avatar_url,country')
+        const { data } = await supabase.from('profiles').select('id,user_number,display_name,username,avatar_url,country')
           .or(`username.ilike.%${term}%,display_name.ilike.%${term}%`).limit(10);
         rows = (data ?? []) as Person[];
       }
@@ -65,7 +68,7 @@ export default function PartyScreen() {
     offline, loading: rooms.loading, error: rooms.error, data: rooms.data, onRetry: rooms.reload,
     isEmpty: () => matchingRooms.length === 0 && matchingPeople.length === 0 && !(searching && people?.q !== q),
     empty: searching
-      ? { title: 'No matches', body: 'Try another name, or a Host ID like HOST-00000001.' }
+      ? { title: 'No matches', body: 'Try another name, an 11-digit ID, or a Host ID like HOST-00000001.' }
       : { title: 'No rooms are live', body: 'Start your own and invite your fans.' },
   });
 
@@ -81,7 +84,7 @@ export default function PartyScreen() {
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Search rooms, hosts or HOST-ID"
+            placeholder="Search rooms, people, ID or HOST-ID"
             placeholderTextColor={c.textFaint}
             autoCapitalize="none"
             autoCorrect={false}
@@ -107,7 +110,7 @@ export default function PartyScreen() {
                       <Avatar uri={p.avatar_url} name={displayName(p)} />
                       <View style={{ flex: 1 }}>
                         <Text variant="label">{displayName(p)}</Text>
-                        <Text variant="caption" faint>{[p.username && `@${p.username}`, p.host_code, p.country].filter(Boolean).join(' · ')}</Text>
+                        <Text variant="caption" faint>{[`ID ${p.user_number}`, p.username && `@${p.username}`, p.host_code, p.country].filter(Boolean).join(' · ')}</Text>
                       </View>
                     </Row>
                   </Pressable>

@@ -10,6 +10,7 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 | `…030000_moderation_ai.sql` | reports, moderation_actions, ai_jobs, ai_reports, ai_actions, message_translations, support_tickets, user_recommendations + social/room/moderation/agency RPCs, rankings |
 | `…040000_access.sql` | grants, RLS policies, Realtime publication |
 | `…060000_host_verification.sql` | `hosts.verification_status`, `host_verifications`, Didit RPCs; go-live and withdrawals require verification ([HOST_VERIFICATION.md](HOST_VERIFICATION.md)) |
+| `…070000_user_number.sql` | `profiles.user_number`: random unique 11-digit public ID, set by trigger on insert and frozen on update |
 | `…050000_hardening.sql` | fixed `search_path` on remaining functions; no anon execute by default (Supabase advisor fixes) |
 
 Architecture table names map 1:1 except: `users` → Clerk + `profiles`;

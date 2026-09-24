@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.2 — User IDs
+
+- Every account gets a random, unique 11-digit ID at sign-up (existing accounts backfilled). Shown on Me and profiles; searchable in Party.
+
 ## 0.4.1 — Launch flow
 
 - Zynalive logo (red tile, white Z, gold live dot) for the app icon, Android adaptive icon, favicon and native splash.
