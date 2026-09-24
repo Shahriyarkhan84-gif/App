@@ -23,3 +23,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.didit-webhook]
 verify_jwt = false
+[functions.delete-account]
+verify_jwt = false

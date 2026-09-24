@@ -24,6 +24,7 @@ token plus `LIVEKIT_URL`.
 |---|---|
 | `CLERK_ISSUER` | all user-facing functions (JWT verification), e.g. `https://xxx.clerk.accounts.dev` |
 | `CLERK_WEBHOOK_SECRET` | `clerk-webhook` |
+| `CLERK_SECRET_KEY` | `delete-account` (deletes the Clerk user). Server-side only. |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | `livekit-token`, `livekit-webhook` |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | `coins-checkout`, `stripe-webhook` |
 | `SITE_URL` | Stripe return URLs |

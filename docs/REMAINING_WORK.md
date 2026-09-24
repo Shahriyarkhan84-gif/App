@@ -28,4 +28,5 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 - Localization layer (phase 2 in the architecture): UI strings are English.
 - Web dashboards for Agency (9 sections) and Owner (14 sections) beyond the command center.
 - Component and end-to-end tests for mobile flows (viewer join→chat→gift→leave; host go-live→end→summary) — needs a dev build on a device farm (e.g. Maestro on EAS).
-- App-store review: selling coins through Stripe from inside iOS/Android apps may require in-app purchases depending on market; plan IAP (e.g. RevenueCat) for native if needed.
+- Store review: Google Play requires Play Billing for coins bought inside the Android app (Stripe is fine on the web). Plan: RevenueCat or `react-native-iap` + a server-side receipt check that credits coins through the same ledger path.
+- Store listing: fill the placeholders in `src/app/privacy.tsx` / `account-deletion.tsx` ([COMPANY LEGAL NAME], [SUPPORT EMAIL], [RETENTION PERIOD], [MINIMUM AGE]) and publish the web build so `/privacy` and `/account-deletion` have public URLs.

@@ -37,6 +37,10 @@ Verification status is written only by the service role from a signature-verifie
 Didit webhook, after re-reading the decision from Didit's API. Clients can't write
 `hosts` or `host_verifications`. Only a non-PII summary is stored. See HOST_VERIFICATION.md.
 
+## Account deletion
+
+`internal_delete_account()` is service-role only (called by `delete-account` after verifying the Clerk JWT, and by `clerk-webhook` on `user.deleted`). It is idempotent, refuses while a withdrawal is pending, deletes follows/blocks/DMs/notifications, blanks chat and support text, and anonymises the profile. Payments, ledger, gifts, earnings, withdrawals, reports and audit logs are retained.
+
 ## Secrets
 
 - `LIVEKIT_API_SECRET`, `STRIPE_SECRET_KEY`, webhook secrets, Upstash, Resend

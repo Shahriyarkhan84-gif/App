@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.4 — Store readiness
+
+- In-app account deletion (Me → Delete account) via the `delete-account` edge function; Clerk deletions go through the same cleanup.
+- Public `/privacy` (draft — fill in placeholders) and `/account-deletion` pages for the store listings.
+- Android: removed storage and draw-over-apps permissions the app doesn't use.
+
 ## 0.4.3 — Host badge
 
 - Passing Didit verification marks the user verified and unlocks a red Host badge, shown on Me, profiles, room cards, Party and the live room. Unverified hosts see "Verification pending".

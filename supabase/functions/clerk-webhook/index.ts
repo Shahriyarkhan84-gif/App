@@ -33,8 +33,13 @@ Deno.serve(async (req) => {
   const user = event.data;
 
   if (event.type === 'user.deleted') {
-    // Keep financial/audit history; anonymise the profile.
-    await db.from('profiles').update({ email: null, display_name: 'Deleted user', avatar_url: null }).eq('id', user.id);
+    // Deleted in Clerk (dashboard or delete-account): remove personal data, keep financial/audit history.
+    const { error } = await db.rpc('internal_delete_account', { p_user: user.id });
+    if (error) {
+      // e.g. withdrawal_pending: still strip identity fields; staff settle the rest.
+      console.error('internal_delete_account failed', error.message);
+      await db.from('profiles').update({ email: null, display_name: 'Deleted user', avatar_url: null }).eq('id', user.id);
+    }
     return json({ ok: true });
   }
 

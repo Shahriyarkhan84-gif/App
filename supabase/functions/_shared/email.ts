@@ -16,7 +16,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
 
 const layout = (body: string) => `
 <div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:520px;margin:auto;padding:24px;color:#111">
-  <div style="font-weight:800;color:#7C5CFF;font-size:20px;margin-bottom:24px">Zynalive</div>
+  <div style="font-weight:800;color:#D81E45;font-size:20px;margin-bottom:24px">Zynalive</div>
   ${body}
   <p style="color:#888;font-size:12px;margin-top:32px">You're receiving this because you have a Zynalive account.</p>
 </div>`;
@@ -25,7 +25,7 @@ export const emails = {
   welcome: (name: string) => ({
     subject: 'Welcome to Zynalive',
     html: layout(`<h2>Welcome${name ? `, ${escapeHtml(name)}` : ''}!</h2>
-      <p>Watch live rooms, chat, send gifts — or tap <b>Create</b> to go live yourself.</p>`),
+      <p>Watch live rooms, chat, send gifts — or tap <b>Go live</b> to stream yourself.</p>`),
   }),
 };
 

@@ -37,6 +37,11 @@ export function startHostVerification(supabase: SupabaseClient, returnTo: string
   return invokeFn<{ url: string }>(supabase, 'didit-session', { returnTo, language });
 }
 
+/** Permanently deletes the signed-in account (personal data removed; money records kept). */
+export function deleteAccount(supabase: SupabaseClient) {
+  return invokeFn<{ deleted: boolean }>(supabase, 'delete-account', {});
+}
+
 /** Random idempotency key for money-moving requests (gifts). */
 export function idempotencyKey() {
   return randomUUID();

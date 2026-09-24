@@ -103,6 +103,7 @@ function RootNavigator() {
         <Stack.Screen name="chat/[userId]" options={{ title: 'Chat' }} />
         <Stack.Screen name="wallet" options={{ title: 'Wallet' }} />
         <Stack.Screen name="rankings" options={{ title: 'Rankings' }} />
+        <Stack.Screen name="delete-account" options={{ title: 'Delete account' }} />
         <Stack.Screen name="earnings" options={{ title: 'Earnings' }} />
         <Stack.Screen name="support" options={{ title: 'Help & support' }} />
         <Stack.Screen name="profile-edit" options={{ title: 'Edit profile', presentation: 'modal' }} />
@@ -112,6 +113,9 @@ function RootNavigator() {
         <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
       </Stack.Protected>
       <Stack.Screen name="checkout-return" options={{ headerShown: false }} />
+      {/* Public pages linked from the store listings; readable signed out. */}
+      <Stack.Screen name="privacy" options={{ headerShown: false }} />
+      <Stack.Screen name="account-deletion" options={{ headerShown: false }} />
     </Stack>
   );
 }

@@ -13,7 +13,7 @@ App (Expo) ──> Supabase (Postgres + RLS + RPCs + Realtime + Edge Functions) 
 |---|---|
 | `src/` | Expo Router app — Home · Party · Go live · Messages · Me, rankings, live room, host broadcast, wallet, earnings, DMs, support, Owner command center |
 | `supabase/migrations/` | Schema, RLS, money/moderation RPCs |
-| `supabase/functions/` | `livekit-token`, `livekit-webhook`, `coins-checkout`, `stripe-webhook`, `clerk-webhook`, `didit-session`, `didit-webhook` |
+| `supabase/functions/` | `livekit-token`, `livekit-webhook`, `coins-checkout`, `stripe-webhook`, `clerk-webhook`, `didit-session`, `didit-webhook`, `delete-account` |
 | `supabase/tests/` | Must-pass security & financial tests (`run.sh`) |
 | `agents/` | LangGraph worker: AI CEO (Finance · Economy · Streaming AI), moderation, fraud, support, creator assist, translation, recommendations |
 | `docs/` | [Architecture](docs/ARCHITECTURE.md) · [Database](docs/DATABASE.md) · [API](docs/API.md) · [Economy](docs/ECONOMY.md) · [Security](docs/SECURITY.md) · [AI](docs/AI.md) · [Environment](docs/ENVIRONMENT.md) · [Remaining work](docs/REMAINING_WORK.md) · [Changelog](docs/CHANGELOG.md) |

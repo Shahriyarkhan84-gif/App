@@ -29,6 +29,7 @@ const RPC_ERRORS: Record<string, number> = {
   room_not_live: 409,
   already_verified: 409,
   verification_required: 403,
+  withdrawal_pending: 409,
 };
 
 /** Converts a Supabase RPC error into an HttpError (known codes) or rethrows. */

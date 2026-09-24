@@ -109,11 +109,13 @@ export default function ProfileScreen() {
           <ListRow icon="wallet-outline" label="Wallet & history" onPress={() => router.push('/wallet')} />
           <ListRow icon="trophy-outline" label="Rankings" onPress={() => router.push('/rankings')} />
           <ListRow icon="help-buoy-outline" label="Help & support" onPress={() => router.push('/support')} />
-          <ListRow icon="megaphone-outline" label="Share feedback" onPress={openFeedback} last={!isPlatformAdmin} />
+          <ListRow icon="megaphone-outline" label="Share feedback" onPress={openFeedback} />
+          <ListRow icon="lock-closed-outline" label="Privacy policy" onPress={() => router.push('/privacy')} last={!isPlatformAdmin} />
           {isPlatformAdmin && <ListRow icon="analytics-outline" label="Owner command center" onPress={() => router.push('/admin')} last />}
         </View>
 
         <Button title="Sign out" variant="ghost" onPress={() => signOut()} />
+        <Button title="Delete account" variant="ghost" onPress={() => router.push('/delete-account')} />
       </ScrollView>
     </Screen>
   );

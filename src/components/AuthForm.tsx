@@ -52,9 +52,12 @@ export function AuthHero({ size = 44 }: { size?: number }) {
 }
 
 export function AuthTerms() {
+  const { c } = useTheme();
   return (
     <Text variant="caption" faint style={{ textAlign: 'center', marginTop: 28, lineHeight: 18 }}>
-      By continuing you agree to the Terms and Privacy Policy. You must be 18+ to go live.
+      By continuing you agree to the Terms and{' '}
+      <Text variant="caption" color={c.primary} accessibilityRole="link" onPress={() => router.push('/privacy')}>Privacy Policy</Text>
+      . You must be 18+ to go live.
     </Text>
   );
 }
