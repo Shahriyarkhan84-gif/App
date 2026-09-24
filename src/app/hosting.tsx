@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { FadeIn } from '@/components/Motion';
 import { StateView } from '@/components/StateView';
@@ -86,12 +86,15 @@ export default function HostingScreen() {
             <Text muted>Usually a CNIC photo was blurred, cut off or expired, the face photo was too dark, or the details didn’t match the card. Check the tips above and try again.</Text>
           </Card>
         )}
-
-
-        <Button title={cta.title} onPress={cta.onPress} loading={cta.loading} disabled={offline} />
-        {offline && <Text variant="caption" muted>You need a connection to continue.</Text>}
-
       </ScrollView>
+
+      {/* Pinned footer: the action stays in place while the instructions scroll. */}
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, gap: 8, borderTopWidth: 1, borderTopColor: c.divider, backgroundColor: c.background }}>
+        <View style={{ maxWidth: 640, width: '100%', alignSelf: 'center', gap: 8 }}>
+          <Button title={cta.title} onPress={cta.onPress} loading={cta.loading} disabled={offline} style={{ minHeight: 54, width: '100%' }} />
+          {offline && <Text variant="caption" muted style={{ textAlign: 'center' }}>You need a connection to continue.</Text>}
+        </View>
+      </View>
     </Screen>
   );
 }
