@@ -17,7 +17,7 @@ exception when others then
 end $$;
 grant execute on all functions in schema tests to authenticated, service_role;
 
-insert into public.profiles (id, username) values ('ha_ok', 'ha_ok'), ('ha_review', 'ha_review'), ('ha_bad', 'ha_bad'), ('ha_kid', 'ha_kid'), ('ha_admin', 'ha_admin');
+insert into public.profiles (id, username) values ('ha_ok', 'ha_ok'), ('ha_review', 'ha_review'), ('ha_bad', 'ha_bad'), ('ha_kid', 'ha_kid'), ('ha_admin', 'ha_admin'), ('ha_typo', 'ha_typo'), ('ha_noage', 'ha_noage');
 update public.profiles set role = 'OWNER_ADMIN' where id = 'ha_admin';
 insert into public.agencies (name, code) values ('Lahore Stars', '4821');
 
@@ -31,8 +31,13 @@ reset role;
 set role service_role;
 -- All checks pass → approved, host created, agency linked.
 select tests.ok((public.internal_submit_host_application('ha_ok', 'Ayesha Khan', '+923001234567', '4567', ' 4821 ', 'Approved', 'Approved', 90, true, true, 25, 'r1', 'r2') ->> 'status') = 'approved', 'clean application approved');
--- Mismatched CNIC number → a person reviews it.
-select tests.ok((public.internal_submit_host_application('ha_review', 'Bilal Ahmed', '+923111234567', '1111', '4821', 'Approved', 'Approved', 88, false, true, 30, 'r3', 'r4') ->> 'status') = 'in_review', 'cnic mismatch goes to review');
+-- Didit hasn't decided yet → a person reviews it.
+select tests.ok((public.internal_submit_host_application('ha_review', 'Bilal Ahmed', '+923111234567', '1111', '4821', 'In Review', 'Approved', 88, true, true, 30, 'r3', 'r4') ->> 'status') = 'in_review', 'Didit in review goes to review');
+-- Verified by Didit but typed CNIC/name differ → still approved automatically, mismatch kept as a note.
+select tests.ok((select r ->> 'status' = 'approved' and (r -> 'reasons') ? 'cnic_mismatch' and (r -> 'reasons') ? 'name_mismatch'
+  from (select public.internal_submit_host_application('ha_typo', 'Typo Person', '+923451234567', '5555', '4821', 'Approved', 'Approved', 80, false, false, 27, 'r17', 'r18') as r) x), 'Didit-verified host auto-approved despite typed mismatch');
+-- Age unreadable → review.
+select tests.ok((public.internal_submit_host_application('ha_noage', 'No Age', '+923461234567', '6666', '4821', 'Approved', 'Approved', 90, true, true, null, 'r19', 'r20') ->> 'status') = 'in_review', 'unknown age goes to review');
 -- Face doesn't match → declined.
 select tests.ok((public.internal_submit_host_application('ha_bad', 'Sara Ali', '+923211234567', '2222', '4821', 'Approved', 'Declined', 12, true, true, 22, 'r5', 'r6') ->> 'status') = 'declined', 'face mismatch declined');
 -- Under 18 → declined.
@@ -45,6 +50,7 @@ reset role;
 
 select tests.ok((select verification_status = 'approved' and agency_id = (select id from public.agencies where code = '4821') from public.hosts where user_id = 'ha_ok'), 'approved host verified and linked to agency');
 select tests.ok((select verified_at is not null from public.profiles where id = 'ha_ok'), 'approved user gets Host badge');
+select tests.ok((select verified_at is not null from public.profiles where id = 'ha_typo'), 'auto-approved user gets Host badge immediately');
 select tests.ok((select verification_status from public.hosts where user_id = 'ha_review') = 'in_review', 'review host pending');
 select tests.ok((select verification_status from public.hosts where user_id = 'ha_bad') = 'declined', 'declined host');
 
@@ -58,7 +64,7 @@ reset role;
 -- Admin approves the one in review.
 select set_config('request.jwt.claims', '{"sub":"ha_admin"}', false);
 set role authenticated;
-select tests.ok((select count(*) from public.host_applications where status = 'in_review') = 1, 'admin sees review queue');
+select tests.ok((select count(*) from public.host_applications where status = 'in_review') = 2, 'admin sees review queue');
 select public.review_host_application((select id from public.host_applications where user_id = 'ha_review'), true, 'Card photo checked by hand');
 select tests.fails($$select public.review_host_application((select id from public.host_applications where user_id = 'ha_review'), false)$$, '%already_reviewed%', 'no double review');
 reset role;

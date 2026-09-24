@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.2 — Hosts approved automatically
+
+- A host who passes Didit (ID approved, face match approved, 18+) is **approved instantly** — Host badge and go-live unlocked on the result screen. Typed CNIC/name differences are kept as notes instead of sending the application to manual review. Only undecided Didit results or an unreadable age still go to Owner command center → Host applications.
+
 ## 0.6.1 — Permanent agency codes & Agency owner tag
 
 - Each agency owner gets **one** agency with a **one-time, permanent** 4-digit code: codes are issued on creation and can never change (trigger `agencies_code_permanent`); `regenerate_agency_code` and the "New code" buttons are removed; one agency per owner (`agencies_one_per_owner`).

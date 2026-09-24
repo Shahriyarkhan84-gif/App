@@ -21,9 +21,13 @@ Hosting → "Continue verification" → /verify-form
 Owner command center → Host applications → approve / decline the in_review ones (review_host_application)
 ```
 
-Decision rules: under 18, ID declined or face declined → **declined**. Anything
-uncertain (Didit "In Review", CNIC or name mismatch, age unreadable) → **in_review**
-for a person. Otherwise **approved**. Photos go only to Didit (visible to staff in
+Decision rules (since `…150000_auto_approve_hosts.sql`):
+- Under 18, ID declined or face declined → **declined**.
+- Didit ID **Approved** + face match **Approved** + age 18+ → **approved automatically**, instantly:
+  Host badge, host role, agency link and notification, no person involved.
+- Didit hasn't decided ("In Review" / no result) or the age couldn't be read → **in_review** for a person.
+- A typed CNIC number or name that differs from the card never blocks approval (Didit has verified the
+  card and matched the face to it); it is kept as a note in `reasons` for the owner. Photos go only to Didit (visible to staff in
 Didit's console under Manual Checks); Zynalive stores the name, phone, agency code,
 the last 4 CNIC digits and the result (`host_applications`). Needs `DIDIT_API_KEY`.
 
