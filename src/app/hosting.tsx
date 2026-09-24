@@ -24,13 +24,6 @@ const REQUIREMENTS: { icon: IconName; text: string }[] = [
   { icon: 'sunny-outline', text: 'Good light and about 2 minutes' },
 ];
 
-const DIDIT_STEPS = [
-  'Choose your country and ID type.',
-  'Scan the front (and back) of your ID — keep all four corners in the frame.',
-  'Record a short selfie video and follow the on-screen moves (liveness check).',
-  'Didit matches your selfie to your ID photo automatically.',
-];
-
 const TIPS = [
   'Use your own ID — the name must match you.',
   'No glare: tilt the card away from lamps and windows.',
@@ -121,17 +114,6 @@ export default function HostingScreen() {
             <Row key={r.text} gap={10} style={{ alignItems: 'flex-start' }}>
               <Ionicons name={r.icon} size={20} color={c.gold} style={{ marginTop: 1 }} />
               <Text style={{ flex: 1 }}>{r.text}</Text>
-            </Row>
-          ))}
-        </Section>
-
-        <Section title="In the Didit check">
-          {DIDIT_STEPS.map((t, i) => (
-            <Row key={t} gap={10} style={{ alignItems: 'flex-start' }}>
-              <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: c.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
-                <Text variant="caption" style={{ fontWeight: '700' }}>{i + 1}</Text>
-              </View>
-              <Text style={{ flex: 1 }}>{t}</Text>
             </Row>
           ))}
         </Section>
