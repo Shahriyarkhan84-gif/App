@@ -56,7 +56,7 @@ Clerk JWT, account + room bans, room is live) → joins LiveKit as subscriber-on
 Viewer counts come back through the LiveKit webhook into `rooms.viewer_count`
 and out to clients via Realtime.
 
-**Go live** — `become_host()` (permanent `HOST-xxxxxxxx` id + room) →
+**Go live** — `become_host()` (Host ID = the user's 8-digit ID + room) →
 `go_live()` creates a `streams` row and notifies followers → `livekit-token`
 with `as: host` grants publish rights for camera + mic only.
 

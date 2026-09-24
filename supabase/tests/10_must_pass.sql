@@ -99,6 +99,10 @@ select tests.ok((select user_number from public.profiles where id = 'newbie') <>
 update public.profiles set user_number = 12345678 where id = 'alice';
 select tests.ok((select user_number from public.profiles where id = 'alice') = (select user_number from alice_number), 'user ID never changes');
 delete from public.profiles where id = 'newbie';
+-- Host ID is the same number as the user ID, and can't be changed.
+select tests.ok((select bool_and(h.host_code = p.user_number::text) from public.hosts h join public.profiles p on p.id = h.user_id), 'host ID equals user ID');
+update public.hosts set host_code = '12345678' where user_id = 'bob';
+select tests.ok((select host_code = (select user_number::text from public.profiles where id = 'bob') from public.hosts where user_id = 'bob'), 'host ID never changes');
 
 -- OWNER_ADMIN cannot grant roles either; only SUPER_ADMIN, and never to themselves.
 select set_config('request.jwt.claims', '{"sub":"owner"}', false);

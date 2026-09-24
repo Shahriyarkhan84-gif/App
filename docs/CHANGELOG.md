@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.7 — One ID per person
+
+- A host's Host ID is now the same 8-digit number as their user ID (existing hosts updated). The separate HOST-xxxxxxxx format is gone.
+
 ## 0.4.6 — 8-digit IDs
 
 - User IDs are now random 8-digit numbers; every existing account was issued a new one.

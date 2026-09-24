@@ -5,7 +5,7 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 
 | Migration | Contents |
 |---|---|
-| `…010000_core.sql` | roles, profiles, agencies, agency_members, hosts (`HOST-00000001` ids), rooms, streams, room_admins (max 5), room_bans, viewers, follows, user_blocks, messages, direct_messages, word_filters, notifications, audit_logs, platform_settings |
+| `…010000_core.sql` | roles, profiles, agencies, agency_members, hosts (Host ID = user's 8-digit ID since `…110000`), rooms, streams, room_admins (max 5), room_bans, viewers, follows, user_blocks, messages, direct_messages, word_filters, notifications, audit_logs, platform_settings |
 | `…020000_economy.sql` | wallets, coin_transactions (ledger), gift_catalog, gifts, creator_earnings, earning_entries, platform_ledger, coin_packages, payments, processed_webhook_events, refund_requests, withdrawals + money RPCs + seed catalog/packages |
 | `…030000_moderation_ai.sql` | reports, moderation_actions, ai_jobs, ai_reports, ai_actions, message_translations, support_tickets, user_recommendations + social/room/moderation/agency RPCs, rankings |
 | `…040000_access.sql` | grants, RLS policies, Realtime publication |
@@ -13,6 +13,7 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 | `…070000_user_number.sql` | `profiles.user_number`: random unique public ID, set by trigger on insert and frozen on update (8 digits since `…100000_user_number_8_digits.sql`) |
 | `…080000_verified_badge.sql` | `profiles.verified_at`: set by trigger when host verification is approved (Host badge), cleared if declined |
 | `…090000_account_deletion.sql` | `profiles.deleted_at`, `internal_delete_account()` (service role): removes personal data and social graph, anonymises the profile, keeps money/moderation records |
+| `…110000_host_id_equals_user_id.sql` | `hosts.host_code` = `profiles.user_number` (set by trigger, frozen); sequence dropped |
 | `…050000_hardening.sql` | fixed `search_path` on remaining functions; no anon execute by default (Supabase advisor fixes) |
 
 Architecture table names map 1:1 except: `users` → Clerk + `profiles`;

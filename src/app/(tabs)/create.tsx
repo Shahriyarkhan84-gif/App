@@ -114,7 +114,7 @@ export default function CreateScreen() {
           <View style={{ padding: 14, borderRadius: 18, backgroundColor: 'rgba(14,13,18,0.78)', gap: 14 }}>
             <Row style={{ justifyContent: 'space-between' }}>
               <Text variant="h2" color={lc.text}>Go live</Text>
-              <Text variant="caption" color={lc.textMuted}>Host ID {host?.host_code}{verification === 'approved' ? ' · Verified' : ''}</Text>
+              <Text variant="caption" color={lc.textMuted}>ID {profile?.user_number}{verification === 'approved' ? ' · Verified' : ''}</Text>
             </Row>
             <Input label="Stream title" value={title} onChangeText={setTitle} placeholder="What are you streaming?" maxLength={80} style={{ backgroundColor: lc.surfaceRaised, borderColor: '#3A3547', color: lc.text, minHeight: 44 }} />
             <View style={{ gap: 8 }}>

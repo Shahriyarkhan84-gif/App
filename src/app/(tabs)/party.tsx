@@ -11,7 +11,7 @@ import { useSupabase } from '@/lib/supabase';
 import { fonts, useTheme } from '@/lib/theme';
 import { categoryLabel, displayName, normalizeRooms, ROOM_SELECT, type Profile, type Room } from '@/lib/types';
 
-type Person = Pick<Profile, 'id' | 'user_number' | 'display_name' | 'username' | 'avatar_url' | 'country'> & { host_code?: string };
+type Person = Pick<Profile, 'id' | 'user_number' | 'display_name' | 'username' | 'avatar_url' | 'country'>;
 
 /** Party: find live rooms, hosts and Host IDs. Multi-guest voice/video parties plug in here next. */
 export default function PartyScreen() {
@@ -27,7 +27,7 @@ export default function PartyScreen() {
     return normalizeRooms(data);
   }, []);
 
-  // People search by name, @username, or permanent Host ID (HOST-00018452).
+  // People search by name, @username, or 8-digit ID (the same number is their Host ID).
   const q = query.trim();
   useEffect(() => {
     if (q.length < 2) return;
@@ -37,12 +37,6 @@ export default function PartyScreen() {
       if (/^\d{8}$/.test(q)) {
         const { data } = await supabase.from('profiles').select('id,user_number,display_name,username,avatar_url,country').eq('user_number', Number(q)).limit(1);
         rows = (data ?? []) as Person[];
-      } else if (/^host-\d+$/i.test(q)) {
-        const { data } = await supabase.from('hosts').select('host_code,profile:profiles(id,user_number,display_name,username,avatar_url,country)').eq('host_code', q.toUpperCase()).limit(1);
-        rows = (data ?? []).flatMap((h) => {
-          const p = h.profile as unknown as Person | null;
-          return p ? [{ ...p, host_code: h.host_code }] : [];
-        });
       } else {
         const term = q.replace(/[%_,()@]/g, ' ').trim();
         const { data } = await supabase.from('profiles').select('id,user_number,display_name,username,avatar_url,country')
@@ -68,7 +62,7 @@ export default function PartyScreen() {
     offline, loading: rooms.loading, error: rooms.error, data: rooms.data, onRetry: rooms.reload,
     isEmpty: () => matchingRooms.length === 0 && matchingPeople.length === 0 && !(searching && people?.q !== q),
     empty: searching
-      ? { title: 'No matches', body: 'Try another name, an 8-digit ID, or a Host ID like HOST-00000001.' }
+      ? { title: 'No matches', body: 'Try another name or an 8-digit ID.' }
       : { title: 'No rooms are live', body: 'Start your own and invite your fans.' },
   });
 
@@ -84,11 +78,11 @@ export default function PartyScreen() {
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Search rooms, people, ID or HOST-ID"
+            placeholder="Search rooms, people or ID"
             placeholderTextColor={c.textFaint}
             autoCapitalize="none"
             autoCorrect={false}
-            accessibilityLabel="Search rooms, hosts or Host ID"
+            accessibilityLabel="Search rooms, people or ID"
             style={{ height: 44, borderRadius: radius.pill, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, color: c.text, paddingLeft: 42, paddingRight: 16, fontSize: 15, fontFamily: fonts.regular }}
           />
         </View>
@@ -110,7 +104,7 @@ export default function PartyScreen() {
                       <Avatar uri={p.avatar_url} name={displayName(p)} />
                       <View style={{ flex: 1 }}>
                         <Text variant="label">{displayName(p)}</Text>
-                        <Text variant="caption" faint>{[`ID ${p.user_number}`, p.username && `@${p.username}`, p.host_code, p.country].filter(Boolean).join(' · ')}</Text>
+                        <Text variant="caption" faint>{[`ID ${p.user_number}`, p.username && `@${p.username}`, p.country].filter(Boolean).join(' · ')}</Text>
                       </View>
                     </Row>
                   </Pressable>

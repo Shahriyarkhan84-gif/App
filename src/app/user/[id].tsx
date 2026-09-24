@@ -84,7 +84,7 @@ export default function UserProfileScreen() {
                 <Text variant="h2">{displayName(data.profile)}</Text>
                 {data.profile.verified_at && <HostBadge />}
               </Row>
-              <Text muted>{[`ID ${data.profile.user_number}`, data.profile.username && `@${data.profile.username}`, data.host?.host_code, data.profile.country].filter(Boolean).join(' · ')}</Text>
+              <Text muted>{[`ID ${data.profile.user_number}`, data.profile.username && `@${data.profile.username}`, data.profile.country].filter(Boolean).join(' · ')}</Text>
               <Text variant="label">{data.followers.toLocaleString()} followers</Text>
               {data.profile.bio && <Text style={{ textAlign: 'center' }}>{data.profile.bio}</Text>}
             </View>

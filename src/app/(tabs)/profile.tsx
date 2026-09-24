@@ -67,7 +67,6 @@ export default function ProfileScreen() {
           <View style={{ flex: 1, gap: 4 }}>
             <Text variant="h3" style={{ fontSize: 20, lineHeight: 26 }} numberOfLines={1}>{displayName(profile)}</Text>
             <Text variant="bodySmall" muted selectable accessibilityLabel={`Your ID ${String(profile.user_number).split('').join(' ')}`}>ID {profile.user_number}</Text>
-            {host && <Text variant="caption" faint>Host ID {host.host_code}</Text>}
             {host && (
               <Row gap={6}>
                 {verified ? <HostBadge /> : <Badge label="Verification pending" />}
