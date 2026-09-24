@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Button, Card, Row, Screen, Text } from '@/components/ui';
+import { Avatar, Button, Card, HostBadge, Row, Screen, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -24,7 +24,7 @@ export default function UserProfileScreen() {
 
   const { data, error, loading, reload } = useAsync(async () => {
     const [profile, host, room, followers, follow] = await Promise.all([
-      supabase.from('profiles').select('id,user_number,username,display_name,avatar_url,bio,country,language,role,status,status_until').eq('id', id).single(),
+      supabase.from('profiles').select('id,user_number,verified_at,username,display_name,avatar_url,bio,country,language,role,status,status_until').eq('id', id).single(),
       supabase.from('hosts').select('host_code,total_live_seconds').eq('user_id', id).maybeSingle(),
       supabase.from('rooms').select('id,status,title,viewer_count').eq('host_id', id).maybeSingle(),
       supabase.from('follows').select('*', { count: 'exact', head: true }).eq('followee_id', id),
@@ -80,7 +80,10 @@ export default function UserProfileScreen() {
           <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
             <View style={{ alignItems: 'center', gap: 8 }}>
               <Avatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={96} />
-              <Text variant="h2">{displayName(data.profile)}</Text>
+              <Row gap={8}>
+                <Text variant="h2">{displayName(data.profile)}</Text>
+                {data.profile.verified_at && <HostBadge />}
+              </Row>
               <Text muted>{[`ID ${data.profile.user_number}`, data.profile.username && `@${data.profile.username}`, data.host?.host_code, data.profile.country].filter(Boolean).join(' · ')}</Text>
               <Text variant="label">{data.followers.toLocaleString()} followers</Text>
               {data.profile.bio && <Text style={{ textAlign: 'center' }}>{data.profile.bio}</Text>}

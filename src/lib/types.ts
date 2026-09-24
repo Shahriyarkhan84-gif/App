@@ -4,6 +4,8 @@ export type Profile = {
   id: string;
   /** Public 11-digit ID, assigned by the database at sign-up. */
   user_number: number;
+  /** Set by the database when the user passes host verification (Host badge). */
+  verified_at: string | null;
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
@@ -25,7 +27,7 @@ export type Room = {
   updated_at?: string;
   viewer_count: number;
   current_stream_id: string | null;
-  host?: Pick<Profile, 'id' | 'display_name' | 'username' | 'avatar_url' | 'country'> | null;
+  host?: Pick<Profile, 'id' | 'display_name' | 'username' | 'avatar_url' | 'country' | 'verified_at'> | null;
 };
 
 export type ChatMessage = {
@@ -44,7 +46,7 @@ export type CoinPackage = { id: number; name: string; coins: number; price_minor
 
 // rooms.host_id -> hosts.user_id -> profiles.id
 export const ROOM_SELECT =
-  'id,host_id,title,category,cover_url,status,viewer_count,current_stream_id,updated_at,hostRow:hosts(profile:profiles(id,display_name,username,avatar_url,country))';
+  'id,host_id,title,category,cover_url,status,viewer_count,current_stream_id,updated_at,hostRow:hosts(profile:profiles(id,display_name,username,avatar_url,country,verified_at))';
 
 type RawRoom = Omit<Room, 'host'> & { hostRow?: { profile: Room['host'] } | null };
 

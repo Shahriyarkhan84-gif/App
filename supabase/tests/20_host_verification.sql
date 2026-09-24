@@ -30,7 +30,9 @@ select tests.fails($$update public.hosts set verification_status = 'approved' wh
 select tests.fails($$select public.internal_start_host_verification('hana', 'ses_x')$$, '%permission denied%', 'client starts session record');
 select tests.fails($$select public.internal_apply_host_verification('ses_x', 'Approved', '{}')$$, '%permission denied%', 'client applies Approved');
 select tests.fails($$insert into public.host_verifications (user_id, session_id, status) values ('hana', 'ses_fake', 'approved')$$, '%permission denied%', 'client inserts verification');
+select tests.fails($$update public.profiles set verified_at = now() where id = 'hana'$$, '%permission denied%', 'client marks own profile verified');
 reset role;
+select tests.ok((select verified_at is null from public.profiles where id = 'hana'), 'new host is not a verified user');
 
 -- Non-hosts can't start verification.
 set role service_role;
@@ -43,13 +45,15 @@ select public.internal_apply_host_verification('ses_1', 'In Review', '{"document
 select tests.ok((select verification_status from public.hosts where user_id = 'hana') = 'in_review', 'in review');
 select public.internal_apply_host_verification('ses_1', 'Declined', '{}');
 select tests.ok((select verification_status from public.hosts where user_id = 'hana') = 'declined', 'declined');
+select tests.ok((select verified_at is null from public.profiles where id = 'hana'), 'declined: no verified badge');
 
 -- Session 2 (retry): approved; a replayed webhook changes nothing.
 select public.internal_start_host_verification('hana', 'ses_2');
 select public.internal_apply_host_verification('ses_2', 'Approved', '{}');
 select tests.ok(not (public.internal_apply_host_verification('ses_2', 'Approved', '{}') ->> 'changed')::boolean, 'replay is a no-op');
 select tests.ok((select verification_status = 'approved' and verified_at is not null from public.hosts where user_id = 'hana'), 'approved');
-select tests.ok((select count(*) from public.notifications where user_id = 'hana' and type = 'verification' and title like 'You%verified') = 1, 'one approval notification');
+select tests.ok((select count(*) from public.notifications where user_id = 'hana' and type = 'verification' and title like 'You%verified%') = 1, 'one approval notification');
+select tests.ok((select verified_at is not null from public.profiles where id = 'hana'), 'approval marks the user verified (host badge)');
 -- A late webhook for the old session doesn't override the newer approval.
 select tests.ok(not (public.internal_apply_host_verification('ses_1', 'Approved', '{}') ->> 'applied_to_host')::boolean, 'stale session ignored');
 select tests.fails($$select public.internal_start_host_verification('hana', 'ses_3')$$, '%already_verified%', 'no new session once approved');

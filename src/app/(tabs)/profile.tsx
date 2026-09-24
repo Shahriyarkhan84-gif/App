@@ -5,7 +5,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { Alert, ScrollView, View } from 'react-native';
 
 import { StateView } from '@/components/StateView';
-import { Avatar, Button, Card, Coin, IconButton, ListRow, Row, Screen, Text } from '@/components/ui';
+import { Avatar, Button, Card, Coin, HostBadge, IconButton, ListRow, Row, Screen, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { env } from '@/lib/env';
 import { useFocusedAsync, useRealtime } from '@/lib/hooks';
@@ -70,8 +70,7 @@ export default function ProfileScreen() {
             {host && <Text variant="caption" faint>Host ID {host.host_code}</Text>}
             {host && (
               <Row gap={6}>
-                <Badge label={verified ? 'Verified host' : 'Host'} gold={verified} />
-                {!verified && <Badge label="Not verified" />}
+                {verified ? <HostBadge /> : <Badge label="Verification pending" />}
               </Row>
             )}
           </View>

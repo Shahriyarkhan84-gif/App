@@ -1,4 +1,4 @@
-# Host identity verification (Didit)
+# Host identity verification (Didit (approval also marks the user verified — `profiles.verified_at` — which shows the Host badge))
 
 Hosts verify their identity (ID document scan + liveness selfie + face match)
 with [Didit](https://didit.me) before they can **go live** or **withdraw

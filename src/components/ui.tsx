@@ -229,6 +229,20 @@ export function ViewerCount({ count }: { count: number }) {
   );
 }
 
+/** Earned by passing host identity verification. */
+export function HostBadge({ small }: { small?: boolean }) {
+  const { c } = useTheme();
+  return (
+    <View
+      accessibilityLabel="Verified host"
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: c.primary, borderRadius: 6, paddingHorizontal: small ? 5 : 8, paddingVertical: small ? 1 : 3 }}
+    >
+      <Ionicons name="shield-checkmark" size={small ? 10 : 12} color="#fff" />
+      <Text variant="caption" color="#fff" style={{ fontSize: small ? 10 : 11, fontWeight: '700' }}>Host</Text>
+    </View>
+  );
+}
+
 /** Gold coin glyph used next to balances and prices. */
 export function Coin({ size = 16 }: { size?: number }) {
   return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#FFC24B', borderWidth: Math.max(2, size / 8), borderColor: '#C98A12' }} />;

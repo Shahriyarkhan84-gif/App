@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.3 — Host badge
+
+- Passing Didit verification marks the user verified and unlocks a red Host badge, shown on Me, profiles, room cards, Party and the live room. Unverified hosts see "Verification pending".
+
 ## 0.4.2 — User IDs
 
 - Every account gets a random, unique 11-digit ID at sign-up (existing accounts backfilled). Shown on Me and profiles; searchable in Party.

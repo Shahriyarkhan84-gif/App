@@ -9,7 +9,7 @@ import { ChatPanel } from '@/components/ChatPanel';
 import { GiftSheet, GiftToasts } from '@/components/GiftSheet';
 import { LiveStage } from '@/components/LiveStage';
 import { StateView, type ViewState } from '@/components/StateView';
-import { Avatar, LiveBadge, Row, Text, ViewerCount } from '@/components/ui';
+import { Avatar, HostBadge, LiveBadge, Row, Text, ViewerCount } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { getLiveKitToken, rpc } from '@/lib/api';
 import { errorCode, friendlyError } from '@/lib/errors';
@@ -103,7 +103,10 @@ export default function LiveRoomScreen() {
                   <Pressable onPress={() => router.push({ pathname: '/user/[id]', params: { id: r.host_id } })} accessibilityRole="button" accessibilityLabel={`${displayName(r.host)} profile`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
                     <Avatar uri={r.host?.avatar_url} name={displayName(r.host)} size={36} />
                     <View style={{ flexShrink: 1, paddingRight: 4 }}>
-                      <Text variant="label" color={c.text} numberOfLines={1}>{displayName(r.host)}</Text>
+                      <Row gap={6}>
+                        <Text variant="label" color={c.text} numberOfLines={1} style={{ flexShrink: 1 }}>{displayName(r.host)}</Text>
+                        {r.host?.verified_at && <HostBadge small />}
+                      </Row>
                       <Text variant="caption" color="#E4DFEC" numberOfLines={1}>{r.title}</Text>
                     </View>
                   </Pressable>
