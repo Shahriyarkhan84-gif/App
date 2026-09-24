@@ -30,6 +30,9 @@ const RPC_ERRORS: Record<string, number> = {
   already_verified: 409,
   verification_required: 403,
   withdrawal_pending: 409,
+  invalid_agency_code: 400,
+  agency_code_required: 400,
+  already_reviewed: 409,
 };
 
 /** Converts a Supabase RPC error into an HttpError (known codes) or rethrows. */

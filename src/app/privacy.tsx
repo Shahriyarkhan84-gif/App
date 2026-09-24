@@ -13,7 +13,7 @@ export default function PrivacyPage() {
         'Profile: username, bio, country, language, your 8-digit Zynalive ID, followers and following.',
         'Content: live video and audio while you broadcast, chat messages, direct messages, gifts and reports.',
         'Purchases and earnings: coin packages bought, gifts sent and received, withdrawal requests and payout details you enter. Card details are handled by Stripe; we never see them.',
-        'Host verification: if you become a host, our partner Didit checks your ID document and a selfie. We receive only the result (for example “approved”), not your documents.',
+        'Host verification: if you apply to host, you give us your name, phone, CNIC number, agency code, photos of your CNIC and a photo of you holding it. The photos and CNIC number are sent to our partner Didit to check; we keep only your name, phone, agency code, the last 4 CNIC digits and the result — never the photos.',
         'Device and usage: app version, device model, crash reports and in-app events (screens viewed, rooms joined, gifts sent).',
       ]} />
 

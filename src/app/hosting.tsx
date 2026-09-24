@@ -40,7 +40,7 @@ export default function HostingScreen() {
   const status = host?.verification_status ?? 'unverified';
   const approved = status === 'approved';
 
-  const openDidit = () => router.push('/verify-start');
+  const openDidit = () => router.push('/verify-form');
   const cta = !isHost
     ? { title: 'Start verification with Didit', onPress: openDidit, loading: false }
     : approved
@@ -90,7 +90,7 @@ export default function HostingScreen() {
         {offline && <Text variant="caption" muted>You need a connection to continue.</Text>}
 
         <Section title="Your privacy">
-          <Text muted>Didit, our verification partner, processes your ID and selfie. Zynalive only receives the result (approved or not) and the document type — never your ID photos or selfie.</Text>
+          <Text muted>Your CNIC photos and face photo are sent securely to Didit, our verification partner. Zynalive keeps only your name, phone, agency code, the last 4 CNIC digits and the result — never your photos or full CNIC number.</Text>
         </Section>
       </ScrollView>
     </Screen>

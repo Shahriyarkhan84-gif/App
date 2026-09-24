@@ -5,7 +5,7 @@ import { randomUUID } from 'expo-crypto';
 type ErrorBody = { error?: { code?: string; message?: string } };
 
 /** Calls a Supabase Edge Function and surfaces its `{ error: { code } }` shape as Error(code). */
-export async function invokeFn<T>(supabase: SupabaseClient, name: string, body: Record<string, unknown>): Promise<T> {
+export async function invokeFn<T>(supabase: SupabaseClient, name: string, body: Record<string, unknown> | FormData): Promise<T> {
   const { data, error } = await supabase.functions.invoke<T>(name, { body });
   if (error) {
     if (error instanceof FunctionsHttpError) {
@@ -40,6 +40,13 @@ export function startHostVerification(supabase: SupabaseClient, returnTo: string
 /** Permanently deletes the signed-in account (personal data removed; money records kept). */
 export function deleteAccount(supabase: SupabaseClient) {
   return invokeFn<{ deleted: boolean }>(supabase, 'delete-account', {});
+}
+
+export type HostApplicationResult = { id: string; status: 'approved' | 'in_review' | 'declined'; reasons: string[] };
+
+/** Sends the in-app host application (details + CNIC/face photos) to the host-application function. */
+export function submitHostApplication(supabase: SupabaseClient, form: FormData) {
+  return invokeFn<HostApplicationResult>(supabase, 'host-application', form);
 }
 
 /** Random idempotency key for money-moving requests (gifts). */

@@ -1,11 +1,33 @@
-# Host identity verification (Didit (approval also marks the user verified — `profiles.verified_at` — which shows the Host badge))
+# Host identity verification (Didit)
+
+Approval marks the user verified (`profiles.verified_at`), which shows the Host badge.
 
 Hosts verify their identity (ID document scan + liveness selfie + face match)
 with [Didit](https://didit.me) before they can **go live** or **withdraw
 earnings**. Both gates are settings (`platform_settings.host_verification`:
 `required_to_go_live`, `required_to_withdraw`, default `true`).
 
-## Flow
+## In-app application (primary)
+
+```
+Hosting → "Start verification with Didit" → /verify-form
+   full name, phone (+92), CNIC number, CNIC front + back photos, face photo holding the CNIC, agency code (required), consent
+   → host-application (edge fn, multipart; photos resized to ≤1600px JPEG in the app)
+      → checks: format, agency code exists, not already verified, 5/day per user
+      → POST verification.didit.me/v3/id-verification/  (front_image, back_image)  → OCR + authenticity
+      → POST verification.didit.me/v3/face-match/       (user_image = face-with-CNIC, ref_image = CNIC portrait)
+      → compares typed CNIC with the card's number and typed name with the card's name
+      → internal_submit_host_application()  → approved | in_review | declined (+ Host badge, agency link, notification)
+Owner command center → Host applications → approve / decline the in_review ones (review_host_application)
+```
+
+Decision rules: under 18, ID declined or face declined → **declined**. Anything
+uncertain (Didit "In Review", CNIC or name mismatch, age unreadable) → **in_review**
+for a person. Otherwise **approved**. Photos go only to Didit (visible to staff in
+Didit's console under Manual Checks); Zynalive stores the name, phone, agency code,
+the last 4 CNIC digits and the result (`host_applications`). Needs `DIDIT_API_KEY`.
+
+## Hosted-page flow (fallback)
 
 ```
 Create tab → "Verify identity" → didit-session (edge fn)

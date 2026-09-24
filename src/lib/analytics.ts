@@ -13,7 +13,8 @@ type AnalyticsEvent =
   | { name: 'report_submitted'; props: { target_type: string } }
   | { name: 'became_host'; props: Record<string, never> }
   | { name: 'feedback_opened'; props: Record<string, never> }
-  | { name: 'account_deleted'; props: Record<string, never> };
+  | { name: 'account_deleted'; props: Record<string, never> }
+  | { name: 'host_application_submitted'; props: { status: string } };
 
 /** Typed PostHog capture; no-op when PostHog isn't configured. */
 export function useAnalytics() {

@@ -25,7 +25,7 @@ type Briefing = {
   };
 };
 
-const SECTIONS = ['Briefing', 'AI proposals', 'Reports', 'Withdrawals', 'Settings'] as const;
+const SECTIONS = ['Briefing', 'Host applications', 'AI proposals', 'Reports', 'Withdrawals', 'Settings'] as const;
 const DOMAIN_TITLES: Record<string, string> = { finance_ai: '💰 Finance AI', economy_ai: '🎁 Economy AI', streaming_ai: '📡 Streaming AI' };
 
 /** Owner command center: AI CEO output + the human-approval queue. */
@@ -39,6 +39,7 @@ export default function AdminScreen() {
         {SECTIONS.map((s) => <Chip key={s} label={s} selected={section === s} onPress={() => setSection(s)} />)}
       </ScrollView>
       {section === 'Briefing' && <BriefingSection />}
+      {section === 'Host applications' && <HostApplicationsSection />}
       {section === 'AI proposals' && <ProposalsSection />}
       {section === 'Reports' && <ReportsSection />}
       {section === 'Withdrawals' && <WithdrawalsSection />}
@@ -178,6 +179,51 @@ function ReportsSection() {
               <Button title="Restrict 24h" size="sm" variant="secondary" onPress={() => act('apply_moderation_action', { p_user: r.target_user_id, p_action: 'temp_restriction', p_reason: r.ai_assessment?.summary ?? r.reason, p_hours: 24, p_report: r.id }, reload)} />
               <Button title="Ban 7d" size="sm" variant="danger" onPress={() => act('apply_moderation_action', { p_user: r.target_user_id, p_action: 'temp_ban', p_reason: r.ai_assessment?.summary ?? r.reason, p_hours: 168, p_report: r.id }, reload)} />
               <Button title="Dismiss" size="sm" variant="ghost" onPress={() => act('dismiss_report', { p_report: r.id }, reload)} />
+            </Row>
+          </Card>
+        ))}
+      </ScrollView>
+    </StateView>
+  );
+}
+
+type HostApplication = {
+  id: string; user_id: string; full_name: string; phone: string; cnic_last4: string; agency_code: string;
+  id_status: string | null; face_status: string | null; face_score: number | null; cnic_match: boolean | null; name_match: boolean | null;
+  age: number | null; reasons: string[]; didit_id_request: string | null; created_at: string;
+};
+
+const REASON_LABELS: Record<string, string> = {
+  cnic_mismatch: 'CNIC number differs from card', name_mismatch: 'Name differs from card', id_needs_review: 'Didit: ID needs review',
+  face_needs_review: 'Didit: face needs review', age_unknown: 'Age not read from card',
+};
+
+/** Applications Didit couldn't auto-approve. Photos are in the Didit console (Manual Checks), never here. */
+function HostApplicationsSection() {
+  const supabase = useSupabase();
+  const { c } = useTheme();
+  const offline = useOffline();
+  const act = useAct();
+  const { data, error, loading, reload } = useFocusedAsync(async () => {
+    const { data, error } = await supabase.from('host_applications').select('*').eq('status', 'in_review').order('created_at').limit(100);
+    if (error) throw error;
+    return data as HostApplication[];
+  }, []);
+  return (
+    <StateView state={resolveState({ offline, loading, error, data, onRetry: reload, isEmpty: (d) => d.length === 0, empty: { title: 'No applications to review', body: 'Clear cases are approved or declined automatically.' } })}>
+      <ScrollView contentContainerStyle={listStyle}>
+        {(data ?? []).map((a) => (
+          <Card key={a.id}>
+            <Text variant="h3">{a.full_name}</Text>
+            <Text muted>+{a.phone.replace('+', '')} · CNIC •••{a.cnic_last4} · Agency {a.agency_code}{a.age != null ? ` · ${a.age} yrs` : ''}</Text>
+            <Text variant="caption" muted>
+              ID {a.id_status ?? '–'} · Face {a.face_status ?? '–'}{a.face_score != null ? ` (${a.face_score})` : ''} · {new Date(a.created_at).toLocaleString()}
+            </Text>
+            {a.reasons.map((r) => <Text key={r} variant="bodySmall" color={c.warning}>⚠ {REASON_LABELS[r] ?? r}</Text>)}
+            {a.didit_id_request && <Text variant="caption" faint selectable>Didit request {a.didit_id_request}</Text>}
+            <Row>
+              <Button title="Approve" size="sm" onPress={() => act('review_host_application', { p_id: a.id, p_approve: true }, reload)} />
+              <Button title="Decline" size="sm" variant="secondary" onPress={() => act('review_host_application', { p_id: a.id, p_approve: false, p_note: 'Declined by owner' }, reload)} />
             </Row>
           </Card>
         ))}

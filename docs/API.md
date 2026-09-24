@@ -13,6 +13,7 @@ All return `{ error: { code, message } }` on failure. User-facing functions requ
 | `livekit-webhook` | LiveKit event | — | Viewer counts, viewer records, stream end. |
 | `clerk-webhook` | Svix event | — | Profile sync + welcome email. Never sets roles. |
 | `delete-account` | `{}` | `{ deleted }` | Deletes the signed-in account: `internal_delete_account()` then the Clerk user. `withdrawal_pending` (409) if a payout is in progress. 3/hour. |
+| `host-application` | multipart: `full_name`, `phone`, `cnic`, `agency_code`, files `cnic_front`, `cnic_back`, `selfie` | `{ id, status, reasons }` | Didit ID verification + face match; photos not stored. 5/day. |
 | `didit-session` | `{ returnTo?, language? }` | `{ url }` | Hosts only; starts Didit ID + selfie verification. 5/hour. |
 | `didit-webhook` | Didit event | — | Signature-verified; re-reads the decision from Didit, then updates `hosts.verification_status`. |
 

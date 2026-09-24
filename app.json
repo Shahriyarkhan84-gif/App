@@ -68,6 +68,13 @@
           "organization": "YOUR_SENTRY_ORG",
           "project": "zynalive"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Zynalive uses your camera to photograph your CNIC and your face for host verification.",
+          "photosPermission": "Zynalive lets you choose photos of your CNIC for host verification."
+        }
       ]
     ],
     "experiments": {
