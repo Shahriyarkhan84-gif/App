@@ -91,9 +91,6 @@ export default function HostingScreen() {
         <Button title={cta.title} onPress={cta.onPress} loading={cta.loading} disabled={offline} />
         {offline && <Text variant="caption" muted>You need a connection to continue.</Text>}
 
-        <Section title="Your privacy">
-          <Text muted>Your CNIC photos and face photo are sent securely to Didit, our verification partner. Zynalive keeps only your name, phone, agency code, the last 4 CNIC digits and the result — never your photos or full CNIC number.</Text>
-        </Section>
       </ScrollView>
     </Screen>
   );
