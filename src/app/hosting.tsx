@@ -1,18 +1,13 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useState, type ReactNode } from 'react';
-import { Alert, ScrollView } from 'react-native';
+import type { ReactNode } from 'react';
+import { ScrollView } from 'react-native';
 
-import { useStartVerification } from '@/components/HostVerificationCard';
 import { FadeIn } from '@/components/Motion';
 import { StateView } from '@/components/StateView';
 import { Button, Card, HostBadge, Row, Screen, Text, type IconName } from '@/components/ui';
-import { useAnalytics } from '@/lib/analytics';
-import { rpc } from '@/lib/api';
-import { friendlyError } from '@/lib/errors';
 import { useOffline, useRealtime } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
-import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 
 const REQUIREMENTS: { icon: IconName; text: string }[] = [
@@ -31,13 +26,9 @@ const TIPS = [
 
 /** Hosting instructions: how to become a verified host with Didit, with progress and the next action. */
 export default function HostingScreen() {
-  const supabase = useSupabase();
   const { c } = useTheme();
-  const track = useAnalytics();
   const offline = useOffline();
   const { profile, host, isHost, reload } = useProfile();
-  const [becoming, setBecoming] = useState(false);
-  const { start, busy } = useStartVerification(() => void reload());
 
   // Didit results arrive as a notification; refresh when one lands.
   useRealtime('notifications', profile ? `user_id=eq.${profile.id}` : undefined, (p) => {
@@ -49,29 +40,14 @@ export default function HostingScreen() {
   const status = host?.verification_status ?? 'unverified';
   const approved = status === 'approved';
 
-  // Becoming a host (Host ID) happens automatically right before the first Didit check.
-  const becomeHostAndVerify = async () => {
-    setBecoming(true);
-    try {
-      await rpc(supabase, 'become_host');
-      track('became_host', {});
-      await reload();
-    } catch (e) {
-      Alert.alert('Could not continue', friendlyError(e));
-      return;
-    } finally {
-      setBecoming(false);
-    }
-    await start();
-  };
-
+  const openDidit = () => router.push('/verify-start');
   const cta = !isHost
-    ? { title: 'Start verification with Didit', onPress: becomeHostAndVerify, loading: becoming || busy }
+    ? { title: 'Start verification with Didit', onPress: openDidit, loading: false }
     : approved
       ? { title: 'Go live', onPress: () => router.push('/create'), loading: false }
       : status === 'in_review'
         ? { title: 'Refresh status', onPress: () => void reload(), loading: false }
-        : { title: status === 'pending' ? 'Continue verification' : status === 'declined' ? 'Try again with Didit' : 'Start verification with Didit', onPress: start, loading: busy };
+        : { title: status === 'pending' ? 'Continue verification' : status === 'declined' ? 'Try again with Didit' : 'Start verification with Didit', onPress: openDidit, loading: false };
 
   return (
     <Screen edges={['bottom']}>

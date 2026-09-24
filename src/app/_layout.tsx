@@ -105,6 +105,7 @@ function RootNavigator() {
         <Stack.Screen name="rankings" options={{ title: 'Rankings' }} />
         <Stack.Screen name="delete-account" options={{ title: 'Delete account' }} />
         <Stack.Screen name="hosting" options={{ title: 'Hosting' }} />
+        <Stack.Screen name="verify-start" options={{ title: '', presentation: 'modal' }} />
         <Stack.Screen name="earnings" options={{ title: 'Earnings' }} />
         <Stack.Screen name="support" options={{ title: 'Help & support' }} />
         <Stack.Screen name="profile-edit" options={{ title: 'Edit profile', presentation: 'modal' }} />
