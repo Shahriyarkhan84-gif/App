@@ -13,6 +13,8 @@ Never commit real values. `.env` is git-ignored; `.env.example` files list names
 | `EXPO_PUBLIC_PRODUCTBRIDGE_URL` | Feedback board (optional) |
 | `EXPO_PUBLIC_SITE_URL` | Public web URL (Vercel / custom domain) |
 
+The public Supabase URL and publishable key for the `zynalive` project are set in `eas.json` `env` so EAS builds pick them up. Clerk's publishable key goes in EAS environment variables (or `eas.json`) once the Clerk app exists.
+
 The app never receives `LIVEKIT_API_SECRET`; `livekit-token` returns a short-lived
 token plus `LIVEKIT_URL`.
 
