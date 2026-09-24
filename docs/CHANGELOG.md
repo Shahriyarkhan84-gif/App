@@ -4,6 +4,7 @@
 
 - Hosting → "Continue verification" opens a form: name, phone, CNIC number, CNIC front/back photos, face photo with CNIC, agency code (required).
 - `host-application` edge function checks the photos with Didit's ID verification and face match, compares the typed CNIC/name with the card and decides approved / in review / declined. Photos are never stored.
+- Hosting → "What you need" and "Tips" rewritten for the CNIC form, including the agency code requirement.
 - Owner command center: new Host applications queue for the ones needing a person.
 
 ## 0.4.7 — One ID per person

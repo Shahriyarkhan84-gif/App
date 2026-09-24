@@ -27,6 +27,19 @@ for a person. Otherwise **approved**. Photos go only to Didit (visible to staff 
 Didit's console under Manual Checks); Zynalive stores the name, phone, agency code,
 the last 4 CNIC digits and the result (`host_applications`). Needs `DIDIT_API_KEY`.
 
+### Agency code requirements
+
+- **Required.** Every host application must include an agency code; an empty code
+  is refused in the app, in `host-application` (`agency_code_required`) and in
+  `internal_submit_host_application()`.
+- **Must belong to an active agency.** The code is trimmed and upper-cased, then
+  matched against `agencies.code` with `status = 'active'`; anything else is
+  `invalid_agency_code`. This is checked **before** the photos are sent to Didit,
+  so a wrong code costs no Didit check.
+- **Format in the app:** letters, digits and `-`, up to 12 characters (e.g. `AG-1A2B3C`).
+- **On approval** the host is linked to that agency, unless already linked to one.
+- Hosting → "What you need" tells users to get the code from their agency first.
+
 ## Hosted-page flow (fallback)
 
 ```

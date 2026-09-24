@@ -12,16 +12,18 @@ import { useTheme } from '@/lib/theme';
 
 const REQUIREMENTS: { icon: IconName; text: string }[] = [
   { icon: 'person-outline', text: 'You are 18 or older' },
-  { icon: 'card-outline', text: 'A valid original ID: CNIC / national ID card, passport or driving licence (no photocopies or screenshots)' },
-  { icon: 'camera-outline', text: 'A phone with a working front camera' },
-  { icon: 'sunny-outline', text: 'Good light and about 2 minutes' },
+  { icon: 'card-outline', text: 'Your own original CNIC — not expired, no photocopies or screenshots' },
+  { icon: 'call-outline', text: 'A Pakistani mobile number (+92 3XX XXXXXXX)' },
+  { icon: 'business-outline', text: 'An agency code from the Zynalive agency you host with — ask your agency for it, you can\'t continue without one' },
+  { icon: 'camera-outline', text: 'A phone camera for 3 photos: CNIC front, CNIC back, and your face holding your CNIC' },
+  { icon: 'sunny-outline', text: 'Good light and about 3 minutes' },
 ];
 
 const TIPS = [
-  'Use your own ID — the name must match you.',
-  'No glare: tilt the card away from lamps and windows.',
-  'Remove sunglasses, hats and masks for the selfie.',
-  'Hold the phone steady until each capture turns green.',
+  'Type your name and CNIC number exactly as printed on the card.',
+  'Enter the agency code exactly as your agency gave it (e.g. AG-1A2B3C).',
+  'No glare: tilt the card away from lamps and windows, and fit all 4 corners in the photo.',
+  'For the face photo, hold your CNIC next to your face; remove sunglasses, hats and masks.',
 ];
 
 /** Hosting instructions: how to become a verified host with Didit, with progress and the next action. */
@@ -81,7 +83,7 @@ export default function HostingScreen() {
         {status === 'declined' && (
           <Card style={{ borderColor: c.danger }}>
             <Text variant="label" color={c.danger}>Your last check wasn’t approved</Text>
-            <Text muted>Usually the ID was blurred, cut off or expired, or the selfie was too dark. Check the tips above and try again.</Text>
+            <Text muted>Usually a CNIC photo was blurred, cut off or expired, the face photo was too dark, or the details didn’t match the card. Check the tips above and try again.</Text>
           </Card>
         )}
 
