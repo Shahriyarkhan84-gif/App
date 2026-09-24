@@ -9,7 +9,7 @@ import { ChatPanel } from '@/components/ChatPanel';
 import { GiftSheet, GiftToasts } from '@/components/GiftSheet';
 import { LiveStage } from '@/components/LiveStage';
 import { StateView, type ViewState } from '@/components/StateView';
-import { Avatar, Button, LiveBadge, Row, Text } from '@/components/ui';
+import { Avatar, LiveBadge, Row, Text, ViewerCount } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { getLiveKitToken, rpc } from '@/lib/api';
 import { errorCode, friendlyError } from '@/lib/errors';
@@ -97,23 +97,35 @@ export default function LiveRoomScreen() {
         {r && token.data && (
           <>
             <LiveStage token={token.data.token} url={token.data.url} role="viewer" onError={() => token.reload()} />
-            <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12 }}>
-              <Row>
-                <Pressable onPress={() => router.push({ pathname: '/user/[id]', params: { id: r.host_id } })}>
-                  <Row gap={8} style={{ backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 24, paddingRight: 12 }}>
+            <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, gap: 10 }}>
+              <Row gap={8}>
+                <Row gap={8} style={{ backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 24, padding: 4, flexShrink: 1 }}>
+                  <Pressable onPress={() => router.push({ pathname: '/user/[id]', params: { id: r.host_id } })} accessibilityRole="button" accessibilityLabel={`${displayName(r.host)} profile`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
                     <Avatar uri={r.host?.avatar_url} name={displayName(r.host)} size={36} />
-                    <View>
+                    <View style={{ flexShrink: 1, paddingRight: 4 }}>
                       <Text variant="label" color={c.text} numberOfLines={1}>{displayName(r.host)}</Text>
-                      <Text variant="caption" color={c.textMuted} numberOfLines={1}>{r.title}</Text>
+                      <Text variant="caption" color="#E4DFEC" numberOfLines={1}>{r.title}</Text>
                     </View>
-                  </Row>
-                </Pressable>
-                {r.host_id !== userId && <Button title={isFollowing ? 'Following' : 'Follow'} size="sm" variant={isFollowing ? 'secondary' : 'primary'} onPress={toggleFollow} />}
+                  </Pressable>
+                  {r.host_id !== userId && (
+                    <Pressable
+                      onPress={toggleFollow}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: isFollowing }}
+                      style={{ height: 36, paddingHorizontal: 14, borderRadius: 18, justifyContent: 'center', backgroundColor: isFollowing ? 'rgba(255,255,255,0.18)' : c.primary }}
+                    >
+                      <Text variant="label" color="#fff" style={{ fontSize: 13 }}>{isFollowing ? 'Following' : 'Follow'}</Text>
+                    </Pressable>
+                  )}
+                </Row>
                 <View style={{ flex: 1 }} />
-                <LiveBadge viewers={r.viewer_count} />
-                <Pressable onPress={() => router.back()} accessibilityLabel="Leave room" hitSlop={12}>
-                  <Ionicons name="close" size={28} color={c.text} />
+                <ViewerCount count={r.viewer_count ?? 0} />
+                <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Leave live room" style={roundButton('rgba(0,0,0,0.45)')}>
+                  <Ionicons name="close" size={22} color={c.text} />
                 </Pressable>
+              </Row>
+              <Row gap={6}>
+                <LiveBadge />
               </Row>
             </View>
             <View style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 12, gap: 10 }}>
@@ -124,11 +136,17 @@ export default function LiveRoomScreen() {
                 isHost={false}
                 canModerate={!!room.data?.isRoomAdmin}
                 onUserPress={(id) => router.push({ pathname: '/user/[id]', params: { id } })}
+                actions={
+                  <>
+                    <Pressable onPress={() => setGiftOpen(true)} accessibilityRole="button" accessibilityLabel="Send a gift" style={roundButton(c.gold)}>
+                      <Ionicons name="gift" size={20} color={c.onGold} />
+                    </Pressable>
+                    <Pressable onPress={reportRoom} accessibilityRole="button" accessibilityLabel="Report this stream" style={roundButton('rgba(0,0,0,0.5)')}>
+                      <Ionicons name="flag-outline" size={18} color={c.text} />
+                    </Pressable>
+                  </>
+                }
               />
-              <Row gap={8}>
-                <Button title="🎁 Gift" onPress={() => setGiftOpen(true)} style={{ flex: 1 }} />
-                <Button title="Report" variant="secondary" size="sm" onPress={reportRoom} />
-              </Row>
             </View>
             <GiftSheet roomId={roomId} visible={giftOpen} onClose={() => setGiftOpen(false)} />
           </>
@@ -136,4 +154,8 @@ export default function LiveRoomScreen() {
       </StateView>
     </View>
   );
+}
+
+function roundButton(backgroundColor: string) {
+  return { width: 44, height: 44, borderRadius: 22, backgroundColor, alignItems: 'center', justifyContent: 'center' } as const;
 }

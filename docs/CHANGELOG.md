@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 — Canvas restyle
+
+- New visual identity from the Zynalive design canvas: red live accent, gold coins, violet earnings;
+  Bricolage Grotesque display + DM Sans body (bundled via `@expo-google-fonts`).
+- Tabs are now Home · Party · Go live (raised centre button) · Messages · Me.
+- Home: Following / Popular / Nearby / New feeds and category chips. Party: search rooms, people and Host IDs.
+  Rankings moved to its own screen with a podium.
+- Restyled sign-in, go-live camera setup, live room controls, gift sheet and banners, wallet (select a package, then buy) and Me.
+
 ## 0.3.0 — Host verification
 
 - Didit identity verification for hosts (ID + liveness + face match); required to go live and to withdraw (configurable).

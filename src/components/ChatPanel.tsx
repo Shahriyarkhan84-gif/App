@@ -1,13 +1,14 @@
 import { getLocales } from 'expo-localization';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, TextInput, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, TextInput, View } from 'react-native';
 
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
-import { liveColors as c } from '@/lib/theme';
+import { fonts, liveColors as c } from '@/lib/theme';
 import { displayName, type ChatMessage } from '@/lib/types';
 
 import { Button, Sheet, Text } from './ui';
@@ -22,7 +23,7 @@ type Props = {
   onUserPress?: (userId: string) => void;
 };
 
-export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress }: Props) {
+export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress, actions }: Props & { actions?: ReactNode }) {
   const supabase = useSupabase();
   const track = useAnalytics();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -141,9 +142,9 @@ export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress }: 
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
         renderItem={({ item }) => (
           <Pressable onLongPress={() => setSelected(item)} onPress={() => onUserPress?.(item.sender_id)} accessibilityHint="Long press for options">
-            <View style={{ alignSelf: 'flex-start', backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6, marginVertical: 2, maxWidth: '90%' }}>
-              <Text variant="bodySmall" color={c.text}>
-                <Text variant="label" color={item.sender_id === hostId ? c.accent : '#C9B8FF'}>{displayName(item.sender)} </Text>
+            <View style={{ alignSelf: 'flex-start', backgroundColor: 'rgba(0,0,0,0.42)', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6, marginVertical: 3, maxWidth: '85%' }}>
+              <Text color={c.text} style={{ fontSize: 14, lineHeight: 19 }}>
+                <Text variant="label" color={item.sender_id === hostId ? c.gold : '#FFB3C1'}>{displayName(item.sender)} </Text>
                 {translations[item.id] ?? item.body}
               </Text>
               {translations[item.id] && <Text variant="caption" color={c.textMuted}>Translated · {item.body}</Text>}
@@ -155,14 +156,24 @@ export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress }: 
         <TextInput
           value={draft}
           onChangeText={setDraft}
-          placeholder="Say something nice…"
+          placeholder="Say something…"
           placeholderTextColor={c.textMuted}
           maxLength={300}
           onSubmitEditing={send}
           returnKeyType="send"
-          style={{ flex: 1, height: 44, borderRadius: 22, paddingHorizontal: 16, backgroundColor: 'rgba(0,0,0,0.5)', color: c.text }}
+          accessibilityLabel="Chat message"
+          style={{ flex: 1, minWidth: 0, height: 44, borderRadius: 22, paddingHorizontal: 16, backgroundColor: 'rgba(0,0,0,0.5)', color: c.text, fontFamily: fonts.regular, fontSize: 14 }}
         />
-        <Button title="Send" size="sm" onPress={send} loading={sending} disabled={!draft.trim()} />
+        <Pressable
+          onPress={send}
+          disabled={sending || !draft.trim()}
+          accessibilityRole="button"
+          accessibilityLabel="Send message"
+          style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', opacity: draft.trim() ? 1 : 0.6 }}
+        >
+          {sending ? <ActivityIndicator color={c.text} /> : <Ionicons name="send" size={18} color={c.text} />}
+        </Pressable>
+        {actions}
       </View>
 
       <Sheet visible={!!selected} onClose={() => setSelected(null)} title={selected ? displayName(selected.sender) : undefined}>

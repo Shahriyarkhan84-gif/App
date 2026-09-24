@@ -1,7 +1,8 @@
-import { useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
-import { router } from 'expo-router';
+import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
+import { router, useIsFocused } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Platform, ScrollView, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HostVerificationCard } from '@/components/HostVerificationCard';
 import { StateView, type ViewState } from '@/components/StateView';
@@ -12,8 +13,8 @@ import { friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
-
-const CATEGORIES = ['chat', 'music', 'gaming', 'talent', 'education', 'other'] as const;
+import { liveColors } from '@/lib/theme';
+import { CATEGORIES, categoryLabel } from '@/lib/types';
 
 export default function CreateScreen() {
   const supabase = useSupabase();
@@ -25,6 +26,8 @@ export default function CreateScreen() {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>('chat');
   const [busy, setBusy] = useState(false);
+  // Only hold the camera while this tab is on screen, so the broadcast can take it.
+  const focused = useIsFocused();
 
   const room = useFocusedAsync(async () => {
     if (!profile) return null;
@@ -42,7 +45,6 @@ export default function CreateScreen() {
   }, !!profile);
 
   const verification = host?.verification_status ?? 'unverified';
-  const verifiedBadge = verification === 'approved' ? ' · ✓ Verified' : '';
   const needsVerification = isHost && room.data?.verificationRequired !== false && verification !== 'approved';
 
   const becomeHost = async () => {
@@ -92,6 +94,51 @@ export default function CreateScreen() {
     state = { kind: 'disabled', title: 'Permissions blocked', body: 'Enable camera and microphone for Zynalive in your device settings.' };
   }
 
+  if (state.kind === 'success' && isHost && !needsVerification && !room.data) {
+    state = room.error ? { kind: 'error', error: room.error, onRetry: room.reload } : { kind: 'loading' };
+  }
+  const ready = isHost && !needsVerification && !!room.data && room.data.status !== 'live';
+  const lc = liveColors;
+
+  if (state.kind === 'success' && ready) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#2A2436' }}>
+        {Platform.OS !== 'web' && focused && camera?.granted ? (
+          <CameraView facing="front" style={StyleSheet.absoluteFill} />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
+            <Text variant="caption" color="rgba(255,255,255,0.35)" style={{ letterSpacing: 1 }}>CAMERA PREVIEW</Text>
+          </View>
+        )}
+        <SafeAreaView edges={['top']} style={{ padding: 12 }}>
+          <View style={{ padding: 14, borderRadius: 18, backgroundColor: 'rgba(14,13,18,0.78)', gap: 14 }}>
+            <Row style={{ justifyContent: 'space-between' }}>
+              <Text variant="h2" color={lc.text}>Go live</Text>
+              <Text variant="caption" color={lc.textMuted}>Host ID {host?.host_code}{verification === 'approved' ? ' · Verified' : ''}</Text>
+            </Row>
+            <Input label="Stream title" value={title} onChangeText={setTitle} placeholder="What are you streaming?" maxLength={80} style={{ backgroundColor: lc.surfaceRaised, borderColor: '#3A3547', color: lc.text, minHeight: 44 }} />
+            <View style={{ gap: 8 }}>
+              <Text variant="bodySmall" color={lc.textMuted}>Category</Text>
+              <Row gap={8} style={{ flexWrap: 'wrap' }}>
+                {CATEGORIES.map((cat) => <Chip key={cat} label={categoryLabel(cat)} selected={category === cat} onPress={() => setCategory(cat)} />)}
+              </Row>
+            </View>
+          </View>
+        </SafeAreaView>
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: lc.tabBar, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 16, paddingBottom: 20, gap: 10 }}>
+          <Button
+            title="Go live"
+            onPress={goLive}
+            loading={busy}
+            disabled={offline}
+            icon={<View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#fff' }} />}
+          />
+          {offline && <Text variant="bodySmall" color={lc.textMuted} style={{ textAlign: 'center' }}>You need a connection to go live.</Text>}
+        </View>
+      </View>
+    );
+  }
+
   return (
     <Screen>
       <StateView state={state}>
@@ -105,27 +152,12 @@ export default function CreateScreen() {
             </Card>
           ) : needsVerification ? (
             <HostVerificationCard status={verification} onChanged={() => void reloadProfile()} />
-          ) : room.data?.status === 'live' ? (
+          ) : (
             <Card>
               <Text variant="h3">{"You're live"}</Text>
-              <Text muted>{room.data.title}</Text>
+              <Text muted>{room.data?.title}</Text>
               <Button title="Return to stream" onPress={() => router.push('/host/live')} />
             </Card>
-          ) : (
-            <>
-              <Text muted>Host ID {host?.host_code}{verifiedBadge}</Text>
-              <Input label="Title" value={title} onChangeText={setTitle} placeholder="What's happening?" maxLength={80} />
-              <View style={{ gap: 8 }}>
-                <Text variant="label" muted>Category</Text>
-                <Row gap={8} style={{ flexWrap: 'wrap' }}>
-                  {CATEGORIES.map((cat) => (
-                    <Chip key={cat} label={cat[0].toUpperCase() + cat.slice(1)} selected={category === cat} onPress={() => setCategory(cat)} />
-                  ))}
-                </Row>
-              </View>
-              <Button title="Go live" onPress={goLive} loading={busy} disabled={offline} />
-              {offline && <Text muted>You need a connection to go live.</Text>}
-            </>
           )}
         </ScrollView>
       </StateView>

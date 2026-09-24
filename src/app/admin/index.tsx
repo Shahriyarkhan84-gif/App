@@ -87,7 +87,7 @@ function BriefingSection() {
               <Text>{data.summary}</Text>
               <Row style={{ flexWrap: 'wrap' }}>
                 {data.data.kpis.users && <Text variant="label" muted>DAU {data.data.kpis.users.dau} · MAU {data.data.kpis.users.mau} · new {data.data.kpis.users.new_24h} · D7 {data.data.kpis.users.d7_retention_pct ?? '–'}%</Text>}
-                {data.data.kpis.streaming && <Text variant="label" muted>Live now {data.data.kpis.streaming.live_now} · 👁 {data.data.kpis.streaming.viewers_now}</Text>}
+                {data.data.kpis.streaming && <Text variant="label" muted>Live now {data.data.kpis.streaming.live_now} · {data.data.kpis.streaming.viewers_now} watching</Text>}
               </Row>
             </Card>
             <Card>

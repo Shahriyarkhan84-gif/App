@@ -1,12 +1,11 @@
 import { useClerk } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, type Href } from 'expo-router';
+import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import type { ComponentProps } from 'react';
-import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 
 import { StateView } from '@/components/StateView';
-import { Avatar, Button, Card, Row, Screen, Text } from '@/components/ui';
+import { Avatar, Button, Card, Coin, IconButton, ListRow, Row, Screen, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { env } from '@/lib/env';
 import { useFocusedAsync, useRealtime } from '@/lib/hooks';
@@ -24,13 +23,19 @@ export default function ProfileScreen() {
 
   const stats = useFocusedAsync(async () => {
     if (!profile) return null;
-    const [followers, following, wallet] = await Promise.all([
+    const [followers, following, wallet, earnings] = await Promise.all([
       supabase.from('follows').select('*', { count: 'exact', head: true }).eq('followee_id', profile.id),
       supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', profile.id),
       supabase.from('wallets').select('coin_balance').eq('user_id', profile.id).maybeSingle(),
+      isHost ? supabase.from('creator_earnings').select('balance').eq('host_id', profile.id).maybeSingle() : Promise.resolve({ data: null }),
     ]);
-    return { followers: followers.count ?? 0, following: following.count ?? 0, coins: wallet.data?.coin_balance ?? 0 };
-  }, [profile?.id]);
+    return {
+      followers: followers.count ?? 0,
+      following: following.count ?? 0,
+      coins: wallet.data?.coin_balance ?? 0,
+      earnings: (earnings.data as { balance: number } | null)?.balance ?? 0,
+    };
+  }, [profile?.id, isHost]);
   useRealtime('wallets', profile ? `user_id=eq.${profile.id}` : undefined, () => stats.reload(), !!profile);
 
   const openFeedback = async () => {
@@ -41,38 +46,64 @@ export default function ProfileScreen() {
 
   if (!profile) return <Screen><StateView state={error ? { kind: 'error', error, onRetry: reload } : { kind: 'loading' }} /></Screen>;
 
+  const verified = host?.verification_status === 'approved';
+
   return (
     <Screen>
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
-        <Row gap={16}>
-          <Avatar uri={profile.avatar_url} name={displayName(profile)} size={72} />
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text variant="h2">{displayName(profile)}</Text>
-            {profile.username && <Text muted>@{profile.username}</Text>}
-            {host && <Text variant="caption" color={c.primary}>{host.host_code}</Text>}
-          </View>
-          <Button title="Edit" size="sm" variant="secondary" onPress={() => router.push('/profile-edit')} />
+      <ScrollView contentContainerStyle={{ padding: 16, paddingTop: 8, gap: 18, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
+        <Row style={{ justifyContent: 'space-between' }}>
+          <Text variant="h2">Me</Text>
+          <IconButton icon="create-outline" label="Edit profile" onPress={() => router.push('/profile-edit')} />
         </Row>
-        {profile.bio && <Text>{profile.bio}</Text>}
+
+        <Row gap={14}>
+          <Avatar uri={profile.avatar_url} name={displayName(profile)} size={76} ring={c.primary} />
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text variant="h3" style={{ fontSize: 20, lineHeight: 26 }} numberOfLines={1}>{displayName(profile)}</Text>
+            <Text variant="bodySmall" muted>{host ? `Host ID ${host.host_code}` : profile.username ? `@${profile.username}` : ''}</Text>
+            {host && (
+              <Row gap={6}>
+                <Badge label={verified ? 'Verified host' : 'Host'} gold={verified} />
+                {!verified && <Badge label="Not verified" />}
+              </Row>
+            )}
+          </View>
+        </Row>
+        {profile.bio && <Text muted>{profile.bio}</Text>}
         {profile.status !== 'active' && (
           <Card style={{ borderColor: c.warning }}>
             <Text variant="label" color={c.warning}>Account {profile.status}</Text>
             <Text muted>{profile.status_until ? `Until ${new Date(profile.status_until).toLocaleString()}` : 'Contact support for details.'}</Text>
           </Card>
         )}
-        <Row style={{ justifyContent: 'space-around' }}>
-          <Stat label="Followers" value={stats.data?.followers} />
-          <Stat label="Following" value={stats.data?.following} />
-          <Stat label="Coins" value={stats.data?.coins} />
-        </Row>
 
-        <Card style={{ padding: 0, gap: 0 }}>
-          <MenuItem icon="wallet" label="Wallet" href="/wallet" />
-          {isHost && <MenuItem icon="diamond" label="Earnings & withdrawals" href="/earnings" />}
-          <MenuItem icon="help-buoy" label="Help & support" href="/support" />
-          <MenuItem icon="megaphone" label="Share feedback" onPress={openFeedback} />
-          {isPlatformAdmin && <MenuItem icon="analytics" label="Owner command center" href="/admin" />}
-        </Card>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Stat label="Following" value={stats.data?.following} />
+          <Stat label="Fans" value={stats.data?.followers} />
+        </View>
+
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <View style={{ flex: 1, padding: 16, borderRadius: 18, backgroundColor: c.goldSurface, borderWidth: 1, borderColor: c.goldBorder, gap: 10 }}>
+            <Row gap={6}><Coin /><Text variant="bodySmall" color={c.goldText}>Coins</Text></Row>
+            <Text variant="h1">{stats.data ? stats.data.coins.toLocaleString() : '–'}</Text>
+            <Button title="Recharge" variant="gold" size="sm" onPress={() => router.push('/wallet')} />
+          </View>
+          {isHost && (
+            <View style={{ flex: 1, padding: 16, borderRadius: 18, backgroundColor: c.violetSurface, borderWidth: 1, borderColor: c.violetBorder, gap: 10 }}>
+              <Row gap={6}><Ionicons name="diamond-outline" size={16} color={c.violetText} /><Text variant="bodySmall" color={c.violetText}>Earnings</Text></Row>
+              <Text variant="h1">{stats.data ? stats.data.earnings.toLocaleString() : '–'}</Text>
+              <Button title="Withdraw" variant="outline" size="sm" onPress={() => router.push('/earnings')} />
+            </View>
+          )}
+        </View>
+
+        <View style={{ borderRadius: 18, backgroundColor: c.surface, overflow: 'hidden' }}>
+          <ListRow icon="wallet-outline" label="Wallet & history" onPress={() => router.push('/wallet')} />
+          <ListRow icon="trophy-outline" label="Rankings" onPress={() => router.push('/rankings')} />
+          <ListRow icon="help-buoy-outline" label="Help & support" onPress={() => router.push('/support')} />
+          <ListRow icon="megaphone-outline" label="Share feedback" onPress={openFeedback} last={!isPlatformAdmin} />
+          {isPlatformAdmin && <ListRow icon="analytics-outline" label="Owner command center" onPress={() => router.push('/admin')} last />}
+        </View>
 
         <Button title="Sign out" variant="ghost" onPress={() => signOut()} />
       </ScrollView>
@@ -80,24 +111,21 @@ export default function ProfileScreen() {
   );
 }
 
-function Stat({ label, value }: { label: string; value?: number }) {
+function Badge({ label, gold }: { label: string; gold?: boolean }) {
+  const { c } = useTheme();
   return (
-    <View style={{ alignItems: 'center' }}>
-      <Text variant="h3">{value === undefined ? '–' : value.toLocaleString()}</Text>
-      <Text variant="caption" muted>{label}</Text>
+    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, backgroundColor: gold ? c.gold : c.surfaceRaised }}>
+      <Text variant="caption" color={gold ? c.onGold : c.textMuted} style={{ fontSize: 11, fontWeight: gold ? '700' : '500' }}>{label}</Text>
     </View>
   );
 }
 
-function MenuItem({ icon, label, href, onPress }: { icon: ComponentProps<typeof Ionicons>['name']; label: string; href?: Href; onPress?: () => void }) {
+function Stat({ label, value }: { label: string; value?: number }) {
   const { c } = useTheme();
   return (
-    <Pressable onPress={onPress ?? (() => href && router.push(href))} accessibilityRole="button" style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: c.border }}>
-      <Row>
-        <Ionicons name={icon} size={20} color={c.primary} />
-        <Text style={{ flex: 1 }}>{label}</Text>
-        <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
-      </Row>
-    </Pressable>
+    <View style={{ flex: 1, padding: 12, borderRadius: 14, backgroundColor: c.surface, alignItems: 'center', gap: 2 }}>
+      <Text variant="h3">{value === undefined ? '–' : value.toLocaleString()}</Text>
+      <Text variant="caption" muted>{label}</Text>
+    </View>
   );
 }

@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/lib/theme';
 
-import { Button, Input, Text } from './ui';
+import { Button, Input, Text, Wordmark } from './ui';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -27,16 +27,27 @@ export function clerkErrorMessage(err: unknown) {
   return err instanceof Error ? err.message : 'Something went wrong';
 }
 
+const TILES = ['#5B2A4A', '#1F4A5C', '#4A2F6B', '#6B3A22'];
+
 export function AuthShell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   const { c } = useTheme();
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.background }}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <Text variant="display" color={c.primary} style={{ marginBottom: 32 }}>Zynalive</Text>
-          <Text variant="h1">{title}</Text>
-          <Text muted style={{ marginTop: 4, marginBottom: 24 }}>{subtitle}</Text>
+          <View style={{ gap: 14, marginBottom: 28 }}>
+            <View style={{ flexDirection: 'row', gap: 6 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              {TILES.map((bg, i) => <View key={bg} style={{ width: 56, height: 76, borderRadius: 14, backgroundColor: bg, marginTop: i % 2 ? 18 : 0 }} />)}
+            </View>
+            <Wordmark size={44} />
+            <Text variant="bodyLarge" muted>Go live, meet people and support the hosts you love.</Text>
+          </View>
+          <Text variant="h2">{title}</Text>
+          <Text muted style={{ marginTop: 4, marginBottom: 20 }}>{subtitle}</Text>
           <View style={{ gap: 12 }}>{children}</View>
+          <Text variant="caption" faint style={{ textAlign: 'center', marginTop: 28, lineHeight: 18 }}>
+            By continuing you agree to the Terms and Privacy Policy. You must be 18+ to go live.
+          </Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -91,7 +102,7 @@ export function SocialButtons({ onError }: { onError: (message: string) => void 
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, justifyContent: 'center', padding: 24, maxWidth: 480, width: '100%', alignSelf: 'center' },
+  container: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40, maxWidth: 480, width: '100%', alignSelf: 'center' },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 4 },
   divider: { flex: 1, height: StyleSheet.hairlineWidth },
 });

@@ -1,36 +1,59 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
-import type { ComponentProps } from 'react';
 import type { ColorValue } from 'react-native';
+import { Pressable, View } from 'react-native';
 
-import { useTheme } from '@/lib/theme';
+import type { IconName } from '@/components/ui';
+import { fonts, useTheme } from '@/lib/theme';
 
-type IconName = ComponentProps<typeof Ionicons>['name'];
-
-function icon(name: IconName) {
-  const TabIcon = ({ color, size }: { color: ColorValue; size: number }) => <Ionicons name={name} color={color} size={size} />;
+function icon(name: IconName, active: IconName) {
+  const TabIcon = ({ color, focused }: { color: ColorValue; focused: boolean }) => <Ionicons name={focused ? active : name} color={color} size={24} />;
   TabIcon.displayName = `TabIcon(${name})`;
   return TabIcon;
 }
 
-// User app navigation (architecture §09): Home · Discover · Create · Messages · Profile
+// User app navigation (Zynalive canvas): Home · Party · Go live · Messages · Me
 export default function TabsLayout() {
   const { c } = useTheme();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: c.primary,
-        tabBarInactiveTintColor: c.textMuted,
-        tabBarStyle: { backgroundColor: c.surface, borderTopColor: c.border },
+        tabBarActiveTintColor: c.text,
+        tabBarInactiveTintColor: c.textFaint,
+        tabBarLabelStyle: { fontFamily: fonts.medium, fontSize: 11 },
+        tabBarStyle: { backgroundColor: c.tabBar, borderTopColor: c.divider, height: 88, paddingTop: 8 },
         sceneStyle: { backgroundColor: c.background },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: icon('home') }} />
-      <Tabs.Screen name="discover" options={{ title: 'Discover', tabBarIcon: icon('compass') }} />
-      <Tabs.Screen name="create" options={{ title: 'Create', tabBarIcon: icon('radio') }} />
-      <Tabs.Screen name="messages" options={{ title: 'Messages', tabBarIcon: icon('chatbubbles') }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: icon('person-circle') }} />
+      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: icon('home-outline', 'home') }} />
+      <Tabs.Screen name="party" options={{ title: 'Party', tabBarIcon: icon('people-outline', 'people') }} />
+      <Tabs.Screen
+        name="create"
+        options={{
+          title: 'Go live',
+          tabBarLabel: () => null,
+          tabBarAccessibilityLabel: 'Go live',
+          tabBarButton: ({ onPress, accessibilityState }) => (
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Pressable
+                onPress={onPress}
+                accessibilityRole="button"
+                accessibilityLabel="Go live"
+                accessibilityState={accessibilityState}
+                style={({ pressed }) => ({
+                  width: 56, height: 56, marginTop: -18, borderRadius: 28, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center',
+                  opacity: pressed ? 0.85 : 1, shadowColor: c.primary, shadowOpacity: 0.45, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 8,
+                })}
+              >
+                <Ionicons name="videocam" size={26} color={c.primaryText} />
+              </Pressable>
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen name="messages" options={{ title: 'Messages', tabBarIcon: icon('chatbox-outline', 'chatbox') }} />
+      <Tabs.Screen name="profile" options={{ title: 'Me', tabBarIcon: icon('person-outline', 'person') }} />
     </Tabs>
   );
 }

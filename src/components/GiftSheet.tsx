@@ -12,7 +12,7 @@ import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 import type { GiftItem } from '@/lib/types';
 
-import { Button, Chip, Row, Sheet, Text } from './ui';
+import { Button, Chip, Coin, Row, Sheet, Text } from './ui';
 
 const QUANTITIES = [1, 10, 99];
 
@@ -65,30 +65,38 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Send a gift">
+    <Sheet visible={visible} onClose={onClose}>
       <Row style={{ justifyContent: 'space-between' }}>
-        <Text muted>Balance</Text>
-        <Text variant="label">🪙 {balance.toLocaleString()}</Text>
+        <Text variant="h2">Gifts</Text>
+        <Row gap={6}>
+          <Coin />
+          <Text variant="label" accessibilityLabel={`Balance ${balance} coins`}>{balance.toLocaleString()}</Text>
+          <Pressable onPress={() => { onClose(); router.push('/wallet'); }} accessibilityRole="link" hitSlop={10} style={{ marginLeft: 8 }}>
+            <Text variant="bodySmall" color={c.gold} style={{ fontWeight: '700' }}>Recharge</Text>
+          </Pressable>
+        </Row>
       </Row>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {(catalog.data ?? []).map((g) => (
-          <Pressable
-            key={g.id}
-            onPress={() => setSelected(g)}
-            accessibilityRole="button"
-            accessibilityLabel={`${g.name}, ${g.coin_price} coins`}
-            accessibilityState={{ selected: selected?.id === g.id }}
-            style={{
-              width: '23%', alignItems: 'center', paddingVertical: 10, borderRadius: radius[12],
-              backgroundColor: selected?.id === g.id ? c.surfaceRaised : 'transparent',
-              borderWidth: 1, borderColor: selected?.id === g.id ? c.primary : c.border,
-            }}
-          >
-            <Text style={{ fontSize: 28 }}>{g.icon}</Text>
-            <Text variant="caption">{g.name}</Text>
-            <Text variant="caption" muted>🪙 {g.coin_price}</Text>
-          </Pressable>
-        ))}
+        {(catalog.data ?? []).map((g) => {
+          const on = selected?.id === g.id;
+          return (
+            <Pressable
+              key={g.id}
+              onPress={() => setSelected(g)}
+              accessibilityRole="button"
+              accessibilityLabel={`${g.name}, ${g.coin_price} coins`}
+              accessibilityState={{ selected: on }}
+              style={{
+                width: '23%', height: 96, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: radius[12] + 2,
+                backgroundColor: c.surfaceRaised, borderWidth: 2, borderColor: on ? c.primary : 'transparent',
+              }}
+            >
+              <Text style={{ fontSize: 28, lineHeight: 34 }}>{g.icon}</Text>
+              <Text variant="caption">{g.name}</Text>
+              <Text variant="caption" color={c.gold} style={{ fontSize: 11 }}>{g.coin_price.toLocaleString()}</Text>
+            </Pressable>
+          );
+        })}
       </View>
       <Row gap={8}>
         {QUANTITIES.map((q) => (
@@ -99,9 +107,14 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
       {wallet.data?.frozen ? (
         <Text color={c.warning}>Your wallet is on hold while a payment is reviewed.</Text>
       ) : insufficient ? (
-        <Button title={`Need ${total - balance} more coins — Buy coins`} onPress={() => { onClose(); router.push('/wallet'); }} />
+        <Button title={`Need ${(total - balance).toLocaleString()} more coins — Recharge`} variant="gold" onPress={() => { onClose(); router.push('/wallet'); }} />
       ) : (
-        <Button title={selected ? `Send for 🪙 ${total.toLocaleString()}` : 'Pick a gift'} disabled={!selected} loading={sending} onPress={send} />
+        <Row>
+          <Text variant="bodySmall" muted style={{ flex: 1 }}>
+            {selected ? `${selected.name} ×${quantity} · ${total.toLocaleString()} coins. The host gets 90%.` : 'Pick a gift to send.'}
+          </Text>
+          <Button title="Send" disabled={!selected} loading={sending} onPress={send} style={{ minHeight: 44, paddingHorizontal: 26 }} />
+        </Row>
       )}
     </Sheet>
   );
@@ -110,7 +123,7 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
 /** Floating toasts for gifts arriving in a room (realtime). */
 export function GiftToasts({ roomId }: { roomId: string }) {
   const supabase = useSupabase();
-  const [toasts, setToasts] = useState<{ id: string; text: string }[]>([]);
+  const [toasts, setToasts] = useState<{ id: string; sender: string; gift: string; count: number }[]>([]);
   useRealtime('gifts', `room_id=eq.${roomId}`, async (payload) => {
     if (payload.eventType !== 'INSERT') return;
     const g = payload.new as { id: string; sender_id: string; gift_id: number; quantity: number };
@@ -118,15 +131,19 @@ export function GiftToasts({ roomId }: { roomId: string }) {
       supabase.from('profiles').select('display_name,username').eq('id', g.sender_id).maybeSingle(),
       supabase.from('gift_catalog').select('icon,name').eq('id', g.gift_id).maybeSingle(),
     ]);
-    const text = `${sender?.display_name ?? sender?.username ?? 'Someone'} sent ${gift?.icon ?? '🎁'} ${gift?.name ?? 'a gift'}${g.quantity > 1 ? ` ×${g.quantity}` : ''}`;
-    setToasts((t) => [...t.slice(-2), { id: g.id, text }]);
+    const toast = { id: g.id, sender: sender?.display_name ?? sender?.username ?? 'Someone', gift: `${gift?.icon ?? '🎁'} ${gift?.name ?? 'a gift'}`, count: g.quantity };
+    setToasts((t) => [...t.slice(-2), toast]);
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== g.id)), 4000);
   });
   return (
-    <View pointerEvents="none" style={{ gap: 6 }}>
+    <View pointerEvents="none" style={{ gap: 8 }}>
       {toasts.map((t) => (
-        <View key={t.id} style={{ alignSelf: 'flex-start', backgroundColor: 'rgba(124,92,255,0.85)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6 }}>
-          <Text variant="label" color="#fff">{t.text}</Text>
+        <View key={t.id} style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, height: 46, paddingLeft: 14, paddingRight: 14, borderRadius: 23, backgroundColor: 'rgba(20,16,28,0.85)', borderWidth: 1, borderColor: '#FFC24B' }}>
+          <View>
+            <Text variant="label" color="#fff" style={{ fontSize: 13 }}>{t.sender}</Text>
+            <Text variant="caption" color="#E4DFEC">sent {t.gift}</Text>
+          </View>
+          {t.count > 1 && <Text variant="display" color="#FFC24B" style={{ fontSize: 24, lineHeight: 28, fontStyle: 'italic' }}>×{t.count}</Text>}
         </View>
       ))}
     </View>

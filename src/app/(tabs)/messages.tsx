@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Chip, Row, Screen, Text } from '@/components/ui';
+import { Avatar, Row, Screen, Segmented, Text } from '@/components/ui';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
@@ -13,16 +13,18 @@ import { displayName, type Profile } from '@/lib/types';
 type Thread = { otherId: string; other: Pick<Profile, 'display_name' | 'username' | 'avatar_url'> | null; last: string; at: string; unread: number };
 type Notification = { id: number; type: string; title: string; body: string | null; data: Record<string, string>; read_at: string | null; created_at: string };
 
+const TABS = [
+  { id: 'chats', label: 'Chats' },
+  { id: 'notifications', label: 'Notifications' },
+] as const;
+
 export default function MessagesScreen() {
   const [tab, setTab] = useState<'chats' | 'notifications'>('chats');
   return (
     <Screen>
-      <View style={{ padding: 16, gap: 12 }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 12 }}>
         <Text variant="h1">Messages</Text>
-        <Row gap={8}>
-          <Chip label="Chats" selected={tab === 'chats'} onPress={() => setTab('chats')} />
-          <Chip label="Notifications" selected={tab === 'notifications'} onPress={() => setTab('notifications')} />
-        </Row>
+        <Segmented options={TABS} value={tab} onChange={setTab} />
       </View>
       {tab === 'chats' ? <Chats /> : <Notifications />}
     </Screen>
@@ -67,16 +69,19 @@ function Chats() {
         keyExtractor={(t) => t.otherId}
         contentContainerStyle={{ paddingHorizontal: 16 }}
         renderItem={({ item }) => (
-          <Pressable onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: item.otherId } })}>
+          <Pressable onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: item.otherId } })} accessibilityRole="button">
             <Row style={{ paddingVertical: 10 }}>
-              <Avatar uri={item.other?.avatar_url} name={displayName(item.other)} size={48} />
-              <View style={{ flex: 1 }}>
-                <Text variant="label">{displayName(item.other)}</Text>
-                <Text muted numberOfLines={1}>{item.last}</Text>
+              <Avatar uri={item.other?.avatar_url} name={displayName(item.other)} size={52} ring={item.unread > 0 ? c.primary : undefined} />
+              <View style={{ flex: 1, gap: 3 }}>
+                <Row style={{ justifyContent: 'space-between' }}>
+                  <Text variant="label" style={{ fontSize: 15 }} numberOfLines={1}>{displayName(item.other)}</Text>
+                  <Text variant="caption" faint>{shortTime(item.at)}</Text>
+                </Row>
+                <Text variant="bodySmall" muted={item.unread === 0} numberOfLines={1} style={{ fontSize: 14 }}>{item.last}</Text>
               </View>
               {item.unread > 0 && (
-                <View style={{ backgroundColor: c.primary, borderRadius: 10, minWidth: 20, paddingHorizontal: 6, alignItems: 'center' }}>
-                  <Text variant="caption" color={c.primaryText}>{item.unread}</Text>
+                <View style={{ backgroundColor: c.primary, borderRadius: 10, minWidth: 20, height: 20, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text variant="caption" color={c.primaryText} style={{ fontSize: 11, fontWeight: '700' }}>{item.unread}</Text>
                 </View>
               )}
             </Row>
@@ -120,7 +125,7 @@ function Notifications() {
         contentContainerStyle={{ paddingHorizontal: 16, gap: 4 }}
         renderItem={({ item }) => (
           <Pressable onPress={() => open(item)}>
-            <View style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.border, opacity: item.read_at ? 0.6 : 1 }}>
+            <View style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.divider, opacity: item.read_at ? 0.6 : 1 }}>
               <Text variant="label">{item.title}</Text>
               {item.body && <Text muted numberOfLines={3}>{item.body}</Text>}
               <Text variant="caption" muted>{new Date(item.created_at).toLocaleString()}</Text>
@@ -130,4 +135,13 @@ function Notifications() {
       />
     </StateView>
   );
+}
+
+function shortTime(iso: string) {
+  const d = new Date(iso);
+  const mins = Math.round((Date.now() - d.getTime()) / 60000);
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
+  if (mins < 60 * 24) return `${Math.round(mins / 60)}h`;
+  return d.toLocaleDateString();
 }

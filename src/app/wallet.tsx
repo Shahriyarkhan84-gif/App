@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
-import { Card, Row, Screen, Text } from '@/components/ui';
+import { Button, Coin, Row, Screen, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { startCoinCheckout } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -27,6 +27,7 @@ export default function WalletScreen() {
   const track = useAnalytics();
   const offline = useOffline();
   const [buying, setBuying] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number | null>(null);
 
   const { data, error, loading, reload } = useFocusedAsync(async () => {
     const [wallet, packages, txs] = await Promise.all([
@@ -59,45 +60,74 @@ export default function WalletScreen() {
   return (
     <Screen edges={[]}>
       <StateView state={resolveState({ offline, loading, error, data, onRetry: reload })}>
-        {data && (
-          <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
-            <Card style={{ alignItems: 'center', backgroundColor: c.primary, borderColor: c.primary }}>
-              <Text variant="label" color={c.primaryText}>Balance</Text>
-              <Text variant="display" color={c.primaryText}>🪙 {data.wallet.coin_balance.toLocaleString()}</Text>
-              {data.wallet.frozen && <Text color={c.primaryText}>On hold while a payment dispute is reviewed</Text>}
-            </Card>
-
-            <Text variant="h3">Buy coins</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-              {data.packages.map((p) => (
-                <Pressable
-                  key={p.id}
-                  disabled={buying !== null || offline}
-                  onPress={() => buy(p)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${p.coins} coins for ${formatMoney(p.price_minor, p.currency)}`}
-                  style={{ width: '47%', padding: 16, borderRadius: radius[16], backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, gap: 4, opacity: buying && buying !== p.id ? 0.5 : 1 }}
-                >
-                  <Text variant="caption" muted>{p.name}</Text>
-                  <Text variant="h2">🪙 {p.coins.toLocaleString()}</Text>
-                  <Text variant="label" color={c.primary}>{buying === p.id ? 'Opening checkout…' : formatMoney(p.price_minor, p.currency)}</Text>
-                </Pressable>
-              ))}
-            </View>
-            <Text variant="caption" muted>Payments are processed by Stripe. Coins are added automatically once payment is confirmed.</Text>
-
-            <Text variant="h3">History</Text>
-            {data.txs.length === 0 ? <Text muted>No transactions yet.</Text> : data.txs.map((t) => (
-              <Row key={t.id} style={{ justifyContent: 'space-between', paddingVertical: 6 }}>
-                <View>
-                  <Text>{KIND_LABEL[t.kind] ?? t.kind}</Text>
-                  <Text variant="caption" muted>{new Date(t.created_at).toLocaleString()}</Text>
+        {data && (() => {
+          const pick = data.packages.find((p) => p.id === selected) ?? data.packages[1] ?? data.packages[0];
+          return (
+            <ScrollView contentContainerStyle={{ padding: 16, gap: 18, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
+              <Row style={{ padding: 18, borderRadius: 20, backgroundColor: c.goldSurface, borderWidth: 1, borderColor: c.goldBorder, justifyContent: 'space-between' }}>
+                <View style={{ gap: 4 }}>
+                  <Row gap={6}><Coin /><Text variant="bodySmall" color={c.goldText}>Coin balance</Text></Row>
+                  <Text variant="display" accessibilityLiveRegion="polite">{data.wallet.coin_balance.toLocaleString()}</Text>
                 </View>
-                <Text variant="label" color={t.delta > 0 ? c.success : c.text}>{t.delta > 0 ? '+' : ''}{t.delta.toLocaleString()}</Text>
+                <Text variant="caption" color={c.goldText} style={{ maxWidth: 130, textAlign: 'right' }}>
+                  {data.wallet.frozen ? 'On hold while a payment dispute is reviewed' : 'Used to send gifts in live rooms'}
+                </Text>
               </Row>
-            ))}
-          </ScrollView>
-        )}
+
+              <View style={{ gap: 10 }}>
+                <Text variant="h3">Buy coins</Text>
+                <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {data.packages.map((p) => {
+                    const on = pick?.id === p.id;
+                    return (
+                      <Pressable
+                        key={p.id}
+                        disabled={buying !== null}
+                        onPress={() => setSelected(p.id)}
+                        accessibilityRole="radio"
+                        accessibilityState={{ checked: on }}
+                        accessibilityLabel={`${p.coins} coins for ${formatMoney(p.price_minor, p.currency)}`}
+                        style={{ width: '48.5%', minHeight: 76, paddingHorizontal: 14, justifyContent: 'center', borderRadius: radius[16], backgroundColor: c.surface, borderWidth: 2, borderColor: on ? c.primary : c.divider, gap: 4 }}
+                      >
+                        <Row gap={6}><Coin size={14} /><Text variant="h3" style={{ fontSize: 18 }}>{p.coins.toLocaleString()}</Text></Row>
+                        <Text variant="bodySmall" muted>{formatMoney(p.price_minor, p.currency)} · {p.name}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {pick && (
+                <Button
+                  title={buying ? 'Opening checkout…' : `Buy ${pick.coins.toLocaleString()} coins · ${formatMoney(pick.price_minor, pick.currency)}`}
+                  loading={buying !== null}
+                  disabled={offline}
+                  onPress={() => buy(pick)}
+                />
+              )}
+              <Text variant="caption" faint>Payments are processed by Stripe. Coins are added only after the payment is confirmed.</Text>
+
+              <View style={{ gap: 4 }}>
+                <Text variant="h3">History</Text>
+                {data.txs.length === 0 ? <Text muted>No transactions yet.</Text> : data.txs.map((t) => {
+                  const credit = t.delta > 0;
+                  return (
+                    <Row key={t.id} style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.divider }}>
+                      <View style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: credit ? c.goldSurface : c.surfaceRaised }}>
+                        <Text variant="label" color={credit ? c.gold : c.textMuted} style={{ fontSize: 15 }}>{credit ? '+' : '−'}</Text>
+                      </View>
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text style={{ fontWeight: '500', fontSize: 14 }}>{KIND_LABEL[t.kind] ?? t.kind}</Text>
+                        <Text variant="caption" faint>{new Date(t.created_at).toLocaleString()}</Text>
+                      </View>
+                      <Text variant="label" color={credit ? c.success : c.text}>{credit ? '+' : ''}{t.delta.toLocaleString()}</Text>
+                    </Row>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          );
+        })()}
       </StateView>
     </Screen>
   );

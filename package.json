@@ -5,6 +5,8 @@
   "dependencies": {
     "@clerk/clerk-expo": "^2.20.1",
     "@config-plugins/react-native-webrtc": "^15.0.2",
+    "@expo-google-fonts/bricolage-grotesque": "^0.4.1",
+    "@expo-google-fonts/dm-sans": "^0.4.2",
     "@expo/vector-icons": "^15.1.1",
     "@livekit/components-react": "^2.9.24",
     "@livekit/react-native": "^3.0.0",
@@ -22,6 +24,7 @@
     "expo-dev-client": "~57.0.19",
     "expo-device": "~57.0.2",
     "expo-file-system": "~57.0.7",
+    "expo-font": "~57.0.4",
     "expo-haptics": "~57.0.3",
     "expo-image": "~57.0.5",
     "expo-linking": "~57.0.11",

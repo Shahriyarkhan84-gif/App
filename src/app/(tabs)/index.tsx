@@ -1,24 +1,39 @@
 import { useAuth } from '@clerk/clerk-expo';
-import { FlatList, RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
 
 import { RoomCard } from '@/components/RoomCard';
 import { resolveState, StateView } from '@/components/StateView';
-import { Screen, Text } from '@/components/ui';
+import { Chip, IconButton, Row, Screen, Text, TextTabs, Wordmark } from '@/components/ui';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
+import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
-import { normalizeRooms, ROOM_SELECT, type Room } from '@/lib/types';
+import { CATEGORIES, categoryLabel, normalizeRooms, ROOM_SELECT, type Room } from '@/lib/types';
 
-type HomeData = { recommended: (Room & { reason: string | null })[]; following: Room[]; live: Room[] };
+type Feed = 'following' | 'popular' | 'nearby' | 'new';
+const FEEDS: { id: Feed; label: string }[] = [
+  { id: 'following', label: 'Following' },
+  { id: 'popular', label: 'Popular' },
+  { id: 'nearby', label: 'Nearby' },
+  { id: 'new', label: 'New' },
+];
+const CHIPS = ['all', ...CATEGORIES] as const;
+
+type HomeData = { live: Room[]; followed: Set<string>; recommended: Map<string, { reason: string | null; score: number }> };
 
 export default function HomeScreen() {
   const supabase = useSupabase();
   const { userId } = useAuth();
+  const { profile } = useProfile();
   const { c } = useTheme();
   const offline = useOffline();
   const { width } = useWindowDimensions();
+  const [feed, setFeed] = useState<Feed>('popular');
+  const [category, setCategory] = useState<(typeof CHIPS)[number]>('all');
   const columns = width > 700 ? 4 : 2;
-  const cardWidth = (Math.min(width, 1100) - 16 * 2 - 12 * (columns - 1)) / columns;
+  const cardWidth = (Math.min(width, 1100) - 16 * 2 - 10 * (columns - 1)) / columns;
 
   const { data, error, loading, reload } = useFocusedAsync<HomeData>(async () => {
     const [live, follows, recs] = await Promise.all([
@@ -28,11 +43,11 @@ export default function HomeScreen() {
       supabase.from('user_recommendations').select('room_id,reason,score').eq('user_id', userId!).order('score', { ascending: false }).limit(10),
     ]);
     if (live.error) throw live.error;
-    const rooms = normalizeRooms(live.data);
-    const followed = new Set((follows.data ?? []).map((f) => f.followee_id));
-    const byId = new Map(rooms.map((r) => [r.id, r]));
-    const recommended = (recs.data ?? []).flatMap((r) => (byId.has(r.room_id) ? [{ ...byId.get(r.room_id)!, reason: r.reason }] : []));
-    return { live: rooms, following: rooms.filter((r) => followed.has(r.host_id)), recommended };
+    return {
+      live: normalizeRooms(live.data),
+      followed: new Set((follows.data ?? []).map((f) => f.followee_id)),
+      recommended: new Map((recs.data ?? []).map((r) => [r.room_id, { reason: r.reason, score: r.score }])),
+    };
   }, [userId]);
 
   // Rooms going live/offline update the feed in real time.
@@ -42,66 +57,65 @@ export default function HomeScreen() {
     if (before !== after) reload();
   });
 
+  const rooms = data ? pickFeed(data, feed, profile?.country ?? null).filter((r) => category === 'all' || r.category === category) : [];
+  const emptyCopy = {
+    following: { title: 'No one you follow is live', body: 'Follow hosts you like and they will show up here.' },
+    popular: { title: 'No one is live right now', body: 'Be the first — tap Go live.' },
+    nearby: { title: 'No one nearby is live', body: profile?.country ? 'Try Popular to see everyone.' : 'Add your country in Edit profile to see hosts near you.' },
+    new: { title: 'No new lives yet', body: 'Check back soon, or go live yourself.' },
+  }[feed];
+
   const state = resolveState({
     offline, loading, error, data, onRetry: reload,
-    isEmpty: (d) => d.live.length === 0,
-    empty: { title: 'No one is live right now', body: 'Be the first — tap Create to go live.' },
+    isEmpty: () => rooms.length === 0,
+    empty: category === 'all' ? emptyCopy : { title: `No ${categoryLabel(category)} lives`, body: 'Try another category.' },
   });
 
   return (
     <Screen>
-      <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
-        <Text variant="h1" color={c.primary}>Zynalive</Text>
+      <View style={{ paddingHorizontal: 20, paddingTop: 4, gap: 4, maxWidth: 1100, width: '100%', alignSelf: 'center' }}>
+        <Row style={{ justifyContent: 'space-between' }}>
+          <Wordmark />
+          <Row gap={8}>
+            <IconButton icon="trophy-outline" label="Rankings" color={c.gold} onPress={() => router.push('/rankings')} />
+            <IconButton icon="search" label="Search" onPress={() => router.push('/party')} />
+            <IconButton icon="notifications-outline" label="Notifications" onPress={() => router.push('/messages')} />
+          </Row>
+        </Row>
+        <TextTabs options={FEEDS} value={feed} onChange={setFeed} />
+      </View>
+      <View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingVertical: 12 }}>
+          {CHIPS.map((k) => <Chip key={k} label={k === 'all' ? 'All' : categoryLabel(k)} selected={category === k} onPress={() => setCategory(k)} />)}
+        </ScrollView>
       </View>
       <StateView state={state}>
-        {data && (
-          <ScrollView
-            contentContainerStyle={{ paddingBottom: 32, gap: 24, maxWidth: 1100, width: '100%', alignSelf: 'center' }}
-            refreshControl={<RefreshControl refreshing={loading && !!data} onRefresh={reload} tintColor={c.text} />}
-          >
-            {data.recommended.length > 0 && (
-              <Section title="For you">
-                <FlatList
-                  horizontal
-                  data={data.recommended}
-                  keyExtractor={(r) => r.id}
-                  contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
-                  showsHorizontalScrollIndicator={false}
-                  renderItem={({ item }) => <RoomCard room={item} width={150} reason={item.reason} />}
-                />
-              </Section>
-            )}
-            {data.following.length > 0 && (
-              <Section title="Following">
-                <FlatList
-                  horizontal
-                  data={data.following}
-                  keyExtractor={(r) => r.id}
-                  contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
-                  showsHorizontalScrollIndicator={false}
-                  renderItem={({ item }) => <RoomCard room={item} width={150} />}
-                />
-              </Section>
-            )}
-            <Section title="Live now">
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 16 }}>
-                {data.live.map((r) => (
-                  <RoomCard key={r.id} room={r} width={cardWidth} />
-                ))}
-              </View>
-            </Section>
-          </ScrollView>
-        )}
+        <ScrollView
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32, maxWidth: 1100, width: '100%', alignSelf: 'center' }}
+          refreshControl={<RefreshControl refreshing={loading && !!data} onRefresh={reload} tintColor={c.text} />}
+        >
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+            {rooms.map((r) => <RoomCard key={r.id} room={r} width={cardWidth} reason={feed === 'popular' ? data?.recommended.get(r.id)?.reason : null} />)}
+          </View>
+          {feed === 'popular' && rooms.length > 0 && <Text variant="caption" faint style={{ marginTop: 16, textAlign: 'center' }}>Picks for you come first.</Text>}
+        </ScrollView>
       </StateView>
     </Screen>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <View style={{ gap: 12 }}>
-      <Text variant="h3" style={{ paddingHorizontal: 16 }}>{title}</Text>
-      {children}
-    </View>
-  );
+function pickFeed(data: HomeData, feed: Feed, country: string | null): Room[] {
+  switch (feed) {
+    case 'following':
+      return data.live.filter((r) => data.followed.has(r.host_id));
+    case 'nearby':
+      return country ? data.live.filter((r) => r.host?.country === country) : [];
+    case 'new':
+      return [...data.live].sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''));
+    default: {
+      // Recommended rooms (AI) first, then by viewers.
+      const rec = (r: Room) => data.recommended.get(r.id)?.score ?? -1;
+      return [...data.live].sort((a, b) => rec(b) - rec(a) || b.viewer_count - a.viewer_count);
+    }
+  }
 }

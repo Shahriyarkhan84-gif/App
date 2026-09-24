@@ -1,7 +1,12 @@
 import '@/lib/livekit';
 
+import { BricolageGrotesque_800ExtraBold } from '@expo-google-fonts/bricolage-grotesque/800ExtraBold';
+import { DMSans_400Regular } from '@expo-google-fonts/dm-sans/400Regular';
+import { DMSans_500Medium } from '@expo-google-fonts/dm-sans/500Medium';
+import { DMSans_700Bold } from '@expo-google-fonts/dm-sans/700Bold';
 import { ClerkLoaded, ClerkProvider, useAuth, useUser } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
+import { useFonts } from 'expo-font';
 import { Stack, useGlobalSearchParams, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { PostHogProvider, usePostHog } from 'posthog-react-native';
@@ -13,7 +18,7 @@ import { env, missingRequiredEnv } from '@/lib/env';
 import { ProfileProvider } from '@/lib/profile';
 import { initSentry, Sentry } from '@/lib/sentry';
 import { SupabaseProvider } from '@/lib/supabase';
-import { useTheme } from '@/lib/theme';
+import { fonts, useTheme } from '@/lib/theme';
 
 initSentry();
 
@@ -65,6 +70,7 @@ function RootNavigator() {
       screenOptions={{
         headerStyle: { backgroundColor: c.background },
         headerTintColor: c.text,
+        headerTitleStyle: { fontFamily: fonts.bold },
         contentStyle: { backgroundColor: c.background },
         headerShadowVisible: false,
       }}
@@ -77,6 +83,7 @@ function RootNavigator() {
         <Stack.Screen name="user/[id]" options={{ title: '' }} />
         <Stack.Screen name="chat/[userId]" options={{ title: 'Chat' }} />
         <Stack.Screen name="wallet" options={{ title: 'Wallet' }} />
+        <Stack.Screen name="rankings" options={{ title: 'Rankings' }} />
         <Stack.Screen name="earnings" options={{ title: 'Earnings' }} />
         <Stack.Screen name="support" options={{ title: 'Help & support' }} />
         <Stack.Screen name="profile-edit" options={{ title: 'Edit profile', presentation: 'modal' }} />
@@ -102,7 +109,10 @@ function MissingConfig() {
 }
 
 function RootLayout() {
-  const { scheme } = useTheme();
+  const { c, scheme } = useTheme();
+  // A font that fails to load falls back to the system face; never block on it.
+  const [fontsLoaded, fontError] = useFonts({ BricolageGrotesque_800ExtraBold, DMSans_400Regular, DMSans_500Medium, DMSans_700Bold });
+  if (!fontsLoaded && !fontError) return <View style={{ flex: 1, backgroundColor: c.background }} />;
   if (missingRequiredEnv.length > 0) return <MissingConfig />;
   return (
     <ClerkProvider publishableKey={env.clerkPublishableKey} tokenCache={tokenCache}>

@@ -87,7 +87,7 @@ export default function UserProfileScreen() {
             </View>
             {data.room?.status === 'live' && (
               <Card style={{ borderColor: c.live }}>
-                <Text variant="label" color={c.live}>● LIVE · 👁 {data.room.viewer_count}</Text>
+                <Text variant="label" color={c.live}>● LIVE · {data.room.viewer_count} watching</Text>
                 <Text>{data.room.title}</Text>
                 <Button title="Join stream" onPress={() => router.push({ pathname: '/live/[roomId]', params: { roomId: data.room!.id } })} />
               </Card>

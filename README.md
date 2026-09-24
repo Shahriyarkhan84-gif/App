@@ -11,7 +11,7 @@ App (Expo) ──> Supabase (Postgres + RLS + RPCs + Realtime + Edge Functions) 
 
 | Where | What |
 |---|---|
-| `src/` | Expo Router app — Home · Discover · Create · Messages · Profile, live room, host broadcast, wallet, earnings, DMs, support, Owner command center |
+| `src/` | Expo Router app — Home · Party · Go live · Messages · Me, rankings, live room, host broadcast, wallet, earnings, DMs, support, Owner command center |
 | `supabase/migrations/` | Schema, RLS, money/moderation RPCs |
 | `supabase/functions/` | `livekit-token`, `livekit-webhook`, `coins-checkout`, `stripe-webhook`, `clerk-webhook`, `didit-session`, `didit-webhook` |
 | `supabase/tests/` | Must-pass security & financial tests (`run.sh`) |

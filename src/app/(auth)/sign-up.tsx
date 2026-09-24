@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { AuthShell, clerkErrorMessage, Field, FormError, SocialButtons } from '@/components/AuthForm';
 import { Button, Text } from '@/components/ui';
-import { useTheme } from '@/lib/theme';
+import { fonts, useTheme } from '@/lib/theme';
 
 export default function SignUpScreen() {
   const { c } = useTheme();
@@ -65,7 +65,7 @@ export default function SignUpScreen() {
       <Button title="Continue" loading={loading} disabled={!email || password.length < 8} onPress={onCreate} />
       <Text muted style={{ textAlign: 'center' }}>
         Already have an account?{' '}
-        <Link href="/sign-in" style={{ color: c.text, fontWeight: '700' }}>
+        <Link href="/sign-in" style={{ color: c.primary, fontFamily: fonts.bold }}>
           Sign in
         </Link>
       </Text>
