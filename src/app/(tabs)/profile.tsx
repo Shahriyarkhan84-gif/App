@@ -25,11 +25,17 @@ export default function ProfileScreen() {
     if (!profile) return null;
     const [followers, following, wallet, earnings] = await Promise.all([
       supabase.from('follows').select('*', { count: 'exact', head: true }).eq('followee_id', profile.id),
-      supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', profile.id),
+      supabase.from('follows').select('followee_id', { count: 'exact' }).eq('follower_id', profile.id).limit(1000),
       supabase.from('wallets').select('coin_balance').eq('user_id', profile.id).maybeSingle(),
       isHost ? supabase.from('creator_earnings').select('balance').eq('host_id', profile.id).maybeSingle() : Promise.resolve({ data: null }),
     ]);
+    // Friends = people you follow who follow you back.
+    const followeeIds = (following.data ?? []).map((f) => f.followee_id);
+    const friends = followeeIds.length
+      ? (await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('followee_id', profile.id).in('follower_id', followeeIds)).count ?? 0
+      : 0;
     return {
+      friends,
       followers: followers.count ?? 0,
       following: following.count ?? 0,
       coins: wallet.data?.coin_balance ?? 0,
@@ -78,8 +84,9 @@ export default function ProfileScreen() {
         )}
 
         <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Stat label="Friends" value={stats.data?.friends} />
+          <Stat label="Followers" value={stats.data?.followers} />
           <Stat label="Following" value={stats.data?.following} />
-          <Stat label="Fans" value={stats.data?.followers} />
         </View>
 
         <View style={{ flexDirection: 'row', gap: 10 }}>
