@@ -58,6 +58,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "owner": "khan888s-team",
+    "extra": {
+      "eas": {
+        "projectId": "f451a41a-b7ae-4a50-821e-b6fb8ed9cdb7"
+      }
     }
   }
 }
