@@ -1,0 +1,29 @@
+# Minimal Supabase CLI config. Run `supabase init` to generate the full file
+# if you want to run the local stack; these sections are the parts we rely on.
+project_id = "streamly"
+
+[auth.third_party.clerk]
+enabled = true
+# Your Clerk Frontend API domain, e.g. "example.clerk.accounts.dev"
+domain = "env(CLERK_DOMAIN)"
+
+# Edge functions verify the Clerk session JWT themselves (see _shared/auth.ts),
+# and webhooks are verified with their provider's signing secret.
+[functions.search]
+verify_jwt = false
+[functions.recommendations]
+verify_jwt = false
+[functions.trending]
+verify_jwt = false
+[functions.track-view]
+verify_jwt = false
+[functions.create-checkout-session]
+verify_jwt = false
+[functions.create-portal-session]
+verify_jwt = false
+[functions.stripe-webhook]
+verify_jwt = false
+[functions.clerk-webhook]
+verify_jwt = false
+[functions.index-catalog]
+verify_jwt = false
