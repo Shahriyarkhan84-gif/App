@@ -95,16 +95,6 @@ export default function HostingScreen() {
           <Text muted>Every host on Zynalive is identity-verified. It keeps viewers safe and protects your earnings.</Text>
         </FadeIn>
 
-        <FadeIn delay={40}>
-          <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <Ionicons name="finger-print-outline" size={24} color={c.gold} />
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text variant="caption" muted>{host ? 'Your ID · also your Host ID' : 'Your ID — it becomes your Host ID'}</Text>
-              <Text variant="h3" selectable style={{ letterSpacing: 1 }} accessibilityLabel={`Your ID ${String(profile.user_number).split('').join(' ')}`}>{profile.user_number}</Text>
-            </View>
-          </Card>
-        </FadeIn>
-
         {status === 'declined' && (
           <Card style={{ borderColor: c.danger }}>
             <Text variant="label" color={c.danger}>Your last check wasn’t approved</Text>
