@@ -1,5 +1,6 @@
 import { getLocales } from 'expo-localization';
 import * as Linking from 'expo-linking';
+import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Alert, Platform } from 'react-native';
@@ -34,13 +35,10 @@ const COPY: Record<Exclude<VerificationStatus, 'approved'>, { title: string; bod
   },
 };
 
-/** Didit identity verification for hosts (shown until approved). */
-export function HostVerificationCard({ status, onChanged }: { status: Exclude<VerificationStatus, 'approved'>; onChanged: () => void }) {
+/** Opens Didit's hosted ID + selfie check and calls onDone when the user comes back. */
+export function useStartVerification(onDone: () => void) {
   const supabase = useSupabase();
-  const { c } = useTheme();
   const [busy, setBusy] = useState(false);
-  const copy = COPY[status];
-
   const start = async () => {
     setBusy(true);
     try {
@@ -48,13 +46,21 @@ export function HostVerificationCard({ status, onChanged }: { status: Exclude<Ve
       const { url } = await startHostVerification(supabase, returnTo, getLocales()[0]?.languageCode ?? undefined);
       if (Platform.OS === 'web') window.location.assign(url);
       else await WebBrowser.openAuthSessionAsync(url, returnTo);
-      onChanged();
+      onDone();
     } catch (e) {
       Alert.alert('Verification', friendlyError(e));
     } finally {
       setBusy(false);
     }
   };
+  return { start, busy };
+}
+
+/** Didit identity verification for hosts (shown until approved). */
+export function HostVerificationCard({ status, onChanged }: { status: Exclude<VerificationStatus, 'approved'>; onChanged: () => void }) {
+  const { c } = useTheme();
+  const { start, busy } = useStartVerification(onChanged);
+  const copy = COPY[status];
 
   return (
     <Card style={{ borderColor: status === 'declined' ? c.danger : c.primary }}>
@@ -62,6 +68,7 @@ export function HostVerificationCard({ status, onChanged }: { status: Exclude<Ve
       <Text muted>{copy.body}</Text>
       {copy.cta && <Button title={copy.cta} onPress={start} loading={busy} />}
       {status === 'in_review' && <Button title="Refresh status" variant="secondary" onPress={onChanged} />}
+      <Button title="How hosting works" variant="ghost" size="sm" onPress={() => router.push('/hosting')} />
     </Card>
   );
 }
