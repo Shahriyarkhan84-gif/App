@@ -42,12 +42,12 @@ export default function HostingScreen() {
 
   const openDidit = () => router.push('/verify-form');
   const cta = !isHost
-    ? { title: 'Start verification with Didit', onPress: openDidit, loading: false }
+    ? { title: 'Continue verification', onPress: openDidit, loading: false }
     : approved
       ? { title: 'Go live', onPress: () => router.push('/create'), loading: false }
       : status === 'in_review'
         ? { title: 'Refresh status', onPress: () => void reload(), loading: false }
-        : { title: status === 'pending' ? 'Continue verification' : status === 'declined' ? 'Try again with Didit' : 'Start verification with Didit', onPress: openDidit, loading: false };
+        : { title: status === 'declined' ? 'Try again with Didit' : 'Continue verification', onPress: openDidit, loading: false };
 
   return (
     <Screen edges={['bottom']}>

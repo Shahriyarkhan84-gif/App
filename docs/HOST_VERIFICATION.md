@@ -10,7 +10,7 @@ earnings**. Both gates are settings (`platform_settings.host_verification`:
 ## In-app application (primary)
 
 ```
-Hosting → "Start verification with Didit" → /verify-form
+Hosting → "Continue verification" → /verify-form
    full name, phone (+92), CNIC number, CNIC front + back photos, face photo holding the CNIC, agency code (required), consent
    → host-application (edge fn, multipart; photos resized to ≤1600px JPEG in the app)
       → checks: format, agency code exists, not already verified, 5/day per user
