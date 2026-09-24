@@ -84,19 +84,19 @@ reset role;
 select tests.ok((select role from public.profiles where id = 'alice') = 'USER', 'alice still USER');
 select tests.ok((select display_name from public.profiles where id = 'bob') = 'Bob', 'cannot edit other profile');
 
--- 1b. Every profile gets a unique, permanent 11-digit user ID.
-select tests.ok((select bool_and(user_number between 10000000000 and 99999999999) from public.profiles), 'user IDs are 11 digits');
+-- 1b. Every profile gets a unique, permanent 8-digit user ID.
+select tests.ok((select bool_and(user_number between 10000000 and 99999999) from public.profiles), 'user IDs are 8 digits');
 select tests.ok((select count(distinct user_number) = count(*) from public.profiles), 'user IDs are unique');
 create temp table alice_number as select user_number from public.profiles where id = 'alice';
 grant select on alice_number to authenticated;
 set role authenticated;
-select tests.fails($$update public.profiles set user_number = 12345678901 where id = 'alice'$$, '%permission denied%', 'client cannot change own user ID');
+select tests.fails($$update public.profiles set user_number = 12345678 where id = 'alice'$$, '%permission denied%', 'client cannot change own user ID');
 select tests.ok((select user_number from public.profiles where id = 'bob') is not null, 'user ID is readable');
 reset role;
 -- Even privileged writers (webhooks, admins) cannot choose or change it.
-insert into public.profiles (id, user_number) values ('newbie', 12345678901);
-select tests.ok((select user_number from public.profiles where id = 'newbie') <> 12345678901, 'insert ignores supplied user ID');
-update public.profiles set user_number = 12345678901 where id = 'alice';
+insert into public.profiles (id, user_number) values ('newbie', 12345678);
+select tests.ok((select user_number from public.profiles where id = 'newbie') <> 12345678, 'insert ignores supplied user ID');
+update public.profiles set user_number = 12345678 where id = 'alice';
 select tests.ok((select user_number from public.profiles where id = 'alice') = (select user_number from alice_number), 'user ID never changes');
 delete from public.profiles where id = 'newbie';
 

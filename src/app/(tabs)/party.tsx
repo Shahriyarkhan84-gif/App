@@ -34,7 +34,7 @@ export default function PartyScreen() {
     let cancelled = false;
     const t = setTimeout(async () => {
       let rows: Person[] = [];
-      if (/^\d{11}$/.test(q)) {
+      if (/^\d{8}$/.test(q)) {
         const { data } = await supabase.from('profiles').select('id,user_number,display_name,username,avatar_url,country').eq('user_number', Number(q)).limit(1);
         rows = (data ?? []) as Person[];
       } else if (/^host-\d+$/i.test(q)) {
@@ -68,7 +68,7 @@ export default function PartyScreen() {
     offline, loading: rooms.loading, error: rooms.error, data: rooms.data, onRetry: rooms.reload,
     isEmpty: () => matchingRooms.length === 0 && matchingPeople.length === 0 && !(searching && people?.q !== q),
     empty: searching
-      ? { title: 'No matches', body: 'Try another name, an 11-digit ID, or a Host ID like HOST-00000001.' }
+      ? { title: 'No matches', body: 'Try another name, an 8-digit ID, or a Host ID like HOST-00000001.' }
       : { title: 'No rooms are live', body: 'Start your own and invite your fans.' },
   });
 

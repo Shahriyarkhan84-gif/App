@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.6 — 8-digit IDs
+
+- User IDs are now random 8-digit numbers; every existing account was issued a new one.
+
 ## 0.4.5 — Hosting instructions
 
 - New Hosting screen (Me → Verification for hosting): requirements, the 4 steps (become a host → Didit ID + selfie → review → Host badge) with live progress, a context-aware button, Didit walkthrough, tips and privacy note.

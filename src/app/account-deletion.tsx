@@ -7,7 +7,7 @@ export default function AccountDeletionPage() {
       <H>In the app</H>
       <Bullets items={['Open Zynalive and sign in.', 'Go to Me → Delete account.', 'Type DELETE and confirm. Deletion happens immediately.']} />
       <H>Without the app</H>
-      <P>Email [SUPPORT EMAIL] from the address on your account with the subject “Delete my account” and your 11-digit Zynalive ID. We delete the account within 30 days and confirm by email.</P>
+      <P>Email [SUPPORT EMAIL] from the address on your account with the subject “Delete my account” and your 8-digit Zynalive ID. We delete the account within 30 days and confirm by email.</P>
       <H>What we delete</H>
       <Bullets items={['Name, username, photo, bio, email and country', 'Followers, following and blocks', 'Direct messages and notifications', 'Live chat messages (replaced with “[deleted]”)', 'Your sign-in account']} />
       <H>What we keep, and why</H>

@@ -2,7 +2,7 @@ export type AppRole = 'USER' | 'HOST' | 'AGENCY_MEMBER' | 'AGENCY_ADMIN' | 'OWNE
 
 export type Profile = {
   id: string;
-  /** Public 11-digit ID, assigned by the database at sign-up. */
+  /** Public 8-digit ID, assigned by the database at sign-up. */
   user_number: number;
   /** Set by the database when the user passes host verification (Host badge). */
   verified_at: string | null;

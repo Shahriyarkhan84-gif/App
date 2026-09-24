@@ -10,7 +10,7 @@ export default function PrivacyPage() {
       <H>What we collect</H>
       <Bullets items={[
         'Account: email address, name and profile photo from sign-up (email, Google or Apple sign-in).',
-        'Profile: username, bio, country, language, your 11-digit Zynalive ID, followers and following.',
+        'Profile: username, bio, country, language, your 8-digit Zynalive ID, followers and following.',
         'Content: live video and audio while you broadcast, chat messages, direct messages, gifts and reports.',
         'Purchases and earnings: coin packages bought, gifts sent and received, withdrawal requests and payout details you enter. Card details are handled by Stripe; we never see them.',
         'Host verification: if you become a host, our partner Didit checks your ID document and a selfie. We receive only the result (for example “approved”), not your documents.',
