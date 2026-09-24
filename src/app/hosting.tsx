@@ -51,17 +51,17 @@ export default function HostingScreen() {
   const status = host?.verification_status ?? 'unverified';
   const approved = status === 'approved';
   const steps: { title: string; body: string; state: StepState }[] = [
-    { title: 'Become a host', body: 'Get your permanent Host ID (HOST-00000000).', state: isHost ? 'done' : 'current' },
     {
       title: 'Verify your identity with Didit',
       body: 'Quick ID scan and selfie in a secure Didit page.',
-      state: !isHost ? 'todo' : status === 'in_review' || approved ? 'done' : 'current',
+      state: status === 'in_review' || approved ? 'done' : 'current',
     },
     { title: 'Review', body: 'Most checks finish in minutes; some go to manual review (usually within a day).', state: approved ? 'done' : status === 'in_review' ? 'current' : 'todo' },
     { title: 'Host badge unlocked', body: 'Go live, receive gifts (you keep 90%) and withdraw earnings.', state: approved ? 'done' : 'todo' },
   ];
 
-  const becomeHost = async () => {
+  // Becoming a host (Host ID) happens automatically right before the first Didit check.
+  const becomeHostAndVerify = async () => {
     setBecoming(true);
     try {
       await rpc(supabase, 'become_host');
@@ -69,13 +69,15 @@ export default function HostingScreen() {
       await reload();
     } catch (e) {
       Alert.alert('Could not continue', friendlyError(e));
+      return;
     } finally {
       setBecoming(false);
     }
+    await start();
   };
 
   const cta = !isHost
-    ? { title: 'Become a host', onPress: becomeHost, loading: becoming }
+    ? { title: 'Start verification with Didit', onPress: becomeHostAndVerify, loading: becoming || busy }
     : approved
       ? { title: 'Go live', onPress: () => router.push('/create'), loading: false }
       : status === 'in_review'
