@@ -4,15 +4,17 @@ import { BricolageGrotesque_800ExtraBold } from '@expo-google-fonts/bricolage-gr
 import { DMSans_400Regular } from '@expo-google-fonts/dm-sans/400Regular';
 import { DMSans_500Medium } from '@expo-google-fonts/dm-sans/500Medium';
 import { DMSans_700Bold } from '@expo-google-fonts/dm-sans/700Bold';
-import { ClerkLoaded, ClerkProvider, useAuth, useUser } from '@clerk/clerk-expo';
+import { ClerkProvider, useAuth, useUser } from '@clerk/clerk-expo';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import { useFonts } from 'expo-font';
 import { Stack, useGlobalSearchParams, usePathname } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { PostHogProvider, usePostHog } from 'posthog-react-native';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 
+import { LaunchScreen } from '@/components/LaunchScreen';
 import { Text } from '@/components/ui';
 import { env, missingRequiredEnv } from '@/lib/env';
 import { ProfileProvider } from '@/lib/profile';
@@ -21,6 +23,23 @@ import { SupabaseProvider } from '@/lib/supabase';
 import { fonts, useTheme } from '@/lib/theme';
 
 initSentry();
+// Keep the native logo splash up until fonts are ready, then hand over to <LaunchScreen />.
+void SplashScreen.preventAutoHideAsync();
+SplashScreen.setOptions({ fade: true, duration: 300 });
+
+const MIN_LAUNCH_MS = 1200;
+
+/** Shows the branded loading page until Clerk has restored the session (and for a short minimum). */
+function LaunchGate({ children }: { children: ReactNode }) {
+  const { isLoaded } = useAuth();
+  const [minElapsed, setMinElapsed] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMinElapsed(true), MIN_LAUNCH_MS);
+    return () => clearTimeout(t);
+  }, []);
+  if (!isLoaded || !minElapsed) return <LaunchScreen />;
+  return <>{children}</>;
+}
 
 function Analytics({ children }: { children: ReactNode }) {
   if (!env.posthogKey) return <>{children}</>;
@@ -76,7 +95,7 @@ function RootNavigator() {
       }}
     >
       <Stack.Protected guard={!!isSignedIn}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="live/[roomId]" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="host/live" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="host/summary" options={{ title: 'Stream summary', headerBackVisible: false }} />
@@ -90,7 +109,7 @@ function RootNavigator() {
         <Stack.Screen name="admin/index" options={{ title: 'Owner command center' }} />
       </Stack.Protected>
       <Stack.Protected guard={!isSignedIn}>
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
       </Stack.Protected>
       <Stack.Screen name="checkout-return" options={{ headerShown: false }} />
     </Stack>
@@ -112,11 +131,15 @@ function RootLayout() {
   const { c, scheme } = useTheme();
   // A font that fails to load falls back to the system face; never block on it.
   const [fontsLoaded, fontError] = useFonts({ BricolageGrotesque_800ExtraBold, DMSans_400Regular, DMSans_500Medium, DMSans_700Bold });
-  if (!fontsLoaded && !fontError) return <View style={{ flex: 1, backgroundColor: c.background }} />;
+  const fontsReady = fontsLoaded || !!fontError;
+  useEffect(() => {
+    if (fontsReady) SplashScreen.hide();
+  }, [fontsReady]);
+  if (!fontsReady) return <View style={{ flex: 1, backgroundColor: c.background }} />;
   if (missingRequiredEnv.length > 0) return <MissingConfig />;
   return (
     <ClerkProvider publishableKey={env.clerkPublishableKey} tokenCache={tokenCache}>
-      <ClerkLoaded>
+      <LaunchGate>
         <SupabaseProvider>
           <ProfileProvider>
             <Analytics>
@@ -126,7 +149,7 @@ function RootLayout() {
             </Analytics>
           </ProfileProvider>
         </SupabaseProvider>
-      </ClerkLoaded>
+      </LaunchGate>
     </ClerkProvider>
   );
 }

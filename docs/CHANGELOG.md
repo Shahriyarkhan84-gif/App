@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1 — Launch flow
+
+- Zynalive logo (red tile, white Z, gold live dot) for the app icon, Android adaptive icon, favicon and native splash.
+- Startup: native logo splash → animated loading page (while fonts and the Clerk session load) → animated welcome screen
+  with Create account / Sign in / Google → sign-up or sign-in. Animations respect Reduce Motion.
+
 ## 0.4.0 — Canvas restyle
 
 - New visual identity from the Zynalive design canvas: red live accent, gold coins, violet earnings;
