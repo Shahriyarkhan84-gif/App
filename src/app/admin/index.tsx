@@ -235,7 +235,7 @@ function HostApplicationsSection() {
 
 type AgencyRow = { id: string; name: string; code: string; status: string; manager_id: string | null; created_at: string };
 
-/** Owner creates agencies (manager by 8-digit user ID); each gets a random 4-digit code. */
+/** Owner creates agencies (manager by 8-digit user ID); each owner gets one agency with a permanent random 4-digit code. */
 function AgenciesSection() {
   const supabase = useSupabase();
   const { c } = useTheme();
@@ -258,7 +258,7 @@ function AgenciesSection() {
           <Input value={manager} onChangeText={(v) => setManager(v.replace(/\D/g, '').slice(0, 8))} placeholder="Manager's 8-digit user ID" keyboardType="number-pad" />
           <Button title="Create agency" disabled={!canCreate || offline}
             onPress={() => act('create_agency_by_user_number', { p_name: name.trim(), p_user_number: Number(manager) }, () => { setName(''); setManager(''); void reload(); })} />
-          <Text variant="caption" muted>The manager becomes the agency admin and sees the 4-digit code in their Agency portal.</Text>
+          <Text variant="caption" muted>The manager becomes the Agency owner (one agency each) and gets a permanent 4-digit code, shown in their Agency portal. Codes never change.</Text>
         </Card>
         {(data ?? []).length === 0 && <Text muted style={{ textAlign: 'center' }}>No agencies yet.</Text>}
         {(data ?? []).map((a) => (
@@ -268,7 +268,6 @@ function AgenciesSection() {
               <Text variant="h3" color={c.gold} selectable style={{ letterSpacing: 4 }}>{a.code}</Text>
             </Row>
             <Text variant="caption" muted>{a.status} · since {new Date(a.created_at).toLocaleDateString()}</Text>
-            <Button title="New code" size="sm" variant="secondary" onPress={() => act('regenerate_agency_code', { p_agency: a.id }, reload)} />
           </Card>
         ))}
       </ScrollView>

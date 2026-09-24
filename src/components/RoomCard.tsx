@@ -5,7 +5,7 @@ import { Pressable, View } from 'react-native';
 import { useTheme } from '@/lib/theme';
 import { categoryLabel, displayName, type Room } from '@/lib/types';
 
-import { HostBadge, LiveBadge, Text, ViewerCount } from './ui';
+import { LiveBadge, RoleBadges, Text, ViewerCount } from './ui';
 
 export function RoomCard({ room, width, reason }: { room: Room; width: number; reason?: string | null }) {
   const { c, radius } = useTheme();
@@ -27,7 +27,7 @@ export function RoomCard({ room, width, reason }: { room: Room; width: number; r
           <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 12, paddingTop: 28, paddingBottom: 12, experimental_backgroundImage: 'linear-gradient(transparent, rgba(0,0,0,0.72))' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Text variant="label" color="#fff" style={{ fontSize: 15, flexShrink: 1 }} numberOfLines={1}>{name}</Text>
-              {room.host?.verified_at && <HostBadge small />}
+              <RoleBadges profile={room.host} small />
             </View>
             <Text variant="caption" color="#E4DFEC" numberOfLines={1}>{room.title} · {categoryLabel(room.category)}</Text>
           </View>

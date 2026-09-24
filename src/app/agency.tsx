@@ -1,13 +1,13 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, Share, View } from 'react-native';
+import { Pressable, ScrollView, Share, View } from 'react-native';
 
 import { FadeIn } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Button, Card, Chip, Coin, compactNumber, HostBadge, Row, Screen, Text } from '@/components/ui';
+import { AgencyOwnerBadge, Avatar, Button, Card, Chip, Coin, compactNumber, HostBadge, Row, Screen, Text } from '@/components/ui';
 import { rpc } from '@/lib/api';
-import { errorCode, friendlyError } from '@/lib/errors';
+import { errorCode } from '@/lib/errors';
 import { useFocusedAsync, useOffline } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
@@ -33,33 +33,14 @@ export default function AgencyPortalScreen() {
   const { c } = useTheme();
   const offline = useOffline();
   const [tab, setTab] = useState<(typeof TABS)[number]>('Hosts');
-  const [rotating, setRotating] = useState(false);
   const { data, error, loading, reload } = useFocusedAsync(() => rpc<Portal>(supabase, 'agency_portal', {}), []);
 
   if (error && errorCode(error) === 'not_agency_member') {
     return <Screen edges={[]}><StateView state={{ kind: 'disabled', title: 'No agency yet', body: 'The agency portal is for agency owners and staff. Ask Zynalive to set up your agency.' }} /></Screen>;
   }
 
-  const isAdmin = data?.role === 'admin' || data?.role === 'manager';
   const shareCode = (p: Portal) =>
     Share.share({ message: `Join ${p.agency.name} on Zynalive! When you verify for hosting, enter agency code ${p.agency.code}.` });
-  const rotate = (p: Portal) =>
-    Alert.alert('Issue a new code?', `Code ${p.agency.code} will stop working for new applications. Hosts already in your agency stay linked.`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'New code', style: 'destructive', onPress: async () => {
-          setRotating(true);
-          try {
-            await rpc(supabase, 'regenerate_agency_code', { p_agency: p.agency.id });
-            await reload();
-          } catch (e) {
-            Alert.alert('Could not change the code', friendlyError(e));
-          } finally {
-            setRotating(false);
-          }
-        },
-      },
-    ]);
 
   return (
     <Screen edges={['bottom']}>
@@ -68,19 +49,24 @@ export default function AgencyPortalScreen() {
           <ScrollView contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 32, maxWidth: 900, width: '100%', alignSelf: 'center' }}>
             <FadeIn style={{ gap: 4 }}>
               <Text variant="h1">{data.agency.name}</Text>
-              <Text muted>{data.role === 'agent' ? 'Agent' : data.role === 'manager' ? 'Manager' : 'Agency owner'}{data.agency.status !== 'active' ? ' · Suspended' : ''}</Text>
+              <Row gap={8}>
+                {data.role === 'admin' ? <AgencyOwnerBadge /> : <Text muted>{data.role === 'manager' ? 'Manager' : 'Agent'}</Text>}
+                {data.agency.status !== 'active' && <Text muted>Suspended</Text>}
+              </Row>
             </FadeIn>
 
             <FadeIn delay={60}>
               <Card style={{ gap: 12, backgroundColor: c.goldSurface, borderColor: c.goldBorder }}>
-                <Text variant="label" color={c.goldText}>Agency code</Text>
+                <Row style={{ justifyContent: 'space-between' }}>
+                  <Text variant="label" color={c.goldText}>Agency code</Text>
+                  <Row gap={4}><Ionicons name="lock-closed" size={12} color={c.goldText} /><Text variant="caption" color={c.goldText}>Permanent</Text></Row>
+                </Row>
                 <Text variant="display" selectable accessibilityLabel={`Agency code ${data.agency.code.split('').join(' ')}`} style={{ fontSize: 44, lineHeight: 52, letterSpacing: 10, color: c.gold }}>
                   {data.agency.code}
                 </Text>
-                <Text variant="bodySmall" color={c.goldText}>New hosts enter this code in “Verify with Didit”. Once they pass, they join your agency automatically.</Text>
+                <Text variant="bodySmall" color={c.goldText}>New hosts enter this code in “Verify with Didit”. Once they pass, they join your agency automatically. This code is yours for good — it never changes.</Text>
                 <Row gap={8}>
                   <Button title="Share code" icon={<Ionicons name="share-social-outline" size={16} color={c.onGold} />} variant="gold" size="sm" onPress={() => void shareCode(data)} />
-                  {isAdmin && <Button title="New code" variant="secondary" size="sm" loading={rotating} disabled={offline} onPress={() => rotate(data)} />}
                 </Row>
               </Card>
             </FadeIn>

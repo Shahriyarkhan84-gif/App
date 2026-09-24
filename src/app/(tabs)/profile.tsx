@@ -5,7 +5,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { Alert, ScrollView, View } from 'react-native';
 
 import { StateView } from '@/components/StateView';
-import { Avatar, Button, Card, Coin, HostBadge, IconButton, ListRow, Row, Screen, Text } from '@/components/ui';
+import { AgencyOwnerBadge, Avatar, Button, Card, Coin, HostBadge, IconButton, ListRow, Row, Screen, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { env } from '@/lib/env';
 import { useFocusedAsync, useRealtime } from '@/lib/hooks';
@@ -53,7 +53,8 @@ export default function ProfileScreen() {
   if (!profile) return <Screen><StateView state={error ? { kind: 'error', error, onRetry: reload } : { kind: 'loading' }} /></Screen>;
 
   const verified = host?.verification_status === 'approved';
-  const isAgencyStaff = profile?.role === 'AGENCY_ADMIN' || profile?.role === 'AGENCY_MEMBER';
+  const isAgencyOwner = profile?.role === 'AGENCY_ADMIN';
+  const isAgencyStaff = isAgencyOwner || profile?.role === 'AGENCY_MEMBER';
 
   return (
     <Screen>
@@ -68,9 +69,10 @@ export default function ProfileScreen() {
           <View style={{ flex: 1, gap: 4 }}>
             <Text variant="h3" style={{ fontSize: 20, lineHeight: 26 }} numberOfLines={1}>{displayName(profile)}</Text>
             <Text variant="bodySmall" muted selectable accessibilityLabel={`Your ID ${String(profile.user_number).split('').join(' ')}`}>ID {profile.user_number}</Text>
-            {host && (
-              <Row gap={6}>
-                {verified ? <HostBadge /> : <Badge label="Verification pending" />}
+            {(host || isAgencyOwner) && (
+              <Row gap={6} style={{ flexWrap: 'wrap' }}>
+                {host && (verified ? <HostBadge /> : <Badge label="Verification pending" />)}
+                {isAgencyOwner && <AgencyOwnerBadge />}
               </Row>
             )}
           </View>

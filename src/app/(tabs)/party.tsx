@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, TextInput, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Button, compactNumber, HostBadge, Row, Screen, Text } from '@/components/ui';
+import { Avatar, Button, compactNumber, RoleBadges, Row, Screen, Text } from '@/components/ui';
 import { useFocusedAsync, useOffline } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
 import { fonts, useTheme } from '@/lib/theme';
@@ -140,7 +140,7 @@ function PartyRow({ room }: { room: Room }) {
       <View style={{ flex: 1, justifyContent: 'center', gap: 5 }}>
         <Text variant="h3" numberOfLines={1} style={{ fontSize: 16 }}>{room.title}</Text>
         <Text variant="bodySmall" muted numberOfLines={1}>Host <Text variant="bodySmall" style={{ fontWeight: '500' }}>{host}</Text> · {categoryLabel(room.category)}</Text>
-        {room.host?.verified_at && <View style={{ flexDirection: 'row' }}><HostBadge small /></View>}
+        <View style={{ flexDirection: 'row' }}><RoleBadges profile={room.host} small /></View>
         <Text variant="caption" faint>{compactNumber(room.viewer_count)} watching</Text>
       </View>
     </Pressable>

@@ -243,6 +243,33 @@ export function HostBadge({ small }: { small?: boolean }) {
   );
 }
 
+/** Owners of an agency (profiles.role AGENCY_ADMIN). Separate from, and can sit next to, the Host badge. */
+export function AgencyOwnerBadge({ small }: { small?: boolean }) {
+  const { c } = useTheme();
+  return (
+    <View
+      accessibilityLabel="Agency owner"
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: c.gold, borderRadius: 6, paddingHorizontal: small ? 5 : 8, paddingVertical: small ? 1 : 3 }}
+    >
+      <Ionicons name="business" size={small ? 10 : 12} color={c.onGold} />
+      <Text variant="caption" color={c.onGold} style={{ fontSize: small ? 10 : 11, fontWeight: '700' }}>Agency owner</Text>
+    </View>
+  );
+}
+
+/** Host and/or Agency owner tags for a profile; renders nothing when neither applies. */
+export function RoleBadges({ profile, small }: { profile?: { verified_at?: string | null; role?: string | null } | null; small?: boolean }) {
+  const host = !!profile?.verified_at;
+  const owner = profile?.role === 'AGENCY_ADMIN';
+  if (!host && !owner) return null;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+      {host && <HostBadge small={small} />}
+      {owner && <AgencyOwnerBadge small={small} />}
+    </View>
+  );
+}
+
 /** Gold coin glyph used next to balances and prices. */
 export function Coin({ size = 16 }: { size?: number }) {
   return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#FFC24B', borderWidth: Math.max(2, size / 8), borderColor: '#C98A12' }} />;

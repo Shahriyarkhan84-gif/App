@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.1 — Permanent agency codes & Agency owner tag
+
+- Each agency owner gets **one** agency with a **one-time, permanent** 4-digit code: codes are issued on creation and can never change (trigger `agencies_code_permanent`); `regenerate_agency_code` and the "New code" buttons are removed; one agency per owner (`agencies_one_per_owner`).
+- New gold **Agency owner** tag, separate from the red **Host** tag; someone who is both shows both (profile, public profile, room cards, live room, Party).
+
 ## 0.6.0 — Agency portal & 4-digit agency codes
 
 - Agency codes are now random 4-digit numbers (e.g. `4821`); old `AG-XXXXXX` codes are reissued. The verification form takes 4 digits only.

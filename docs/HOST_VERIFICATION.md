@@ -38,7 +38,7 @@ the last 4 CNIC digits and the result (`host_applications`). Needs `DIDIT_API_KE
   so a wrong code costs no Didit check.
 - **Format:** exactly 4 digits, 1000–9999 (e.g. `4821`), random and unique per agency. Checked in the app,
   in `host-application` and by a table constraint. Agencies find and share their code in the **Agency portal**
-  (Profile → Agency portal) and can issue a new one there.
+  (Profile → Agency portal). The code is issued once when the agency is created and never changes.
 - **On approval** the host is linked to that agency, unless already linked to one.
 - Hosting → "What you need" tells users to get the code from their agency first.
 

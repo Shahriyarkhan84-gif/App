@@ -338,14 +338,11 @@ select tests.ok((public.agency_portal() -> 'agency' ->> 'name') = 'Agency A', 'a
 select tests.ok((public.agency_portal() -> 'stats' ->> 'earnings_lifetime')::bigint = (select lifetime from public.creator_earnings where host_id = 'bob'), 'agency admin sees host earnings');
 select tests.ok(jsonb_array_length(public.agency_portal() -> 'hosts') = 1, 'portal lists only own hosts');
 select tests.fails($$select public.agency_portal(tests.agency('Agency B'))$$, '%not_agency_member%', 'agency admin opens another agency portal');
-select tests.fails($$select public.regenerate_agency_code(tests.agency('Agency B'))$$, '%forbidden%', 'agency admin rotates another agency code');
-select public.regenerate_agency_code(tests.agency('Agency A'));
 select tests.fails($$select public.create_agency_by_user_number('Mine', 12345678)$$, '%forbidden%', 'agency admin creates agency');
 reset role;
 select set_config('request.jwt.claims', '{"sub":"agent_a"}', false);
 set role authenticated;
 select tests.ok(public.agency_portal() -> 'stats' -> 'earnings_lifetime' = 'null'::jsonb, 'agent does not see money');
-select tests.fails($$select public.regenerate_agency_code(tests.agency('Agency A'))$$, '%forbidden%', 'agent rotates code');
 reset role;
 select set_config('request.jwt.claims', '{"sub":"alice"}', false);
 set role authenticated;
@@ -358,5 +355,12 @@ select tests.fails($$select public.create_agency_by_user_number('Again', (select
 select tests.fails($$select public.create_agency_by_user_number('Ghost', 1)$$, '%user_not_found%', 'unknown user ID');
 reset role;
 select tests.ok((select role from public.profiles where id = 'frank') = 'AGENCY_ADMIN', 'new agency manager becomes agency admin');
+-- Agency codes are permanent (no one can change them) and each owner has one agency.
+select tests.fails($$update public.agencies set code = '1234' where name = 'Agency A'$$, '%agency_code_permanent%', 'agency code cannot change');
+select tests.ok(not exists (select 1 from pg_proc where proname = 'regenerate_agency_code'), 'no code rotation RPC');
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select tests.fails($$select public.create_agency('Second agency', 'dave')$$, '%agencies_one_per_owner%', 'one agency per owner');
+reset role;
 
 drop schema tests cascade;

@@ -14,6 +14,7 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 | `…080000_verified_badge.sql` | `profiles.verified_at`: set by trigger when host verification is approved (Host badge), cleared if declined |
 | `…090000_account_deletion.sql` | `profiles.deleted_at`, `internal_delete_account()` (service role): removes personal data and social graph, anonymises the profile, keeps money/moderation records |
 | `…110000_host_id_equals_user_id.sql` | `hosts.host_code` = `profiles.user_number` (set by trigger, frozen); sequence dropped |
+| `…140000_permanent_agency_code.sql` | agency codes frozen after insert (`agency_code_permanent`), `regenerate_agency_code()` dropped, unique `agencies.manager_id` (one agency per owner) |
 | `…130000_agency_portal.sql` | `agencies.code` is a random unique **4-digit** code (1000–9999, `private.new_agency_code()`, old `AG-` codes reissued); `agency_portal()`, `regenerate_agency_code()`, `create_agency_by_user_number()` |
 | `…120000_host_applications.sql` | `host_applications` (no images, CNIC last 4 only), `internal_submit_host_application()`, `review_host_application()`, `private.ensure_host()` |
 | `…050000_hardening.sql` | fixed `search_path` on remaining functions; no anon execute by default (Supabase advisor fixes) |

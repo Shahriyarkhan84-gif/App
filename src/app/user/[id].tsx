@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Button, Card, HostBadge, Row, Screen, Text } from '@/components/ui';
+import { Avatar, Button, Card, RoleBadges, Row, Screen, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -82,7 +82,7 @@ export default function UserProfileScreen() {
               <Avatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={96} />
               <Row gap={8}>
                 <Text variant="h2">{displayName(data.profile)}</Text>
-                {data.profile.verified_at && <HostBadge />}
+                <RoleBadges profile={data.profile} />
               </Row>
               <Text muted>{[`ID ${data.profile.user_number}`, data.profile.username && `@${data.profile.username}`, data.profile.country].filter(Boolean).join(' · ')}</Text>
               <Text variant="label">{data.followers.toLocaleString()} followers</Text>

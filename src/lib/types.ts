@@ -27,7 +27,7 @@ export type Room = {
   updated_at?: string;
   viewer_count: number;
   current_stream_id: string | null;
-  host?: Pick<Profile, 'id' | 'display_name' | 'username' | 'avatar_url' | 'country' | 'verified_at'> | null;
+  host?: Pick<Profile, 'id' | 'display_name' | 'username' | 'avatar_url' | 'country' | 'verified_at' | 'role'> | null;
 };
 
 export type ChatMessage = {
@@ -46,7 +46,7 @@ export type CoinPackage = { id: number; name: string; coins: number; price_minor
 
 // rooms.host_id -> hosts.user_id -> profiles.id
 export const ROOM_SELECT =
-  'id,host_id,title,category,cover_url,status,viewer_count,current_stream_id,updated_at,hostRow:hosts(profile:profiles(id,display_name,username,avatar_url,country,verified_at))';
+  'id,host_id,title,category,cover_url,status,viewer_count,current_stream_id,updated_at,hostRow:hosts(profile:profiles(id,display_name,username,avatar_url,country,verified_at,role))';
 
 type RawRoom = Omit<Room, 'host'> & { hostRow?: { profile: Room['host'] } | null };
 
