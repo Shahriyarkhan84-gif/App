@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { Alert, ScrollView } from 'react-native';
 
 import { useStartVerification } from '@/components/HostVerificationCard';
 import { FadeIn } from '@/components/Motion';
@@ -14,8 +14,6 @@ import { useOffline, useRealtime } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
-
-type StepState = 'done' | 'current' | 'todo';
 
 const REQUIREMENTS: { icon: IconName; text: string }[] = [
   { icon: 'person-outline', text: 'You are 18 or older' },
@@ -50,15 +48,6 @@ export default function HostingScreen() {
 
   const status = host?.verification_status ?? 'unverified';
   const approved = status === 'approved';
-  const steps: { title: string; body: string; state: StepState }[] = [
-    {
-      title: 'Verify your identity with Didit',
-      body: 'Quick ID scan and selfie in a secure Didit page.',
-      state: status === 'in_review' || approved ? 'done' : 'current',
-    },
-    { title: 'Review', body: 'Most checks finish in minutes; some go to manual review (usually within a day).', state: approved ? 'done' : status === 'in_review' ? 'current' : 'todo' },
-    { title: 'Host badge unlocked', body: 'Go live, receive gifts (you keep 90%) and withdraw earnings.', state: approved ? 'done' : 'todo' },
-  ];
 
   // Becoming a host (Host ID) happens automatically right before the first Didit check.
   const becomeHostAndVerify = async () => {
@@ -120,11 +109,6 @@ export default function HostingScreen() {
           </Card>
         )}
 
-        <FadeIn delay={80}>
-          <Card style={{ gap: 0, paddingVertical: 8 }}>
-            {steps.map((s, i) => <Step key={s.title} n={i + 1} last={i === steps.length - 1} {...s} />)}
-          </Card>
-        </FadeIn>
 
         <Button title={cta.title} onPress={cta.onPress} loading={cta.loading} disabled={offline} />
         {offline && <Text variant="caption" muted>You need a connection to continue.</Text>}
@@ -134,25 +118,6 @@ export default function HostingScreen() {
         </Section>
       </ScrollView>
     </Screen>
-  );
-}
-
-function Step({ n, title, body, state, last }: { n: number; title: string; body: string; state: StepState; last: boolean }) {
-  const { c } = useTheme();
-  const color = state === 'done' ? c.success : state === 'current' ? c.primary : c.textFaint;
-  return (
-    <View style={{ flexDirection: 'row', gap: 12 }} accessibilityLabel={`Step ${n}, ${title}, ${state === 'done' ? 'done' : state === 'current' ? 'current step' : 'not started'}`}>
-      <View style={{ alignItems: 'center' }}>
-        <View style={{ width: 28, height: 28, borderRadius: 14, marginTop: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: state === 'todo' ? c.surfaceRaised : color }}>
-          {state === 'done' ? <Ionicons name="checkmark" size={16} color="#fff" /> : <Text variant="caption" color={state === 'current' ? '#fff' : c.textMuted} style={{ fontWeight: '700' }}>{n}</Text>}
-        </View>
-        {!last && <View style={{ flex: 1, width: 2, backgroundColor: state === 'done' ? c.success : c.divider, marginVertical: 4 }} />}
-      </View>
-      <View style={{ flex: 1, paddingVertical: 8, gap: 2 }}>
-        <Text variant="label" color={state === 'todo' ? c.textMuted : c.text}>{title}</Text>
-        <Text variant="bodySmall" muted>{body}</Text>
-      </View>
-    </View>
   );
 }
 
