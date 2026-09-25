@@ -12,12 +12,14 @@ import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useAsync, useOffline } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
+import { useTheme } from '@/lib/theme';
 import { displayName, type Profile } from '@/lib/types';
 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const supabase = useSupabase();
   const { userId } = useAuth();
+  const { c } = useTheme();
   const track = useAnalytics();
   const offline = useOffline();
   const [following, setFollowing] = useState<boolean | null>(null);
@@ -73,7 +75,7 @@ export default function UserProfileScreen() {
     ]);
 
   return (
-    <Screen edges={[]}>
+    <Screen edges={['bottom']}>
       <Stack.Screen options={{ title: data ? displayName(data.profile) : '' }} />
       <StateView state={resolveState({ offline, loading, error, data, onRetry: reload })}>
         {data && (
@@ -100,14 +102,17 @@ export default function UserProfileScreen() {
               <Text variant="label">{data.followers.toLocaleString()} followers</Text>
               {data.profile.bio && <Text style={{ textAlign: 'center' }}>{data.profile.bio}</Text>}
             </View>
-            {!isMe && (
-              <Row>
-                <Button title={isFollowing ? 'Following' : 'Follow'} variant={isFollowing ? 'secondary' : 'primary'} onPress={toggleFollow} style={{ flex: 1 }} />
-                <Button title="Message" variant="secondary" onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: id } })} style={{ flex: 1 }} />
-                <Button title="•••" variant="ghost" onPress={moreActions} accessibilityLabel="More actions" />
-              </Row>
-            )}
           </ScrollView>
+        )}
+        {data && !isMe && (
+          // Pinned footer: Follow / Message stay in place while the profile scrolls.
+          <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, borderTopWidth: 1, borderTopColor: c.divider, backgroundColor: c.background }}>
+            <Row style={{ maxWidth: 640, width: '100%', alignSelf: 'center' }}>
+              <Button title={isFollowing ? 'Following' : 'Follow'} variant={isFollowing ? 'secondary' : 'primary'} onPress={toggleFollow} style={{ flex: 1, minHeight: 54 }} />
+              <Button title="Message" variant="secondary" onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: id } })} style={{ flex: 1, minHeight: 54 }} />
+              <Button title="•••" variant="ghost" onPress={moreActions} accessibilityLabel="More actions" />
+            </Row>
+          </View>
         )}
       </StateView>
     </Screen>
