@@ -50,6 +50,7 @@ reset role;
 
 select tests.ok((select verification_status = 'approved' and agency_id = (select id from public.agencies where code = '4821') from public.hosts where user_id = 'ha_ok'), 'approved host verified and linked to agency');
 select tests.ok((select verified_at is not null from public.profiles where id = 'ha_ok'), 'approved user gets Host badge');
+select tests.ok((select h.host_code = p.user_number::text from public.hosts h join public.profiles p on p.id = h.user_id where h.user_id = 'ha_ok'), 'verified host keeps their user ID as Host ID');
 select tests.ok((select verified_at is not null from public.profiles where id = 'ha_typo'), 'auto-approved user gets Host badge immediately');
 select tests.ok((select verification_status from public.hosts where user_id = 'ha_review') = 'in_review', 'review host pending');
 select tests.ok((select verification_status from public.hosts where user_id = 'ha_bad') = 'declined', 'declined host');

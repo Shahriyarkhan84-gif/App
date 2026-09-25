@@ -194,7 +194,7 @@ export default function CreateScreen() {
           {!isHost ? (
             <Card>
               <Text variant="h3">Become a host</Text>
-              <Text muted>{"Stream to your followers, receive gifts, and earn 90% of every gift's coins. You'll get a permanent Host ID."}</Text>
+              <Text muted>{`Stream to your followers, receive gifts, and earn 90% of every gift's coins. Your ID ${profile?.user_number ?? ''} stays the same — it's also your Host ID.`}</Text>
               <Button title="Become a host" onPress={becomeHost} loading={busy} disabled={offline} />
             </Card>
           ) : needsVerification ? (
