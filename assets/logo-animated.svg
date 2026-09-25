@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 168" width="168" height="168" role="img" aria-label="Zynalive">
+  <style>
+    .tile{transform-origin:84px 84px;animation:pop .8s cubic-bezier(.2,.9,.25,1.25) both}
+    .body{stroke-dasharray:190;animation:draw .7s ease-out .45s both}
+    .lens{stroke-dasharray:60;animation:draw .45s ease-out .75s both}
+    .dot{transform-origin:70px 84px;animation:dot .5s cubic-bezier(.2,.9,.3,1.5) 1s both,breathe 1.4s ease-in-out 1.6s infinite}
+    .a1{animation:wave 2s ease-out 1.2s infinite both}
+    .a2{animation:wave 2s ease-out 1.55s infinite both}
+    .ring{transform-origin:84px 84px;opacity:0;animation:ripple 2.4s ease-out 1.4s infinite}
+    @keyframes pop{0%{transform:scale(.2) rotate(-18deg);opacity:0}60%{opacity:1}100%{transform:none}}
+    @keyframes draw{from{stroke-dashoffset:190}to{stroke-dashoffset:0}}
+    @keyframes dot{0%{transform:scale(0)}70%{transform:scale(1.5)}100%{transform:scale(1)}}
+    @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+    @keyframes wave{0%{opacity:0}15%{opacity:1}70%{opacity:.15}100%{opacity:1}}
+    @keyframes ripple{0%{opacity:.55;transform:scale(1)}100%{opacity:0;transform:scale(1.45)}}
+    @media (prefers-reduced-motion:reduce){*{animation:none!important}.a1,.a2{opacity:1}}
+  </style>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF3B63"/><stop offset="1" stop-color="#9E0C33"/></linearGradient>
+  </defs>
+  <rect class="ring" x="22" y="22" width="124" height="124" rx="36" fill="none" stroke="#FF3B63" stroke-width="2"/>
+  <g class="tile">
+    <rect x="22" y="22" width="124" height="124" rx="36" fill="url(#g)"/>
+    <rect x="22" y="22" width="124" height="62" rx="36" fill="#FFFFFF" opacity=".07"/>
+    <rect class="body" x="46" y="64" width="54" height="40" rx="10" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linejoin="round"/>
+    <path class="lens" d="M100 78 L120 67 L120 101 L100 90" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle class="dot" cx="70" cy="84" r="7" fill="#FFFFFF"/>
+    <path class="a1" d="M112 46 a14 14 0 0 1 14 14" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+    <path class="a2" d="M112 34 a26 26 0 0 1 26 26" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" opacity=".8"/>
+  </g>
+</svg>
