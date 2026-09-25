@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
 
 import { RoomCard } from '@/components/RoomCard';
-import { FollowingLive } from '@/components/FollowingLive';
+import { LiveBell } from '@/components/FollowingLive';
 import { FadeIn, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Chip, IconButton, Row, Screen, Text, TextTabs, Wordmark } from '@/components/ui';
@@ -81,12 +81,11 @@ export default function HomeScreen() {
           <Row gap={8}>
             <IconButton icon="trophy-outline" label="Rankings" color={c.gold} onPress={() => router.push('/rankings')} />
             <IconButton icon="search" label="Search" onPress={() => router.push('/party')} />
-            <IconButton icon="notifications-outline" label="Notifications" onPress={() => router.push('/messages')} />
+            <LiveBell rooms={data ? data.live.filter((r) => data.followed.has(r.host_id)) : []} />
           </Row>
         </Row>
         <TextTabs options={FEEDS} value={feed} onChange={setFeed} />
       </View>
-      {feed !== 'following' && data && <FollowingLive rooms={data.live.filter((r) => data.followed.has(r.host_id))} />}
       <View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingVertical: 12 }}>
           {CHIPS.map((k) => <Chip key={k} label={k === 'all' ? 'All' : categoryLabel(k)} selected={category === k} onPress={() => setCategory(k)} />)}
