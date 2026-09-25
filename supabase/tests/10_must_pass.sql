@@ -172,9 +172,21 @@ reset role;
 ---------------------------------------------------------------------------------------
 -- 5. A duplicated gift request cannot double-charge
 ---------------------------------------------------------------------------------------
+-- A cover picture is required to go live; hosts set it only from their own storage folder.
+update public.platform_settings set value = '{"covers_base": "https://cdn.test/covers"}' where key = 'media';
 select set_config('request.jwt.claims', '{"sub":"bob"}', false);
 set role authenticated;
+select tests.fails($$select public.go_live('Bob live', 'music')$$, '%cover_required%', 'go live without a cover');
+select tests.fails($$select public.set_room_cover('carol/pic.jpg')$$, '%invalid_cover%', 'cover from another user folder');
+select tests.fails($$select public.set_room_cover('bob/../carol/pic.jpg')$$, '%invalid_cover%', 'cover path traversal');
+select tests.fails($$select public.set_room_cover('bob/pic.exe')$$, '%invalid_cover%', 'cover wrong type');
+select tests.fails($$update public.rooms set cover_url = 'https://evil.test/x.jpg' where host_id = 'bob'$$, '%permission denied%', 'client writes cover_url');
+select tests.ok((public.set_room_cover('bob/cover-1.jpg')).cover_url = 'https://cdn.test/covers/bob/cover-1.jpg', 'host sets own cover');
 select public.go_live('Bob live', 'music');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"alice"}', false);
+set role authenticated;
+select tests.fails($$select public.set_room_cover('alice/a.jpg')$$, '%not_a_host%', 'non-host sets cover');
 reset role;
 
 select set_config('request.jwt.claims', '{"sub":"alice"}', false);

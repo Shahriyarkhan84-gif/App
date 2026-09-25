@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.1 — Cover picture required to go live
+
+- `go_live()` raises `cover_required` until the room has a cover. Covers are uploaded to the public `covers` storage bucket under `<user id>/` (storage policies: hosts write only their own folder; JPEG/PNG/WebP, 5 MB) and attached with `set_room_cover(p_path)`, which checks the folder, file type and that the object exists, then builds the URL from `platform_settings.media.covers_base` — clients can't write `rooms.cover_url` or point it elsewhere.
+- Go live screen: required cover tile (pick → crop 3:4 → resize 900 px JPEG → upload); the Go live button reads "Add a cover to go live" until one is set.
+- Set `media.covers_base` per environment: `https://<project>.supabase.co/storage/v1/object/public/covers`.
+
 ## 0.7.0 — Figma redesign + motion
 
 - Figma file "Zynalive — App redesign" (design system, 30 mobile screens, 2 web dashboards, animated prototype) is the design reference.

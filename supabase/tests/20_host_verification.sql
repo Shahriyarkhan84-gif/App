@@ -61,6 +61,7 @@ select tests.fails($$select public.internal_apply_host_verification('ses_unknown
 reset role;
 
 -- Verified hosts can go live; users only see their own verification records.
+update public.rooms set cover_url = 'https://cdn.test/covers/hana/c.jpg' where host_id = 'hana';
 select set_config('request.jwt.claims', '{"sub":"hana"}', false);
 set role authenticated;
 select public.go_live('Verified!', 'chat');
@@ -76,6 +77,10 @@ update public.platform_settings set value = '{"required_to_go_live": false, "req
 select set_config('request.jwt.claims', '{"sub":"ivan"}', false);
 set role authenticated;
 select public.become_host();
+reset role;
+update public.rooms set cover_url = 'https://cdn.test/covers/ivan/c.jpg' where host_id = 'ivan';
+select set_config('request.jwt.claims', '{"sub":"ivan"}', false);
+set role authenticated;
 select public.go_live('No KYC needed', 'chat');
 reset role;
 update public.platform_settings set value = '{"required_to_go_live": true, "required_to_withdraw": true}' where key = 'host_verification';

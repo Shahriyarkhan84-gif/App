@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 type AnalyticsEvent =
   | { name: 'room_joined'; props: { room_id: string } }
   | { name: 'went_live'; props: { category: string } }
+  | { name: 'cover_set'; props: Record<string, never> }
   | { name: 'live_ended'; props: { room_id: string } }
   | { name: 'gift_sent'; props: { room_id: string; gift_id: number; coins: number } }
   | { name: 'chat_sent'; props: { room_id: string } }

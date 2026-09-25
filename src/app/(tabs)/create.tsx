@@ -1,10 +1,15 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
+import { Image } from 'expo-image';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+import * as ImagePicker from 'expo-image-picker';
 import { router, useIsFocused } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HostVerificationCard } from '@/components/HostVerificationCard';
+import { Pop } from '@/components/Motion';
 import { StateView, type ViewState } from '@/components/StateView';
 import { Button, Card, Chip, Input, Row, Screen, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
@@ -26,17 +31,18 @@ export default function CreateScreen() {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>('chat');
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   // Only hold the camera while this tab is on screen, so the broadcast can take it.
   const focused = useIsFocused();
 
   const room = useFocusedAsync(async () => {
     if (!profile) return null;
     const [{ data }, { data: setting }] = await Promise.all([
-      supabase.from('rooms').select('id,status,title,category').eq('host_id', profile.id).maybeSingle(),
+      supabase.from('rooms').select('id,status,title,category,cover_url').eq('host_id', profile.id).maybeSingle(),
       supabase.from('platform_settings').select('value').eq('key', 'host_verification').maybeSingle(),
     ]);
     const verificationRequired = (setting?.value as { required_to_go_live?: boolean } | undefined)?.required_to_go_live !== false;
-    return data ? { ...data, verificationRequired } : { verificationRequired, status: null, title: '' };
+    return data ? { ...data, verificationRequired } : { verificationRequired, status: null, title: '', cover_url: null as string | null };
   }, [profile?.id, isHost]);
 
   // Didit results arrive as a notification; refresh the host's status when one lands.
@@ -73,6 +79,30 @@ export default function CreateScreen() {
       setBusy(false);
     }
   };
+
+  // Covers are required to go live: uploaded to covers/<user id>/ and attached by set_room_cover().
+  const pickCover = async () => {
+    if (!profile) return;
+    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [3, 4], quality: 1 });
+    if (picked.canceled || !picked.assets[0]) return;
+    setUploading(true);
+    try {
+      const ref = await ImageManipulator.manipulate(picked.assets[0].uri).resize({ width: 900 }).renderAsync();
+      const out = await ref.saveAsync({ compress: 0.8, format: SaveFormat.JPEG });
+      const body = await (await fetch(out.uri)).arrayBuffer();
+      const path = `${profile.id}/cover-${Date.now()}.jpg`;
+      const { error } = await supabase.storage.from('covers').upload(path, body, { contentType: 'image/jpeg' });
+      if (error) throw error;
+      await rpc(supabase, 'set_room_cover', { p_path: path });
+      track('cover_set', {});
+      room.reload();
+    } catch (e) {
+      Alert.alert('Could not add cover', friendlyError(e));
+    } finally {
+      setUploading(false);
+    }
+  };
+  const cover = room.data?.cover_url ?? null;
 
   const needsPermission = Platform.OS !== 'web' && (!camera?.granted || !mic?.granted);
 
@@ -116,6 +146,23 @@ export default function CreateScreen() {
               <Text variant="h2" color={lc.text}>Go live</Text>
               <Text variant="caption" color={lc.textMuted}>ID {profile?.user_number}{verification === 'approved' ? ' · Verified' : ''}</Text>
             </Row>
+            <Pressable onPress={pickCover} disabled={uploading || offline} accessibilityRole="button" accessibilityLabel={cover ? 'Change cover picture' : 'Add cover picture, required'} style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+              <View style={{ width: 72, height: 96, borderRadius: 12, overflow: 'hidden', borderWidth: cover ? 0 : 2, borderStyle: 'dashed', borderColor: '#FF6B85', backgroundColor: lc.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
+                {cover ? (
+                  <Pop key={cover} from={0.7}><Image source={cover} style={{ width: 72, height: 96 }} contentFit="cover" /></Pop>
+                ) : (
+                  <Ionicons name={uploading ? 'cloud-upload-outline' : 'image-outline'} size={26} color="#FF6B85" />
+                )}
+              </View>
+              <View style={{ flex: 1, gap: 3 }}>
+                <Row gap={6}>
+                  <Text variant="label" color={lc.text}>Cover picture</Text>
+                  {!cover && <Text variant="caption" color="#FF6B85" style={{ fontWeight: '700' }}>Required</Text>}
+                </Row>
+                <Text variant="caption" color={lc.textMuted}>{uploading ? 'Uploading…' : cover ? 'Shown on Home and in search. Tap to change.' : 'Add a cover to go live. It shows on Home and in search.'}</Text>
+              </View>
+              <Ionicons name={cover ? 'create-outline' : 'add-circle'} size={22} color={cover ? lc.textMuted : '#FF6B85'} />
+            </Pressable>
             <Input label="Stream title" value={title} onChangeText={setTitle} placeholder="What are you streaming?" maxLength={80} style={{ backgroundColor: lc.surfaceRaised, borderColor: '#3A3547', color: lc.text, minHeight: 44 }} />
             <View style={{ gap: 8 }}>
               <Text variant="bodySmall" color={lc.textMuted}>Category</Text>
@@ -127,10 +174,10 @@ export default function CreateScreen() {
         </SafeAreaView>
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: lc.tabBar, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 16, paddingBottom: 20, gap: 10 }}>
           <Button
-            title="Go live"
+            title={cover ? 'Go live' : 'Add a cover to go live'}
             onPress={goLive}
             loading={busy}
-            disabled={offline}
+            disabled={offline || !cover || uploading}
             icon={<View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#fff' }} />}
           />
           {offline && <Text variant="bodySmall" color={lc.textMuted} style={{ textAlign: 'center' }}>You need a connection to go live.</Text>}
