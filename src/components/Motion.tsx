@@ -96,22 +96,26 @@ export function Pulse({ min = 1, max = 1.12, period = 1400, children, style }: {
 }
 
 /** Expanding, fading ring behind a round button (the Go live tab). */
-export function Ripple({ size, color, period = 2200 }: { size: number; color: string; period?: number }) {
+export function Ripple({ size, color, period = 2200, delay = 0, ring = false }: { size: number; color: string; period?: number; delay?: number; ring?: boolean }) {
   const reduce = useReduceMotion();
   const [v] = useState(() => new Animated.Value(0));
   useEffect(() => {
     if (reduce) return;
     const loop = Animated.loop(Animated.timing(v, { toValue: 1, duration: period, easing: Easing.out(Easing.quad), useNativeDriver: true }));
-    loop.start();
-    return () => loop.stop();
-  }, [v, period, reduce]);
+    const t = setTimeout(() => loop.start(), delay);
+    return () => {
+      clearTimeout(t);
+      loop.stop();
+    };
+  }, [v, period, delay, reduce]);
   if (reduce) return null;
   return (
     <Animated.View
       pointerEvents="none"
       style={{
-        position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: color,
-        opacity: v.interpolate({ inputRange: [0, 1], outputRange: [0.45, 0] }),
+        position: 'absolute', width: size, height: size, borderRadius: size / 2,
+        ...(ring ? { borderWidth: 2, borderColor: color } : { backgroundColor: color }),
+        opacity: v.interpolate({ inputRange: [0, 1], outputRange: [ring ? 0.8 : 0.45, 0] }),
         transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [1, 1.6] }) }],
       }}
     />
@@ -165,4 +169,17 @@ export function SlideIn({ from = -80, delay = 0, children, style }: { from?: num
     return () => anim.stop();
   }, [v, delay, reduce]);
   return <Animated.View style={[style, { transform: [{ translateX: v.interpolate({ inputRange: [0, 1], outputRange: [from, 0] }) }] }]}>{children}</Animated.View>;
+}
+
+/** Endless rotation (live story ring). */
+export function Spin({ period = 2400, children, style }: { period?: number; children?: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const reduce = useReduceMotion();
+  const [v] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    if (reduce) return;
+    const loop = Animated.loop(Animated.timing(v, { toValue: 1, duration: period, easing: Easing.linear, useNativeDriver: true }));
+    loop.start();
+    return () => loop.stop();
+  }, [v, period, reduce]);
+  return <Animated.View style={[style, { transform: [{ rotate: v.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }]}>{children}</Animated.View>;
 }

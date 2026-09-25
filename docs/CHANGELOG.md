@@ -8,6 +8,7 @@
 - Staggered entrances: home live grid, Party rooms, Messages, Profile sections, Hosting, wallet packages, gift tiles; rankings podium rises with growing pillars.
 - Gift toasts slide in with a popping ×count; the verification result check and Host badge pop; agency code shows as 4 digit tiles that pop in.
 - Wallet and Earnings heroes use the Figma gold / violet gradients; Profile stats sit in one card.
+- Home: TikTok-style "Following · live now" row — people you follow who are live get a spinning ring with outward ripples and a pulsing LIVE tag; a host who just went live pops in (realtime).
 
 ## 0.6.2 — Hosts approved automatically
 
