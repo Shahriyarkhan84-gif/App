@@ -103,6 +103,22 @@ delete from public.profiles where id = 'newbie';
 select tests.ok((select bool_and(h.host_code = p.user_number::text) from public.hosts h join public.profiles p on p.id = h.user_id), 'host ID equals user ID');
 update public.hosts set host_code = '12345678' where user_id = 'bob';
 select tests.ok((select host_code = (select user_number::text from public.profiles where id = 'bob') from public.hosts where user_id = 'bob'), 'host ID never changes');
+-- Every user has their own ID: no duplicates, no taking someone else's.
+select tests.ok((select count(*) = count(distinct user_number) from public.profiles), 'user IDs unique');
+select tests.ok((select count(*) = count(distinct host_code) from public.hosts), 'host IDs unique');
+-- Someone else's ID can't be copied onto an account, even by a direct write.
+update public.profiles set user_number = (select user_number from public.profiles where id = 'bob') where id = 'alice';
+select tests.ok((select a.user_number <> b.user_number from public.profiles a, public.profiles b where a.id = 'alice' and b.id = 'bob'), 'cannot take another user ID');
+-- A new account asking for an existing ID gets its own fresh one.
+insert into public.profiles (id, username, user_number) values ('dup_user', 'dup_user', (select user_number from public.profiles where id = 'bob'));
+select tests.ok((select a.user_number <> b.user_number from public.profiles a, public.profiles b where a.id = 'dup_user' and b.id = 'bob'), 'new account gets its own ID');
+-- Even with triggers bypassed, the database refuses a duplicate ID.
+set session_replication_role = replica;
+select tests.fails($$insert into public.profiles (id, username, user_number) values ('dup_user2', 'dup_user2', (select user_number from public.profiles where id = 'bob'))$$, '%profiles_user_number_key%', 'duplicate user ID rejected');
+select tests.fails($$insert into public.hosts (user_id, host_code) values ('dup_user', (select host_code from public.hosts where user_id = 'bob'))$$, '%duplicate key%', 'duplicate host ID rejected');
+set session_replication_role = origin;
+delete from public.profiles where id = 'dup_user';
+
 
 -- OWNER_ADMIN cannot grant roles either; only SUPER_ADMIN, and never to themselves.
 select set_config('request.jwt.claims', '{"sub":"owner"}', false);
