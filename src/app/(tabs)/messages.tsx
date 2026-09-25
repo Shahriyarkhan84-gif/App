@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 
+import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Avatar, Row, Screen, Segmented, Text } from '@/components/ui';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
@@ -68,8 +69,9 @@ function Chats() {
         data={data ?? []}
         keyExtractor={(t) => t.otherId}
         contentContainerStyle={{ paddingHorizontal: 16 }}
-        renderItem={({ item }) => (
-          <Pressable onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: item.otherId } })} accessibilityRole="button">
+        renderItem={({ item, index }) => (
+          <FadeIn delay={stagger(index, 50)}>
+          <PressScale scaleTo={0.98} onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: item.otherId } })} accessibilityRole="button">
             <Row style={{ paddingVertical: 10 }}>
               <Avatar uri={item.other?.avatar_url} name={displayName(item.other)} size={52} ring={item.unread > 0 ? c.primary : undefined} />
               <View style={{ flex: 1, gap: 3 }}>
@@ -85,7 +87,8 @@ function Chats() {
                 </View>
               )}
             </Row>
-          </Pressable>
+          </PressScale>
+          </FadeIn>
         )}
       />
     </StateView>

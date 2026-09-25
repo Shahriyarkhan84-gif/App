@@ -20,6 +20,8 @@ import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { bodyFont, fonts, useTheme, type TypeVariant } from '@/lib/theme';
 
+import { PressScale, Pulse } from './Motion';
+
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
 export function Text({ variant = 'body', muted, faint, color, style, ...rest }: TextProps & { variant?: TypeVariant; muted?: boolean; faint?: boolean; color?: string }) {
@@ -69,11 +71,11 @@ export function Button({ title, variant = 'primary', size = 'md', loading, icon,
   }[variant];
   const border = variant === 'secondary' ? c.border : variant === 'outline' ? c.violetBorder : 'transparent';
   return (
-    <Pressable
+    <PressScale
       accessibilityRole="button"
       accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
       disabled={disabled || loading}
-      style={({ pressed }) => [
+      style={[
         {
           minHeight: size === 'md' ? 52 : 40,
           paddingHorizontal: size === 'md' ? 22 : 16,
@@ -85,7 +87,7 @@ export function Button({ title, variant = 'primary', size = 'md', loading, icon,
           gap: 8,
           borderWidth: border === 'transparent' ? 0 : 1,
           borderColor: border,
-          opacity: disabled ? 0.45 : pressed ? 0.8 : 1,
+          opacity: disabled ? 0.45 : 1,
         },
         style,
       ]}
@@ -93,7 +95,7 @@ export function Button({ title, variant = 'primary', size = 'md', loading, icon,
     >
       {loading ? <ActivityIndicator color={fg} /> : icon}
       {!loading && <Text variant="label" color={fg} style={{ fontSize: size === 'md' ? 16 : 14 }}>{title}</Text>}
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -101,15 +103,16 @@ export function Button({ title, variant = 'primary', size = 'md', loading, icon,
 export function IconButton({ icon, label, onPress, color, badge }: { icon: IconName; label: string; onPress?: () => void; color?: string; badge?: boolean }) {
   const { c } = useTheme();
   return (
-    <Pressable
+    <PressScale
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, backgroundColor: c.surfaceRaised, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.8 : 1 })}
+      scaleTo={0.9}
+      style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}
     >
       <Ionicons name={icon} size={20} color={color ?? c.text} />
       {badge && <View style={{ position: 'absolute', top: 10, right: 11, width: 8, height: 8, borderRadius: 4, backgroundColor: c.primary }} />}
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -143,10 +146,11 @@ export function Avatar({ uri, name, size = 40, ring }: { uri?: string | null; na
 export function Chip({ label, selected, onPress }: { label: string; selected?: boolean; onPress?: () => void }) {
   const { c, radius } = useTheme();
   return (
-    <Pressable
+    <PressScale
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected: !!selected }}
+      scaleTo={0.93}
       style={{
         minHeight: 36,
         justifyContent: 'center',
@@ -158,7 +162,7 @@ export function Chip({ label, selected, onPress }: { label: string; selected?: b
       }}
     >
       <Text variant="label" color={selected ? c.background : c.textMuted} style={{ fontWeight: '500' }}>{label}</Text>
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -212,7 +216,8 @@ export function LiveBadge({ viewers }: { viewers?: number }) {
   const { c } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-      <View style={{ backgroundColor: c.live, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+      <View style={{ backgroundColor: c.live, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+        <Pulse min={0.6} max={1.15} period={1100}><View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' }} /></Pulse>
         <Text variant="caption" color="#fff" style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>LIVE</Text>
       </View>
       {viewers !== undefined && <ViewerCount count={viewers} />}
@@ -308,13 +313,13 @@ export function Row({ children, gap = 12, style }: { children: ReactNode; gap?: 
 export function ListRow({ icon, label, onPress, color, last }: { icon: IconName; label: string; onPress: () => void; color?: string; last?: boolean }) {
   const { c } = useTheme();
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
+    <PressScale onPress={onPress} accessibilityRole="button" scaleTo={0.98}>
       <Row style={{ minHeight: 52, paddingHorizontal: 16, borderBottomWidth: last ? 0 : 1, borderBottomColor: c.divider }}>
         <Ionicons name={icon} size={20} color={color ?? c.text} />
         <Text style={{ flex: 1 }} color={color}>{label}</Text>
         <Ionicons name="chevron-forward" size={18} color={c.textFaint} />
       </Row>
-    </Pressable>
+    </PressScale>
   );
 }
 

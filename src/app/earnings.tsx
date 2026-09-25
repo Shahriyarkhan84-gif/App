@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
-import { Button, Card, Chip, Input, Row, Screen, Text } from '@/components/ui';
+import { FadeIn } from '@/components/Motion';
+import { Button, Card, Chip, Coin, Input, Row, Screen, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -73,11 +74,16 @@ export default function EarningsScreen() {
       <StateView state={resolveState({ offline, loading, error, data, onRetry: reload })}>
         {data && (
           <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
-            <Row style={{ justifyContent: 'space-between' }}>
-              <Card style={{ flex: 1, alignItems: 'center' }}><Text variant="caption" muted>Available</Text><Text variant="h2">💎 {data.earnings.balance.toLocaleString()}</Text></Card>
-              <Card style={{ flex: 1, alignItems: 'center' }}><Text variant="caption" muted>In review</Text><Text variant="h2">{data.earnings.held.toLocaleString()}</Text></Card>
-              <Card style={{ flex: 1, alignItems: 'center' }}><Text variant="caption" muted>Lifetime</Text><Text variant="h2">{data.earnings.lifetime.toLocaleString()}</Text></Card>
-            </Row>
+            <FadeIn>
+              <View style={{ padding: 20, borderRadius: 22, gap: 10, backgroundColor: c.violetSurface, experimental_backgroundImage: 'linear-gradient(135deg, #4B32B8, #1B1830)' }}>
+                <Text variant="bodySmall" color={c.violetText}>Available to withdraw</Text>
+                <Row gap={10}><Coin size={26} /><Text variant="display" color="#fff" accessibilityLiveRegion="polite">{data.earnings.balance.toLocaleString()}</Text></Row>
+                <Row gap={24}>
+                  <View><Text variant="label" color="#fff">{data.earnings.held.toLocaleString()}</Text><Text variant="caption" color={c.violetText}>In review</Text></View>
+                  <View><Text variant="label" color="#fff">{data.earnings.lifetime.toLocaleString()}</Text><Text variant="caption" color={c.violetText}>Lifetime</Text></View>
+                </Row>
+              </View>
+            </FadeIn>
 
             <Card>
               <Text variant="h3">Withdraw</Text>

@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 
+import { FadeIn, GrowBar, PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Avatar, Coin, compactNumber, Row, Screen, Segmented, Text, TextTabs } from '@/components/ui';
 import { rpc } from '@/lib/api';
@@ -67,11 +68,12 @@ export default function RankingsScreen() {
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           ListHeaderComponent={
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 6, paddingBottom: 12 }}>
-              {podium.map((r) => {
+              {podium.map((r, i) => {
                 const first = r.rank === 1;
                 const size = first ? 84 : 68;
                 return (
-                  <Pressable key={r.subject_id} onPress={() => open(r)} disabled={kind === 'country'} style={{ flex: 1, alignItems: 'center', gap: 6 }} accessibilityLabel={`Rank ${r.rank}, ${r.label}, ${score(r)}`}>
+                  <FadeIn key={`${kind}-${r.subject_id}`} delay={[150, 0, 300][i] ?? 0} from={40} style={{ flex: 1 }}>
+                  <PressScale onPress={() => open(r)} disabled={kind === 'country'} style={{ alignItems: 'center', gap: 6 }} accessibilityLabel={`Rank ${r.rank}, ${r.label}, ${score(r)}`}>
                     <View>
                       <Avatar uri={kind === 'country' ? null : r.avatar_url} name={r.label} size={size} ring={MEDALS[r.rank - 1]} />
                       <View style={{ position: 'absolute', alignSelf: 'center', bottom: -8, width: 22, height: 22, borderRadius: 11, backgroundColor: MEDALS[r.rank - 1], alignItems: 'center', justifyContent: 'center' }}>
@@ -80,8 +82,9 @@ export default function RankingsScreen() {
                     </View>
                     <Text variant="label" numberOfLines={1} style={{ marginTop: 6 }}>{r.label}</Text>
                     <Row gap={4}>{kind !== 'live' && <Coin size={12} />}<Text variant="caption" muted>{score(r)}</Text></Row>
-                    <View style={{ alignSelf: 'stretch', height: first ? 56 : 36, borderTopLeftRadius: 12, borderTopRightRadius: 12, backgroundColor: c.surface }} />
-                  </Pressable>
+                    <GrowBar height={first ? 56 : 36} delay={350 + i * 120} style={{ alignSelf: 'stretch', borderTopLeftRadius: 12, borderTopRightRadius: 12, backgroundColor: c.surface }} />
+                  </PressScale>
+                  </FadeIn>
                 );
               })}
             </View>

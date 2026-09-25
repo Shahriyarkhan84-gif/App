@@ -1,9 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, Share, View } from 'react-native';
+import { ScrollView, Share, View } from 'react-native';
 
-import { FadeIn } from '@/components/Motion';
+import { FadeIn, Pop, PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { AgencyOwnerBadge, Avatar, Button, Card, Chip, Coin, compactNumber, HostBadge, Row, Screen, Text } from '@/components/ui';
 import { rpc } from '@/lib/api';
@@ -61,9 +61,15 @@ export default function AgencyPortalScreen() {
                   <Text variant="label" color={c.goldText}>Agency code</Text>
                   <Row gap={4}><Ionicons name="lock-closed" size={12} color={c.goldText} /><Text variant="caption" color={c.goldText}>Permanent</Text></Row>
                 </Row>
-                <Text variant="display" selectable accessibilityLabel={`Agency code ${data.agency.code.split('').join(' ')}`} style={{ fontSize: 44, lineHeight: 52, letterSpacing: 10, color: c.gold }}>
-                  {data.agency.code}
-                </Text>
+                <View accessible accessibilityLabel={`Agency code ${data.agency.code.split('').join(' ')}`} style={{ flexDirection: 'row', gap: 8 }}>
+                  {data.agency.code.split('').map((d, i) => (
+                    <Pop key={`${i}-${d}`} delay={200 + i * 90} from={0.5}>
+                      <View style={{ width: 58, height: 68, borderRadius: 14, backgroundColor: '#1A1408', borderWidth: 1, borderColor: c.goldBorder, alignItems: 'center', justifyContent: 'center' }}>
+                        <Text variant="display" selectable style={{ fontSize: 36, lineHeight: 44, color: c.gold }}>{d}</Text>
+                      </View>
+                    </Pop>
+                  ))}
+                </View>
                 <Text variant="bodySmall" color={c.goldText}>New hosts enter this code in “Verify with Didit”. Once they pass, they join your agency automatically. This code is yours for good — it never changes.</Text>
                 <Row gap={8}>
                   <Button title="Share code" icon={<Ionicons name="share-social-outline" size={16} color={c.onGold} />} variant="gold" size="sm" onPress={() => void shareCode(data)} />
@@ -88,7 +94,7 @@ export default function AgencyPortalScreen() {
             ) : (
               <Card style={{ gap: 0, paddingVertical: 4 }}>
                 {data.hosts.map((h, i) => (
-                  <Pressable key={h.user_id} onPress={() => router.push({ pathname: '/user/[id]', params: { id: h.user_id } })} accessibilityRole="button"
+                  <PressScale key={h.user_id} scaleTo={0.98} onPress={() => router.push({ pathname: '/user/[id]', params: { id: h.user_id } })} accessibilityRole="button"
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: i === data.hosts.length - 1 ? 0 : 1, borderBottomColor: c.divider }}>
                     <Avatar uri={h.avatar_url} name={h.display_name ?? h.username} size={44} ring={h.live ? c.primary : undefined} />
                     <View style={{ flex: 1, gap: 2 }}>
@@ -101,7 +107,7 @@ export default function AgencyPortalScreen() {
                     {h.earnings_lifetime != null && (
                       <Row gap={4}><Coin size={14} /><Text variant="label">{compactNumber(h.earnings_lifetime)}</Text></Row>
                     )}
-                  </Pressable>
+                  </PressScale>
                 ))}
               </Card>
             ))}

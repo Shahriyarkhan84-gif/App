@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0 — Figma redesign + motion
+
+- Figma file "Zynalive — App redesign" (design system, 30 mobile screens, 2 web dashboards, animated prototype) is the design reference.
+- New motion primitives in `src/components/Motion.tsx`: `Pop`, `Pulse`, `Ripple`, `PressScale`, `SlideIn`, `GrowBar`, `stagger()` — all respect Reduce Motion.
+- Buttons, icon buttons, chips, list rows and cards spring on press; LIVE badges have a pulsing dot; the Go live tab has a ripple.
+- Staggered entrances: home live grid, Party rooms, Messages, Profile sections, Hosting, wallet packages, gift tiles; rankings podium rises with growing pillars.
+- Gift toasts slide in with a popping ×count; the verification result check and Host badge pop; agency code shows as 4 digit tiles that pop in.
+- Wallet and Earnings heroes use the Figma gold / violet gradients; Profile stats sit in one card.
+
 ## 0.6.2 — Hosts approved automatically
 
 - A host who passes Didit (ID approved, face match approved, 18+) is **approved instantly** — Host badge and go-live unlocked on the result screen. Typed CNIC/name differences are kept as notes instead of sending the application to manual review. Only undecided Didit results or an unreadable age still go to Owner command center → Host applications.

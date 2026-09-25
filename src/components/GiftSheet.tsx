@@ -12,6 +12,7 @@ import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 import type { GiftItem } from '@/lib/types';
 
+import { FadeIn, Pop, PressScale, SlideIn, stagger } from './Motion';
 import { Button, Chip, Coin, Row, Sheet, Text } from './ui';
 
 const QUANTITIES = [1, 10, 99];
@@ -77,24 +78,25 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
         </Row>
       </Row>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {(catalog.data ?? []).map((g) => {
+        {(catalog.data ?? []).map((g, i) => {
           const on = selected?.id === g.id;
           return (
-            <Pressable
-              key={g.id}
+            <Pop key={g.id} delay={stagger(i, 40)} from={0.6} style={{ width: '23%' }}>
+            <PressScale
               onPress={() => setSelected(g)}
               accessibilityRole="button"
               accessibilityLabel={`${g.name}, ${g.coin_price} coins`}
               accessibilityState={{ selected: on }}
               style={{
-                width: '23%', height: 96, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: radius[12] + 2,
+                width: '100%', height: 96, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: radius[12] + 2,
                 backgroundColor: c.surfaceRaised, borderWidth: 2, borderColor: on ? c.primary : 'transparent',
               }}
             >
               <Text style={{ fontSize: 28, lineHeight: 34 }}>{g.icon}</Text>
               <Text variant="caption">{g.name}</Text>
               <Text variant="caption" color={c.gold} style={{ fontSize: 11 }}>{g.coin_price.toLocaleString()}</Text>
-            </Pressable>
+            </PressScale>
+            </Pop>
           );
         })}
       </View>
@@ -138,13 +140,15 @@ export function GiftToasts({ roomId }: { roomId: string }) {
   return (
     <View pointerEvents="none" style={{ gap: 8 }}>
       {toasts.map((t) => (
-        <View key={t.id} style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, height: 46, paddingLeft: 14, paddingRight: 14, borderRadius: 23, backgroundColor: 'rgba(20,16,28,0.85)', borderWidth: 1, borderColor: '#FFC24B' }}>
+        <FadeIn key={t.id} from={0} style={{ alignSelf: 'flex-start' }}>
+        <SlideIn style={{ flexDirection: 'row', alignItems: 'center', gap: 8, height: 46, paddingLeft: 14, paddingRight: 14, borderRadius: 23, backgroundColor: 'rgba(20,16,28,0.85)', borderWidth: 1, borderColor: '#FFC24B' }}>
           <View>
             <Text variant="label" color="#fff" style={{ fontSize: 13 }}>{t.sender}</Text>
             <Text variant="caption" color="#E4DFEC">sent {t.gift}</Text>
           </View>
-          {t.count > 1 && <Text variant="display" color="#FFC24B" style={{ fontSize: 24, lineHeight: 28, fontStyle: 'italic' }}>×{t.count}</Text>}
-        </View>
+          {t.count > 1 && <Pop delay={250} from={2}><Text variant="display" color="#FFC24B" style={{ fontSize: 24, lineHeight: 28, fontStyle: 'italic' }}>×{t.count}</Text></Pop>}
+        </SlideIn>
+        </FadeIn>
       ))}
     </View>
   );

@@ -1,10 +1,11 @@
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
 import { useTheme } from '@/lib/theme';
 import { categoryLabel, displayName, type Room } from '@/lib/types';
 
+import { PressScale } from './Motion';
 import { LiveBadge, RoleBadges, Text, ViewerCount } from './ui';
 
 export function RoomCard({ room, width, reason }: { room: Room; width: number; reason?: string | null }) {
@@ -13,7 +14,7 @@ export function RoomCard({ room, width, reason }: { room: Room; width: number; r
   const name = displayName(room.host);
   return (
     <Link href={{ pathname: '/live/[roomId]', params: { roomId: room.id } }} asChild>
-      <Pressable style={{ width }} accessibilityLabel={`Watch ${name} live: ${room.title}`}>
+      <PressScale style={{ width }} scaleTo={0.97} accessibilityLabel={`Watch ${name} live: ${room.title}`}>
         <View style={{ width, height: Math.round(width * 1.33), borderRadius: radius[16], overflow: 'hidden', backgroundColor: c.surfaceRaised }}>
           {cover ? <Image source={cover} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -33,7 +34,7 @@ export function RoomCard({ room, width, reason }: { room: Room; width: number; r
           </View>
         </View>
         {reason && <Text variant="caption" faint numberOfLines={1} style={{ marginTop: 4 }}>{reason}</Text>}
-      </Pressable>
+      </PressScale>
     </Link>
   );
 }

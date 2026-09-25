@@ -4,6 +4,7 @@ import type { ColorValue } from 'react-native';
 import { Pressable, View } from 'react-native';
 
 import type { IconName } from '@/components/ui';
+import { Ripple } from '@/components/Motion';
 import { fonts, useTheme } from '@/lib/theme';
 
 function icon(name: IconName, active: IconName) {
@@ -36,6 +37,9 @@ export default function TabsLayout() {
           tabBarAccessibilityLabel: 'Go live',
           tabBarButton: ({ onPress, accessibilityState }) => (
             <View style={{ flex: 1, alignItems: 'center' }}>
+              <View style={{ position: 'absolute', top: -18, width: 56, height: 56, alignItems: 'center', justifyContent: 'center' }}>
+                <Ripple size={56} color={c.primary} />
+              </View>
               <Pressable
                 onPress={onPress}
                 accessibilityRole="button"

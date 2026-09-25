@@ -62,6 +62,7 @@ export default function HostingScreen() {
           <Text muted>Every host on Zynalive is identity-verified. It keeps viewers safe and protects your earnings.</Text>
         </FadeIn>
 
+        <FadeIn delay={80}>
         <Section title="What you need">
           {REQUIREMENTS.map((r) => (
             <Row key={r.text} gap={10} style={{ alignItems: 'flex-start' }}>
@@ -70,7 +71,9 @@ export default function HostingScreen() {
             </Row>
           ))}
         </Section>
+        </FadeIn>
 
+        <FadeIn delay={160}>
         <Section title="Tips to pass first time">
           {TIPS.map((t) => (
             <Row key={t} gap={10} style={{ alignItems: 'flex-start' }}>
@@ -79,6 +82,7 @@ export default function HostingScreen() {
             </Row>
           ))}
         </Section>
+        </FadeIn>
 
         {status === 'declined' && (
           <Card style={{ borderColor: c.danger }}>

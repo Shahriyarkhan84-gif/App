@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, TextInput, View } from 'react-native';
 
+import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Avatar, Button, compactNumber, RoleBadges, Row, Screen, Text } from '@/components/ui';
 import { useFocusedAsync, useOffline } from '@/lib/hooks';
@@ -113,7 +114,7 @@ export default function PartyScreen() {
               </View>
             ) : null
           }
-          renderItem={({ item }) => <PartyRow room={item} />}
+          renderItem={({ item, index }) => <FadeIn delay={stagger(index, 50)}><PartyRow room={item} /></FadeIn>}
         />
       </StateView>
     </Screen>
@@ -125,11 +126,12 @@ function PartyRow({ room }: { room: Room }) {
   const cover = room.cover_url ?? room.host?.avatar_url;
   const host = displayName(room.host);
   return (
-    <Pressable
+    <PressScale
+      scaleTo={0.98}
       onPress={() => router.push({ pathname: '/live/[roomId]', params: { roomId: room.id } })}
       accessibilityRole="button"
       accessibilityLabel={`Join ${room.title}, hosted by ${host}, ${room.viewer_count} watching`}
-      style={({ pressed }) => ({ flexDirection: 'row', gap: 12, padding: 10, borderRadius: radius[16] + 2, backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider, opacity: pressed ? 0.85 : 1 })}
+      style={{ flexDirection: 'row', gap: 12, padding: 10, borderRadius: radius[16] + 2, backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider }}
     >
       <View style={{ width: 92, height: 92, borderRadius: radius[12] + 2, backgroundColor: c.surfaceRaised, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
         {cover ? <Image source={cover} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : <Text variant="display" color="rgba(255,255,255,0.2)" style={{ fontSize: 44, lineHeight: 50 }}>{host.slice(0, 1).toUpperCase()}</Text>}
@@ -143,6 +145,6 @@ function PartyRow({ room }: { room: Room }) {
         <View style={{ flexDirection: 'row' }}><RoleBadges profile={room.host} small /></View>
         <Text variant="caption" faint>{compactNumber(room.viewer_count)} watching</Text>
       </View>
-    </Pressable>
+    </PressScale>
   );
 }

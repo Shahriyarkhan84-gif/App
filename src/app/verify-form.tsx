@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 
-import { FadeIn } from '@/components/Motion';
+import { FadeIn, Pop } from '@/components/Motion';
 import { Button, Card, HostBadge, Row, Screen, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { submitHostApplication, type HostApplicationResult } from '@/lib/api';
@@ -253,15 +253,15 @@ function ResultView({ result, firstName, cnicLast, onRetry }: { result: HostAppl
   return (
     <Screen edges={['bottom']}>
       <View style={{ flex: 1, padding: 24, alignItems: 'center', justifyContent: 'center', gap: 16 }}>
-        <FadeIn from={0}>
+        <Pop from={0.3}>
           <View style={{ width: 96, height: 96, borderRadius: 48, borderWidth: 2, borderColor: copy.color, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface }}>
-            <Ionicons name={copy.icon} size={44} color={copy.color} />
+            <Pop delay={220} from={0}><Ionicons name={copy.icon} size={44} color={copy.color} /></Pop>
           </View>
-        </FadeIn>
+        </Pop>
         <FadeIn delay={150} style={{ alignItems: 'center', gap: 8 }}>
           <Row gap={8}>
             <Text variant="h2" style={{ textAlign: 'center' }}>{copy.title}</Text>
-            {result.status === 'approved' && <HostBadge />}
+            {result.status === 'approved' && <Pop delay={600} from={0.2}><HostBadge /></Pop>}
           </Row>
           <Text muted style={{ textAlign: 'center', maxWidth: 320 }}>{copy.body}</Text>
         </FadeIn>

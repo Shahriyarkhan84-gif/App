@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
 
 import { RoomCard } from '@/components/RoomCard';
+import { FadeIn, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Chip, IconButton, Row, Screen, Text, TextTabs, Wordmark } from '@/components/ui';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
@@ -95,7 +96,11 @@ export default function HomeScreen() {
           refreshControl={<RefreshControl refreshing={loading && !!data} onRefresh={reload} tintColor={c.text} />}
         >
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-            {rooms.map((r) => <RoomCard key={r.id} room={r} width={cardWidth} reason={feed === 'popular' ? data?.recommended.get(r.id)?.reason : null} />)}
+            {rooms.map((r, i) => (
+              <FadeIn key={`${feed}-${category}-${r.id}`} delay={stagger(i)} from={24}>
+                <RoomCard room={r} width={cardWidth} reason={feed === 'popular' ? data?.recommended.get(r.id)?.reason : null} />
+              </FadeIn>
+            ))}
           </View>
           {feed === 'popular' && rooms.length > 0 && <Text variant="caption" faint style={{ marginTop: 16, textAlign: 'center' }}>Picks for you come first.</Text>}
         </ScrollView>

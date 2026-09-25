@@ -5,7 +5,8 @@ import * as WebBrowser from 'expo-web-browser';
 import { Alert, ScrollView, View } from 'react-native';
 
 import { StateView } from '@/components/StateView';
-import { AgencyOwnerBadge, Avatar, Button, Card, Coin, HostBadge, IconButton, ListRow, Row, Screen, Text } from '@/components/ui';
+import { FadeIn } from '@/components/Motion';
+import { AgencyOwnerBadge, Avatar, Button, Card, Coin, compactNumber, HostBadge, IconButton, ListRow, Row, Screen, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { env } from '@/lib/env';
 import { useFocusedAsync, useRealtime } from '@/lib/hooks';
@@ -85,13 +86,13 @@ export default function ProfileScreen() {
           </Card>
         )}
 
-        <View style={{ flexDirection: 'row', gap: 8 }}>
+        <FadeIn delay={80} style={{ flexDirection: 'row', paddingVertical: 14, borderRadius: 18, backgroundColor: c.surface }}>
           <Stat label="Friends" value={stats.data?.friends} />
           <Stat label="Followers" value={stats.data?.followers} />
           <Stat label="Following" value={stats.data?.following} />
-        </View>
+        </FadeIn>
 
-        <View style={{ flexDirection: 'row', gap: 10 }}>
+        <FadeIn delay={160} style={{ flexDirection: 'row', gap: 10 }}>
           <View style={{ flex: 1, padding: 16, borderRadius: 18, backgroundColor: c.goldSurface, borderWidth: 1, borderColor: c.goldBorder, gap: 10 }}>
             <Row gap={6}><Coin /><Text variant="bodySmall" color={c.goldText}>Coins</Text></Row>
             <Text variant="h1">{stats.data ? stats.data.coins.toLocaleString() : '–'}</Text>
@@ -104,9 +105,9 @@ export default function ProfileScreen() {
               <Button title="Withdraw" variant="outline" size="sm" onPress={() => router.push('/earnings')} />
             </View>
           )}
-        </View>
+        </FadeIn>
 
-        <View style={{ borderRadius: 18, backgroundColor: c.surface, overflow: 'hidden' }}>
+        <FadeIn delay={240} style={{ borderRadius: 18, backgroundColor: c.surface, overflow: 'hidden' }}>
           {!verified && <ListRow icon="shield-checkmark-outline" label="Verification for hosting" color={c.gold} onPress={() => router.push('/hosting')} />}
           <ListRow icon="wallet-outline" label="Wallet & history" onPress={() => router.push('/wallet')} />
           <ListRow icon="trophy-outline" label="Rankings" onPress={() => router.push('/rankings')} />
@@ -115,10 +116,10 @@ export default function ProfileScreen() {
           {isAgencyStaff && <ListRow icon="business-outline" label="Agency portal" color={c.gold} onPress={() => router.push('/agency')} />}
           <ListRow icon="lock-closed-outline" label="Privacy policy" onPress={() => router.push('/privacy')} last={!isPlatformAdmin} />
           {isPlatformAdmin && <ListRow icon="analytics-outline" label="Owner command center" onPress={() => router.push('/admin')} last />}
-        </View>
+        </FadeIn>
 
         <Button title="Sign out" variant="ghost" onPress={() => signOut()} />
-        <Button title="Delete account" variant="ghost" onPress={() => router.push('/delete-account')} />
+        <Button title="Delete account" variant="ghost" onPress={() => router.push('/delete-account')} style={{ marginTop: -8 }} icon={<Ionicons name="trash-outline" size={16} color={c.danger} />} />
       </ScrollView>
     </Screen>
   );
@@ -134,10 +135,9 @@ function Badge({ label, gold }: { label: string; gold?: boolean }) {
 }
 
 function Stat({ label, value }: { label: string; value?: number }) {
-  const { c } = useTheme();
   return (
-    <View style={{ flex: 1, padding: 12, borderRadius: 14, backgroundColor: c.surface, alignItems: 'center', gap: 2 }}>
-      <Text variant="h3">{value === undefined ? '–' : value.toLocaleString()}</Text>
+    <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
+      <Text variant="display" style={{ fontSize: 22, lineHeight: 28 }}>{value === undefined ? '–' : compactNumber(value)}</Text>
       <Text variant="caption" muted>{label}</Text>
     </View>
   );

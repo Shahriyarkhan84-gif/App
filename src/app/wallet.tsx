@@ -2,8 +2,9 @@ import { useAuth } from '@clerk/clerk-expo';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, View } from 'react-native';
+import { Alert, Platform, ScrollView, View } from 'react-native';
 
+import { Pop, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Button, Coin, Row, Screen, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
@@ -64,7 +65,7 @@ export default function WalletScreen() {
           const pick = data.packages.find((p) => p.id === selected) ?? data.packages[1] ?? data.packages[0];
           return (
             <ScrollView contentContainerStyle={{ padding: 16, gap: 18, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
-              <Row style={{ padding: 18, borderRadius: 20, backgroundColor: c.goldSurface, borderWidth: 1, borderColor: c.goldBorder, justifyContent: 'space-between' }}>
+              <Row style={{ padding: 20, borderRadius: 22, backgroundColor: c.goldSurface, borderWidth: 1, borderColor: c.goldBorder, justifyContent: 'space-between', experimental_backgroundImage: 'linear-gradient(135deg, #7A5A12, #2A2110)' }}>
                 <View style={{ gap: 4 }}>
                   <Row gap={6}><Coin /><Text variant="bodySmall" color={c.goldText}>Coin balance</Text></Row>
                   <Text variant="display" accessibilityLiveRegion="polite">{data.wallet.coin_balance.toLocaleString()}</Text>
@@ -77,21 +78,23 @@ export default function WalletScreen() {
               <View style={{ gap: 10 }}>
                 <Text variant="h3">Buy coins</Text>
                 <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {data.packages.map((p) => {
+                  {data.packages.map((p, i) => {
                     const on = pick?.id === p.id;
                     return (
-                      <Pressable
-                        key={p.id}
+                      <Pop key={p.id} delay={stagger(i, 50)} from={0.85} style={{ width: '48.5%' }}>
+                      <PressScale
+                        scaleTo={0.96}
                         disabled={buying !== null}
                         onPress={() => setSelected(p.id)}
                         accessibilityRole="radio"
                         accessibilityState={{ checked: on }}
                         accessibilityLabel={`${p.coins} coins for ${formatMoney(p.price_minor, p.currency)}`}
-                        style={{ width: '48.5%', minHeight: 76, paddingHorizontal: 14, justifyContent: 'center', borderRadius: radius[16], backgroundColor: c.surface, borderWidth: 2, borderColor: on ? c.primary : c.divider, gap: 4 }}
+                        style={{ width: '100%', minHeight: 76, paddingHorizontal: 14, justifyContent: 'center', borderRadius: radius[16], backgroundColor: c.surface, borderWidth: 2, borderColor: on ? c.primary : c.divider, gap: 4 }}
                       >
                         <Row gap={6}><Coin size={14} /><Text variant="h3" style={{ fontSize: 18 }}>{p.coins.toLocaleString()}</Text></Row>
                         <Text variant="bodySmall" muted>{formatMoney(p.price_minor, p.currency)} · {p.name}</Text>
-                      </Pressable>
+                      </PressScale>
+                      </Pop>
                     );
                   })}
                 </View>
