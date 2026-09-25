@@ -11,6 +11,7 @@ export type Profile = {
   avatar_url: string | null;
   bio: string | null;
   country: string | null;
+  signup_country?: string | null;
   language: string;
   role: AppRole;
   status: 'active' | 'restricted' | 'banned';

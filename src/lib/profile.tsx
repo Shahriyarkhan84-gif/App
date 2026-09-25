@@ -1,4 +1,5 @@
 import { useAuth, useUser } from '@clerk/clerk-expo';
+import { getLocales } from 'expo-localization';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 
 import { rpc } from './api';
@@ -35,7 +36,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const reload = useCallback(async () => {
     setLoading(true);
     try {
-      const p = await rpc<Profile>(supabase, 'ensure_profile', { p_display_name: fullName });
+      const p = await rpc<Profile>(supabase, 'ensure_profile', { p_display_name: fullName, p_region: getLocales()[0]?.regionCode ?? null });
       const { data: h } = await supabase.from('hosts').select('host_code,agency_id,status,verification_status').eq('user_id', p.id).maybeSingle();
       setProfile(p);
       setHost(h ?? null);

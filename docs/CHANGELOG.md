@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.3 — Country the account was created from
+
+- `profiles.signup_country` (ISO-2): recorded once by `ensure_profile(p_display_name, p_region)` from the edge country header (`cf-ipcountry`) or else the device region; frozen by trigger, cleared on account deletion; clients can't write it.
+- Public profile: the "@username · country" line is replaced by the ID and a 📍 location tag showing the sign-up country.
+
 ## 0.7.2 — Contributions on host profiles
 
 - Public profile of a host shows a **Contributions** card (overall top 3, overall top 1) that opens a full **Contributions page** (`/contributions/[id]`) with podium + list: top gifters Daily / Weekly / Monthly (calendar periods, Pakistan time) and **Overall** since the host joined hosting, with the top 1 highlighted.

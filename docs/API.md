@@ -21,7 +21,7 @@ All return `{ error: { code, message } }` on failure. User-facing functions requ
 
 | Area | RPCs |
 |---|---|
-| Profile | `ensure_profile`, `become_host` |
+| Profile | `ensure_profile(p_display_name?, p_region?)`, `become_host` |
 | Live | `set_room_cover(p_path)` (file in `covers/<user id>/`), `go_live(p_title, p_category)` (needs a cover → else `cover_required`), `end_live()` |
 | Room moderation | `room_moderate(p_room, p_target, p_action, p_minutes)` (`mute/kick/block/unmute/unblock`), `set_room_admin(p_user, p_enabled)` |
 | Chat & social | `send_chat_message(p_room, p_body)`, `send_direct_message(p_recipient, p_body)`, `request_translation(p_message_id, p_language)`, `report_content(p_target_type, p_target_id, p_reason)`, `create_support_ticket(p_subject, p_body)` |
