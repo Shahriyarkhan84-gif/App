@@ -1,5 +1,5 @@
 import { useSignUp } from '@clerk/clerk-expo';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { useState } from 'react';
 
 import { AuthShell, clerkErrorMessage, Field, FormError, SocialButtons } from '@/components/AuthForm';
@@ -41,6 +41,10 @@ export default function SignUpScreen() {
       const attempt = await signUp!.attemptEmailAddressVerification({ code: code.trim() });
       if (attempt.status === 'complete') {
         await setActive!({ session: attempt.createdSessionId });
+        // Stack.Protected re-evaluates on the next render, but a signed-in
+        // user can otherwise be left stranded on this (auth) screen when the
+        // group's guard flips mid-navigation; push home explicitly.
+        router.replace('/');
       } else {
         setError('Verification incomplete. Please try again.');
       }

@@ -1,5 +1,5 @@
 import { useSignIn } from '@clerk/clerk-expo';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { useState } from 'react';
 
 import { AuthShell, clerkErrorMessage, Field, FormError, SocialButtons } from '@/components/AuthForm';
@@ -22,6 +22,9 @@ export default function SignInScreen() {
       const attempt = await signIn.create({ identifier: email.trim(), password });
       if (attempt.status === 'complete') {
         await setActive({ session: attempt.createdSessionId });
+        // See sign-up.tsx: push home explicitly rather than rely solely on
+        // Stack.Protected's guard re-evaluation.
+        router.replace('/');
       } else {
         setError('Additional verification is required. Please use the web app to finish signing in.');
       }

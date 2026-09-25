@@ -14,10 +14,15 @@ export default function SSOCallback() {
   const { isLoaded, isSignedIn } = useAuth();
 
   useEffect(() => {
-    // If sign-in didn't complete (cancelled, failed) within a few seconds, don't
-    // strand the user on a spinner — send them back to sign in.
     if (!isLoaded) return;
-    if (isSignedIn) return;
+    // Session already active (SocialButtons' own setActive + redirect usually
+    // gets here first) — push home rather than wait on Stack.Protected.
+    if (isSignedIn) {
+      router.replace('/');
+      return;
+    }
+    // Otherwise sign-in didn't complete (cancelled, failed) — don't strand the
+    // user on a spinner forever; send them back to sign in after a few seconds.
     const t = setTimeout(() => {
       if (!isSignedIn) router.replace('/welcome');
     }, 4000);

@@ -116,7 +116,12 @@ export function SocialButtons({ onError, divider = true }: { onError: (message: 
         strategy,
         redirectUrl: AuthSession.makeRedirectUri({ path: 'sso-callback' }),
       });
-      if (createdSessionId) await setActive?.({ session: createdSessionId });
+      if (createdSessionId) {
+        await setActive?.({ session: createdSessionId });
+        // See sign-up.tsx: push home explicitly rather than rely solely on
+        // Stack.Protected's guard re-evaluation.
+        router.replace('/');
+      }
     } catch (err) {
       onError(clerkErrorMessage(err));
     } finally {
