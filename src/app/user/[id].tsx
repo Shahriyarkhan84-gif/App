@@ -4,20 +4,20 @@ import { useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Button, Card, RoleBadges, Row, Screen, Text } from '@/components/ui';
+import { LiveAvatar } from '@/components/FollowingLive';
+import { PressScale } from '@/components/Motion';
+import { Avatar, Button, RoleBadges, Row, Screen, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useAsync, useOffline } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
-import { useTheme } from '@/lib/theme';
 import { displayName, type Profile } from '@/lib/types';
 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const supabase = useSupabase();
   const { userId } = useAuth();
-  const { c } = useTheme();
   const track = useAnalytics();
   const offline = useOffline();
   const [following, setFollowing] = useState<boolean | null>(null);
@@ -79,7 +79,19 @@ export default function UserProfileScreen() {
         {data && (
           <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
             <View style={{ alignItems: 'center', gap: 8 }}>
-              <Avatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={96} />
+              {data.room?.status === 'live' ? (
+                <PressScale
+                  scaleTo={0.94}
+                  onPress={() => router.push({ pathname: '/live/[roomId]', params: { roomId: data.room!.id } })}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${displayName(data.profile)} is live, ${data.room.viewer_count} watching. Watch`}
+                  style={{ marginBottom: 8 }}
+                >
+                  <LiveAvatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={108} />
+                </PressScale>
+              ) : (
+                <Avatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={96} />
+              )}
               <Row gap={8}>
                 <Text variant="h2">{displayName(data.profile)}</Text>
                 <RoleBadges profile={data.profile} />
@@ -88,13 +100,6 @@ export default function UserProfileScreen() {
               <Text variant="label">{data.followers.toLocaleString()} followers</Text>
               {data.profile.bio && <Text style={{ textAlign: 'center' }}>{data.profile.bio}</Text>}
             </View>
-            {data.room?.status === 'live' && (
-              <Card style={{ borderColor: c.live }}>
-                <Text variant="label" color={c.live}>● LIVE · {data.room.viewer_count} watching</Text>
-                <Text>{data.room.title}</Text>
-                <Button title="Join stream" onPress={() => router.push({ pathname: '/live/[roomId]', params: { roomId: data.room!.id } })} />
-              </Card>
-            )}
             {!isMe && (
               <Row>
                 <Button title={isFollowing ? 'Following' : 'Follow'} variant={isFollowing ? 'secondary' : 'primary'} onPress={toggleFollow} style={{ flex: 1 }} />
