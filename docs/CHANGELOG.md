@@ -2,7 +2,7 @@
 
 ## 0.7.2 — Contributions on host profiles
 
-- Public profile of a host shows **Contributions**: top gifters Daily / Weekly / Monthly (calendar periods, Pakistan time) and **Overall** since the host joined hosting, with the top 1 highlighted.
+- Public profile of a host shows a **Contributions** card (overall top 3, overall top 1) that opens a full **Contributions page** (`/contributions/[id]`) with podium + list: top gifters Daily / Weekly / Monthly (calendar periods, Pakistan time) and **Overall** since the host joined hosting, with the top 1 highlighted.
 - `host_contributions(p_host, p_period)` (authenticated, read-only, public profile fields only); tests in `supabase/tests/50_host_contributions.sql`.
 
 ## 0.7.1 — Cover picture required to go live

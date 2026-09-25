@@ -110,6 +110,7 @@ function RootNavigator() {
         <Stack.Screen name="support" options={{ title: 'Help & support' }} />
         <Stack.Screen name="profile-edit" options={{ title: 'Edit profile', presentation: 'modal' }} />
         <Stack.Screen name="agency" options={{ title: 'Agency portal' }} />
+        <Stack.Screen name="contributions/[id]" options={{ title: 'Contributions' }} />
         <Stack.Screen name="admin/index" options={{ title: 'Owner command center' }} />
       </Stack.Protected>
       <Stack.Protected guard={!isSignedIn}>
