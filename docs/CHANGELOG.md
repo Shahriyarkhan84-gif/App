@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.2 — Contributions on host profiles
+
+- Public profile of a host shows **Contributions**: top gifters Daily / Weekly / Monthly (calendar periods, Pakistan time) and **Overall** since the host joined hosting, with the top 1 highlighted.
+- `host_contributions(p_host, p_period)` (authenticated, read-only, public profile fields only); tests in `supabase/tests/50_host_contributions.sql`.
+
 ## 0.7.1 — Cover picture required to go live
 
 - `go_live()` raises `cover_required` until the room has a cover. Covers are uploaded to the public `covers` storage bucket under `<user id>/` (storage policies: hosts write only their own folder; JPEG/PNG/WebP, 5 MB) and attached with `set_room_cover(p_path)`, which checks the folder, file type and that the object exists, then builds the URL from `platform_settings.media.covers_base` — clients can't write `rooms.cover_url` or point it elsewhere.

@@ -14,6 +14,7 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 | `…080000_verified_badge.sql` | `profiles.verified_at`: set by trigger when host verification is approved (Host badge), cleared if declined |
 | `…090000_account_deletion.sql` | `profiles.deleted_at`, `internal_delete_account()` (service role): removes personal data and social graph, anonymises the profile, keeps money/moderation records |
 | `…110000_host_id_equals_user_id.sql` | `hosts.host_code` = `profiles.user_number` (set by trigger, frozen); sequence dropped |
+| `…180000_host_contributions.sql` | `host_contributions()` — per-host gifter ranking; Overall starts when the host joined hosting |
 | `…170000_unique_ids.sql` | user IDs issued under an advisory lock (no duplicate from simultaneous sign-ups); one host row per user. IDs are unique, frozen, never reused |
 | `…160000_live_cover.sql` | `covers` storage bucket + per-user folder policies, `set_room_cover()`, `go_live()` requires a cover, `platform_settings.media.covers_base` |
 | `…140000_permanent_agency_code.sql` | agency codes frozen after insert (`agency_code_permanent`), `regenerate_agency_code()` dropped, unique `agencies.manager_id` (one agency per owner) |

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
+import { Contributions } from '@/components/Contributions';
 import { LiveAvatar } from '@/components/FollowingLive';
 import { PressScale } from '@/components/Motion';
 import { Avatar, Button, RoleBadges, Row, Screen, Text } from '@/components/ui';
@@ -102,6 +103,7 @@ export default function UserProfileScreen() {
               <Text variant="label">{data.followers.toLocaleString()} followers</Text>
               {data.profile.bio && <Text style={{ textAlign: 'center' }}>{data.profile.bio}</Text>}
             </View>
+            {data.host && <Contributions hostId={id} />}
           </ScrollView>
         )}
         {data && !isMe && (

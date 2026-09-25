@@ -32,6 +32,7 @@ const MESSAGES: Record<string, string> = {
   not_agency_member: "You're not part of an agency.",
   user_not_found: 'No user with that ID.',
   already_in_agency: 'That user already belongs to an agency.',
+  invalid_period: 'Unknown period.',
   cover_required: 'Add a cover picture to go live.',
   invalid_cover: 'That picture could not be used. Try another one.',
   agency_code_permanent: 'Agency codes are permanent and cannot be changed.',
