@@ -29,13 +29,14 @@ export default function HomeScreen() {
   const supabase = useSupabase();
   const { userId } = useAuth();
   const { profile } = useProfile();
-  const { c } = useTheme();
+  const { c, hPadding } = useTheme();
   const offline = useOffline();
   const { width } = useWindowDimensions();
   const [feed, setFeed] = useState<Feed>('popular');
   const [category, setCategory] = useState<(typeof CHIPS)[number]>('all');
+  // 2 columns on every phone width (compact through xlarge) — only widens past that on tablet/web.
   const columns = width > 700 ? 4 : 2;
-  const cardWidth = (Math.min(width, 1100) - 16 * 2 - 10 * (columns - 1)) / columns;
+  const cardWidth = (Math.min(width, 1100) - hPadding * 2 - 10 * (columns - 1)) / columns;
 
   const { data, error, loading, reload } = useFocusedAsync<HomeData>(async () => {
     const [live, follows, recs] = await Promise.all([
@@ -75,7 +76,7 @@ export default function HomeScreen() {
 
   return (
     <Screen>
-      <View style={{ paddingHorizontal: 20, paddingTop: 4, gap: 4, maxWidth: 1100, width: '100%', alignSelf: 'center' }}>
+      <View style={{ paddingHorizontal: hPadding, paddingTop: 4, gap: 4, maxWidth: 1100, width: '100%', alignSelf: 'center' }}>
         <Row style={{ justifyContent: 'space-between' }}>
           <Wordmark />
           <Row gap={8}>
@@ -87,13 +88,13 @@ export default function HomeScreen() {
         <TextTabs options={FEEDS} value={feed} onChange={setFeed} />
       </View>
       <View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingVertical: 12 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: hPadding, paddingVertical: 12 }}>
           {CHIPS.map((k) => <Chip key={k} label={k === 'all' ? 'All' : categoryLabel(k)} selected={category === k} onPress={() => setCategory(k)} />)}
         </ScrollView>
       </View>
       <StateView state={state}>
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32, maxWidth: 1100, width: '100%', alignSelf: 'center' }}
+          contentContainerStyle={{ paddingHorizontal: hPadding, paddingBottom: 32, maxWidth: 1100, width: '100%', alignSelf: 'center' }}
           refreshControl={<RefreshControl refreshing={loading && !!data} onRefresh={reload} tintColor={c.text} />}
         >
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
