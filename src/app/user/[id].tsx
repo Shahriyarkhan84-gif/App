@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { Alert, ScrollView, Share, View } from 'react-native';
 
 import { ContributionsCard } from '@/components/Contributions';
 import { LiveAvatar } from '@/components/FollowingLive';
@@ -42,6 +42,12 @@ export default function UserProfileScreen() {
   const isMe = id === userId;
   const isFollowing = following ?? data?.follows ?? false;
 
+  const shareProfile = () => {
+    if (!data) return;
+    void Share.share({ message: `${displayName(data.profile)} on Zynalive — ID ${data.profile.user_number}: zynalive://user/${id}` });
+    track('profile_shared', { user_id: id! });
+  };
+
   const toggleFollow = async () => {
     const next = !isFollowing;
     setFollowing(next);
@@ -79,7 +85,16 @@ export default function UserProfileScreen() {
 
   return (
     <Screen edges={['bottom']}>
-      <Stack.Screen options={{ title: data ? displayName(data.profile) : '' }} />
+      <Stack.Screen
+        options={{
+          title: data ? displayName(data.profile) : '',
+          headerRight: data ? () => (
+            <PressScale onPress={shareProfile} accessibilityRole="button" accessibilityLabel="Share this profile">
+              <Ionicons name="share-social-outline" size={21} color={c.text} />
+            </PressScale>
+          ) : undefined,
+        }}
+      />
       <StateView state={resolveState({ offline, loading, error, data, onRetry: reload })}>
         {data && (
           <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
