@@ -21,11 +21,12 @@ export default function SSOCallback() {
       router.replace('/');
       return;
     }
-    // Otherwise sign-in didn't complete (cancelled, failed) — don't strand the
-    // user on a spinner forever; send them back to sign in after a few seconds.
+    // Otherwise sign-in didn't complete (cancelled, failed, or the redirect never
+    // carried a session back — see AuthForm.tsx's start()) — don't strand the user
+    // on a spinner forever; send them back with a visible reason after a few seconds.
     const t = setTimeout(() => {
-      if (!isSignedIn) router.replace('/welcome');
-    }, 4000);
+      if (!isSignedIn) router.replace({ pathname: '/welcome', params: { notice: 'sso_timeout' } });
+    }, 6000);
     return () => clearTimeout(t);
   }, [isLoaded, isSignedIn]);
 

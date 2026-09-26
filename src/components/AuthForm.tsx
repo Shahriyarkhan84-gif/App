@@ -130,7 +130,7 @@ export function SocialButtons({ onError, divider = true }: { onError: (message: 
   const start = async (strategy: 'oauth_google' | 'oauth_apple') => {
     setPending(strategy);
     try {
-      const { createdSessionId, setActive } = await startSSOFlow({
+      const { createdSessionId, setActive, authSessionResult, signIn, signUp } = await startSSOFlow({
         strategy,
         redirectUrl: AuthSession.makeRedirectUri({ path: 'sso-callback' }),
       });
@@ -139,6 +139,20 @@ export function SocialButtons({ onError, divider = true }: { onError: (message: 
         // See sign-up.tsx: push home explicitly rather than rely solely on
         // Stack.Protected's guard re-evaluation.
         router.replace('/');
+      } else if (authSessionResult?.type === 'cancel' || authSessionResult?.type === 'dismiss') {
+        // User closed the browser sheet before finishing — not an error, just stop quietly.
+      } else {
+        // The browser session ended but Clerk didn't hand back a session — this used to
+        // fail silently (button just stopped loading, no feedback). Surface *why* so it's
+        // debuggable instead of looking like the app "did nothing": either the sign-in
+        // needs another step Clerk requires (status), or the redirect didn't carry a
+        // result back to the app at all (authSessionResult.type).
+        const status = signUp?.status ?? signIn?.status;
+        onError(
+          status
+            ? `Sign-in needs an extra step (${status}). Try email sign-in instead.`
+            : `Sign-in didn't complete (${authSessionResult?.type ?? 'no response'}). Please try again.`,
+        );
       }
     } catch (err) {
       onError(clerkErrorMessage(err));

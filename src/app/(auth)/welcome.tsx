@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,7 +11,13 @@ import { useTheme } from '@/lib/theme';
 /** First screen after the loading page: sign up, sign in, or continue with Google. */
 export default function WelcomeScreen() {
   const { c } = useTheme();
-  const [error, setError] = useState<string | null>(null);
+  // sso-callback.tsx bounces here with ?notice=sso_timeout when Google/Apple
+  // sign-in opened the browser but never came back with a session, so the
+  // reason is visible instead of the screen just quietly resetting.
+  const { notice } = useLocalSearchParams<{ notice?: string }>();
+  const [error, setError] = useState<string | null>(
+    notice === 'sso_timeout' ? "Sign-in didn't finish. Please try again." : null,
+  );
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.background }}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: 56, paddingBottom: 24, maxWidth: 480, width: '100%', alignSelf: 'center' }}>
