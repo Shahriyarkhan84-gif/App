@@ -2,13 +2,14 @@ import { useSignIn } from '@clerk/clerk-expo';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
 
-import { AuthShell, clerkErrorMessage, Field, FormError, SocialButtons } from '@/components/AuthForm';
+import { AuthShell, clerkErrorMessage, Field, FormError, SocialButtons, useRedirectWhenSignedIn } from '@/components/AuthForm';
 import { Button, Text } from '@/components/ui';
 import { fonts, useTheme } from '@/lib/theme';
 
 export default function SignInScreen() {
   const { c } = useTheme();
   const { signIn, setActive, isLoaded } = useSignIn();
+  useRedirectWhenSignedIn();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);

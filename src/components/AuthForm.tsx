@@ -1,4 +1,4 @@
-import { isClerkAPIResponseError, useSSO } from '@clerk/clerk-expo';
+import { isClerkAPIResponseError, useAuth, useSSO } from '@clerk/clerk-expo';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -23,6 +23,23 @@ function useWarmUpBrowser() {
       void WebBrowser.coolDownAsync();
     };
   }, []);
+}
+
+/**
+ * Push signed-in users to the home screen. Used on every screen that can
+ * complete a Clerk session (welcome/sign-up/sign-in's social buttons,
+ * sign-up/sign-in's own email flow, sso-callback). Fires off
+ * `useAuth().isSignedIn` rather than immediately after `setActive()`, so it
+ * can't race React flushing that state update — the authoritative signal,
+ * not a same-tick guess. Each caller may *also* call router.replace('/')
+ * right after its own setActive() as a same-tick fast path; that's harmless
+ * and this hook is what actually guarantees the navigation happens.
+ */
+export function useRedirectWhenSignedIn() {
+  const { isSignedIn } = useAuth();
+  useEffect(() => {
+    if (isSignedIn) router.replace('/');
+  }, [isSignedIn]);
 }
 
 export function clerkErrorMessage(err: unknown) {
@@ -106,6 +123,7 @@ export function FormError({ message }: { message: string | null }) {
 /** Google / Apple sign-in through Clerk's SSO flow. */
 export function SocialButtons({ onError, divider = true }: { onError: (message: string) => void; divider?: boolean }) {
   useWarmUpBrowser();
+  useRedirectWhenSignedIn();
   const { startSSOFlow } = useSSO();
   const [pending, setPending] = useState<string | null>(null);
 
