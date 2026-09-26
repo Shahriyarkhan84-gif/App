@@ -56,20 +56,24 @@ export function bodyFont(weight?: string | number | null) {
   return w >= 600 ? fonts.bold : w >= 500 ? fonts.medium : fonts.regular;
 }
 
+// White/blue rebrand (was red/gold). Gold stays as the coin/gift color only —
+// that's a semantic "currency" cue used industry-wide (BIGO, TikTok, etc.),
+// not the app's brand color, so it doesn't change with this rebrand.
+type Gradient = readonly [string, string, string];
 const dark = {
-  background: '#0E0D12',
-  surface: '#17151E',
-  surfaceRaised: '#1C1A24',
-  border: '#2C2937',
-  divider: '#26232F',
-  tabBar: '#15131B',
-  text: '#F4F1F8',
-  textMuted: '#B9B3C6',
-  textFaint: '#8C8699',
-  primary: '#D81E45',
+  background: '#080B14',
+  surface: '#101624',
+  surfaceRaised: '#161D2E',
+  border: '#232C40',
+  divider: '#1C2334',
+  tabBar: '#0A0F1C',
+  text: '#F2F6FF',
+  textMuted: '#AEB9D4',
+  textFaint: '#7C89AC',
+  primary: '#2E6BFF',
   primaryText: '#FFFFFF',
-  accent: '#FFC24B',
-  live: '#D81E45',
+  accent: '#7FD1FF',
+  live: '#2E6BFF',
   gold: '#FFC24B',
   onGold: '#2A1A00',
   goldSurface: '#2A2110',
@@ -83,22 +87,26 @@ const dark = {
   warning: '#FFC24B',
   danger: '#FF5A61',
   overlay: 'rgba(0,0,0,0.6)',
+  // HDR-style gradient + glow tokens for hero surfaces (buttons, live badge,
+  // balance cards, auth hero) — see GradientCard/GlowButton in ui.tsx.
+  gradient: ['#0A2540', '#2E6BFF', '#7FD1FF'] as Gradient,
+  glow: 'rgba(46,107,255,0.55)',
 };
 
 const light: typeof dark = {
-  background: '#F7F5FA',
+  background: '#F4F8FF',
   surface: '#FFFFFF',
-  surfaceRaised: '#F0EDF4',
-  border: '#E2DDE9',
-  divider: '#ECE8F1',
+  surfaceRaised: '#EAF1FF',
+  border: '#D7E3FA',
+  divider: '#E3EAFB',
   tabBar: '#FFFFFF',
-  text: '#16131F',
-  textMuted: '#5E5870',
-  textFaint: '#716B80',
-  primary: '#C81A3F',
+  text: '#0B1220',
+  textMuted: '#4A5578',
+  textFaint: '#6B7694',
+  primary: '#2258E6',
   primaryText: '#FFFFFF',
-  accent: '#B7791F',
-  live: '#D81E45',
+  accent: '#2E6BFF',
+  live: '#2258E6',
   gold: '#FFC24B',
   onGold: '#2A1A00',
   goldSurface: '#FFF4DA',
@@ -112,6 +120,8 @@ const light: typeof dark = {
   warning: '#B7791F',
   danger: '#D9363E',
   overlay: 'rgba(0,0,0,0.45)',
+  gradient: ['#DCE9FF', '#2258E6', '#0A2540'] as Gradient,
+  glow: 'rgba(34,88,230,0.35)',
 };
 
 export type Palette = typeof dark;

@@ -147,21 +147,21 @@ export default function CreateScreen() {
               <Text variant="caption" color={lc.textMuted}>ID {profile?.user_number}{verification === 'approved' ? ' · Verified' : ''}</Text>
             </Row>
             <Pressable onPress={pickCover} disabled={uploading || offline} accessibilityRole="button" accessibilityLabel={cover ? 'Change cover picture' : 'Add cover picture, required'} style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-              <View style={{ width: 72, height: 96, borderRadius: 12, overflow: 'hidden', borderWidth: cover ? 0 : 2, borderStyle: 'dashed', borderColor: '#FF6B85', backgroundColor: lc.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 72, height: 96, borderRadius: 12, overflow: 'hidden', borderWidth: cover ? 0 : 2, borderStyle: 'dashed', borderColor: lc.accent, backgroundColor: lc.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
                 {cover ? (
                   <Pop key={cover} from={0.7}><Image source={cover} style={{ width: 72, height: 96 }} contentFit="cover" /></Pop>
                 ) : (
-                  <Ionicons name={uploading ? 'cloud-upload-outline' : 'image-outline'} size={26} color="#FF6B85" />
+                  <Ionicons name={uploading ? 'cloud-upload-outline' : 'image-outline'} size={26} color={lc.accent} />
                 )}
               </View>
               <View style={{ flex: 1, gap: 3 }}>
                 <Row gap={6}>
                   <Text variant="label" color={lc.text}>Cover picture</Text>
-                  {!cover && <Text variant="caption" color="#FF6B85" style={{ fontWeight: '700' }}>Required</Text>}
+                  {!cover && <Text variant="caption" color={lc.accent} style={{ fontWeight: '700' }}>Required</Text>}
                 </Row>
                 <Text variant="caption" color={lc.textMuted}>{uploading ? 'Uploading…' : cover ? 'Shown on Home and in search. Tap to change.' : 'Add a cover to go live. It shows on Home and in search.'}</Text>
               </View>
-              <Ionicons name={cover ? 'create-outline' : 'add-circle'} size={22} color={cover ? lc.textMuted : '#FF6B85'} />
+              <Ionicons name={cover ? 'create-outline' : 'add-circle'} size={22} color={cover ? lc.textMuted : lc.accent} />
             </Pressable>
             <Input label="Stream title" value={title} onChangeText={setTitle} placeholder="What are you streaming?" maxLength={80} style={{ backgroundColor: lc.surfaceRaised, borderColor: '#3A3547', color: lc.text, minHeight: 44 }} />
             <View style={{ gap: 8 }}>

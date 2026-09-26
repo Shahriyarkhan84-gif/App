@@ -19,7 +19,7 @@ export function LiveAvatar({ uri, name, size }: { uri?: string | null; name: str
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
       <Ripple size={size} color={c.primary} period={1600} ring />
       <Ripple size={size} color={c.primary} period={1600} delay={800} ring />
-      <Spin style={{ position: 'absolute', width: size, height: size, borderRadius: size / 2, borderWidth: ring, borderTopColor: c.primary, borderRightColor: c.gold, borderBottomColor: '#FF6B85', borderLeftColor: c.primary }} />
+      <Spin style={{ position: 'absolute', width: size, height: size, borderRadius: size / 2, borderWidth: ring, borderTopColor: c.primary, borderRightColor: c.gold, borderBottomColor: c.accent, borderLeftColor: c.primary }} />
       <Avatar uri={uri} name={name} size={size - ring * 2 - 6} />
       <View style={{ position: 'absolute', bottom: -8 }}>
         <Pulse min={1} max={1.1} period={1200}>

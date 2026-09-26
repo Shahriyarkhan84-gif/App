@@ -47,7 +47,7 @@ export function clerkErrorMessage(err: unknown) {
   return err instanceof Error ? err.message : 'Something went wrong';
 }
 
-const TILES = ['#5B2A4A', '#1F4A5C', '#4A2F6B', '#6B3A22'];
+const TILES = ['#0A2540', '#1B4FBF', '#2E6BFF', '#7FD1FF'];
 
 /** Tiles + wordmark + tagline from the design canvas. */
 export function AuthHero({ size = 44 }: { size?: number }) {

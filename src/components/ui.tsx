@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { ComponentProps, ReactNode } from 'react';
 import {
   ActivityIndicator,
@@ -70,7 +71,7 @@ export function Button({ title, variant = 'primary', size = 'md', loading, icon,
     primary: c.primaryText, danger: c.primaryText, gold: c.onGold, secondary: c.text, ghost: c.textMuted, outline: c.violetText,
   }[variant];
   const border = variant === 'secondary' ? c.border : variant === 'outline' ? c.violetBorder : 'transparent';
-  return (
+  const button = (
     <PressScale
       accessibilityRole="button"
       accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
@@ -80,7 +81,7 @@ export function Button({ title, variant = 'primary', size = 'md', loading, icon,
           minHeight: size === 'md' ? 52 : 40,
           paddingHorizontal: size === 'md' ? 22 : 16,
           borderRadius: radius.pill,
-          backgroundColor: bg,
+          backgroundColor: variant === 'primary' ? 'transparent' : bg,
           alignItems: 'center',
           justifyContent: 'center',
           flexDirection: 'row',
@@ -88,15 +89,24 @@ export function Button({ title, variant = 'primary', size = 'md', loading, icon,
           borderWidth: border === 'transparent' ? 0 : 1,
           borderColor: border,
           opacity: disabled ? 0.45 : 1,
+          overflow: 'hidden',
         },
         style,
       ]}
       {...rest}
     >
+      {variant === 'primary' && (
+        <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+      )}
       {loading ? <ActivityIndicator color={fg} /> : icon}
       {!loading && <Text variant="label" color={fg} style={{ fontSize: size === 'md' ? 16 : 14 }}>{title}</Text>}
     </PressScale>
   );
+  // Primary CTAs get an HDR-style glow — shadow goes on an outer wrapper since
+  // overflow:hidden (needed to clip the gradient to the pill shape) would
+  // otherwise clip the shadow too on iOS.
+  if (variant !== 'primary' || disabled) return button;
+  return <View style={{ shadowColor: c.glow, shadowOpacity: 1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 8, borderRadius: radius.pill }}>{button}</View>;
 }
 
 /** Round 44pt icon-only button (header actions). */
@@ -216,9 +226,13 @@ export function LiveBadge({ viewers }: { viewers?: number }) {
   const { c } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-      <View style={{ backgroundColor: c.live, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-        <Pulse min={0.6} max={1.15} period={1100}><View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' }} /></Pulse>
-        <Text variant="caption" color="#fff" style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>LIVE</Text>
+      <View style={{ borderRadius: 6, shadowColor: c.glow, shadowOpacity: 1, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 4 }}>
+        <View style={{ borderRadius: 6, overflow: 'hidden' }}>
+          <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 8, paddingVertical: 3, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            <Pulse min={0.6} max={1.15} period={1100}><View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' }} /></Pulse>
+            <Text variant="caption" color="#fff" style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>LIVE</Text>
+          </LinearGradient>
+        </View>
       </View>
       {viewers !== undefined && <ViewerCount count={viewers} />}
     </View>
