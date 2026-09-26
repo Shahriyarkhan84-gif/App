@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { View } from 'react-native';
@@ -8,7 +9,7 @@ import { categoryLabel, displayName, type Room } from '@/lib/types';
 import { PressScale } from './Motion';
 import { LiveBadge, RoleBadges, Text, ViewerCount } from './ui';
 
-export function RoomCard({ room, width, reason }: { room: Room; width: number; reason?: string | null }) {
+export function RoomCard({ room, width, reason, rank }: { room: Room; width: number; reason?: string | null; rank?: number }) {
   const { c, radius } = useTheme();
   const cover = room.cover_url ?? room.host?.avatar_url;
   const name = displayName(room.host);
@@ -19,6 +20,12 @@ export function RoomCard({ room, width, reason }: { room: Room; width: number; r
           {cover ? <Image source={cover} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
               <Text variant="display" color="rgba(255,255,255,0.14)" style={{ fontSize: 96, lineHeight: 110 }}>{name.replace('@', '').slice(0, 1).toUpperCase()}</Text>
+            </View>
+          )}
+          {rank !== undefined && (
+            <View style={{ position: 'absolute', bottom: 44, left: 10, flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: c.gold, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 }}>
+              <Ionicons name="trophy" size={9} color={c.onGold} />
+              <Text variant="caption" color={c.onGold} style={{ fontSize: 9, fontWeight: '800' }}>TOP {rank}</Text>
             </View>
           )}
           <View style={{ position: 'absolute', top: 10, left: 10, right: 10, flexDirection: 'row', justifyContent: 'space-between' }}>

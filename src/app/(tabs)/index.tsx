@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
 
 import { RoomCard } from '@/components/RoomCard';
+import { FeaturedHost } from '@/components/FeaturedHost';
 import { FollowingLive, LiveBell } from '@/components/FollowingLive';
 import { FadeIn, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
@@ -100,10 +101,20 @@ export default function HomeScreen() {
           contentContainerStyle={{ paddingHorizontal: hPadding, paddingBottom: 32, maxWidth: 1100, width: '100%', alignSelf: 'center' }}
           refreshControl={<RefreshControl refreshing={loading && !!data} onRefresh={reload} tintColor={c.text} />}
         >
+          {feed === 'popular' && category === 'all' && rooms[0] && (
+            <FadeIn style={{ marginBottom: 10 }}>
+              <FeaturedHost room={rooms[0]} following={data!.followed.has(rooms[0].host_id)} />
+            </FadeIn>
+          )}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {rooms.map((r, i) => (
               <FadeIn key={`${feed}-${category}-${r.id}`} delay={stagger(i)} from={24}>
-                <RoomCard room={r} width={cardWidth} reason={feed === 'popular' ? data?.recommended.get(r.id)?.reason : null} />
+                <RoomCard
+                  room={r}
+                  width={cardWidth}
+                  reason={feed === 'popular' ? data?.recommended.get(r.id)?.reason : null}
+                  rank={feed === 'popular' && category === 'all' && i > 0 && i <= 3 ? i + 1 : undefined}
+                />
               </FadeIn>
             ))}
           </View>

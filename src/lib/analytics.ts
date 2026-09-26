@@ -19,7 +19,8 @@ type AnalyticsEvent =
   | { name: 'pk_battle_invited'; props: { room_id: string; target_room_id: string } }
   | { name: 'pk_battle_accepted'; props: { battle_id: string } }
   | { name: 'pk_battle_declined'; props: { battle_id: string } }
-  | { name: 'pk_battle_ended'; props: { battle_id: string } };
+  | { name: 'pk_battle_ended'; props: { battle_id: string } }
+  | { name: 'room_shared'; props: { room_id: string } };
 
 /** Typed PostHog capture; no-op when PostHog isn't configured. */
 export function useAnalytics() {

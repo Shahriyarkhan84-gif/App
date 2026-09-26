@@ -3,7 +3,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { Alert, Pressable, Share, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChatPanel } from '@/components/ChatPanel';
@@ -68,6 +68,11 @@ export default function LiveRoomScreen() {
       : await supabase.from('follows').delete().eq('follower_id', userId!).eq('followee_id', r.host_id);
     if (error) setFollowing(!next);
     else track('follow_toggled', { user_id: r.host_id, following: next });
+  };
+
+  const shareRoom = () => {
+    void Share.share({ message: `Watch ${displayName(r?.host)} live on Zynalive: zynalive://live/${roomId}` });
+    track('room_shared', { room_id: roomId });
   };
 
   const reportRoom = () =>
@@ -160,6 +165,9 @@ export default function LiveRoomScreen() {
                   <>
                     <Pressable onPress={() => setGiftOpen(true)} accessibilityRole="button" accessibilityLabel="Send a gift" style={roundButton(c.gold)}>
                       <Ionicons name="gift" size={20} color={c.onGold} />
+                    </Pressable>
+                    <Pressable onPress={shareRoom} accessibilityRole="button" accessibilityLabel="Share this stream" style={roundButton('rgba(0,0,0,0.5)')}>
+                      <Ionicons name="share-social-outline" size={18} color={c.text} />
                     </Pressable>
                     <Pressable onPress={reportRoom} accessibilityRole="button" accessibilityLabel="Report this stream" style={roundButton('rgba(0,0,0,0.5)')}>
                       <Ionicons name="flag-outline" size={18} color={c.text} />

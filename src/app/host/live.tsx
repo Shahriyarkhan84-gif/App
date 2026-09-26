@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, FlatList, View } from 'react-native';
+import { Alert, FlatList, Share, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChatPanel } from '@/components/ChatPanel';
@@ -10,7 +10,7 @@ import { GiftToasts } from '@/components/GiftSheet';
 import { LiveStage } from '@/components/LiveStage';
 import { endBattleIfExpired, PkBattleBar, PkBattleStage, usePkBattleState } from '@/components/PkBattle';
 import { StateView, type ViewState } from '@/components/StateView';
-import { Avatar, Button, LiveBadge, Row, Sheet, Text } from '@/components/ui';
+import { Avatar, Button, IconButton, LiveBadge, Row, Sheet, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { getLiveKitToken, rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -94,6 +94,12 @@ export default function HostLiveScreen() {
     }
   };
 
+  const shareRoom = () => {
+    if (!roomId) return;
+    void Share.share({ message: `I'm live on Zynalive: zynalive://live/${roomId}` });
+    track('room_shared', { room_id: roomId });
+  };
+
   const end = () =>
     Alert.alert('End your stream?', undefined, [
       { text: 'Keep streaming', style: 'cancel' },
@@ -147,6 +153,7 @@ export default function HostLiveScreen() {
                 <LiveBadge viewers={viewers ?? session.data.room.viewer_count} />
                 <Text variant="label" color={c.text} style={{ flex: 1 }} numberOfLines={1}>{session.data.room.title}</Text>
                 <Text variant="label" color={c.text}>💎 {coins.toLocaleString()}</Text>
+                <IconButton icon="share-social-outline" label="Share this stream" onPress={shareRoom} />
                 {!battle && (
                   <Button title="Battle" size="sm" variant="gold" onPress={() => setInviteOpen(true)}
                     icon={<Ionicons name="flash" size={14} color={c.onGold} />} />
