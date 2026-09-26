@@ -28,7 +28,22 @@ export type Room = {
   updated_at?: string;
   viewer_count: number;
   current_stream_id: string | null;
+  current_battle_id: string | null;
   host?: Pick<Profile, 'id' | 'display_name' | 'username' | 'avatar_url' | 'country' | 'verified_at' | 'role'> | null;
+};
+
+export type PkBattle = {
+  id: string;
+  room_a_id: string;
+  room_b_id: string;
+  status: 'invited' | 'live' | 'declined' | 'cancelled' | 'ended';
+  score_a: number;
+  score_b: number;
+  winner_room_id: string | null;
+  invited_at: string;
+  started_at: string | null;
+  ends_at: string | null;
+  ended_at: string | null;
 };
 
 export type ChatMessage = {
@@ -47,7 +62,7 @@ export type CoinPackage = { id: number; name: string; coins: number; price_minor
 
 // rooms.host_id -> hosts.user_id -> profiles.id
 export const ROOM_SELECT =
-  'id,host_id,title,category,cover_url,status,viewer_count,current_stream_id,updated_at,hostRow:hosts(profile:profiles(id,display_name,username,avatar_url,country,verified_at,role))';
+  'id,host_id,title,category,cover_url,status,viewer_count,current_stream_id,current_battle_id,updated_at,hostRow:hosts(profile:profiles(id,display_name,username,avatar_url,country,verified_at,role))';
 
 type RawRoom = Omit<Room, 'host'> & { hostRow?: { profile: Room['host'] } | null };
 

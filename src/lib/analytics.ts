@@ -15,7 +15,11 @@ type AnalyticsEvent =
   | { name: 'became_host'; props: Record<string, never> }
   | { name: 'feedback_opened'; props: Record<string, never> }
   | { name: 'account_deleted'; props: Record<string, never> }
-  | { name: 'host_application_submitted'; props: { status: string } };
+  | { name: 'host_application_submitted'; props: { status: string } }
+  | { name: 'pk_battle_invited'; props: { room_id: string; target_room_id: string } }
+  | { name: 'pk_battle_accepted'; props: { battle_id: string } }
+  | { name: 'pk_battle_declined'; props: { battle_id: string } }
+  | { name: 'pk_battle_ended'; props: { battle_id: string } };
 
 /** Typed PostHog capture; no-op when PostHog isn't configured. */
 export function useAnalytics() {

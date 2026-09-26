@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.4 — PK battles
+
+- Two live hosts can battle head-to-head: a "Battle" button on the host's own live screen invites another live host; the challenged host gets a live accept/decline prompt; the challenger can cancel while waiting. Once accepted, both hosts' live video shows split-screen (each still publishing only to their own room) with a VS badge, a live score bar and countdown, visible to every viewer on either side.
+- Score is a running tally of gift coins sent to either side while the battle is live, kept in sync by a trigger on `gifts` — `send_gift()` itself is untouched, so the money path doesn't change.
+- `pk_battles`, `rooms.current_battle_id`, `invite_pk_battle()`, `respond_pk_battle()`, `end_pk_battle()`; tests in `supabase/tests/70_pk_battles.sql`.
+- App: `src/components/PkBattle.tsx` (shared state hook + split-stage/score-bar UI), wired into `src/app/host/live.tsx` and `src/app/live/[roomId].tsx`; PK battle notifications route to the host's live screen.
+
 ## 0.7.3 — Country the account was created from
 
 - `profiles.signup_country` (ISO-2): recorded once by `ensure_profile(p_display_name, p_region)` from the edge country header (`cf-ipcountry`) or else the device region; frozen by trigger, cleared on account deletion; clients can't write it.

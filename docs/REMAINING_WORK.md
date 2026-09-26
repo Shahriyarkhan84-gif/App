@@ -14,7 +14,7 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 | 7 | Coin + gift economy | ✅ | Ledger, 90/5/5 gift engine, purchase money path, idempotency, concurrency-tested |
 | 8 | Payment + withdrawal | 🟡 | Stripe purchases, refunds, chargebacks, withdrawal review. **Missing: local rails (JazzCash/Easypaisa collection), automated payouts; coin→PKR rate decision** |
 | 9 | Chat + social | ✅ | Room chat, DMs, follows, blocks, word filters, anti-spam |
-| 10 | Ranking + events | 🟡 | Live/creator/gifter/country rankings (podium screen). **Missing: events, battles (PK)** |
+| 10 | Ranking + events | 🟡 | Live/creator/gifter/country rankings (podium screen), PK battles (invite/accept/decline, live split-screen, score + timer). **Missing: events** |
 | 11 | Safety + moderation | ✅ | AI moderation, reports, room admin, action ladder, audit logs |
 | 12 | AI platform | 🟡 | AI CEO + Finance/Economy/Streaming AI, moderation, fraud, support, creator assist, translation, recommendations. **Missing: subtitles (speech-to-text)** |
 | 13 | Marketing + SEO | ⬜ | AI Growth Manager / SEO AI not started |
@@ -23,7 +23,7 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 
 ## Also pending
 
-- Design canvas screens not built yet: multi-guest voice & video party rooms (Party tab lists live rooms until then), PK battles, likes, host dashboard, agency web dashboard.
+- Design canvas screens not built yet: multi-guest voice & video party rooms (Party tab lists live rooms until then), likes, host dashboard, agency web dashboard.
 
 - Localization layer (phase 2 in the architecture): UI strings are English.
 - Web dashboards for Agency (9 sections) and Owner (14 sections) beyond the command center.

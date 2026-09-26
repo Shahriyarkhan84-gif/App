@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChatPanel } from '@/components/ChatPanel';
 import { GiftSheet, GiftToasts } from '@/components/GiftSheet';
 import { LiveStage } from '@/components/LiveStage';
+import { PkBattleBar, PkBattleStage, usePkBattleState } from '@/components/PkBattle';
 import { StateView, type ViewState } from '@/components/StateView';
 import { Avatar, LiveBadge, RoleBadges, Row, Text, ViewerCount } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
@@ -55,6 +56,8 @@ export default function LiveRoomScreen() {
 
   const r = room.data ? { ...room.data.room, ...live } : null;
   const isFollowing = following ?? room.data?.follows ?? false;
+  const { battle, opponentRoom, mySide, secondsLeft } = usePkBattleState(r?.id, r?.current_battle_id);
+  const battleLive = battle?.status === 'live' && !!opponentRoom;
 
   const toggleFollow = async () => {
     if (!r) return;
@@ -97,7 +100,20 @@ export default function LiveRoomScreen() {
       <StateView state={state}>
         {r && token.data && (
           <>
-            <LiveStage token={token.data.token} url={token.data.url} role="viewer" onError={() => token.reload()} />
+            {battleLive ? (
+              <>
+                <PkBattleStage
+                  mySide={mySide}
+                  myStage={<LiveStage token={token.data.token} url={token.data.url} role="viewer" onError={() => token.reload()} />}
+                  opponentRoom={opponentRoom!}
+                  mySideLabel={displayName(r.host)}
+                  opponentSideLabel={displayName(opponentRoom!.host)}
+                />
+                <PkBattleBar battle={battle!} mySide={mySide} secondsLeft={secondsLeft} />
+              </>
+            ) : (
+              <LiveStage token={token.data.token} url={token.data.url} role="viewer" onError={() => token.reload()} />
+            )}
             <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, gap: 10 }}>
               <Row gap={8}>
                 <Row gap={8} style={{ backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 24, padding: 4, flexShrink: 1 }}>

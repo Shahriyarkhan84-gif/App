@@ -113,7 +113,8 @@ function Notifications() {
       await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', n.id);
       reload();
     }
-    if (n.data?.room_id) router.push({ pathname: '/live/[roomId]', params: { roomId: n.data.room_id } });
+    if (n.type.startsWith('pk_battle_')) router.push('/host/live');
+    else if (n.data?.room_id) router.push({ pathname: '/live/[roomId]', params: { roomId: n.data.room_id } });
     else if (n.type === 'withdrawal') router.push('/earnings');
     else if (n.type === 'coins_credited' || n.type === 'refund') router.push('/wallet');
     else if (n.type === 'support') router.push('/support');

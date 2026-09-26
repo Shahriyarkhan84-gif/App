@@ -47,6 +47,13 @@ const MESSAGES: Record<string, string> = {
   already_verified: "You're already verified.",
   verification_in_review: 'Your verification is being reviewed.',
   verification_unavailable: 'Verification is temporarily unavailable. Please try again.',
+  not_live: 'Go live first to start a battle.',
+  invalid_target: 'Pick a host to battle.',
+  target_not_live: "That host isn't live right now.",
+  cannot_battle_self: "You can't battle your own room.",
+  already_in_battle: "You're already in a battle.",
+  target_already_in_battle: 'That host is already in a battle.',
+  not_invitable: "This invite isn't pending anymore.",
 };
 
 export function errorCode(e: unknown): string {

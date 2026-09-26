@@ -41,7 +41,7 @@ export function LiveStage({ token, url, role, onDisconnected, onError }: LiveSta
   );
 }
 
-function Stage({ role }: { role: LiveStageProps['role'] }) {
+export function Stage({ role }: { role: LiveStageProps['role'] }) {
   const tracks = useTracks([Track.Source.Camera]);
   const trackRef = tracks.find((t) => isTrackReference(t) && (role === 'host' ? t.participant.isLocal : !t.participant.isLocal));
 

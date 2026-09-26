@@ -22,10 +22,10 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 | `…130000_agency_portal.sql` | `agencies.code` is a random unique **4-digit** code (1000–9999, `private.new_agency_code()`, old `AG-` codes reissued); `agency_portal()`, `regenerate_agency_code()`, `create_agency_by_user_number()` |
 | `…120000_host_applications.sql` | `host_applications` (no images, CNIC last 4 only), `internal_submit_host_application()`, `review_host_application()`, `private.ensure_host()` |
 | `…050000_hardening.sql` | fixed `search_path` on remaining functions; no anon execute by default (Supabase advisor fixes) |
+| `…200000_pk_battles.sql` | `pk_battles` (two rooms, live score, winner), `rooms.current_battle_id`; `invite_pk_battle()`, `respond_pk_battle()`, `end_pk_battle()`; a trigger on `gifts` tallies `score_a`/`score_b` from gifts already sent through `send_gift()` — no changes to the money path itself. Each host still publishes only to their own existing LiveKit room; viewers subscribe to both rooms while a battle is live. |
 
 Architecture table names map 1:1 except: `users` → Clerk + `profiles`;
-`battles` is not built yet (see REMAINING_WORK.md); `rankings` is computed by
-`get_rankings()` instead of stored.
+`rankings` is computed by `get_rankings()` instead of stored.
 
 ## Conventions
 
