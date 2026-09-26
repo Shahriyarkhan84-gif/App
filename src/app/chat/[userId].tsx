@@ -1,10 +1,11 @@
 import { useAuth } from '@clerk/clerk-expo';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, FlatList, KeyboardAvoidingView, Platform, View } from 'react-native';
+import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
-import { Button, Input, Row, Screen, Text } from '@/components/ui';
+import { Avatar, Button, Input, Row, Screen, Text } from '@/components/ui';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useAsync, useOffline, useRealtime } from '@/lib/hooks';
@@ -29,7 +30,7 @@ export default function ChatScreen() {
       supabase.from('direct_messages').select('*')
         .or(`and(sender_id.eq.${userId},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${userId})`)
         .order('created_at', { ascending: true }).limit(200),
-      supabase.from('profiles').select('display_name,username').eq('id', otherId).maybeSingle(),
+      supabase.from('profiles').select('display_name,username,avatar_url').eq('id', otherId).maybeSingle(),
     ]);
     if (msgs.error) throw msgs.error;
     return { messages: msgs.data as DM[], other: other.data };
@@ -63,7 +64,21 @@ export default function ChatScreen() {
 
   return (
     <Screen edges={['bottom']}>
-      <Stack.Screen options={{ title: displayName(data?.other) }} />
+      <Stack.Screen
+        options={{
+          title: displayName(data?.other),
+          headerRight: () => (
+            <Row gap={16}>
+              <Pressable onPress={() => Alert.alert('Voice calls', 'Coming soon.')} accessibilityRole="button" accessibilityLabel="Voice call">
+                <Ionicons name="call-outline" size={21} color={c.text} />
+              </Pressable>
+              <Pressable onPress={() => Alert.alert('Video calls', 'Coming soon.')} accessibilityRole="button" accessibilityLabel="Video call">
+                <Ionicons name="videocam-outline" size={22} color={c.text} />
+              </Pressable>
+            </Row>
+          ),
+        }}
+      />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }} keyboardVerticalOffset={90}>
         <StateView state={resolveState({ offline, loading, error, data, onRetry: reload, isEmpty: (d) => d.messages.length === 0, empty: { title: 'Say hi 👋' } })}>
           <FlatList
@@ -72,12 +87,27 @@ export default function ChatScreen() {
             keyExtractor={(m) => String(m.id)}
             contentContainerStyle={{ padding: 16, gap: 6 }}
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
-            renderItem={({ item }) => {
+            renderItem={({ item, index }) => {
               const mine = item.sender_id === userId;
+              const prev = data?.messages[index - 1];
+              const showAvatar = !mine && prev?.sender_id !== item.sender_id;
               return (
-                <View style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '80%', backgroundColor: mine ? c.primary : c.surfaceRaised, borderRadius: radius[16], paddingHorizontal: 12, paddingVertical: 8 }}>
-                  <Text color={mine ? c.primaryText : c.text}>{item.body}</Text>
-                </View>
+                <Row gap={8} style={{ justifyContent: mine ? 'flex-end' : 'flex-start', marginTop: showAvatar || mine ? 10 : 2 }}>
+                  {!mine && (showAvatar ? <Avatar uri={data?.other?.avatar_url} name={displayName(data?.other)} size={26} /> : <View style={{ width: 26 }} />)}
+                  <View
+                    style={{
+                      maxWidth: '75%',
+                      backgroundColor: mine ? c.primary : c.surfaceRaised,
+                      borderRadius: radius[16],
+                      borderBottomRightRadius: mine ? 4 : radius[16],
+                      borderBottomLeftRadius: mine ? radius[16] : 4,
+                      paddingHorizontal: 14,
+                      paddingVertical: 9,
+                    }}
+                  >
+                    <Text color={mine ? c.primaryText : c.text}>{item.body}</Text>
+                  </View>
+                </Row>
               );
             }}
           />

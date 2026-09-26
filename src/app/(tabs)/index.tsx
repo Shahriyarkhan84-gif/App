@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
 
 import { RoomCard } from '@/components/RoomCard';
-import { LiveBell } from '@/components/FollowingLive';
+import { FollowingLive, LiveBell } from '@/components/FollowingLive';
 import { FadeIn, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Chip, IconButton, Row, Screen, Text, TextTabs, Wordmark } from '@/components/ui';
@@ -87,6 +87,9 @@ export default function HomeScreen() {
         </Row>
         <TextTabs options={FEEDS} value={feed} onChange={setFeed} />
       </View>
+      {data && data.live.some((r) => data.followed.has(r.host_id)) && feed !== 'following' && (
+        <FollowingLive rooms={data.live.filter((r) => data.followed.has(r.host_id))} />
+      )}
       <View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: hPadding, paddingVertical: 12 }}>
           {CHIPS.map((k) => <Chip key={k} label={k === 'all' ? 'All' : categoryLabel(k)} selected={category === k} onPress={() => setCategory(k)} />)}
