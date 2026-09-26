@@ -132,7 +132,7 @@ export default function CreateScreen() {
 
   if (state.kind === 'success' && ready) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#2A2436' }}>
+      <View style={{ flex: 1, backgroundColor: '#170B2E' }}>
         {Platform.OS !== 'web' && focused && camera?.granted ? (
           <CameraView facing="front" style={StyleSheet.absoluteFill} />
         ) : (
