@@ -1,11 +1,10 @@
 import { Bullets, H, LegalPage, P } from '@/components/LegalPage';
 
-// Public URL for the store listings' privacy-policy field: https://<your-domain>/privacy
-// DRAFT: have it reviewed; replace every [BRACKETED] placeholder before publishing.
+// Public URL for the store listings' privacy-policy field: https://zynalive.com/privacy
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy Policy" updated="24 September 2026">
-      <P>This policy explains what [COMPANY LEGAL NAME] (“Zynalive”, “we”) collects when you use the Zynalive app and website, why, and your choices. Contact: [SUPPORT EMAIL].</P>
+    <LegalPage title="Privacy Policy" updated="26 September 2026">
+      <P>This policy explains what Zynalive (“we”) collects when you use the Zynalive app and website, why, and your choices. Contact: support@zynalive.com.</P>
 
       <H>What we collect</H>
       <Bullets items={[
@@ -32,13 +31,13 @@ export default function PrivacyPage() {
       <P>Your name, username, photo, bio, Zynalive ID, host badge, follower counts, live streams and live-chat messages are visible to other users. Direct messages are visible only to you and the recipient, and to moderators when reported.</P>
 
       <H>Retention and deletion</H>
-      <P>We keep your data while your account is open. You can delete your account at any time in Me → Delete account, or see /account-deletion. Payment and payout records are kept for [RETENTION PERIOD] as required by law.</P>
+      <P>We keep your data while your account is open. You can delete your account at any time in Me → Delete account, or see /account-deletion. Payment and payout records are kept as required by Pakistani law.</P>
 
       <H>Your rights</H>
-      <P>You can access, correct or delete your data, and object to or restrict some processing, by contacting [SUPPORT EMAIL]. You can edit most profile details in the app.</P>
+      <P>You can access, correct or delete your data, and object to or restrict some processing, by contacting support@zynalive.com. You can edit most profile details in the app.</P>
 
       <H>Children</H>
-      <P>Zynalive is not for children under [MINIMUM AGE]. You must be 18 or older to go live, receive gifts or withdraw earnings.</P>
+      <P>Zynalive is not for children under 18. You must be 18 or older to use the app, go live, receive gifts or withdraw earnings.</P>
 
       <H>Changes</H>
       <P>We will post updates here and tell you in the app about important changes.</P>
