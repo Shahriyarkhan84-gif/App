@@ -23,7 +23,10 @@ export default function TabsLayout() {
         tabBarActiveTintColor: c.text,
         tabBarInactiveTintColor: c.textFaint,
         tabBarLabelStyle: { fontFamily: fonts.medium, fontSize: 11 },
-        tabBarStyle: { backgroundColor: c.tabBar, borderTopColor: c.divider, height: 88, paddingTop: 8 },
+        tabBarStyle: {
+          backgroundColor: c.tabBar, borderTopColor: c.divider, height: 88, paddingTop: 8,
+          borderTopLeftRadius: 400, borderTopRightRadius: 400,
+        },
         sceneStyle: { backgroundColor: c.background },
       }}
     >
