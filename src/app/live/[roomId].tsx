@@ -1,6 +1,5 @@
 import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, Share, View } from 'react-native';
@@ -175,28 +174,15 @@ export default function LiveRoomScreen() {
                   </>
                 }
               />
-              <Row gap={10}>
-                <Pressable
-                  onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: r.host_id } })}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Message ${displayName(r.host)}`}
-                  style={{ flex: 1, height: 46, borderRadius: 23, backgroundColor: 'rgba(0,0,0,0.5)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)' }}
-                >
-                  <Ionicons name="chatbubble-outline" size={17} color={c.text} />
-                  <Text variant="label" color={c.text} style={{ fontSize: 14 }}>Message</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => setGiftOpen(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Send a free gift"
-                  style={{ flex: 1, borderRadius: 23, overflow: 'hidden' }}
-                >
-                  <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                    <Ionicons name="gift-outline" size={17} color="#fff" />
-                    <Text variant="label" color="#fff" style={{ fontSize: 14 }}>Send gift</Text>
-                  </LinearGradient>
-                </Pressable>
-              </Row>
+              <Pressable
+                onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: r.host_id } })}
+                accessibilityRole="button"
+                accessibilityLabel={`Message ${displayName(r.host)}`}
+                style={{ height: 46, borderRadius: 23, backgroundColor: 'rgba(0,0,0,0.5)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)' }}
+              >
+                <Ionicons name="chatbubble-outline" size={17} color={c.text} />
+                <Text variant="label" color={c.text} style={{ fontSize: 14 }}>Message</Text>
+              </Pressable>
             </View>
             <GiftSheet roomId={roomId} visible={giftOpen} onClose={() => setGiftOpen(false)} />
           </>
