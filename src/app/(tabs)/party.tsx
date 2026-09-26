@@ -114,14 +114,18 @@ export default function PartyScreen() {
               </View>
             ) : null
           }
-          renderItem={({ item, index }) => <FadeIn delay={stagger(index, 50)}><PartyRow room={item} /></FadeIn>}
+          renderItem={({ item, index }) => (
+            <FadeIn delay={stagger(index, 50)}>
+              <PartyRow room={item} rank={!searching && index < 3 ? index + 1 : undefined} />
+            </FadeIn>
+          )}
         />
       </StateView>
     </Screen>
   );
 }
 
-function PartyRow({ room }: { room: Room }) {
+function PartyRow({ room, rank }: { room: Room; rank?: number }) {
   const { c, radius } = useTheme();
   const cover = room.cover_url ?? room.host?.avatar_url;
   const host = displayName(room.host);
@@ -138,6 +142,12 @@ function PartyRow({ room }: { room: Room }) {
         <View style={{ position: 'absolute', left: 6, top: 6, backgroundColor: c.live, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 }}>
           <Text variant="caption" color="#fff" style={{ fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>LIVE</Text>
         </View>
+        {rank !== undefined && (
+          <View style={{ position: 'absolute', left: 6, bottom: 6, flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: c.gold, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>
+            <Ionicons name="trophy" size={9} color={c.onGold} />
+            <Text variant="caption" color={c.onGold} style={{ fontSize: 9, fontWeight: '800' }}>TOP {rank}</Text>
+          </View>
+        )}
       </View>
       <View style={{ flex: 1, justifyContent: 'center', gap: 5 }}>
         <Text variant="h3" numberOfLines={1} style={{ fontSize: 16 }}>{room.title}</Text>
