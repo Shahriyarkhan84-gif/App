@@ -106,8 +106,8 @@ at the new API.
   `is_platform_admin()`/`current_app_role()`, applied to an admin-only user
   listing; profile CRUD and the follow/block graph (blocking severs follows
   both ways, matching the RPC behavior).
-- **Phase 3 (streaming core) — mostly done.** `HostsModule.becomeHost()`
-  provisions one standing Amazon IVS channel per host via `IvsService`
+- **Phase 3 (streaming core) — done.** `HostsModule.becomeHost()` provisions
+  one standing Amazon IVS channel per host via `IvsService`
   (`@aws-sdk/client-ivs`) and stores its ARN/playback URL/ingest endpoint on
   `Room`; `goLive()`/`endStream()` flip status against that channel;
   `GET /streams/credentials` fetches a fresh stream-key value from IVS on
@@ -115,10 +115,29 @@ at the new API.
   `invite_pk_battle`/`respond_pk_battle`/`end_pk_battle` from
   `20260924200000_pk_battles.sql` 1:1, including the notify-both-hosts and
   clear-`currentBattleId` behavior; `applyGiftScore()` is wired and ready but
-  unused until the gift-send flow lands in Phase 5. **Not built yet:** the
-  WebRTC signaling layer that actually lets a viewer/host subscribe to the
-  opponent's feed — that's real-time infra and belongs with the Socket.IO
-  gateway in Phase 4, not bolted onto this REST module.
-- Nothing has been `npm install`ed for the new workspaces yet — do that
-  before running `apps/api` or `apps/web` locally. IVS calls also need
+  unused until the gift-send flow lands in Phase 5.
+- **Phase 4 (chat & realtime) — done.** `RealtimeGateway` (Socket.IO):
+  JWT-authenticated handshake, every client auto-joins `user:<id>`, explicit
+  `room:join`/`room:leave` for room channels, `chat:send`/`dm:send` persist
+  via `ChatService` then broadcast. `RedisIoAdapter`
+  (`@socket.io/redis-adapter` + `ioredis`) fans events out across API
+  instances when `REDIS_URL` is set. `ChatModule` adds REST history
+  (`GET /chat/rooms/:roomId/messages`, `GET /chat/dms/:userId`) for initial
+  load. `BattlesService.notify()` now pushes `notification:new` over the
+  gateway instead of only inserting a row, and `respond()`/`end()` emit
+  `battle:started` (carrying each side's *opponent* IVS playback URL) and
+  `battle:ended` — this closes the "cross-room viewing" item deferred from
+  Phase 3: since IVS playback is plain HLS, dual-viewing needs no WebRTC,
+  just telling each client the other room's URL. True guest co-hosting
+  (someone who isn't a host *publishing* into a room) is a distinct,
+  not-yet-built capability that would need real WebRTC/SFU infra — it's out
+  of scope for PK battles.
+- Verified for real this time, not just visually: `apps/api` +
+  `packages/database` were `npm install`ed and `npx tsc --noEmit` run
+  against the actual installed deps in an isolated scratch copy (so the
+  real Expo app's `node_modules` was never touched) — 0 errors after
+  dropping `declaration: true` from `apps/api/tsconfig.json` (unnecessary
+  for an application, and it was the source of a handful of TS2742 errors).
+  Nothing has still been `npm install`ed in the repo itself — do that
+  before running `apps/api`/`apps/web` locally. IVS calls need
   `AWS_REGION`/credentials configured (see `apps/api/.env.example`).

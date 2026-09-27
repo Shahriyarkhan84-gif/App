@@ -3,6 +3,7 @@ import type { Prisma } from '@zynalive/database';
 
 import { PLATFORM_ADMIN_ROLES } from '../auth/roles.decorator';
 import { PrismaService } from '../prisma/prisma.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 const DEFAULT_BATTLE_DURATION_SECONDS = 180;
 
@@ -17,7 +18,10 @@ const DEFAULT_BATTLE_DURATION_SECONDS = 180;
  */
 @Injectable()
 export class BattlesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly realtime: RealtimeGateway,
+  ) {}
 
   async invite(challengerUserId: string, targetRoomId: string) {
     const myRoom = await this.prisma.room.findUnique({ where: { hostId: challengerUserId } });
@@ -42,6 +46,7 @@ export class BattlesService {
       battle_id: battle.id,
       room_id: myRoom.id,
     });
+    this.realtime.emitToRoom(target.id, 'battle:invited', { battleId: battle.id, fromRoomId: myRoom.id });
     return battle;
   }
 
@@ -70,6 +75,18 @@ export class BattlesService {
       await this.notify(roomA.hostId, 'pk_battle_accepted', 'Battle accepted', 'Your PK battle is live.', {
         battle_id: updated.id,
       });
+      // Each side gets the OTHER room's playback URL so the client can render
+      // dual video — no WebRTC needed since IVS playback is just HLS.
+      this.realtime.emitToRoom(roomA.id, 'battle:started', {
+        battleId: updated.id,
+        endsAt: updated.endsAt,
+        opponent: { roomId: roomB.id, playbackUrl: roomB.ivsPlaybackUrl },
+      });
+      this.realtime.emitToRoom(roomB.id, 'battle:started', {
+        battleId: updated.id,
+        endsAt: updated.endsAt,
+        opponent: { roomId: roomA.id, playbackUrl: roomA.ivsPlaybackUrl },
+      });
       return updated;
     }
 
@@ -88,6 +105,8 @@ export class BattlesService {
       null,
       { battle_id: updated.id },
     );
+    this.realtime.emitToRoom(roomA.id, 'battle:withdrawn', { battleId: updated.id, status });
+    this.realtime.emitToRoom(roomB.id, 'battle:withdrawn', { battleId: updated.id, status });
     return updated;
   }
 
@@ -126,6 +145,9 @@ export class BattlesService {
         battle_id: updated.id,
       }),
     ]);
+    const endedPayload = { battleId: updated.id, scoreA: updated.scoreA.toString(), scoreB: updated.scoreB.toString(), winnerRoomId };
+    this.realtime.emitToRoom(roomA.id, 'battle:ended', endedPayload);
+    this.realtime.emitToRoom(roomB.id, 'battle:ended', endedPayload);
     return updated;
   }
 
@@ -152,6 +174,9 @@ export class BattlesService {
   }
 
   private async notify(userId: string, type: string, title: string, body: string | null, data: Record<string, unknown>) {
-    await this.prisma.notification.create({ data: { userId, type, title, body, data: data as Prisma.InputJsonValue } });
+    const notification = await this.prisma.notification.create({
+      data: { userId, type, title, body, data: data as Prisma.InputJsonValue },
+    });
+    this.realtime.emitToUser(userId, 'notification:new', notification);
   }
 }

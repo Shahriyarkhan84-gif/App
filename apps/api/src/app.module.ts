@@ -3,9 +3,11 @@ import { ConfigModule } from '@nestjs/config';
 
 import { AuthModule } from './auth/auth.module';
 import { BattlesModule } from './battles/battles.module';
+import { ChatModule } from './chat/chat.module';
 import { HostsModule } from './hosts/hosts.module';
 import { IvsModule } from './ivs/ivs.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { RealtimeModule } from './realtime/realtime.module';
 import { StreamsModule } from './streams/streams.module';
 import { UsersModule } from './users/users.module';
 
@@ -18,6 +20,8 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     HostsModule,
     StreamsModule,
+    ChatModule,
+    RealtimeModule,
     BattlesModule,
   ],
 })
