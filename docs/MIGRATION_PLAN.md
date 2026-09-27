@@ -319,10 +319,24 @@ actually been done vs. planned.
     `npx expo lint` both clean.
   - Added `EXPO_PUBLIC_API_URL` to `.env.example`/`env.ts`, not yet in
     `missingRequiredEnv` since nothing requires it yet.
-  - Not started: the API-backed replacements for `useProfile()` and the
-    other Supabase-dependent hooks (the real bulk of this step), the
-    actual screen cutover, realtime, streaming, money screens, the repo
-    move.
+  - `src/lib/api-profile.tsx`: `ApiProfileProvider`/`useApiProfile()`, the
+    API-backed equivalent of `useProfile()` — same shape (`profile`,
+    `host`, `isHost`, `isPlatformAdmin`, `reload()`) so the eventual screen
+    cutover is close to a drop-in swap of the import, not a rewrite of
+    every call site. **Known gap, not fabricated:** `apps/api`'s `Host`
+    model has no `verification_status` — Didit identity verification
+    (`20260924060000_host_verification.sql` /
+    `20260924120000_host_applications.sql`) was never translated in
+    Phases 1–7, so `isHost` here means "has a host row", not "passed
+    verification"; screens that gate on verification status can't move
+    until that's built.
+  - Not started: API-backed replacements for the rest of the
+    Supabase-dependent hooks (Home feed's rooms/follows/recommendations
+    query, rankings, wallet, chat, ...) — each screen's own data shape,
+    genuinely the bulk of this step and sized like its own multi-session
+    effort, not something to rush through uncommitted. The actual screen
+    cutover, realtime, streaming, money screens, and the repo move are
+    all still downstream of that.
 - Nothing has still been `npm install`ed in the repo itself — do that
   before running `apps/api`/`apps/web` locally. IVS calls need
   `AWS_REGION`/credentials configured, Stripe needs
