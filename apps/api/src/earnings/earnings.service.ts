@@ -1,8 +1,10 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import type { Prisma } from '@zynalive/database';
+import type { Prisma, WithdrawalStatus } from '@zynalive/database';
 
 import { PLATFORM_ADMIN_ROLES } from '../auth/roles.decorator';
 import { PrismaService } from '../prisma/prisma.service';
+
+const WITHDRAWAL_STATUSES: WithdrawalStatus[] = ['requested', 'approved', 'rejected', 'paid'];
 
 /**
  * Translated from the withdrawals section of
@@ -18,6 +20,18 @@ export class EarningsService {
       where: { hostId: hostUserId },
       create: { hostId: hostUserId },
       update: {},
+    });
+  }
+
+  listWithdrawals(adminRole: string, status?: string) {
+    if (!(PLATFORM_ADMIN_ROLES as string[]).includes(adminRole)) throw new ForbiddenException();
+    if (status && !WITHDRAWAL_STATUSES.includes(status as WithdrawalStatus)) throw new BadRequestException('invalid_status');
+
+    return this.prisma.withdrawal.findMany({
+      where: status ? { status: status as WithdrawalStatus } : undefined,
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      include: { host: { include: { user: { select: { id: true, displayName: true, username: true } } } } },
     });
   }
 

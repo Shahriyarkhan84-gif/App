@@ -20,6 +20,14 @@ export class StreamsService {
     });
   }
 
+  /** The caller's own room, live or not — the creator dashboard's status card. */
+  getMyRoom(hostUserId: string) {
+    return this.prisma.room.findUnique({
+      where: { hostId: hostUserId },
+      include: { currentStream: true },
+    });
+  }
+
   async goLive(hostUserId: string, dto: GoLiveDto) {
     const room = await this.prisma.room.findUnique({ where: { hostId: hostUserId } });
     if (!room) throw new ForbiddenException('Only hosts can go live — call POST /hosts/become first');

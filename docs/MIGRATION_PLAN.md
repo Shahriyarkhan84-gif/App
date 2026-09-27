@@ -206,6 +206,36 @@ at the new API.
     bug, an untyped `Record<string, unknown>` passed where Prisma's
     `InputJsonValue` was required) and `npx jest` re-run to confirm Phase
     5's gift tests still pass unchanged.
+- **Phase 7 (dashboards & admin) — creator + admin done, no clips/scheduled
+  events yet.** Three small backend additions the dashboards needed and
+  didn't have: `GET /streams/me` (a host's own room), `GET
+  /moderation/ai-actions` (list, for the review queue), `GET /withdrawals`
+  (list, for the payout queue).
+  - `apps/web` gained client-side JWT auth (`AuthProvider`, `useAuth()`,
+    token in `localStorage` — explicitly noted as an MVP shortcut; a real
+    deployment should move to httpOnly cookies + server-side refresh), a
+    `/login` page, and `RequireAuth`/`adminOnly` route guards.
+  - `/creator`: wallet balance, earnings, own room/live status, a
+    withdrawal-request form.
+  - `/admin`: open reports (dismiss), AI proposals awaiting review
+    (approve/reject — the same "AI proposes, owner approves" boundary from
+    Phase 6, now with a UI), pending withdrawals (approve/reject).
+  - Not built: creator analytics/clips/scheduled-events, and the rest of
+    the admin surface (user management beyond the existing `GET /users`,
+    revenue reports, feature flags) — explicitly deferred, not silently
+    dropped.
+  - **Verified for real, and it caught two real bugs an isolated `tsc`
+    check on the API alone wouldn't have:** `apps/web` was `npm install`ed
+    and **actually built** (`next build`) in an isolated scratch copy. That
+    caught (1) `next.config.ts` isn't supported on Next 14.2 — needed
+    `next.config.mjs` instead, and (2) the home page's `fetchLiveRooms()`
+    let a network exception (API unreachable) crash the whole page instead
+    of degrading to an empty feed, which `next build`'s static prerendering
+    surfaced immediately. Both are fixed in the committed files, not just
+    in the scratch copy. `next lint` (added `eslint`/`eslint-config-next`,
+    which weren't there before) also ran clean. The API side was re-verified
+    the same way as every other phase (`tsc --noEmit` + `npx jest` against
+    real dependencies).
 - Nothing has still been `npm install`ed in the repo itself — do that
   before running `apps/api`/`apps/web` locally. IVS calls need
   `AWS_REGION`/credentials configured, Stripe needs

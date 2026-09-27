@@ -10,7 +10,13 @@ export type LiveRoom = {
 };
 
 export async function fetchLiveRooms(): Promise<LiveRoom[]> {
-  const res = await fetch(`${API_URL}/streams/live`, { next: { revalidate: 10 } });
-  if (!res.ok) return [];
-  return res.json();
+  try {
+    const res = await fetch(`${API_URL}/streams/live`, { next: { revalidate: 10 } });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    // API unreachable (build-time prerender with no backend running, or a
+    // transient outage) — degrade to an empty feed instead of a 500 page.
+    return [];
+  }
 }

@@ -29,6 +29,15 @@ export class ModerationService {
     private readonly realtime: RealtimeGateway,
   ) {}
 
+  listAiActions(adminRole: string, status?: string) {
+    if (!(PLATFORM_ADMIN_ROLES as string[]).includes(adminRole)) throw new ForbiddenException();
+    return this.prisma.aiAction.findMany({
+      where: status ? { status } : undefined,
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
+  }
+
   /** Admin-initiated action — the only source allowed to touch staff accounts. */
   async applyModerationAction(
     adminId: string,

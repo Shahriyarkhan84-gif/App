@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -22,6 +22,13 @@ export class EarningsController {
   @Post('withdrawals')
   request(@CurrentUser() user: JwtPayload, @Body() dto: RequestWithdrawalDto) {
     return this.earnings.requestWithdrawal(user.sub, dto.coins, dto.payoutMethod);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(...PLATFORM_ADMIN_ROLES)
+  @Get('withdrawals')
+  list(@CurrentUser() user: JwtPayload, @Query('status') status?: string) {
+    return this.earnings.listWithdrawals(user.role, status);
   }
 
   @UseGuards(RolesGuard)

@@ -1,4 +1,4 @@
-import { Body, Controller, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
 
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -13,6 +13,11 @@ import { ModerationService } from './moderation.service';
 @Controller('moderation')
 export class ModerationController {
   constructor(private readonly moderation: ModerationService) {}
+
+  @Get('ai-actions')
+  listAiActions(@CurrentUser() user: JwtPayload, @Query('status') status?: string) {
+    return this.moderation.listAiActions(user.role, status);
+  }
 
   @Post('actions')
   applyAction(@CurrentUser() user: JwtPayload, @Body() dto: ApplyModerationDto) {

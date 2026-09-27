@@ -32,4 +32,10 @@ export class StreamsController {
   credentials(@CurrentUser() user: JwtPayload) {
     return this.streams.getStreamCredentials(user.sub);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  me(@CurrentUser() user: JwtPayload) {
+    return this.streams.getMyRoom(user.sub);
+  }
 }
