@@ -1,0 +1,518 @@
+// Prisma translation of supabase/migrations/20260924010000_core.sql and
+// 20260924020000_economy.sql. See docs/MIGRATION_PLAN.md for context: this is
+// a ground-up rewrite, not a data migration, so ids are regenerated (cuid)
+// instead of reusing Clerk's `sub` text ids.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AppRole {
+  USER
+  HOST
+  AGENCY_MEMBER
+  AGENCY_ADMIN
+  OWNER_ADMIN
+  SUPER_ADMIN
+}
+
+enum AccountStatus {
+  active
+  restricted
+  banned
+}
+
+enum RoomCategory {
+  chat
+  music
+  gaming
+  talent
+  education
+  other
+}
+
+enum RoomStatus {
+  offline
+  live
+}
+
+enum CoinTxnKind {
+  purchase
+  gift_sent
+  refund
+  chargeback
+  adjustment
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+  disputed
+  dispute_lost
+}
+
+enum WithdrawalStatus {
+  requested
+  approved
+  rejected
+  paid
+}
+
+// ---- Identity ---------------------------------------------------------
+
+model User {
+  id           String        @id @default(cuid())
+  username     String?       @unique
+  displayName  String?       @map("display_name")
+  avatarUrl    String?       @map("avatar_url")
+  bio          String?
+  country      String?
+  language     String        @default("en")
+  email        String?       @unique
+  passwordHash String?       @map("password_hash")
+  role         AppRole       @default(USER)
+  status       AccountStatus @default(active)
+  statusUntil  DateTime?     @map("status_until")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  host              Host?
+  agencyMemberships AgencyMember[]
+  managedAgencies   Agency[]          @relation("AgencyManager")
+  roomAdmin         RoomAdmin[]
+  followers         Follow[]          @relation("Followee")
+  following         Follow[]          @relation("Follower")
+  blockedBy         UserBlock[]       @relation("Blocked")
+  blocking          UserBlock[]       @relation("Blocker")
+  messagesSent      Message[]
+  dmsSent           DirectMessage[]   @relation("DmSender")
+  dmsReceived       DirectMessage[]   @relation("DmRecipient")
+  notifications     Notification[]
+  wallet            Wallet?
+  coinTransactions  CoinTransaction[]
+  giftsSent         Gift[]
+  payments          Payment[]
+  refundRequests    RefundRequest[]
+  viewerSessions    Viewer[]
+
+  @@map("users")
+}
+
+model Agency {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  managerId String?  @map("manager_id")
+  manager   User?    @relation("AgencyManager", fields: [managerId], references: [id])
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  members  AgencyMember[]
+  hosts    Host[]
+  payments Payment[]
+
+  @@map("agencies")
+}
+
+model AgencyMember {
+  agencyId   String   @map("agency_id")
+  userId     String   @map("user_id")
+  memberRole String   @map("member_role") // admin | manager | agent
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([agencyId, userId])
+  @@map("agency_members")
+}
+
+// ---- Hosts & rooms ------------------------------------------------------
+
+model Host {
+  userId           String   @id @map("user_id")
+  hostCode         String   @unique @map("host_code")
+  agencyId         String?  @map("agency_id")
+  status           String   @default("active")
+  totalLiveSeconds BigInt   @default(0) @map("total_live_seconds")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agency         Agency?         @relation(fields: [agencyId], references: [id])
+  room           Room?
+  streams        Stream[]
+  gifts          Gift[]
+  creatorEarning CreatorEarning?
+  earningEntries EarningEntry[]
+  withdrawals    Withdrawal[]
+
+  @@index([agencyId])
+  @@map("hosts")
+}
+
+model Room {
+  id              String       @id @default(cuid())
+  hostId          String       @unique @map("host_id")
+  title           String       @default("Live now")
+  category        RoomCategory @default(chat)
+  coverUrl        String?      @map("cover_url")
+  status          RoomStatus   @default(offline)
+  ivsChannelArn   String?      @unique @map("ivs_channel_arn")
+  ivsStreamKeyArn String?      @map("ivs_stream_key_arn")
+  ivsPlaybackUrl  String?      @map("ivs_playback_url")
+  viewerCount     Int          @default(0) @map("viewer_count")
+  currentStreamId String?      @unique @map("current_stream_id")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  host          Host        @relation(fields: [hostId], references: [userId], onDelete: Cascade)
+  currentStream Stream?     @relation("CurrentStream", fields: [currentStreamId], references: [id])
+  streams       Stream[]    @relation("RoomStreams")
+  admins        RoomAdmin[]
+  bans          RoomBan[]
+  messages      Message[]
+  gifts         Gift[]
+
+  @@index([status, viewerCount(sort: Desc)])
+  @@map("rooms")
+}
+
+model Stream {
+  id          String    @id @default(cuid())
+  roomId      String    @map("room_id")
+  hostId      String    @map("host_id")
+  title       String
+  startedAt   DateTime  @default(now()) @map("started_at")
+  endedAt     DateTime? @map("ended_at")
+  peakViewers Int       @default(0) @map("peak_viewers")
+  giftCoins   BigInt    @default(0) @map("gift_coins")
+  poolCoins   BigInt    @default(0) @map("pool_coins")
+  aiSummary   Json?     @map("ai_summary")
+
+  room          Room      @relation("RoomStreams", fields: [roomId], references: [id], onDelete: Cascade)
+  currentOfRoom Room?     @relation("CurrentStream")
+  host          Host      @relation(fields: [hostId], references: [userId], onDelete: Cascade)
+  viewers       Viewer[]
+  messages      Message[]
+  gifts         Gift[]
+
+  @@index([hostId, startedAt(sort: Desc)])
+  @@map("streams")
+}
+
+model RoomAdmin {
+  roomId    String   @map("room_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, userId])
+  @@map("room_admins")
+}
+
+model RoomBan {
+  roomId    String    @map("room_id")
+  userId    String    @map("user_id")
+  kind      String // mute | kick | block
+  expiresAt DateTime? @map("expires_at")
+  createdBy String?   @map("created_by")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, userId, kind])
+  @@map("room_bans")
+}
+
+model Viewer {
+  streamId String    @map("stream_id")
+  userId   String    @map("user_id")
+  joinedAt DateTime  @default(now()) @map("joined_at")
+  leftAt   DateTime? @map("left_at")
+
+  stream Stream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([streamId, userId])
+  @@map("viewers")
+}
+
+// ---- Social ---------------------------------------------------------------
+
+model Follow {
+  followerId String   @map("follower_id")
+  followeeId String   @map("followee_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  follower User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followee User @relation("Followee", fields: [followeeId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followeeId])
+  @@index([followeeId])
+  @@map("follows")
+}
+
+model UserBlock {
+  blockerId String   @map("blocker_id")
+  blockedId String   @map("blocked_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@id([blockerId, blockedId])
+  @@map("user_blocks")
+}
+
+model Message {
+  id         BigInt   @id @default(autoincrement())
+  roomId     String   @map("room_id")
+  streamId   String?  @map("stream_id")
+  senderId   String   @map("sender_id")
+  body       String
+  status     String   @default("visible") // visible | hidden
+  moderation Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  room   Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  stream Stream? @relation(fields: [streamId], references: [id])
+  sender User    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, createdAt(sort: Desc)])
+  @@index([senderId, createdAt(sort: Desc)])
+  @@map("messages")
+}
+
+model DirectMessage {
+  id          BigInt    @id @default(autoincrement())
+  senderId    String    @map("sender_id")
+  recipientId String    @map("recipient_id")
+  body        String
+  readAt      DateTime? @map("read_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  sender    User @relation("DmSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User @relation("DmRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, createdAt(sort: Desc)])
+  @@index([senderId, createdAt(sort: Desc)])
+  @@map("direct_messages")
+}
+
+model Notification {
+  id        BigInt    @id @default(autoincrement())
+  userId    String    @map("user_id")
+  type      String
+  title     String
+  body      String?
+  data      Json      @default("{}")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+model PlatformSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  @@map("platform_settings")
+}
+
+// ---- Economy ----------------------------------------------------------
+
+model Wallet {
+  userId      String   @id @map("user_id")
+  coinBalance BigInt   @default(0) @map("coin_balance")
+  frozen      Boolean  @default(false)
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("wallets")
+}
+
+model CoinTransaction {
+  id             BigInt      @id @default(autoincrement())
+  userId         String      @map("user_id")
+  delta          BigInt
+  balanceAfter   BigInt      @map("balance_after")
+  kind           CoinTxnKind
+  refType        String?     @map("ref_type")
+  refId          String?     @map("ref_id")
+  idempotencyKey String      @unique @map("idempotency_key")
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("coin_transactions")
+}
+
+model GiftCatalogItem {
+  id        Int     @id @default(autoincrement())
+  name      String
+  icon      String
+  coinPrice Int     @map("coin_price")
+  active    Boolean @default(true)
+  sort      Int     @default(0)
+
+  gifts Gift[]
+
+  @@map("gift_catalog")
+}
+
+model Gift {
+  id             String   @id @default(cuid())
+  roomId         String   @map("room_id")
+  streamId       String?  @map("stream_id")
+  senderId       String   @map("sender_id")
+  hostId         String   @map("host_id")
+  giftId         Int      @map("gift_id")
+  quantity       Int
+  coinsTotal     BigInt   @map("coins_total")
+  hostShare      BigInt   @map("host_share")
+  streamShare    BigInt   @map("stream_share")
+  ownerShare     BigInt   @map("owner_share")
+  idempotencyKey String   @map("idempotency_key")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  room        Room            @relation(fields: [roomId], references: [id])
+  stream      Stream?         @relation(fields: [streamId], references: [id])
+  sender      User            @relation(fields: [senderId], references: [id])
+  host        Host            @relation(fields: [hostId], references: [userId])
+  catalogItem GiftCatalogItem @relation(fields: [giftId], references: [id])
+
+  @@unique([idempotencyKey])
+  @@map("gifts")
+}
+
+model CreatorEarning {
+  hostId    String   @id @map("host_id")
+  balance   BigInt   @default(0)
+  held      BigInt   @default(0)
+  lifetime  BigInt   @default(0)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  host Host @relation(fields: [hostId], references: [userId], onDelete: Cascade)
+
+  @@map("creator_earnings")
+}
+
+model EarningEntry {
+  id        BigInt   @id @default(autoincrement())
+  hostId    String   @map("host_id")
+  delta     BigInt
+  kind      String // gift | withdrawal_hold | withdrawal_release | withdrawal_paid | adjustment
+  refId     String?  @map("ref_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  host Host @relation(fields: [hostId], references: [userId], onDelete: Cascade)
+
+  @@index([hostId, createdAt(sort: Desc)])
+  @@map("earning_entries")
+}
+
+model PlatformLedger {
+  id        BigInt   @id @default(autoincrement())
+  bucket    String
+  unit      String // coins | minor
+  currency  String?
+  amount    BigInt
+  refType   String?  @map("ref_type")
+  refId     String?  @map("ref_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("platform_ledger")
+}
+
+model CoinPackage {
+  id         Int     @id @default(autoincrement())
+  name       String
+  coins      BigInt
+  priceMinor BigInt  @map("price_minor")
+  currency   String  @default("pkr")
+  active     Boolean @default(true)
+  sort       Int     @default(0)
+
+  payments Payment[]
+
+  @@map("coin_packages")
+}
+
+model Payment {
+  id                 String        @id @default(cuid())
+  userId             String        @map("user_id")
+  provider           String        @default("stripe")
+  providerRef        String?       @map("provider_ref")
+  providerPaymentRef String?       @map("provider_payment_ref")
+  packageId          Int?          @map("package_id")
+  coins              BigInt
+  amountMinor        BigInt        @map("amount_minor")
+  currency           String
+  agencyId           String?       @map("agency_id")
+  status             PaymentStatus @default(pending)
+  createdAt          DateTime      @default(now()) @map("created_at")
+
+  user    User         @relation(fields: [userId], references: [id])
+  package CoinPackage? @relation(fields: [packageId], references: [id])
+  agency  Agency?      @relation(fields: [agencyId], references: [id])
+
+  refundRequest RefundRequest?
+
+  @@map("payments")
+}
+
+model ProcessedWebhookEvent {
+  provider    String
+  eventId     String   @map("event_id")
+  processedAt DateTime @default(now()) @map("processed_at")
+
+  @@id([provider, eventId])
+  @@map("processed_webhook_events")
+}
+
+model RefundRequest {
+  id         String   @id @default(cuid())
+  paymentId  String   @unique @map("payment_id")
+  userId     String   @map("user_id")
+  reason     String
+  status     String   @default("requested") // requested | approved | denied
+  reviewedBy String?  @map("reviewed_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("refund_requests")
+}
+
+model Withdrawal {
+  id           String           @id @default(cuid())
+  hostId       String           @map("host_id")
+  coins        BigInt
+  amountMinor  BigInt           @map("amount_minor")
+  currency     String           @default("pkr")
+  payoutMethod Json             @map("payout_method")
+  status       WithdrawalStatus @default(requested)
+  reviewedBy   String?          @map("reviewed_by")
+  reviewNote   String?          @map("review_note")
+  payoutRef    String?          @map("payout_ref")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  host Host @relation(fields: [hostId], references: [userId])
+
+  @@map("withdrawals")
+}

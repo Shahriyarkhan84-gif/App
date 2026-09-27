@@ -2,6 +2,11 @@
   "name": "zynalive",
   "version": "1.0.0",
   "main": "expo-router/entry",
+  "workspaces": [
+    "apps/api",
+    "apps/web",
+    "packages/database"
+  ],
   "dependencies": {
     "@clerk/clerk-expo": "^2.20.1",
     "@config-plugins/react-native-webrtc": "^15.0.2",
