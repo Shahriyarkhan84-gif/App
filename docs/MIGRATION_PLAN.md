@@ -95,4 +95,19 @@ at the new API.
 
 ## Status
 
-Phase 1 in progress. See task list for current file-level progress.
+- **Phase 1 — done.** Prisma schema, NestJS skeleton, Next.js skeleton,
+  docker-compose.
+- **Phase 2 — done.** Full JWT auth: register/login, refresh-token rotation
+  with hashed storage, logout/revocation; phone OTP sign-in behind a
+  pluggable `SmsProvider` (console-log stub); Google and Apple ID-token
+  verification via `google-auth-library` / `apple-signin-auth`; TOTP 2FA
+  (`otplib`) with setup/enable/disable and a login-challenge step; a
+  `RolesGuard` + `@Roles()` decorator mirroring
+  `is_platform_admin()`/`current_app_role()`, applied to an admin-only user
+  listing; profile CRUD and the follow/block graph (blocking severs follows
+  both ways, matching the RPC behavior).
+- **Phase 3 (streaming core) — not started.** `goLive()` in
+  `streams.service.ts` still leaves `ivsChannelArn`/`ivsPlaybackUrl` null;
+  no IVS provisioning or WebRTC guest layer yet.
+- Nothing has been `npm install`ed for the new workspaces yet — do that
+  before running `apps/api` or `apps/web` locally.

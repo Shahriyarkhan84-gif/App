@@ -20,6 +20,7 @@ services:
       DATABASE_URL: postgresql://zynalive:zynalive@postgres:5432/zynalive?schema=public
       REDIS_URL: redis://redis:6379
       JWT_SECRET: dev-secret-change-me
+      JWT_REFRESH_SECRET: dev-refresh-secret-change-me
       PORT: 4000
     ports: ["4000:4000"]
     depends_on: [postgres, redis]

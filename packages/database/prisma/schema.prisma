@@ -68,19 +68,25 @@ enum WithdrawalStatus {
 // ---- Identity ---------------------------------------------------------
 
 model User {
-  id           String        @id @default(cuid())
-  username     String?       @unique
-  displayName  String?       @map("display_name")
-  avatarUrl    String?       @map("avatar_url")
-  bio          String?
-  country      String?
-  language     String        @default("en")
-  email        String?       @unique
-  passwordHash String?       @map("password_hash")
-  role         AppRole       @default(USER)
-  status       AccountStatus @default(active)
-  statusUntil  DateTime?     @map("status_until")
-  createdAt    DateTime      @default(now()) @map("created_at")
+  id               String        @id @default(cuid())
+  username         String?       @unique
+  displayName      String?       @map("display_name")
+  avatarUrl        String?       @map("avatar_url")
+  bio              String?
+  country          String?
+  language         String        @default("en")
+  email            String?       @unique
+  phone            String?       @unique
+  passwordHash     String?       @map("password_hash")
+  googleSub        String?       @unique @map("google_sub")
+  appleSub         String?       @unique @map("apple_sub")
+  refreshTokenHash String?       @map("refresh_token_hash")
+  twoFactorSecret  String?       @map("two_factor_secret")
+  twoFactorEnabled Boolean       @default(false) @map("two_factor_enabled")
+  role             AppRole       @default(USER)
+  status           AccountStatus @default(active)
+  statusUntil      DateTime?     @map("status_until")
+  createdAt        DateTime      @default(now()) @map("created_at")
 
   host              Host?
   agencyMemberships AgencyMember[]
@@ -102,6 +108,20 @@ model User {
   viewerSessions    Viewer[]
 
   @@map("users")
+}
+
+// One-time codes for phone sign-in/verification. Never store the raw code —
+// codeHash is argon2(code), checked and deleted by AuthService.verifyOtp.
+model PhoneOtp {
+  id        String   @id @default(cuid())
+  phone     String
+  codeHash  String   @map("code_hash")
+  expiresAt DateTime @map("expires_at")
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([phone])
+  @@map("phone_otps")
 }
 
 model Agency {
