@@ -1,11 +1,15 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 
+import { IvsService } from '../ivs/ivs.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { GoLiveDto } from './dto/go-live.dto';
 
 @Injectable()
 export class StreamsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ivs: IvsService,
+  ) {}
 
   // Live-room grid: mirrors `rooms` ordered by viewer count in the current app.
   listLive() {
@@ -17,23 +21,24 @@ export class StreamsService {
   }
 
   async goLive(hostUserId: string, dto: GoLiveDto) {
-    const host = await this.prisma.host.findUnique({ where: { userId: hostUserId } });
-    if (!host) throw new ForbiddenException('Only hosts can go live');
+    const room = await this.prisma.room.findUnique({ where: { hostId: hostUserId } });
+    if (!room) throw new ForbiddenException('Only hosts can go live — call POST /hosts/become first');
+    if (!room.ivsChannelArn) {
+      // Shouldn't happen for a host created after Phase 3 landed; older/manual
+      // rows may lack a channel until they re-run POST /hosts/become.
+      throw new BadRequestException('No streaming channel provisioned for this host');
+    }
 
-    const room = await this.prisma.room.upsert({
-      where: { hostId: hostUserId },
-      create: { hostId: hostUserId, title: dto.title, category: dto.category, status: 'live' },
-      update: { title: dto.title, category: dto.category, status: 'live' },
+    const updatedRoom = await this.prisma.room.update({
+      where: { id: room.id },
+      data: { title: dto.title, category: dto.category, status: 'live' },
     });
-
-    // Amazon IVS channel provisioning is a Phase 3 item (see docs/MIGRATION_PLAN.md);
-    // room.ivsChannelArn / ivsPlaybackUrl stay null until that lands.
     const stream = await this.prisma.stream.create({
       data: { roomId: room.id, hostId: hostUserId, title: dto.title },
     });
     await this.prisma.room.update({ where: { id: room.id }, data: { currentStreamId: stream.id } });
 
-    return { room, stream };
+    return { room: updatedRoom, stream };
   }
 
   async endStream(hostUserId: string) {
@@ -51,5 +56,23 @@ export class StreamsService {
       }),
     ]);
     return stream;
+  }
+
+  /**
+   * RTMP ingest endpoint + a fresh stream key value, fetched from IVS on
+   * demand — the key value itself is never persisted in plaintext, only its
+   * ARN (room.ivsStreamKeyArn).
+   */
+  async getStreamCredentials(hostUserId: string) {
+    const room = await this.prisma.room.findUnique({ where: { hostId: hostUserId } });
+    if (!room?.ivsChannelArn || !room.ivsStreamKeyArn || !room.ivsIngestEndpoint) {
+      throw new BadRequestException('No streaming channel provisioned for this host');
+    }
+    const streamKeyValue = await this.ivs.getStreamKeyValue(room.ivsStreamKeyArn);
+    return {
+      ingestEndpoint: `rtmps://${room.ivsIngestEndpoint}:443/app/`,
+      streamKeyValue,
+      playbackUrl: room.ivsPlaybackUrl,
+    };
   }
 }

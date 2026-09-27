@@ -26,4 +26,10 @@ export class StreamsController {
   end(@CurrentUser() user: JwtPayload) {
     return this.streams.endStream(user.sub);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('credentials')
+  credentials(@CurrentUser() user: JwtPayload) {
+    return this.streams.getStreamCredentials(user.sub);
+  }
 }

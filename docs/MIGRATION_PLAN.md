@@ -106,8 +106,19 @@ at the new API.
   `is_platform_admin()`/`current_app_role()`, applied to an admin-only user
   listing; profile CRUD and the follow/block graph (blocking severs follows
   both ways, matching the RPC behavior).
-- **Phase 3 (streaming core) — not started.** `goLive()` in
-  `streams.service.ts` still leaves `ivsChannelArn`/`ivsPlaybackUrl` null;
-  no IVS provisioning or WebRTC guest layer yet.
+- **Phase 3 (streaming core) — mostly done.** `HostsModule.becomeHost()`
+  provisions one standing Amazon IVS channel per host via `IvsService`
+  (`@aws-sdk/client-ivs`) and stores its ARN/playback URL/ingest endpoint on
+  `Room`; `goLive()`/`endStream()` flip status against that channel;
+  `GET /streams/credentials` fetches a fresh stream-key value from IVS on
+  demand (never persisted in plaintext). `BattlesModule` translates
+  `invite_pk_battle`/`respond_pk_battle`/`end_pk_battle` from
+  `20260924200000_pk_battles.sql` 1:1, including the notify-both-hosts and
+  clear-`currentBattleId` behavior; `applyGiftScore()` is wired and ready but
+  unused until the gift-send flow lands in Phase 5. **Not built yet:** the
+  WebRTC signaling layer that actually lets a viewer/host subscribe to the
+  opponent's feed — that's real-time infra and belongs with the Socket.IO
+  gateway in Phase 4, not bolted onto this REST module.
 - Nothing has been `npm install`ed for the new workspaces yet — do that
-  before running `apps/api` or `apps/web` locally.
+  before running `apps/api` or `apps/web` locally. IVS calls also need
+  `AWS_REGION`/credentials configured (see `apps/api/.env.example`).
