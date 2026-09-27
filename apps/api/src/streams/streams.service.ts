@@ -12,11 +12,22 @@ export class StreamsService {
   ) {}
 
   // Live-room grid: mirrors `rooms` ordered by viewer count in the current app.
+  // This is a public, unauthenticated endpoint — the host include MUST stay
+  // a `select` whitelist, never `include: { user: true }`, which would leak
+  // passwordHash/refreshTokenHash/twoFactorSecret/email/phone to anyone.
   listLive() {
     return this.prisma.room.findMany({
       where: { status: 'live' },
       orderBy: { viewerCount: 'desc' },
-      include: { host: { include: { user: true } } },
+      include: {
+        host: {
+          select: {
+            userId: true,
+            hostCode: true,
+            user: { select: { id: true, username: true, displayName: true, avatarUrl: true, country: true, role: true } },
+          },
+        },
+      },
     });
   }
 

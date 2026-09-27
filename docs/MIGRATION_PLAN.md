@@ -330,13 +330,46 @@ actually been done vs. planned.
     Phases 1–7, so `isHost` here means "has a host row", not "passed
     verification"; screens that gate on verification status can't move
     until that's built.
+  - `src/lib/api-rooms.ts`: `fetchApiHomeFeed()`, the equivalent of the
+    Home feed's three-way Supabase query (live rooms + following +
+    recommendations). Normalizes `apps/api`'s camelCase response into the
+    existing `Room` type so `RoomCard`/`FeaturedHost`/etc. need zero
+    changes at cutover — same trick `normalizeRoom()` already does for
+    Supabase's raw shape. Needed one small, well-scoped backend addition:
+    `GET /users/me/following` didn't exist (follow/unfollow existed,
+    listing who you follow didn't).
+  - **A real, serious security bug found and fixed while building this,
+    not a hypothetical:** writing the normalizer meant reading exactly
+    what `GET /streams/live` returns over the wire, which showed
+    `StreamsService.listLive()` used `include: { host: { include: { user:
+    true } } }` — Prisma's bare `include: { user: true }` pulls *every*
+    column by default. On a **public, unauthenticated** endpoint, that
+    meant every live host's `passwordHash`, `refreshTokenHash`,
+    `twoFactorSecret`, `email`, `phone`, `googleSub` and `appleSub` were
+    being serialized into the JSON response for anyone to read. The same
+    bug existed in `RecommendationsService.forUser()`. Worse, on inspecting
+    `UsersService`, `GET /users/:id` — also public, no guard — had the
+    identical bug returning *any* user's full row by id, and `GET
+    /users/me` sent the caller's own password hash back to their own
+    device. Fixed all three: `StreamsService.listLive()` and
+    `RecommendationsService.forUser()` now use an explicit `select`
+    whitelist on the host relation; `UsersService.findById()` was split
+    into `findSelf()` (own profile: wallet/email/phone, still never
+    credentials) and `findPublicProfile()` (public: no email/phone/wallet
+    either). Added `users.service.spec.ts` as a regression test — it
+    asserts the Prisma call uses `select`, not `include`, and that the
+    select object excludes every credential field, so this exact class of
+    bug fails a test if it comes back. This is the kind of thing "AI
+    proposes, owner approves" and the trust-boundary rules in AGENTS.md
+    exist for — caught here because building a real client against the
+    real response shape surfaces bugs that reading the service code in
+    isolation didn't.
   - Not started: API-backed replacements for the rest of the
-    Supabase-dependent hooks (Home feed's rooms/follows/recommendations
-    query, rankings, wallet, chat, ...) — each screen's own data shape,
-    genuinely the bulk of this step and sized like its own multi-session
-    effort, not something to rush through uncommitted. The actual screen
-    cutover, realtime, streaming, money screens, and the repo move are
-    all still downstream of that.
+    Supabase-dependent hooks (rankings, wallet, chat, ...) — each screen's
+    own data shape, genuinely the bulk of this step and sized like its
+    own multi-session effort, not something to rush through uncommitted.
+    The actual screen cutover, realtime, streaming, money screens, and
+    the repo move are all still downstream of that.
 - Nothing has still been `npm install`ed in the repo itself — do that
   before running `apps/api`/`apps/web` locally. IVS calls need
   `AWS_REGION`/credentials configured, Stripe needs

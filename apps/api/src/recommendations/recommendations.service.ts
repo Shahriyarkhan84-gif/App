@@ -11,12 +11,27 @@ import { PrismaService } from '../prisma/prisma.service';
 export class RecommendationsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // Same whitelist-only rule as StreamsService.listLive(): never
+  // `include: { user: true }` here — it would leak the recommended host's
+  // passwordHash/refreshTokenHash/twoFactorSecret/email/phone to the caller.
   forUser(userId: string, take = 20) {
     return this.prisma.userRecommendation.findMany({
       where: { userId },
       orderBy: { score: 'desc' },
       take,
-      include: { room: { include: { host: { include: { user: true } } } } },
+      include: {
+        room: {
+          include: {
+            host: {
+              select: {
+                userId: true,
+                hostCode: true,
+                user: { select: { id: true, username: true, displayName: true, avatarUrl: true, country: true, role: true } },
+              },
+            },
+          },
+        },
+      },
     });
   }
 }

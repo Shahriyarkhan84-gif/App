@@ -15,7 +15,13 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   me(@CurrentUser() user: JwtPayload) {
-    return this.users.findById(user.sub);
+    return this.users.findSelf(user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me/following')
+  myFollowing(@CurrentUser() user: JwtPayload) {
+    return this.users.myFollowing(user.sub);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -27,7 +33,7 @@ export class UsersController {
 
   @Get(':id')
   byId(@Param('id') id: string) {
-    return this.users.findById(id);
+    return this.users.findPublicProfile(id);
   }
 
   @UseGuards(JwtAuthGuard)
