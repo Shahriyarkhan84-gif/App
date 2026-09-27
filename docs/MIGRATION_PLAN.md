@@ -97,17 +97,28 @@ depend on today. It's sequenced screen-by-screen, not as one cutover:
 1. **Foundation (additive, done)** — `src/lib/api-client.ts`: token
    storage (`expo-secure-store`), authenticated `apiFetch()` with
    auto-refresh-on-401. Nothing imports it yet.
-2. **Auth** — a parallel `src/lib/auth-api.ts` (register/login/OTP/social/
-   2FA against `apps/api`'s `/auth/*`), then repoint the sign-in/sign-up
-   screens from Clerk's `useAuth()`/`useSignIn()` to it. Highest-risk single
-   step: every screen currently reads the Clerk session. Ship it behind
-   both paths coexisting until sign-in is confirmed working, not a single
-   flip.
-3. **Read-only data screens first** — Home feed, rankings, profile view:
-   swap `useSupabase()` queries for `apiFetch()` calls one screen at a
-   time. Lower risk than auth (a broken read screen degrades, it doesn't
-   lock users out) and exercises Phases 3–7's endpoints against a real
-   client before the money-critical screens move.
+2. **Auth + data screens move together, not separately (revised after
+   inspecting the code — see Status).** `src/lib/supabase.tsx` authenticates
+   *every* Supabase query app-wide with the Clerk session's JWT
+   (`accessToken: async () => (await getToken()) ?? null`) — Postgres RLS
+   reads the Clerk user id straight from that JWT. A user can't be
+   "signed in" via the new API while every data screen still needs a live
+   Clerk session underneath it; auth and Supabase-dependent screens are one
+   coupled system today, not two. So the real order is:
+   1. Build the parallel session layer (`src/lib/auth-api.ts` +
+      `src/lib/zyna-auth.tsx`) — additive, done, not wired into
+      `_layout.tsx` or any gated route yet.
+   2. Build the API-backed equivalents of the Supabase-dependent hooks the
+      screens actually use (`useProfile`, room/feed reads, ...) *before*
+      touching a single screen — this is the real bulk of the work, not a
+      per-screen `fetch` swap. Response field names also need mapping:
+      `apps/api` returns Prisma's camelCase (`displayName`, `avatarUrl`),
+      the existing `Profile` type (`src/lib/types.ts`) expects the
+      snake_case Supabase's RPCs return.
+   3. Once enough of those exist, cut sign-in/sign-up and their dependent
+      screens over together, behind both systems still present in the tree
+      so a broken cutover is a revert, not a rewrite.
+3. *(folded into step 2 above)*
 4. **Realtime** — add `socket.io-client` (not yet a dependency; deferred
    rather than added unused) and a `src/lib/realtime.ts` wrapper once a
    screen actually needs it (chat first), replacing `useRealtime()`'s
@@ -272,21 +283,46 @@ actually been done vs. planned.
     which weren't there before) also ran clean. The API side was re-verified
     the same way as every other phase (`tsc --noEmit` + `npx jest` against
     real dependencies).
-- **Phase 8 (mobile repoint + infra) — step 1 of 7 done.**
-  `src/lib/api-client.ts`: `expo-secure-store` token storage,
-  `apiFetch()` with auto-refresh-on-401 (mirrors `@supabase/supabase-js`'s
-  own retry-on-401 behavior, since nothing else in the app expects a 401
-  to be fatal), errors thrown with the same string codes the SQL/RPC
-  errors used so the existing `friendlyError()` mapping keeps working
-  unchanged. Verified against the app's real, already-installed
-  `node_modules` (no scratch copy needed here, unlike `apps/api`/`apps/web`
-  — this file lives inside the already-`npm install`ed Expo project):
-  `npx tsc --noEmit` and `npx expo lint` both clean. Added
-  `EXPO_PUBLIC_API_URL` to `.env.example`/`env.ts`, not yet in
-  `missingRequiredEnv` since nothing requires it yet. Steps 2–7 (auth,
-  data screens, realtime, streaming, money screens, the repo move) are
-  each a live-screen change and not started — see the phase plan above
-  for the intended order and why.
+- **Phase 8 (mobile repoint + infra) — session-layer foundation done, no
+  screen touched yet.**
+  - `src/lib/api-client.ts`: `expo-secure-store` token storage,
+    `apiFetch()` with auto-refresh-on-401 (mirrors `@supabase/supabase-js`'s
+    own retry-on-401 behavior), errors thrown with the same string codes
+    the SQL/RPC errors used so `friendlyError()` keeps working unchanged.
+  - `src/lib/auth-api.ts`: pure wrappers for register/login/OTP/Google/
+    Apple/2FA against `apps/api`'s `/auth/*`.
+  - `src/lib/zyna-auth.tsx`: `ZynaAuthProvider`/`useZynaAuth()` — named
+    `Zyna*` specifically to not collide with `@clerk/clerk-expo`'s own
+    `useAuth()` while both exist in the tree. **Not** added to
+    `src/app/_layout.tsx` and no screen imports it yet — see the phase
+    plan above for why (it's coupled to the Supabase data layer, not a
+    standalone swap).
+  - **Real discovery that reshaped the plan, not just an implementation
+    detail:** inspecting `src/lib/supabase.tsx` before touching any auth
+    screen showed the Clerk session JWT authenticates every single
+    Supabase query app-wide (`accessToken: async () => (await getToken())`)
+    — Postgres RLS reads the Clerk user id from it directly. The original
+    plan's steps 2 ("auth") and 3 ("read-only data screens") were written
+    as if separable; they're not — a signed-in user needs the new API for
+    both auth *and* every data read simultaneously, or neither. Revised
+    into a single combined step in the plan above rather than silently
+    building toward a two-step plan that can't actually ship.
+  - Caught a real bug in the new session code itself, same class the
+    codebase already hit once in `PkBattle.tsx`: the initial
+    `useEffect(() => void reload(), [])` called `setState` synchronously
+    from the effect body (`react-hooks/set-state-in-effect`, real ESLint
+    failure, not hypothetical). Fixed with the same deferred-`setTimeout`
+    pattern `ProfileProvider` already uses, for consistency.
+  - **Verified for real** against the app's actual, already-installed
+    `node_modules` (no scratch copy needed — these files live inside the
+    already-`npm install`ed Expo project): `npx tsc --noEmit` and
+    `npx expo lint` both clean.
+  - Added `EXPO_PUBLIC_API_URL` to `.env.example`/`env.ts`, not yet in
+    `missingRequiredEnv` since nothing requires it yet.
+  - Not started: the API-backed replacements for `useProfile()` and the
+    other Supabase-dependent hooks (the real bulk of this step), the
+    actual screen cutover, realtime, streaming, money screens, the repo
+    move.
 - Nothing has still been `npm install`ed in the repo itself — do that
   before running `apps/api`/`apps/web` locally. IVS calls need
   `AWS_REGION`/credentials configured, Stripe needs
