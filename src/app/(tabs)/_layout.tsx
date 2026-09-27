@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
 import { Pressable, Text, View, type GestureResponderEvent } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { IconName } from '@/components/ui';
 import { Ripple } from '@/components/Motion';
@@ -40,14 +41,18 @@ function pillTabButton(icon: IconName, activeIcon: IconName, label: string) {
 // User app navigation (Zynalive canvas): Home · Party · Go live · Messages · Me
 export default function TabsLayout() {
   const { c } = useTheme();
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: c.tabBar, borderTopColor: c.divider, height: 88, paddingTop: 8,
-          borderTopLeftRadius: 400, borderTopRightRadius: 400,
+          position: 'absolute',
+          left: 16, right: 16, bottom: insets.bottom + 12,
+          height: 64, paddingTop: 0,
+          backgroundColor: c.tabBar, borderWidth: 1, borderColor: c.divider, borderRadius: 400,
+          shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 20, shadowOffset: { width: 0, height: 8 }, elevation: 12,
         },
         sceneStyle: { backgroundColor: c.background },
       }}
