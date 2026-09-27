@@ -8,8 +8,10 @@ import { useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { LinearGradient } from 'expo-linear-gradient';
+
 import { HostVerificationCard } from '@/components/HostVerificationCard';
-import { Pop } from '@/components/Motion';
+import { FadeIn, Pop } from '@/components/Motion';
 import { StateView, type ViewState } from '@/components/StateView';
 import { Button, Card, Chip, Input, Row, Screen, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
@@ -18,11 +20,12 @@ import { friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
-import { liveColors } from '@/lib/theme';
+import { liveColors, useTheme } from '@/lib/theme';
 import { CATEGORIES, categoryLabel } from '@/lib/types';
 
 export default function CreateScreen() {
   const supabase = useSupabase();
+  const { c } = useTheme();
   const track = useAnalytics();
   const offline = useOffline();
   const { profile, host, isHost, reload: reloadProfile } = useProfile();
@@ -190,21 +193,46 @@ export default function CreateScreen() {
     <Screen>
       <StateView state={state}>
         <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 560, width: '100%', alignSelf: 'center' }}>
-          <Text variant="h1">Go live</Text>
+          <FadeIn style={{ borderRadius: 22, overflow: 'hidden' }}>
+            <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, gap: 6 }}>
+              <Row gap={8}>
+                <Ionicons name="videocam" size={22} color="#fff" />
+                <Text variant="h1" color="#fff">Go live</Text>
+              </Row>
+              <Text color="rgba(255,255,255,0.85)">
+                {!isHost ? 'Start streaming and earn coins from your fans.' : needsVerification ? 'Finish verification to unlock streaming.' : `You're live now.`}
+              </Text>
+            </LinearGradient>
+          </FadeIn>
+
           {!isHost ? (
-            <Card>
-              <Text variant="h3">Become a host</Text>
+            <FadeIn delay={80}>
+            <Card style={{ gap: 12 }}>
+              <Row gap={10}>
+                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: c.goldSurface, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="star" size={16} color={c.gold} />
+                </View>
+                <Text variant="h3">Become a host</Text>
+              </Row>
               <Text muted>{`Stream to your followers, receive gifts, and earn 90% of every gift's coins. Your ID ${profile?.user_number ?? ''} stays the same — it's also your Host ID.`}</Text>
               <Button title="Become a host" onPress={becomeHost} loading={busy} disabled={offline} />
             </Card>
+            </FadeIn>
           ) : needsVerification ? (
-            <HostVerificationCard status={verification} onChanged={() => void reloadProfile()} />
+            <FadeIn delay={80}><HostVerificationCard status={verification} onChanged={() => void reloadProfile()} /></FadeIn>
           ) : (
-            <Card>
-              <Text variant="h3">{"You're live"}</Text>
+            <FadeIn delay={80}>
+            <Card style={{ gap: 12 }}>
+              <Row gap={10}>
+                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: `${c.success}22`, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="radio" size={16} color={c.success} />
+                </View>
+                <Text variant="h3">{"You're live"}</Text>
+              </Row>
               <Text muted>{room.data?.title}</Text>
               <Button title="Return to stream" onPress={() => router.push('/host/live')} />
             </Card>
+            </FadeIn>
           )}
         </ScrollView>
       </StateView>

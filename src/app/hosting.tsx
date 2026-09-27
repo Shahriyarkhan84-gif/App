@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -9,6 +10,8 @@ import { Button, Card, HostBadge, Row, Screen, Text, type IconName } from '@/com
 import { useOffline, useRealtime } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
 import { useTheme } from '@/lib/theme';
+
+const STEPS = ['unverified', 'in_review', 'approved'] as const;
 
 const REQUIREMENTS: { icon: IconName; text: string }[] = [
   { icon: 'person-outline', text: 'You are 18 or older' },
@@ -51,23 +54,38 @@ export default function HostingScreen() {
         ? { title: 'Refresh status', onPress: () => void reload(), loading: false }
         : { title: status === 'declined' ? 'Try again with Didit' : 'Continue verification', onPress: openDidit, loading: false };
 
+  const stepIndex = status === 'declined' ? 0 : STEPS.indexOf(status === 'unverified' ? 'unverified' : status === 'in_review' ? 'in_review' : 'approved');
+
   return (
     <Screen edges={['bottom']}>
       <ScrollView contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 32, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
-        <FadeIn style={{ gap: 6 }}>
-          <Row gap={8}>
-            <Text variant="h1">Become a host</Text>
-            {approved && <HostBadge />}
-          </Row>
-          <Text muted>Every host on Zynalive is identity-verified. It keeps viewers safe and protects your earnings.</Text>
+        <FadeIn style={{ borderRadius: 22, overflow: 'hidden' }}>
+          <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, gap: 10 }}>
+            <Row gap={8}>
+              <Ionicons name="shield-checkmark" size={22} color="#fff" />
+              <Text variant="h1" color="#fff">Become a host</Text>
+              {approved && <HostBadge />}
+            </Row>
+            <Text color="rgba(255,255,255,0.85)">Every host on Zynalive is identity-verified. It keeps viewers safe and protects your earnings.</Text>
+            <Row gap={6} style={{ marginTop: 4 }}>
+              {STEPS.map((s, i) => (
+                <View key={s} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= stepIndex ? '#fff' : 'rgba(255,255,255,0.3)' }} />
+              ))}
+            </Row>
+            <Text variant="caption" color="rgba(255,255,255,0.75)">
+              {status === 'unverified' ? 'Step 1 of 3 · Submit your ID' : status === 'in_review' ? 'Step 2 of 3 · Under review' : 'Step 3 of 3 · Approved'}
+            </Text>
+          </LinearGradient>
         </FadeIn>
 
         <FadeIn delay={80}>
         <Section title="What you need">
           {REQUIREMENTS.map((r) => (
             <Row key={r.text} gap={10} style={{ alignItems: 'flex-start' }}>
-              <Ionicons name={r.icon} size={20} color={c.gold} style={{ marginTop: 1 }} />
-              <Text style={{ flex: 1 }}>{r.text}</Text>
+              <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: c.goldSurface, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name={r.icon} size={16} color={c.gold} />
+              </View>
+              <Text style={{ flex: 1, paddingTop: 6 }}>{r.text}</Text>
             </Row>
           ))}
         </Section>
@@ -77,8 +95,10 @@ export default function HostingScreen() {
         <Section title="Tips to pass first time">
           {TIPS.map((t) => (
             <Row key={t} gap={10} style={{ alignItems: 'flex-start' }}>
-              <Ionicons name="checkmark-circle-outline" size={20} color={c.success} style={{ marginTop: 1 }} />
-              <Text style={{ flex: 1 }}>{t}</Text>
+              <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: `${c.success}22`, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="checkmark" size={16} color={c.success} />
+              </View>
+              <Text style={{ flex: 1, paddingTop: 6 }}>{t}</Text>
             </Row>
           ))}
         </Section>
