@@ -138,6 +138,37 @@ at the new API.
   real Expo app's `node_modules` was never touched) — 0 errors after
   dropping `declaration: true` from `apps/api/tsconfig.json` (unnecessary
   for an application, and it was the source of a handful of TS2742 errors).
-  Nothing has still been `npm install`ed in the repo itself — do that
+- **Phase 5 (economy) — done.** `WalletsService` holds the two shared
+  money-primitives everything else builds on: `lockWallet()` (row-locks via
+  raw `SELECT ... FOR UPDATE`, then re-reads through the typed API — Prisma
+  has no native row-lock method) and `applyCoinDelta()` (ledgered balance
+  change). `GiftsService.sendGift()` is a close translation of
+  `send_gift()`: same order of operations (lock → idempotency check that
+  short-circuits *before* any other validation → status/frozen/room/ban/
+  catalog checks → split → charge → earnings/ledger/stream totals →
+  `BattlesService.applyGiftScore()`). `PaymentsService` covers
+  `internal_create_payment`/`internal_credit_payment`/
+  `internal_refund_payment`/`internal_dispute_payment`/`request_refund`/
+  `review_refund`; `StripeWebhookController` verifies the signature against
+  the raw body (`rawBody: true` in `main.ts`) and uses
+  `ProcessedWebhookEvent` for replay protection. `EarningsService` covers
+  `request_withdrawal`/`review_withdrawal`/`mark_withdrawal_paid`. Added a
+  minimal `ModerationAction` model (just `account_review` flagging) since
+  the chargeback/refund-shortfall path needs it — the full action ladder is
+  still Phase 6.
+  **Not ported:** Apple/Google IAP webhooks (Stripe only so far) and
+  `private.audit()` call sites (no `AuditLog` model yet — real gap, not
+  fabricated as done).
+  **Verified for real:** the same isolated-scratch-copy method as Phase
+  4 — `npm install` + `tsc --noEmit`, 0 errors, plus `npx jest` actually
+  run and passing (5/5) against a hand-built fake Prisma transaction that
+  asserts the exact call sequence: split math sums to the charged total,
+  insufficient-balance/self-gift/banned-from-room rejections, and an
+  idempotent replay that never touches the wallet a second time. This is a
+  unit-level mirror of `supabase/tests/10_must_pass.sql`'s gift-split and
+  duplicate-gift cases — there is no live Postgres in this environment to
+  run the real integration-level SQL suite equivalent against.
+- Nothing has still been `npm install`ed in the repo itself — do that
   before running `apps/api`/`apps/web` locally. IVS calls need
-  `AWS_REGION`/credentials configured (see `apps/api/.env.example`).
+  `AWS_REGION`/credentials configured, Stripe needs
+  `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` (see `apps/api/.env.example`).

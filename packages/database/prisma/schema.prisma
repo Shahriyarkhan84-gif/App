@@ -535,6 +535,7 @@ model Payment {
   currency           String
   agencyId           String?       @map("agency_id")
   status             PaymentStatus @default(pending)
+  paidAt             DateTime?     @map("paid_at")
   createdAt          DateTime      @default(now()) @map("created_at")
 
   user    User         @relation(fields: [userId], references: [id])
@@ -543,6 +544,9 @@ model Payment {
 
   refundRequest RefundRequest?
 
+  @@unique([provider, providerRef])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([providerPaymentRef])
   @@map("payments")
 }
 
@@ -587,4 +591,20 @@ model Withdrawal {
   host Host @relation(fields: [hostId], references: [userId])
 
   @@map("withdrawals")
+}
+
+// Minimal slice of moderation_actions from 20260924030000_moderation_ai.sql —
+// just enough for PaymentsService to flag an account after an unrecoverable
+// chargeback/refund shortfall. The full action ladder (warnings, temp/perm
+// bans, reports, AI proposals) is Phase 6 (see docs/MIGRATION_PLAN.md).
+model ModerationAction {
+  id           BigInt   @id @default(autoincrement())
+  targetUserId String   @map("target_user_id")
+  action       String // warning | temp_restriction | temp_ban | permanent_ban | content_removal | account_review
+  reason       String
+  source       String // admin | ai | system | room_admin
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([targetUserId, createdAt(sort: Desc)])
+  @@map("moderation_actions")
 }

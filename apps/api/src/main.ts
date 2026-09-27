@@ -19,7 +19,11 @@ declare global {
 };
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // rawBody: true makes Nest stash the unparsed request body on req.rawBody
+  // for every route, which StripeWebhookController needs to verify Stripe's
+  // signature — signing is over the exact bytes Stripe sent, not the
+  // re-serialized JSON.
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   app.enableCors();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
