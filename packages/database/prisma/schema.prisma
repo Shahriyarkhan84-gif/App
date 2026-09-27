@@ -192,17 +192,18 @@ model Room {
   currentBattleId   String?      @map("current_battle_id")
   updatedAt         DateTime     @updatedAt @map("updated_at")
 
-  host          Host        @relation(fields: [hostId], references: [userId], onDelete: Cascade)
-  currentStream Stream?     @relation("CurrentStream", fields: [currentStreamId], references: [id])
-  currentBattle PkBattle?   @relation("CurrentBattle", fields: [currentBattleId], references: [id])
-  streams       Stream[]    @relation("RoomStreams")
-  admins        RoomAdmin[]
-  bans          RoomBan[]
-  messages      Message[]
-  gifts         Gift[]
-  battlesAsA    PkBattle[]  @relation("BattleRoomA")
-  battlesAsB    PkBattle[]  @relation("BattleRoomB")
-  battlesWon    PkBattle[]  @relation("BattleWinner")
+  host            Host                 @relation(fields: [hostId], references: [userId], onDelete: Cascade)
+  currentStream   Stream?              @relation("CurrentStream", fields: [currentStreamId], references: [id])
+  currentBattle   PkBattle?            @relation("CurrentBattle", fields: [currentBattleId], references: [id])
+  streams         Stream[]             @relation("RoomStreams")
+  admins          RoomAdmin[]
+  bans            RoomBan[]
+  messages        Message[]
+  gifts           Gift[]
+  battlesAsA      PkBattle[]           @relation("BattleRoomA")
+  battlesAsB      PkBattle[]           @relation("BattleRoomB")
+  battlesWon      PkBattle[]           @relation("BattleWinner")
+  recommendations UserRecommendation[]
 
   @@index([status, viewerCount(sort: Desc)])
   @@map("rooms")
@@ -353,9 +354,10 @@ model Message {
   moderation Json?
   createdAt  DateTime @default(now()) @map("created_at")
 
-  room   Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  stream Stream? @relation(fields: [streamId], references: [id])
-  sender User    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  room         Room                 @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  stream       Stream?              @relation(fields: [streamId], references: [id])
+  sender       User                 @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  translations MessageTranslation[]
 
   @@index([roomId, createdAt(sort: Desc)])
   @@index([senderId, createdAt(sort: Desc)])
@@ -598,13 +600,133 @@ model Withdrawal {
 // chargeback/refund shortfall. The full action ladder (warnings, temp/perm
 // bans, reports, AI proposals) is Phase 6 (see docs/MIGRATION_PLAN.md).
 model ModerationAction {
-  id           BigInt   @id @default(autoincrement())
-  targetUserId String   @map("target_user_id")
+  id           BigInt    @id @default(autoincrement())
+  targetUserId String    @map("target_user_id")
   action       String // warning | temp_restriction | temp_ban | permanent_ban | content_removal | account_review
   reason       String
+  expiresAt    DateTime? @map("expires_at")
+  actorId      String?   @map("actor_id")
   source       String // admin | ai | system | room_admin
-  createdAt    DateTime @default(now()) @map("created_at")
+  reportId     String?   @map("report_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  report Report? @relation(fields: [reportId], references: [id])
 
   @@index([targetUserId, createdAt(sort: Desc)])
   @@map("moderation_actions")
+}
+
+// ---- Moderation & AI (20260924030000_moderation_ai.sql) -------------------
+
+model Report {
+  id           String   @id @default(cuid())
+  reporterId   String   @map("reporter_id")
+  targetType   String   @map("target_type") // user | room | message
+  targetId     String   @map("target_id")
+  targetUserId String?  @map("target_user_id")
+  reason       String
+  status       String   @default("open") // open | reviewing | actioned | dismissed
+  aiAssessment Json?    @map("ai_assessment")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  moderationActions ModerationAction[]
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([targetUserId])
+  @@map("reports")
+}
+
+model AiJob {
+  id        BigInt    @id @default(autoincrement())
+  kind      String // moderate_message | moderate_report | fraud_review | fraud_sweep | support_ticket | creator_assist | translate_message | recommendations | ceo_briefing
+  payload   Json      @default("{}")
+  status    String    @default("queued") // queued | running | done | failed
+  attempts  Int       @default(0)
+  runAfter  DateTime  @default(now()) @map("run_after")
+  lockedAt  DateTime? @map("locked_at")
+  dedupeKey String?   @unique @map("dedupe_key")
+  result    Json?
+  error     String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@index([status, runAfter])
+  @@map("ai_jobs")
+}
+
+model AiReport {
+  id        BigInt   @id @default(autoincrement())
+  kind      String
+  headline  String
+  summary   String
+  data      Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([kind, createdAt(sort: Desc)])
+  @@map("ai_reports")
+}
+
+// AI never executes high-impact actions directly: it proposes, an owner
+// approves, and the worker executes the approved action.
+model AiAction {
+  id           BigInt   @id @default(autoincrement())
+  agent        String
+  actionType   String   @map("action_type") // warning | temp_restriction | temp_ban | permanent_ban | account_review | freeze_wallet | unfreeze_wallet | note
+  targetUserId String?  @map("target_user_id")
+  rationale    String
+  confidence   Float?
+  params       Json     @default("{}")
+  status       String   @default("proposed") // proposed | approved | rejected | executed | failed
+  reviewedBy   String?  @map("reviewed_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([status, createdAt(sort: Desc)])
+  @@map("ai_actions")
+}
+
+model MessageTranslation {
+  messageId BigInt   @map("message_id")
+  language  String
+  body      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, language])
+  @@map("message_translations")
+}
+
+model SupportTicket {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  subject   String
+  body      String
+  category  String?
+  status    String   @default("open") // open | answered | escalated | closed
+  aiReply   String?  @map("ai_reply")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("support_tickets")
+}
+
+model UserRecommendation {
+  userId    String   @map("user_id")
+  roomId    String   @map("room_id")
+  score     Float
+  reason    String?
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roomId])
+  @@map("user_recommendations")
+}
+
+model WordFilter {
+  term   String @id
+  action String @default("mask") // mask | block
+
+  @@map("word_filters")
 }

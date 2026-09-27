@@ -168,7 +168,46 @@ at the new API.
   unit-level mirror of `supabase/tests/10_must_pass.sql`'s gift-split and
   duplicate-gift cases — there is no live Postgres in this environment to
   run the real integration-level SQL suite equivalent against.
+- **Phase 6 (AI moderation & discovery) — done.** Translated from
+  `20260924030000_moderation_ai.sql`:
+  - `ModerationService`: `applyModerationAction()` (admin), the shared
+    `applyModeration()` every path funnels through (protected-account check
+    for staff, temp/permanent ban → user status + force the room offline,
+    report → `actioned`, realtime notification), `internalAiModeration()`
+    (low-impact only: warning/content_removal), `reviewAiAction()`,
+    `internalExecuteAiAction()` (executes an *approved* proposal — AI never
+    acts directly), `proposeAiAction()`. `internal*` routes sit behind a new
+    `InternalAuthGuard` (shared-secret header) standing in for Postgres's
+    `service_role`, since a plain NestJS app has no equivalent concept —
+    the AI worker (`agents/`) will need this secret once it's repointed at
+    this API.
+  - `AiJobsService.enqueue()`: the Postgres-backed job queue the LangGraph
+    worker already consumes, with the same dedupe-key-as-idempotency
+    behavior as `on conflict (dedupe_key) do nothing` (via catching the
+    unique-constraint error, not a racy read-then-write).
+  - `ReportsModule`: `report_content()` (rate-limited, resolves the target
+    user per type, enqueues `moderate_report`), `dismiss_report()`, admin
+    listing.
+  - **Real gap fixed, not just ported:** Phase 4's `ChatService` shipped
+    without send_chat_message()'s anti-spam (5 msgs/10s), duplicate-message,
+    word-filter (mask/block), or any-active-ban (not just mute) checks, or
+    the `moderate_message` AI job enqueue. All of that is now in place —
+    this was a real correctness hole in production chat, caught while
+    working through the SQL file phase-by-phase rather than trusting the
+    earlier pass was complete.
+  - `RankingsModule.getRankings()`: raw SQL (window functions + grouped
+    aggregation don't fit Prisma's query builder), one query per kind
+    (gifter/creator/country/live), translated statement-for-statement.
+  - `RecommendationsModule`/`SupportModule`: read/write surface for
+    `user_recommendations` and `support_tickets` — the actual scoring and
+    AI replies are computed by the worker via the job queue, not by this API.
+  - **Verified for real:** same isolated-scratch-copy method — `tsc --noEmit`
+    against the real dependencies (0 errors; this caught and fixed a real
+    bug, an untyped `Record<string, unknown>` passed where Prisma's
+    `InputJsonValue` was required) and `npx jest` re-run to confirm Phase
+    5's gift tests still pass unchanged.
 - Nothing has still been `npm install`ed in the repo itself — do that
   before running `apps/api`/`apps/web` locally. IVS calls need
   `AWS_REGION`/credentials configured, Stripe needs
-  `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` (see `apps/api/.env.example`).
+  `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET`, and the AI worker needs
+  `INTERNAL_API_SECRET` (see `apps/api/.env.example`).
