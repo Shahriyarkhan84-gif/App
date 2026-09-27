@@ -1,4 +1,3 @@
-import { useClerk } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -17,7 +16,6 @@ import { displayName } from '@/lib/types';
 
 export default function ProfileScreen() {
   const supabase = useSupabase();
-  const { signOut } = useClerk();
   const { c } = useTheme();
   const track = useAnalytics();
   const { profile, host, isHost, isPlatformAdmin, error, reload } = useProfile();
@@ -61,8 +59,9 @@ export default function ProfileScreen() {
     <Screen>
       <ScrollView contentContainerStyle={{ padding: 16, paddingTop: 8, gap: 18, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
         <Row style={{ justifyContent: 'space-between' }}>
-          <Text variant="h2">Me</Text>
           <IconButton icon="create-outline" label="Edit profile" onPress={() => router.push('/profile-edit')} />
+          <Text variant="h2">Me</Text>
+          <IconButton icon="settings-outline" label="Settings" onPress={() => router.push('/settings')} />
         </Row>
 
         <Row gap={14}>
@@ -112,14 +111,10 @@ export default function ProfileScreen() {
           <ListRow icon="wallet-outline" label="Wallet & history" onPress={() => router.push('/wallet')} />
           <ListRow icon="trophy-outline" label="Rankings" onPress={() => router.push('/rankings')} />
           <ListRow icon="help-buoy-outline" label="Help & support" onPress={() => router.push('/support')} />
-          <ListRow icon="megaphone-outline" label="Share feedback" onPress={openFeedback} />
-          {isAgencyStaff && <ListRow icon="business-outline" label="Agency portal" color={c.gold} onPress={() => router.push('/agency')} />}
-          <ListRow icon="lock-closed-outline" label="Privacy policy" onPress={() => router.push('/privacy')} last={!isPlatformAdmin} />
+          <ListRow icon="megaphone-outline" label="Share feedback" onPress={openFeedback} last={!isAgencyStaff && !isPlatformAdmin} />
+          {isAgencyStaff && <ListRow icon="business-outline" label="Agency portal" color={c.gold} onPress={() => router.push('/agency')} last={!isPlatformAdmin} />}
           {isPlatformAdmin && <ListRow icon="analytics-outline" label="Owner command center" onPress={() => router.push('/admin')} last />}
         </FadeIn>
-
-        <Button title="Sign out" variant="ghost" onPress={() => signOut()} />
-        <Button title="Delete account" variant="ghost" onPress={() => router.push('/delete-account')} style={{ marginTop: -8 }} icon={<Ionicons name="trash-outline" size={16} color={c.danger} />} />
       </ScrollView>
     </Screen>
   );
