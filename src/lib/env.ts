@@ -10,6 +10,10 @@ export const env = {
   sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
   productBridgeUrl: process.env.EXPO_PUBLIC_PRODUCTBRIDGE_URL ?? '',
   siteUrl: process.env.EXPO_PUBLIC_SITE_URL ?? '',
+  // New NestJS backend (apps/api) — see docs/MIGRATION_PLAN.md, Phase 8.
+  // Not in missingRequiredEnv yet: nothing reads this until screens are
+  // repointed off Supabase/Clerk one at a time.
+  apiUrl: process.env.EXPO_PUBLIC_API_URL ?? '',
 };
 
 export const missingRequiredEnv = (

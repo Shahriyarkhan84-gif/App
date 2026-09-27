@@ -89,9 +89,45 @@ at the new API.
 - Admin dashboard (Next.js): user/creator/report/gift/revenue management.
 
 ### Phase 8 — Mobile repoint + infra
-- Move the Expo app into `apps/mobile`, swap Supabase/Clerk/LiveKit clients
-  for the NestJS API + Amazon IVS SDK.
-- Kubernetes manifests, CloudFront/S3 for media, CI/CD across all three apps.
+
+Unlike Phases 1–7, which only ever added new, isolated files, this phase
+edits the live, shipped Expo app — the one thing in this repo real users
+depend on today. It's sequenced screen-by-screen, not as one cutover:
+
+1. **Foundation (additive, done)** — `src/lib/api-client.ts`: token
+   storage (`expo-secure-store`), authenticated `apiFetch()` with
+   auto-refresh-on-401. Nothing imports it yet.
+2. **Auth** — a parallel `src/lib/auth-api.ts` (register/login/OTP/social/
+   2FA against `apps/api`'s `/auth/*`), then repoint the sign-in/sign-up
+   screens from Clerk's `useAuth()`/`useSignIn()` to it. Highest-risk single
+   step: every screen currently reads the Clerk session. Ship it behind
+   both paths coexisting until sign-in is confirmed working, not a single
+   flip.
+3. **Read-only data screens first** — Home feed, rankings, profile view:
+   swap `useSupabase()` queries for `apiFetch()` calls one screen at a
+   time. Lower risk than auth (a broken read screen degrades, it doesn't
+   lock users out) and exercises Phases 3–7's endpoints against a real
+   client before the money-critical screens move.
+4. **Realtime** — add `socket.io-client` (not yet a dependency; deferred
+   rather than added unused) and a `src/lib/realtime.ts` wrapper once a
+   screen actually needs it (chat first), replacing `useRealtime()`'s
+   Supabase Realtime subscriptions.
+5. **Streaming** — swap the LiveKit host/viewer components for an IVS HLS
+   player (viewers) and an RTMP publish flow (hosts, likely
+   `react-native-nodemediaclient` or a custom native module — Amazon IVS
+   has no first-party Expo/RN broadcast SDK, unlike LiveKit's). This is
+   its own significant sub-effort, not a drop-in swap.
+6. **Money screens last** (wallet, gifts, withdrawals, host verification) —
+   only after 2–5 are proven, given Phase 5's trust-boundary work.
+7. **Repo move + infra** — once every screen is repointed and Supabase/
+   Clerk/LiveKit packages are unused, move the app into `apps/mobile` (a
+   single mechanical commit at that point, not before — moving it earlier
+   just adds churn to every step above), update EAS config and CI, then
+   add Kubernetes manifests and CloudFront/S3 for media.
+
+Steps 2–6 each touch a live screen and deserve their own review/testing
+pass, not a single sweeping diff — see the Status section for what's
+actually been done vs. planned.
 
 ## Status
 
@@ -236,6 +272,21 @@ at the new API.
     which weren't there before) also ran clean. The API side was re-verified
     the same way as every other phase (`tsc --noEmit` + `npx jest` against
     real dependencies).
+- **Phase 8 (mobile repoint + infra) — step 1 of 7 done.**
+  `src/lib/api-client.ts`: `expo-secure-store` token storage,
+  `apiFetch()` with auto-refresh-on-401 (mirrors `@supabase/supabase-js`'s
+  own retry-on-401 behavior, since nothing else in the app expects a 401
+  to be fatal), errors thrown with the same string codes the SQL/RPC
+  errors used so the existing `friendlyError()` mapping keeps working
+  unchanged. Verified against the app's real, already-installed
+  `node_modules` (no scratch copy needed here, unlike `apps/api`/`apps/web`
+  — this file lives inside the already-`npm install`ed Expo project):
+  `npx tsc --noEmit` and `npx expo lint` both clean. Added
+  `EXPO_PUBLIC_API_URL` to `.env.example`/`env.ts`, not yet in
+  `missingRequiredEnv` since nothing requires it yet. Steps 2–7 (auth,
+  data screens, realtime, streaming, money screens, the repo move) are
+  each a live-screen change and not started — see the phase plan above
+  for the intended order and why.
 - Nothing has still been `npm install`ed in the repo itself — do that
   before running `apps/api`/`apps/web` locally. IVS calls need
   `AWS_REGION`/credentials configured, Stripe needs
