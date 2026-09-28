@@ -81,6 +81,12 @@
       "typedRoutes": true
     },
     "owner": "khan888s-team",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f451a41a-b7ae-4a50-821e-b6fb8ed9cdb7"
+    },
     "extra": {
       "eas": {
         "projectId": "f451a41a-b7ae-4a50-821e-b6fb8ed9cdb7"
