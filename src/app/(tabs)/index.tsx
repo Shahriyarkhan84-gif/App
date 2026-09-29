@@ -3,16 +3,18 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
 
+import Ionicons from '@expo/vector-icons/Ionicons';
+
 import { RoomCard } from '@/components/RoomCard';
 import { FeaturedHost } from '@/components/FeaturedHost';
 import { FollowingLive, LiveBell } from '@/components/FollowingLive';
-import { FadeIn, stagger } from '@/components/Motion';
+import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Chip, IconButton, Row, Screen, Text, TextTabs, Wordmark } from '@/components/ui';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
-import { useTheme } from '@/lib/theme';
+import { fonts, useTheme } from '@/lib/theme';
 import { CATEGORIES, categoryLabel, normalizeRooms, ROOM_SELECT, type Room } from '@/lib/types';
 
 type Feed = 'following' | 'popular' | 'nearby' | 'new';
@@ -62,6 +64,8 @@ export default function HomeScreen() {
   });
 
   const rooms = data ? pickFeed(data, feed, profile?.country ?? null).filter((r) => category === 'all' || r.category === category) : [];
+  // Highest-viewed live room currently in a PK battle, if any — the Home screen's entry point into that fight.
+  const battleRoom = data?.live.find((r) => r.current_battle_id) ?? null;
   const emptyCopy = {
     following: { title: 'No one you follow is live', body: 'Follow hosts you like and they will show up here.' },
     popular: { title: 'No one is live right now', body: 'Be the first — tap Go live.' },
@@ -106,6 +110,11 @@ export default function HomeScreen() {
               <FeaturedHost room={rooms[0]} following={data!.followed.has(rooms[0].host_id)} />
             </FadeIn>
           )}
+          {feed === 'popular' && category === 'all' && battleRoom && (
+            <FadeIn style={{ marginBottom: 10 }}>
+              <PkBattleBanner room={battleRoom} />
+            </FadeIn>
+          )}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
             {rooms.map((r, i) => (
               <FadeIn key={`${feed}-${category}-${r.id}`} delay={stagger(i)} from={24}>
@@ -122,6 +131,29 @@ export default function HomeScreen() {
         </ScrollView>
       </StateView>
     </Screen>
+  );
+}
+
+function PkBattleBanner({ room }: { room: Room }) {
+  const { c, radius } = useTheme();
+  return (
+    <PressScale
+      onPress={() => router.push({ pathname: '/live/[roomId]', params: { roomId: room.id } })}
+      accessibilityRole="button"
+      accessibilityLabel="Watch the live PK battle"
+      scaleTo={0.98}
+    >
+      <Row style={{ padding: 16, borderRadius: radius[16] + 2, backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider }}>
+        <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: c.gold, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontFamily: fonts.display, fontSize: 20, color: c.onGold }}>PK</Text>
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text variant="h3">PK Battle Night</Text>
+          <Text variant="bodySmall" muted>Hosts go head-to-head — gifts decide the winner</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={c.textFaint} />
+      </Row>
+    </PressScale>
   );
 }
 
