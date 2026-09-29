@@ -111,6 +111,7 @@ export default function ProfileScreen() {
           <ListRow icon="wallet-outline" label="Wallet & history" onPress={() => router.push('/wallet')} />
           <ListRow icon="play-circle-outline" label="Videos" onPress={() => router.push('/videos')} />
           <ListRow icon="trophy-outline" label="Rankings" onPress={() => router.push('/rankings')} />
+          <ListRow icon="calendar-outline" label="Events" onPress={() => router.push('/events')} />
           <ListRow icon="help-buoy-outline" label="Help & support" onPress={() => router.push('/support')} />
           <ListRow icon="megaphone-outline" label="Share feedback" onPress={openFeedback} last={!isAgencyStaff && !isPlatformAdmin} />
           {isAgencyStaff && <ListRow icon="business-outline" label="Agency portal" color={c.gold} onPress={() => router.push('/agency')} last={!isPlatformAdmin} />}

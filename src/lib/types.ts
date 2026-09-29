@@ -79,8 +79,16 @@ export function displayName(p?: { display_name?: string | null; username?: strin
   return p?.display_name || (p?.username ? `@${p.username}` : 'Zynalive user');
 }
 
+const CURRENCY_SYMBOL: Record<string, string> = { PKR: 'Rs', INR: '₹', BDT: '৳', USD: '$', GBP: '£', AED: 'AED' };
+// Regional prices are whole rupees/taka; dollar-style prices keep their cents (1.99).
+const WHOLE_UNIT = new Set(['PKR', 'INR', 'BDT', 'NPR', 'IDR']);
+
 export function formatMoney(minor: number, currency: string) {
-  return `${currency.toUpperCase() === 'PKR' ? 'Rs' : currency.toUpperCase()} ${(minor / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  const code = currency.toUpperCase();
+  const digits = WHOLE_UNIT.has(code) || minor % 100 === 0 ? 0 : 2;
+  const amount = (minor / 100).toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const symbol = CURRENCY_SYMBOL[code] ?? code;
+  return symbol.length === 1 ? `${symbol}${amount}` : `${symbol} ${amount}`;
 }
 
 export const CATEGORIES = ['chat', 'music', 'gaming', 'talent', 'education', 'other'] as const;

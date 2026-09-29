@@ -166,6 +166,12 @@ class Worker:
                 log.exception("ai_action %s failed", row["id"])
                 self.db.run("update public.ai_actions set status = 'failed', updated_at = now() where id = %s", (row["id"],))
 
+    def finalize_events(self) -> None:
+        """Engagement events that have ended: snapshot leaderboards and notify winners."""
+        row = self.db.one("select public.internal_finalize_due_events() as n")
+        if row and row["n"]:
+            log.info("finalized %s events", row["n"])
+
     # Main loop ------------------------------------------------------------------
 
     def run(self) -> None:
@@ -180,6 +186,7 @@ class Worker:
                     if self.settings.queues != "media":
                         self.schedule()
                         self.execute_approved_actions()
+                        self.finalize_events()
                     last_housekeeping = time.monotonic()
                 if self.drain_once() == 0:
                     self.stop.wait(self.settings.poll_interval_s)

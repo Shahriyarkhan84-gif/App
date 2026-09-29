@@ -5,6 +5,7 @@ import { RefreshControl, ScrollView, View, useWindowDimensions } from 'react-nat
 
 import Ionicons from '@expo/vector-icons/Ionicons';
 
+import { LiveEventBanner } from '@/components/EventRow';
 import { RoomCard } from '@/components/RoomCard';
 import { FeaturedHost } from '@/components/FeaturedHost';
 import { FollowingLive, LiveBell } from '@/components/FollowingLive';
@@ -108,6 +109,11 @@ export default function HomeScreen() {
           {feed === 'popular' && category === 'all' && rooms[0] && (
             <FadeIn style={{ marginBottom: 10 }}>
               <FeaturedHost room={rooms[0]} following={data!.followed.has(rooms[0].host_id)} />
+            </FadeIn>
+          )}
+          {feed === 'popular' && category === 'all' && (
+            <FadeIn style={{ marginBottom: 10 }}>
+              <LiveEventBanner />
             </FadeIn>
           )}
           {feed === 'popular' && category === 'all' && battleRoom && (
