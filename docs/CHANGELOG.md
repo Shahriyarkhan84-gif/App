@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.0 — Core architecture complete: upload + HDR pipeline, subtitles, localization, regions, events
+
+- **Upload + HDR pipeline.** Hosts upload videos (Videos → My videos); the media worker probes them, detects HDR (PQ → HDR10, ARIB STD-B67 → HLG, else SDR), and encodes a ladder: 4K HDR and 1080p HDR (HEVC Main10 with HDR10 metadata) plus an always-present SDR fallback (tone-mapped H.264 1080/720/480/360), packaged as fMP4 HLS with a `VIDEO-RANGE` master playlist for adaptive bitrate. Live streams can be recorded (LiveKit egress, `media.record_live`) and replayed through the same pipeline. New tables `media_assets`, `media_renditions`, `media_views`; buckets `uploads` (private) and `media` (public); worker queue `media_process` (`WORKER_QUEUES`, `Dockerfile.media`). App: Videos feed, upload screen with realtime status, HLS player (expo-video).
+- **🤖 Subtitles.** Videos with audio get captions: Whisper transcription, Claude translation into English, Urdu, Hindi and Bengali, WebVTT + HLS subtitle tracks in the master playlist; the player's captions picker defaults to the viewer's language. `media_subtitles`, `media_assets.subtitle_status`.
+- **Localization layer.** `src/lib/i18n` with typed English/Urdu/Hindi/Bengali catalogs; language = saved choice → device → region default → English, mirrored to `profiles.language`; Urdu is RTL (`supportsRTL`). Settings → Language. Tabs, screen states, profile menu, error copy, videos and events are translated; other screens fall back to English until migrated.
+- **Regional variants.** `regions` (PK, IN, BD, Global active; Indonesia, Malaysia, Türkiye, Gulf, Philippines, Nepal ready to switch on) with currency, languages, timezone and feature switches. Regional coin pricing (INR/BDT/USD packages added); the region comes from the frozen sign-up country and `internal_create_payment()` refuses another region's package (must-pass). Gift catalog items can be limited to regions.
+- **Engagement events.** Gifting races (qualifying gifts, per region) and PK battle leagues (win 3, tie 1) with live leaderboards, rewards and automatic finalization + winner notifications. Owner command center → Events. Home shows the live event. Scores are kept by triggers; `send_gift()` is untouched.
+- **NestJS/Prisma mirror** of all of the above (`apps/api`: regions, media, events modules; Prisma models incl. `AuditLog`), with Jest tests.
+- Fixes: agent test fixtures set a cover before going live (required since 0.7.1); `package-lock.json` regenerated for the workspaces so `npm ci` works; USD prices keep their cents.
+
 ## 0.7.4 — PK battles
 
 - Two live hosts can battle head-to-head: a "Battle" button on the host's own live screen invites another live host; the challenged host gets a live accept/decline prompt; the challenger can cancel while waiting. Once accepted, both hosts' live video shows split-screen (each still publishing only to their own room) with a VS badge, a live score bar and countdown, visible to every viewer on either side.

@@ -18,11 +18,30 @@ refusal fallbacks; override per branch with `AI_MODEL_<BRANCH>`.
 | 🤖 Creator assist | stream ends | `load → coach → save` | `streams.ai_summary` + host notification | — |
 | 🤖 Translation | user taps Translate | `load → translate` | cached `message_translations` | — |
 | 🤖 Recommendations | every `AI_RECS_EVERY_MIN` (15) | `score` (SQL, no model) | `user_recommendations` ("For you" row) | — |
-| 🤖 Subtitles | — | not built (needs speech-to-text on LiveKit egress) | — | — |
+| 🤖 Subtitles | a video (upload or live replay) with audio becomes ready | `extract audio → Whisper → source WebVTT → Claude translates cues (1:1 lines) → HLS subtitle playlists → master playlist gets EXT-X-MEDIA tracks` | `media_subtitles` rows; captions menu in the player (defaults to the viewer's language) | — |
 
 Fraud signals: circular gifting between two accounts, ≥95% of spend to one
 host, new accounts with large purchases, repeated refunds/disputes, purchase
 velocity. Only flagged accounts reach the model.
+
+Subtitles run on the **media worker** (`WORKER_QUEUES=media`, `Dockerfile.media`,
+`pip install '.[subtitles]'` for faster-whisper). Without a speech-to-text engine
+the media worker simply doesn't claim `media_subtitles` jobs. Translation uses
+`AI_MODEL_SUBTITLES` if set. Live captions (during the stream) are not built;
+replays get captions once the recording is processed.
+
+## Media worker (not AI, same queue)
+
+`media_process` jobs: download the source from `uploads` → ffprobe →
+HDR detection (`color_transfer` smpte2084 → HDR10, arib-std-b67 → HLG, else SDR)
+→ ladder (`2160p_hdr` HEVC Main10 16 Mbps if the short side ≥ 2160 and
+`uhd_enabled`; `1080p_hdr` 6.5 Mbps; SDR 1080/720/480/360 H.264, tone-mapped
+from HDR with zscale + Hable; never upscaled) → fMP4 HLS (6 s segments, 2 s
+GOP) + master playlist with `VIDEO-RANGE=SDR/PQ/HLG` (SDR listed first) →
+thumbnail → `internal_media_ready`. Code in `agents/zynalive_agents/media/`;
+tests include a real 1080p HDR10 encode checked with ffprobe when ffmpeg is
+installed. Media jobs get a 6.5 h stale-lock window so long encodes are never
+double-run.
 
 ## Runtime
 

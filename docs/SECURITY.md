@@ -37,6 +37,32 @@
 - Prices come from `coin_packages` / `gift_catalog`; amount + currency are
   re-checked against the Stripe session before crediting.
 
+## Media uploads
+
+- Hosts reserve an upload with `create_media_upload()`, which fixes the object
+  name (`<own id>/<asset id>.<ext>`); the `uploads` bucket policy only allows
+  inserting that exact reserved path while it's `awaiting_upload`. The bucket
+  is private (only the service-role media worker reads sources).
+- Processing state, probe results, renditions and subtitles are written only by
+  the service role (`internal_media_*`); every ladder must contain an SDR rung,
+  and all output paths must stay inside the asset's folder.
+- Outputs are in the public `media` bucket under unguessable asset UUIDs (like
+  covers); "unlisted" means not listed, not access-controlled. Removed videos
+  stop resolving in the app; purge storage objects with a lifecycle rule.
+- Live recordings are registered only by the signature-verified LiveKit
+  webhook and only into the room host's own folder. The NestJS API accepts IVS
+  recordings only from the room's own channel prefix.
+- Transcripts are user speech and are passed to Claude as `<untrusted>` data.
+
+## Regions & events
+
+- The pricing region comes from the frozen `signup_country`; clients can't write
+  it, and editing `country` has no effect on price (must-pass §4b).
+- Events are created, edited, cancelled and finalized only by platform admins
+  (audited). Scores come only from triggers on real gifts and ended battles;
+  clients have no write grants on `event_scores`/`event_results`, and a retried
+  gift (same idempotency key) never scores twice.
+
 ## Host identity verification
 
 Verification status is written only by the service role from a signature-verified

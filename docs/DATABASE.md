@@ -24,6 +24,12 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 | `…050000_hardening.sql` | fixed `search_path` on remaining functions; no anon execute by default (Supabase advisor fixes) |
 | `…200000_pk_battles.sql` | `pk_battles` (two rooms, live score, winner), `rooms.current_battle_id`; `invite_pk_battle()`, `respond_pk_battle()`, `end_pk_battle()`; a trigger on `gifts` tallies `score_a`/`score_b` from gifts already sent through `send_gift()` — no changes to the money path itself. Each host still publishes only to their own existing LiveKit room; viewers subscribe to both rooms while a battle is live. |
 
+| `…25010000_media_pipeline.sql` | Upload + HDR pipeline: `media_assets` (probe + HDR metadata, `dynamic_range` sdr/hdr10/hlg, playback/thumbnail paths), `media_renditions` (ladder), `media_views`; private `uploads` bucket (hosts insert only their reserved `<id>/<asset>.<ext>` path) + public `media` bucket; `create_media_upload`, `submit_media_upload`, `update_media`, `remove_media`, `get_media`, `record_media_view`; service role: `internal_media_started/probed/ready/failed`, `internal_register_live_recording`. Every ladder must include an SDR rung. |
+| `…25020000_media_subtitles.sql` | `media_subtitles` (per-language WebVTT + HLS playlist, one source track), `media_assets.subtitle_status`; `internal_media_ready` queues `media_subtitles`; `internal_media_subtitles()` |
+| `…25030000_regions_events.sql` | `regions` (PK/IN/BD/GLOBAL active; ID/MY/TR/GULF/PH/NP ready), region from `signup_country`, `my_region()`; `coin_packages.region` (+ INR/BDT/USD packages) and `internal_create_payment` refuses other regions' packages; `gift_catalog.regions`; `events`, `event_scores` (kept by triggers on `gifts` and ended `pk_battles`), `event_results`; `upsert_event`, `cancel_event`, `finalize_event`, `event_leaderboard`, `internal_finalize_due_events` |
+
+(Files `20260925…` sort after `20260924…`; the short names above drop the date prefix.)
+
 Architecture table names map 1:1 except: `users` → Clerk + `profiles`;
 `rankings` is computed by `get_rankings()` instead of stored.
 
