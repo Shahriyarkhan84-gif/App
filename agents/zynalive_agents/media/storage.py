@@ -28,6 +28,11 @@ def content_type(path: pathlib.Path) -> str:
     return mimetypes.guess_type(path.name)[0] or "application/octet-stream"
 
 
+def cache_control(path: pathlib.Path) -> str:
+    # Playlists can be rewritten (subtitles are added to master.m3u8 later); segments never change.
+    return "max-age=60" if path.suffix == ".m3u8" else "max-age=31536000, immutable"
+
+
 def upload_tree(storage: Storage, bucket: str, prefix: str, root: pathlib.Path) -> None:
     for f in sorted(p for p in root.rglob("*") if p.is_file()):
         storage.upload(bucket, f"{prefix}/{f.relative_to(root).as_posix()}", f)
@@ -50,7 +55,7 @@ class SupabaseStorage:
             r = self._client.post(
                 f"{self._base}/{bucket}/{name}",
                 content=fh,
-                headers={"Content-Type": content_type(source), "x-upsert": "true", "Cache-Control": "max-age=31536000"},
+                headers={"Content-Type": content_type(source), "x-upsert": "true", "Cache-Control": cache_control(source)},
             )
         r.raise_for_status()
 

@@ -32,6 +32,7 @@ from .graphs.translation import build_translation_graph
 from .llm import LLM, ClaudeLLM, LLMRefusal
 from .media.pipeline import FFmpegTools, MediaTools, process_media
 from .media.storage import Storage, SupabaseStorage
+from .media.subtitles import Transcriber, generate_subtitles
 
 log = logging.getLogger("zynalive.worker")
 
@@ -42,6 +43,7 @@ class MediaContext:
     storage: Storage
     tools: MediaTools
     preset: str = "medium"
+    transcriber: Transcriber | None = None  # subtitles run only when a speech-to-text engine is available
 
 
 def build_dispatch(db: Database, llm: LLM, media: MediaContext | None = None) -> dict[str, Callable[[dict], dict]]:
@@ -71,12 +73,16 @@ def build_dispatch(db: Database, llm: LLM, media: MediaContext | None = None) ->
     }
     if media is not None:
         dispatch["media_process"] = lambda p: process_media(db, media.storage, media.tools, p["asset_id"], preset=media.preset)
+        if media.transcriber is not None:
+            transcriber = media.transcriber
+            dispatch["media_subtitles"] = lambda p: generate_subtitles(db, media.storage, media.tools, transcriber, llm, p["asset_id"])
     return dispatch
 
 
 # Called once a job has used up its retries, so the user-visible record doesn't stay stuck.
 FINAL_FAILURE: dict[str, Callable[[Database, dict, str], None]] = {
     "media_process": lambda db, p, err: db.run("select public.internal_media_failed(%s, %s)", (p["asset_id"], err[:300])),
+    "media_subtitles": lambda db, p, err: db.run("select public.internal_media_subtitles(%s, null, true)", (p["asset_id"],)),
 }
 
 
@@ -184,13 +190,23 @@ class Worker:
         self.pool.shutdown(wait=True)
 
 
+def load_transcriber(model_size: str) -> Transcriber | None:
+    try:
+        from .media.subtitles import WhisperTranscriber
+        return WhisperTranscriber(model_size)
+    except ImportError:
+        log.warning("faster-whisper not installed: subtitle jobs stay queued (pip install '.[subtitles]')")
+        return None
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     settings = Settings()
     db = Database(settings.database_url, max_size=settings.concurrency + 2)
     media = None
     if settings.queues in ("all", "media") and settings.supabase_url and settings.supabase_service_key:
-        media = MediaContext(SupabaseStorage(settings.supabase_url, settings.supabase_service_key), FFmpegTools(), settings.media_preset)
+        media = MediaContext(SupabaseStorage(settings.supabase_url, settings.supabase_service_key), FFmpegTools(), settings.media_preset,
+                             load_transcriber(settings.subtitles_model))
     elif settings.queues == "media":
         raise SystemExit("WORKER_QUEUES=media needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY")
     worker = Worker(settings, db, ClaudeLLM(settings.model_for), media)

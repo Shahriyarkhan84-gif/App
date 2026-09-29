@@ -1,11 +1,11 @@
-import { useEvent } from 'expo';
+import { useEvent, useEventListener } from 'expo';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useVideoPlayer, VideoView } from 'expo-video';
-import { useEffect } from 'react';
+import { useVideoPlayer, VideoView, type SubtitleTrack, type VideoPlayer } from 'expo-video';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, ScrollView, Share, View } from 'react-native';
 
 import { resolveState, StateView, type ViewState } from '@/components/StateView';
-import { Avatar, Button, compactNumber, Row, Screen, Text } from '@/components/ui';
+import { Avatar, Button, Chip, compactNumber, Row, Screen, Text } from '@/components/ui';
 import { rpc } from '@/lib/api';
 import { env } from '@/lib/env';
 import { friendlyError } from '@/lib/errors';
@@ -15,6 +15,11 @@ import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 import { displayName } from '@/lib/types';
+
+// The player is a native object configured imperatively (expo-video's API).
+function selectSubtitleTrack(player: VideoPlayer, track: SubtitleTrack | null) {
+  player.subtitleTrack = track;
+}
 
 /**
  * Plays a video's HLS master playlist. The player picks the variant: HDR
@@ -44,6 +49,25 @@ export default function VideoScreen() {
     p.play();
   });
   const { status } = useEvent(player, 'statusChange', { status: player.status });
+
+  // AI subtitles arrive as HLS subtitle tracks; default to the viewer's language.
+  const [tracks, setTracks] = useState(player.availableSubtitleTracks);
+  const [caption, setCaption] = useState<string | null>(null);
+  const autoPicked = useRef(false);
+  useEventListener(player, 'availableSubtitleTracksChange', ({ availableSubtitleTracks }) => {
+    setTracks(availableSubtitleTracks);
+    if (autoPicked.current || !profile?.language) return;
+    const mine = availableSubtitleTracks.find((t) => t.language.split('-')[0] === profile.language.split('-')[0]);
+    if (mine) {
+      autoPicked.current = true;
+      selectSubtitleTrack(player, mine);
+      setCaption(mine.language);
+    }
+  });
+  const chooseCaption = (language: string | null) => {
+    selectSubtitleTrack(player, tracks.find((t) => t.language === language) ?? null);
+    setCaption(language);
+  };
 
   useEffect(() => {
     if (src && profile) void rpc(supabase, 'record_media_view', { p_asset_id: id }).catch(() => undefined);
@@ -102,6 +126,17 @@ export default function VideoScreen() {
                 <Avatar uri={data.owner.avatar_url} name={displayName(data.owner)} size={36} />
                 <Text style={{ flex: 1 }} onPress={() => router.push(`/user/${data.owner!.id}`)}>{displayName(data.owner)}</Text>
               </Row>
+            )}
+            {tracks.length > 0 && (
+              <View style={{ gap: 6 }}>
+                <Text variant="caption" muted>Captions</Text>
+                <Row gap={8} style={{ flexWrap: 'wrap' }}>
+                  <Chip label="Off" selected={caption === null} onPress={() => chooseCaption(null)} />
+                  {tracks.map((t) => (
+                    <Chip key={t.id ?? t.language} label={t.label || t.language} selected={caption === t.language} onPress={() => chooseCaption(t.language)} />
+                  ))}
+                </Row>
+              </View>
             )}
             <Row gap={8}>
               <Button title="Share" variant="secondary" size="sm" onPress={() => void Share.share({ message: `${asset?.title} ${env.siteUrl ? `${env.siteUrl}/videos/${id}` : ''}`.trim() })} />

@@ -248,3 +248,80 @@ def test_real_hdr10_encode(db, media_world):
     master = (base / "master.m3u8").read_text()
     assert "VIDEO-RANGE=PQ" in master and master.index("VIDEO-RANGE=SDR") < master.index("VIDEO-RANGE=PQ")
     assert db.one("select status from public.media_assets where id = %s", (media_world["asset"],))["status"] == "ready"
+
+
+# Subtitles ----------------------------------------------------------------------------------
+
+from zynalive_agents.media.subtitles import Cue, CueTranslations, Transcript, generate_subtitles, to_webvtt  # noqa: E402
+
+
+class FakeTranscriber:
+    def __init__(self, transcript: Transcript):
+        self.transcript = transcript
+
+    def transcribe(self, audio):
+        return self.transcript
+
+
+URDU = Transcript("ur", [Cue(0.0, 1.5, "Assalam o alaikum dosto"), Cue(1.5, 3.25, "Aaj hum chai banayenge")])
+
+
+def test_webvtt_format():
+    vtt = to_webvtt([Cue(0.0, 1.5, "Hello --> world"), Cue(3661.25, 3662.0, "Later")])
+    assert vtt.startswith("WEBVTT\nX-TIMESTAMP-MAP=MPEGTS:0,LOCAL:00:00:00.000\n")
+    assert "00:00:00.000 --> 00:00:01.500\nHello → world" in vtt
+    assert "01:01:01.250 --> 01:01:02.000\nLater" in vtt
+
+
+@pytest.fixture()
+def ready_video(db, media_world):
+    process_media(db, media_world["storage"], FakeTools(probe_of(HDR10_STREAM)), media_world["asset"])
+    assert db.one("select subtitle_status from public.media_assets where id = %s", (media_world["asset"],))["subtitle_status"] == "pending"
+    return media_world
+
+
+def test_subtitles_transcribe_translate_and_extend_master(db, llm, ready_video):
+    def respond(prompt):
+        target = prompt.split("Target language (BCP-47): ")[1].split("\n")[0]
+        return CueTranslations(texts=[f"[{target}] line 1", f"[{target}] line 2"])
+
+    llm.on(CueTranslations, respond)
+    tools = FakeTools(probe_of(HDR10_STREAM))
+    out = generate_subtitles(db, ready_video["storage"], tools, FakeTranscriber(URDU), llm, ready_video["asset"])
+    assert out == {"spoken": "ur", "tracks": ["ur", "en", "hi", "bn"]}
+    # Urdu is transcribed, not translated; three translations; speech passed as untrusted data.
+    assert len(llm.calls) == 3 and all("<untrusted>" in p for _, _, p in llm.calls)
+
+    base = ready_video["root"] / "media" / ready_video["asset"]
+    assert "Assalam o alaikum dosto" in (base / "subs/ur.vtt").read_text()
+    assert "[en] line 2" in (base / "subs/en.vtt").read_text()
+    assert "#EXTINF:12.500," in (base / "subs/en.m3u8").read_text()
+    master = (base / "master.m3u8").read_text()
+    assert master.count("#EXT-X-MEDIA:TYPE=SUBTITLES") == 4
+    assert 'LANGUAGE="ur",NAME="اردو",DEFAULT=YES' in master and "VIDEO-RANGE=PQ" in master
+
+    row = db.one("select subtitle_status from public.media_assets where id = %s", (ready_video["asset"],))
+    assert row["subtitle_status"] == "done"
+    tracks = db.all("select language, is_source from public.media_subtitles where asset_id = %s order by language", (ready_video["asset"],))
+    assert [(t["language"], t["is_source"]) for t in tracks] == [("bn", False), ("en", False), ("hi", False), ("ur", True)]
+    # Viewers can read the tracks of a public video.
+    assert as_user(db, "mhost", "select count(*) as n from public.media_subtitles")[0]["n"] == 4
+
+
+def test_subtitles_reject_mismatched_translation_and_handle_silence(db, llm, ready_video):
+    llm.on(CueTranslations, CueTranslations(texts=["only one"]))
+    with pytest.raises(RuntimeError):
+        generate_subtitles(db, ready_video["storage"], FakeTools({}), FakeTranscriber(URDU), llm, ready_video["asset"])
+    assert db.one("select subtitle_status from public.media_assets where id = %s", (ready_video["asset"],))["subtitle_status"] == "pending"
+
+    out = generate_subtitles(db, ready_video["storage"], FakeTools({}), FakeTranscriber(Transcript("en", [])), llm, ready_video["asset"])
+    assert out == {"tracks": []}
+    assert db.one("select subtitle_status from public.media_assets where id = %s", (ready_video["asset"],))["subtitle_status"] == "no_speech"
+
+
+def test_media_worker_without_speech_engine_leaves_subtitles_queued(db, llm, ready_video, monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "unused")
+    without = Worker(Settings(queues="media"), db, llm, MediaContext(ready_video["storage"], FakeTools({})))
+    assert "media_subtitles" not in without.kinds
+    with_stt = Worker(Settings(queues="media"), db, llm, MediaContext(ready_video["storage"], FakeTools({}), transcriber=FakeTranscriber(URDU)))
+    assert with_stt.kinds == ["media_process", "media_subtitles"]

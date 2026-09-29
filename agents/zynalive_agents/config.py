@@ -26,6 +26,8 @@ class Settings:
     supabase_url: str | None = field(default_factory=lambda: os.environ.get("SUPABASE_URL"))
     supabase_service_key: str | None = field(default_factory=lambda: os.environ.get("SUPABASE_SERVICE_ROLE_KEY"))
     media_preset: str = field(default_factory=lambda: os.environ.get("MEDIA_PRESET", "medium"))
+    # Whisper model size for subtitles (tiny/base/small/medium/large-v3).
+    subtitles_model: str = field(default_factory=lambda: os.environ.get("SUBTITLES_MODEL", "small"))
 
     def model_for(self, branch: str) -> str:
         return os.environ.get(f"AI_MODEL_{branch.upper()}", self.model)
