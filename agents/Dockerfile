@@ -8,5 +8,7 @@ COPY zynalive_agents ./zynalive_agents
 RUN pip install .
 RUN useradd --create-home agent
 USER agent
+ENV WORKER_QUEUES=ai
 # Required: DATABASE_URL, ANTHROPIC_API_KEY. Optional: AI_MODEL, AI_MODEL_<BRANCH>, AI_CONCURRENCY, AI_*_EVERY_MIN.
+# Media jobs run in a separate deployment: see Dockerfile.media.
 CMD ["python", "-m", "zynalive_agents"]

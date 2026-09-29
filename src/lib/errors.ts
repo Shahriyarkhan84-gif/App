@@ -54,6 +54,16 @@ const MESSAGES: Record<string, string> = {
   already_in_battle: "You're already in a battle.",
   target_already_in_battle: 'That host is already in a battle.',
   not_invitable: "This invite isn't pending anymore.",
+  uploads_disabled: 'Video uploads are temporarily unavailable.',
+  invalid_format: 'Use an MP4, MOV, M4V, WebM or MKV video.',
+  title_required: 'Add a title.',
+  invalid_visibility: 'Choose Public or Unlisted.',
+  too_many_pending: 'Wait for your other uploads to finish processing first.',
+  already_submitted: 'This video is already uploaded.',
+  upload_missing: 'The upload did not finish. Try again.',
+  not_found: 'That could not be found.',
+  too_long: 'That video is longer than the limit.',
+  file_too_large: 'That video is larger than the limit.',
 };
 
 export function errorCode(e: unknown): string {

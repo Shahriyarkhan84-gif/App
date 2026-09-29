@@ -189,7 +189,7 @@ reset role;
 -- 5. A duplicated gift request cannot double-charge
 ---------------------------------------------------------------------------------------
 -- A cover picture is required to go live; hosts set it only from their own storage folder.
-update public.platform_settings set value = '{"covers_base": "https://cdn.test/covers"}' where key = 'media';
+update public.platform_settings set value = value || '{"covers_base": "https://cdn.test/covers"}' where key = 'media';
 select set_config('request.jwt.claims', '{"sub":"bob"}', false);
 set role authenticated;
 select tests.fails($$select public.go_live('Bob live', 'music')$$, '%cover_required%', 'go live without a cover');

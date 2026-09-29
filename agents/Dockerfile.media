@@ -1,0 +1,15 @@
+# Media worker: the same package as the AI worker, consuming only the media
+# queue (upload / live-recording transcodes, HDR ladders, subtitles). Needs
+# ffmpeg built with libx264, libx265 and zimg (zscale) — Debian's ffmpeg has all three.
+FROM python:3.12-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 WORKER_QUEUES=media AI_CONCURRENCY=1
+COPY pyproject.toml ./
+COPY zynalive_agents ./zynalive_agents
+RUN pip install ".[subtitles]"
+RUN useradd --create-home agent
+USER agent
+# Required: DATABASE_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY (subtitle translation).
+# Optional: MEDIA_PRESET (x264/x265 preset, default medium), SUBTITLES_MODEL (Whisper size, default small).
+CMD ["python", "-m", "zynalive_agents"]

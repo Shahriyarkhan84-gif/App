@@ -112,6 +112,9 @@ function RootNavigator() {
         <Stack.Screen name="agency" options={{ title: 'Agency portal' }} />
         <Stack.Screen name="contributions/[id]" options={{ title: 'Contributions' }} />
         <Stack.Screen name="admin/index" options={{ title: 'Owner command center' }} />
+        <Stack.Screen name="videos/index" options={{ title: 'Videos' }} />
+        <Stack.Screen name="videos/upload" options={{ title: 'My videos' }} />
+        <Stack.Screen name="videos/[id]" options={{ title: 'Video' }} />
       </Stack.Protected>
       <Stack.Protected guard={!isSignedIn}>
         <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />

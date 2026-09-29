@@ -12,6 +12,10 @@ from psycopg.types.json import Jsonb
 from psycopg_pool import ConnectionPool
 
 
+# Job kinds run by the media worker (ffmpeg / speech-to-text), not the AI worker.
+MEDIA_KINDS = ("media_process", "media_subtitles")
+
+
 class Database:
     def __init__(self, url: str, max_size: int = 8):
         self.pool = ConnectionPool(url, min_size=1, max_size=max_size, kwargs={"row_factory": dict_row, "autocommit": True}, open=True)
@@ -44,18 +48,20 @@ class Database:
             (kind, Jsonb(payload), dedupe_key),
         )
 
-    def claim_job(self) -> dict | None:
-        """Atomically claims the oldest ready job (SKIP LOCKED lets many workers share the queue)."""
+    def claim_job(self, kinds: list[str] | None = None) -> dict | None:
+        """Atomically claims the oldest ready job (SKIP LOCKED lets many workers share the queue).
+        `kinds` limits it to the job kinds this replica handles."""
         return self.one(
             """
             update public.ai_jobs set status = 'running', locked_at = now(), attempts = attempts + 1, updated_at = now()
             where id = (
               select id from public.ai_jobs
-              where status = 'queued' and run_after <= now()
+              where status = 'queued' and run_after <= now() and (%(kinds)s::text[] is null or kind = any(%(kinds)s::text[]))
               order by id for update skip locked limit 1
             )
             returning *
-            """
+            """,
+            {"kinds": kinds},
         )
 
     def complete_job(self, job_id: int, result: dict | None) -> None:
@@ -64,9 +70,11 @@ class Database:
             (Jsonb(result or {}), job_id),
         )
 
-    def fail_job(self, job_id: int, error: str, attempts: int, max_attempts: int) -> None:
+    def fail_job(self, job_id: int, error: str, attempts: int, max_attempts: int) -> bool:
+        """Returns True when the job is out of attempts and now permanently failed."""
         if attempts >= max_attempts:
             self.run("update public.ai_jobs set status = 'failed', error = %s, updated_at = now() where id = %s", (error[:2000], job_id))
+            return True
         else:
             # Exponential backoff: 1, 2, 4, 8... minutes.
             self.run(
@@ -74,13 +82,18 @@ class Database:
                    run_after = now() + make_interval(mins => %s) where id = %s""",
                 (error[:2000], 2 ** (attempts - 1), job_id),
             )
+            return False
 
-    def requeue_stale(self, older_than_min: int = 15) -> int:
-        """Jobs left 'running' by a crashed worker go back to the queue."""
+    def requeue_stale(self, older_than_min: int = 15, long_kinds: tuple[str, ...] = MEDIA_KINDS,
+                      long_older_than_min: int = 6 * 60 + 30) -> int:
+        """Jobs left 'running' by a crashed worker go back to the queue. Long jobs
+        (media encodes, up to the 6 h encoder timeout) get a longer grace period."""
         rows = self.all(
             """update public.ai_jobs set status = 'queued', updated_at = now()
-               where status = 'running' and locked_at < now() - make_interval(mins => %s) returning id""",
-            (older_than_min,),
+               where status = 'running'
+                 and locked_at < now() - make_interval(mins => case when kind = any(%s::text[]) then %s else %s end)
+               returning id""",
+            (list(long_kinds), long_older_than_min, older_than_min),
         )
         return len(rows)
 

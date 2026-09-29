@@ -18,6 +18,14 @@ class Settings:
     fraud_every_min: int = field(default_factory=lambda: _int("AI_FRAUD_EVERY_MIN", 30))
     recs_every_min: int = field(default_factory=lambda: _int("AI_RECS_EVERY_MIN", 15))
     max_attempts: int = field(default_factory=lambda: _int("AI_MAX_ATTEMPTS", 5))
+    # Which job queues this replica consumes: "all", "ai" or "media". Run media
+    # (ffmpeg encoding) in its own deployment (Dockerfile.media) so long encodes
+    # never starve moderation.
+    queues: str = field(default_factory=lambda: os.environ.get("WORKER_QUEUES", "all"))
+    # Media worker: Supabase Storage access (service role) + encoder preset.
+    supabase_url: str | None = field(default_factory=lambda: os.environ.get("SUPABASE_URL"))
+    supabase_service_key: str | None = field(default_factory=lambda: os.environ.get("SUPABASE_SERVICE_ROLE_KEY"))
+    media_preset: str = field(default_factory=lambda: os.environ.get("MEDIA_PRESET", "medium"))
 
     def model_for(self, branch: str) -> str:
         return os.environ.get(f"AI_MODEL_{branch.upper()}", self.model)
