@@ -1,4 +1,6 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Headers, Post, UseGuards } from '@nestjs/common';
+
+import { signupCountryFrom } from '../regions/regions.service';
 
 import { AuthService } from './auth.service';
 import { CurrentUser } from './current-user.decorator';
@@ -15,9 +17,11 @@ import type { JwtPayload } from './jwt.strategy';
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
+  // New accounts record the country they signed up from (edge geo header, else
+  // the device region); it decides their pricing region and never changes.
   @Post('register')
-  register(@Body() dto: RegisterDto) {
-    return this.auth.register(dto);
+  register(@Body() dto: RegisterDto, @Headers() headers: Record<string, string>) {
+    return this.auth.register(dto, signupCountryFrom(headers, dto.region));
   }
 
   @Post('login')
@@ -42,18 +46,18 @@ export class AuthController {
   }
 
   @Post('otp/verify')
-  verifyOtp(@Body() dto: VerifyOtpDto) {
-    return this.auth.verifyOtp(dto.phone, dto.code);
+  verifyOtp(@Body() dto: VerifyOtpDto, @Headers() headers: Record<string, string>) {
+    return this.auth.verifyOtp(dto.phone, dto.code, signupCountryFrom(headers, dto.region));
   }
 
   @Post('google')
-  google(@Body() dto: GoogleLoginDto) {
-    return this.auth.googleLogin(dto.idToken);
+  google(@Body() dto: GoogleLoginDto, @Headers() headers: Record<string, string>) {
+    return this.auth.googleLogin(dto.idToken, signupCountryFrom(headers, dto.region));
   }
 
   @Post('apple')
-  apple(@Body() dto: AppleLoginDto) {
-    return this.auth.appleLogin(dto.identityToken, dto.displayName);
+  apple(@Body() dto: AppleLoginDto, @Headers() headers: Record<string, string>) {
+    return this.auth.appleLogin(dto.identityToken, dto.displayName, signupCountryFrom(headers, dto.region));
   }
 
   @UseGuards(JwtAuthGuard)

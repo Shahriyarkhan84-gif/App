@@ -3,6 +3,7 @@ import type { Prisma } from '@zynalive/database';
 
 import { PLATFORM_ADMIN_ROLES } from '../auth/roles.decorator';
 import { PrismaService } from '../prisma/prisma.service';
+import { RegionsService } from '../regions/regions.service';
 import { WalletsService } from '../wallets/wallets.service';
 
 /**
@@ -19,15 +20,24 @@ export class PaymentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly wallets: WalletsService,
+    private readonly regions: RegionsService,
   ) {}
 
   listPackages() {
     return this.prisma.coinPackage.findMany({ where: { active: true }, orderBy: { sort: 'asc' } });
   }
 
+  /** The signed-in buyer's own region's packages (what the wallet shows). */
+  async listPackagesFor(userId: string) {
+    const regionCode = await this.regions.userRegion(userId);
+    return this.prisma.coinPackage.findMany({ where: { active: true, regionCode }, orderBy: { sort: 'asc' } });
+  }
+
   async createPayment(userId: string, packageId: number) {
     const pkg = await this.prisma.coinPackage.findFirst({ where: { id: packageId, active: true } });
     if (!pkg) throw new BadRequestException('invalid_package');
+    // Regional pricing: never sell another market's (cheaper) package.
+    if (pkg.regionCode !== (await this.regions.userRegion(userId))) throw new BadRequestException('invalid_package');
 
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
     if (user.status === 'banned') throw new ForbiddenException('account_restricted');

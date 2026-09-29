@@ -12,7 +12,9 @@ export type AiJobKind =
   | 'creator_assist'
   | 'translate_message'
   | 'recommendations'
-  | 'ceo_briefing';
+  | 'ceo_briefing'
+  | 'media_process'
+  | 'media_subtitles';
 
 /**
  * Mirrors private.enqueue_ai_job(): a Postgres-backed job queue consumed by

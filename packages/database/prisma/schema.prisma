@@ -74,6 +74,9 @@ model User {
   avatarUrl        String?       @map("avatar_url")
   bio              String?
   country          String?
+  // Country the account was created from (edge geo header, else device
+  // region). Set once, never client-editable; decides the pricing region.
+  signupCountry    String?       @map("signup_country")
   language         String        @default("en")
   email            String?       @unique
   phone            String?       @unique
@@ -106,6 +109,9 @@ model User {
   payments          Payment[]
   refundRequests    RefundRequest[]
   viewerSessions    Viewer[]
+  mediaViews        MediaView[]
+  eventScores       EventScore[]
+  eventResults      EventResult[]
 
   @@map("users")
 }
@@ -171,6 +177,7 @@ model Host {
   creatorEarning CreatorEarning?
   earningEntries EarningEntry[]
   withdrawals    Withdrawal[]
+  mediaAssets    MediaAsset[]
 
   @@index([agencyId])
   @@map("hosts")
@@ -273,6 +280,7 @@ model Stream {
   viewers       Viewer[]
   messages      Message[]
   gifts         Gift[]
+  recordings    MediaAsset[]
 
   @@index([hostId, startedAt(sort: Desc)])
   @@map("streams")
@@ -441,6 +449,8 @@ model GiftCatalogItem {
   coinPrice Int     @map("coin_price")
   active    Boolean @default(true)
   sort      Int     @default(0)
+  // Presentation only (price still comes from here in sendGift); null = everywhere.
+  regions   String[]
 
   gifts Gift[]
 
@@ -519,7 +529,10 @@ model CoinPackage {
   currency   String  @default("pkr")
   active     Boolean @default(true)
   sort       Int     @default(0)
+  // Buyers only get their own region's packages (createPayment enforces it).
+  regionCode String  @default("PK") @map("region")
 
+  region   Region    @relation(fields: [regionCode], references: [code])
   payments Payment[]
 
   @@map("coin_packages")
@@ -638,7 +651,7 @@ model Report {
 
 model AiJob {
   id        BigInt    @id @default(autoincrement())
-  kind      String // moderate_message | moderate_report | fraud_review | fraud_sweep | support_ticket | creator_assist | translate_message | recommendations | ceo_briefing
+  kind      String // moderate_message | moderate_report | fraud_review | fraud_sweep | support_ticket | creator_assist | translate_message | recommendations | ceo_briefing | media_process | media_subtitles
   payload   Json      @default("{}")
   status    String    @default("queued") // queued | running | done | failed
   attempts  Int       @default(0)
@@ -729,4 +742,215 @@ model WordFilter {
   action String @default("mask") // mask | block
 
   @@map("word_filters")
+}
+
+// ---- Regional variants ----------------------------------------------------
+// Translated from supabase/migrations/20260925030000_regions_events.sql.
+
+model Region {
+  code            String   @id
+  name            String
+  countries       String[]
+  currency        String
+  defaultLanguage String   @map("default_language")
+  languages       String[]
+  timezone        String
+  features        Json     @default("{}")
+  active          Boolean  @default(false)
+  sort            Int      @default(0)
+
+  coinPackages CoinPackage[]
+  events       Event[]
+
+  @@map("regions")
+}
+
+// ---- Media: upload / live-recording → HDR pipeline -------------------------
+// Translated from supabase/migrations/20260925010000_media_pipeline.sql and
+// 20260925020000_media_subtitles.sql. Sources live in the private uploads
+// bucket under <owner id>/; the media worker writes HLS outputs under <asset id>/.
+
+enum MediaStatus {
+  awaiting_upload
+  queued
+  processing
+  ready
+  failed
+  removed
+}
+
+enum DynamicRange {
+  sdr
+  hdr10
+  hlg
+}
+
+model MediaAsset {
+  id             String        @id @default(cuid())
+  ownerId        String        @map("owner_id")
+  sourceKind     String        @default("upload") @map("source_kind") // upload | live_recording
+  streamId       String?       @map("stream_id")
+  recordingRef   String?       @unique @map("egress_id") // LiveKit egress id / IVS recording session id
+  title          String
+  description    String?
+  visibility     String        @default("public") // public | unlisted
+  sourcePath     String        @unique @map("source_path")
+  status         MediaStatus   @default(awaiting_upload)
+  durationMs     BigInt?       @map("duration_ms")
+  width          Int?
+  height         Int?
+  fps            Decimal?      @db.Decimal(6, 3)
+  videoCodec     String?       @map("video_codec")
+  bitDepth       Int?          @map("bit_depth")
+  colorPrimaries String?       @map("color_primaries")
+  colorTransfer  String?       @map("color_transfer")
+  colorSpace     String?       @map("color_space")
+  dynamicRange   DynamicRange? @map("dynamic_range")
+  hdrMetadata    Json?         @map("hdr_metadata")
+  hasAudio       Boolean?      @map("has_audio")
+  playbackPath   String?       @map("playback_path")
+  thumbnailPath  String?       @map("thumbnail_path")
+  subtitleStatus String?       @map("subtitle_status") // pending | done | no_speech | failed
+  error          String?
+  viewCount      BigInt        @default(0) @map("view_count")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  publishedAt    DateTime?     @map("published_at")
+
+  owner      Host             @relation(fields: [ownerId], references: [userId], onDelete: Cascade)
+  stream     Stream?          @relation(fields: [streamId], references: [id], onDelete: SetNull)
+  renditions MediaRendition[]
+  views      MediaView[]
+  subtitles  MediaSubtitle[]
+
+  @@index([ownerId, createdAt(sort: Desc)])
+  @@index([status, visibility, publishedAt(sort: Desc)])
+  @@map("media_assets")
+}
+
+model MediaRendition {
+  assetId      String       @map("asset_id")
+  label        String // 2160p_hdr, 1080p_hdr, 1080p, 720p, ...
+  width        Int
+  height       Int
+  bitrateKbps  Int          @map("bitrate_kbps")
+  codecs       String
+  dynamicRange DynamicRange @map("dynamic_range")
+  playlistPath String       @map("playlist_path")
+
+  asset MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@id([assetId, label])
+  @@map("media_renditions")
+}
+
+model MediaView {
+  assetId   String   @map("asset_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  asset MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([assetId, userId])
+  @@map("media_views")
+}
+
+model MediaSubtitle {
+  assetId      String   @map("asset_id")
+  language     String
+  name         String
+  isSource     Boolean  @default(false) @map("is_source")
+  vttPath      String   @map("vtt_path")
+  playlistPath String   @map("playlist_path")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  asset MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@id([assetId, language])
+  @@map("media_subtitles")
+}
+
+// ---- Engagement events ------------------------------------------------------
+
+enum EventKind {
+  gifting
+  pk_battle
+}
+
+enum EventStatus {
+  draft
+  scheduled
+  cancelled
+  finalized
+}
+
+model Event {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  kind        EventKind
+  regionCode  String?     @map("region") // null = global
+  startsAt    DateTime    @map("starts_at")
+  endsAt      DateTime    @map("ends_at")
+  giftIds     Int[]       @map("gift_ids") // empty = all gifts
+  rewards     Json        @default("[]") // [{ role, rank_from, rank_to, reward }]
+  status      EventStatus @default(draft)
+  createdBy   String?     @map("created_by")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  finalizedAt DateTime?   @map("finalized_at")
+
+  region  Region?       @relation(fields: [regionCode], references: [code])
+  scores  EventScore[]
+  results EventResult[]
+
+  @@index([status, startsAt, endsAt])
+  @@map("events")
+}
+
+model EventScore {
+  eventId   String   @map("event_id")
+  userId    String   @map("user_id")
+  role      String // host | gifter
+  score     BigInt   @default(0)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, role, userId])
+  @@index([eventId, role, score(sort: Desc)])
+  @@map("event_scores")
+}
+
+model EventResult {
+  eventId String  @map("event_id")
+  role    String
+  rank    Int
+  userId  String  @map("user_id")
+  score   BigInt
+  reward  String?
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, role, rank])
+  @@map("event_results")
+}
+
+// Mirrors public.audit_logs / private.audit() in core.sql. Used by the
+// admin actions ported so far (events, media takedowns).
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  actorId    String?  @map("actor_id")
+  actorKind  String   @default("user") @map("actor_kind") // user | ai | system
+  action     String
+  targetType String?  @map("target_type")
+  targetId   String?  @map("target_id")
+  details    Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_logs")
 }
