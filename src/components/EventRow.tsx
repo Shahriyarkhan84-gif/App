@@ -6,12 +6,15 @@ import { PressScale } from '@/components/Motion';
 import { Row, Text } from '@/components/ui';
 import { eventPhase, fetchEvents, fetchMyRegion, timeLeft, type AppEvent, type EventPhase } from '@/lib/events';
 import { useFocusedAsync } from '@/lib/hooks';
+import { useI18n } from '@/lib/i18n';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 
 export function EventRow({ event, phase }: { event: AppEvent; phase: EventPhase }) {
   const { c, radius } = useTheme();
-  const when = phase === 'live' ? `Ends in ${timeLeft(event.ends_at)}` : phase === 'upcoming' ? `Starts in ${timeLeft(event.starts_at)}` : 'Ended';
+  const { t } = useI18n();
+  const when = phase === 'live' ? t('events.endsIn', { time: timeLeft(event.ends_at) })
+    : phase === 'upcoming' ? t('events.startsIn', { time: timeLeft(event.starts_at) }) : t('events.ended');
   return (
     <PressScale onPress={() => router.push(`/events/${event.id}`)} accessibilityRole="button" accessibilityLabel={event.title} scaleTo={0.98}>
       <Row style={{ padding: 16, borderRadius: radius[16] + 2, backgroundColor: phase === 'live' ? c.goldSurface : c.surface, borderWidth: 1, borderColor: phase === 'live' ? c.goldBorder : c.divider }}>
@@ -20,7 +23,7 @@ export function EventRow({ event, phase }: { event: AppEvent; phase: EventPhase 
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <Text variant="h3" numberOfLines={1}>{event.title}</Text>
-          <Text variant="bodySmall" muted>{event.kind === 'pk_battle' ? 'PK battle league' : 'Gifting race'} · {when}</Text>
+          <Text variant="bodySmall" muted>{t(`events.kind.${event.kind}`)} · {when}</Text>
         </View>
         <Ionicons name="chevron-forward" size={20} color={c.textFaint} />
       </Row>

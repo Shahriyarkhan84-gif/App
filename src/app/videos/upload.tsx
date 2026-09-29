@@ -1,5 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 
@@ -10,6 +10,7 @@ import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
+import { useI18n } from '@/lib/i18n';
 import { fetchMediaBase, MEDIA_SELECT, videoExtension, videoMime, type MediaAsset } from '@/lib/media';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
@@ -28,6 +29,7 @@ export default function UploadScreen() {
   const track = useAnalytics();
   const { c, hPadding } = useTheme();
   const { profile, isHost } = useProfile();
+  const { t } = useI18n();
   const [picked, setPicked] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -99,33 +101,34 @@ export default function UploadScreen() {
 
   return (
     <Screen edges={[]}>
+      <Stack.Screen options={{ title: t('videos.mine') }} />
       <StateView state={state}>
         <ScrollView contentContainerStyle={{ padding: hPadding, gap: 16 }}>
           <Card>
-            <Text variant="h3">Upload a video</Text>
+            <Text variant="h3">{t('videos.upload')}</Text>
             <Text muted variant="caption">
-              HDR10 and HLG videos keep their HDR, up to 4K. Everyone else gets a standard version automatically. Up to {maxMb} MB, {maxMin} min.
+              {t('videos.upload.hint', { mb: maxMb, min: maxMin })}
             </Text>
-            <Button title={picked ? 'Choose a different video' : 'Choose video'} variant="secondary" onPress={pick} disabled={uploading} />
+            <Button title={picked ? t('videos.chooseAnother') : t('videos.choose')} variant="secondary" onPress={pick} disabled={uploading} />
             {picked && (
               <View style={{ gap: 12 }}>
                 <Text variant="caption" muted numberOfLines={1}>{picked.fileName ?? 'Selected video'}</Text>
-                <Input label="Title" value={title} onChangeText={setTitle} maxLength={100} />
-                <Input label="Description (optional)" value={description} onChangeText={setDescription} maxLength={500} multiline />
+                <Input label={t('videos.field.title')} value={title} onChangeText={setTitle} maxLength={100} />
+                <Input label={t('videos.field.description')} value={description} onChangeText={setDescription} maxLength={500} multiline />
                 <Row gap={8}>
-                  <Chip label="Public" selected={visibility === 'public'} onPress={() => setVisibility('public')} />
-                  <Chip label="Unlisted" selected={visibility === 'unlisted'} onPress={() => setVisibility('unlisted')} />
+                  <Chip label={t('videos.public')} selected={visibility === 'public'} onPress={() => setVisibility('public')} />
+                  <Chip label={t('videos.unlisted')} selected={visibility === 'unlisted'} onPress={() => setVisibility('unlisted')} />
                 </Row>
                 <Text variant="caption" muted>
-                  {visibility === 'public' ? 'Shown in Videos and on your profile.' : 'Only people with the link can watch.'}
+                  {visibility === 'public' ? t('videos.public.hint') : t('videos.unlisted.hint')}
                 </Text>
-                <Button title="Upload" onPress={upload} loading={uploading} disabled={!title.trim()} />
+                <Button title={t('videos.uploadButton')} onPress={upload} loading={uploading} disabled={!title.trim()} />
               </View>
             )}
           </Card>
 
-          <Text variant="h3">My videos</Text>
-          {data?.mine.length === 0 && <Text muted>Nothing yet — your uploads and live replays appear here.</Text>}
+          <Text variant="h3">{t('videos.mine')}</Text>
+          {data?.mine.length === 0 && <Text muted>{t('videos.none')}</Text>}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
             {data?.mine.map((v) => (
               <View key={v.id} style={{ width: '47%' }}>

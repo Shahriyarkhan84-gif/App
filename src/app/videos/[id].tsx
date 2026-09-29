@@ -10,6 +10,7 @@ import { rpc } from '@/lib/api';
 import { env } from '@/lib/env';
 import { friendlyError } from '@/lib/errors';
 import { useAsync, useOffline } from '@/lib/hooks';
+import { useI18n } from '@/lib/i18n';
 import { fetchMediaBase, mediaUrl, qualityBadge, type MediaAsset, type Rendition } from '@/lib/media';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
@@ -32,6 +33,7 @@ export default function VideoScreen() {
   const offline = useOffline();
   const { c, hPadding } = useTheme();
   const { profile, isPlatformAdmin } = useProfile();
+  const { t } = useI18n();
 
   const { data, error, loading, reload } = useAsync(async () => {
     const [base, asset, renditions] = await Promise.all([
@@ -75,8 +77,8 @@ export default function VideoScreen() {
 
   const asset = data?.asset;
   let state: ViewState = resolveState({ offline, loading, error, data, onRetry: reload });
-  if (state.kind === 'success' && (!asset || asset.status === 'removed')) state = { kind: 'empty', title: 'Video unavailable', body: 'It may have been removed.' };
-  else if (state.kind === 'success' && asset && asset.status !== 'ready') state = { kind: 'disabled', title: 'Still processing', body: 'We’ll notify you when it’s ready to watch.' };
+  if (state.kind === 'success' && (!asset || asset.status === 'removed')) state = { kind: 'empty', title: t('videos.unavailable') };
+  else if (state.kind === 'success' && asset && asset.status !== 'ready') state = { kind: 'disabled', title: t('videos.processing'), body: t('videos.processing.body') };
   else if (state.kind === 'success' && !data?.base) state = { kind: 'disabled', title: 'Playback not configured', body: 'Video playback is not set up yet.' };
 
   const canRemove = !!asset && (asset.owner_id === profile?.id || isPlatformAdmin);
@@ -107,7 +109,7 @@ export default function VideoScreen() {
             <VideoView player={player} style={{ flex: 1 }} contentFit="contain" nativeControls fullscreenOptions={{ enable: true }} allowsPictureInPicture />
           </View>
           {status === 'error' && (
-            <Text color={c.danger} style={{ padding: hPadding }}>This video couldn’t play on this device. Try again later.</Text>
+            <Text color={c.danger} style={{ padding: hPadding }}>{t('videos.cantPlay')}</Text>
           )}
           <View style={{ padding: hPadding, gap: 12 }}>
             <Row gap={8} style={{ alignItems: 'center', flexWrap: 'wrap' }}>
@@ -116,8 +118,8 @@ export default function VideoScreen() {
                   <Text variant="caption" color={c.goldText} style={{ fontWeight: '700' }}>{badge}</Text>
                 </View>
               )}
-              <Text variant="caption" muted>{compactNumber(asset?.view_count ?? 0)} views</Text>
-              {asset?.source_kind === 'live_recording' && <Text variant="caption" muted>· Live replay</Text>}
+              <Text variant="caption" muted>{t('videos.views', { count: compactNumber(asset?.view_count ?? 0) })}</Text>
+              {asset?.source_kind === 'live_recording' && <Text variant="caption" muted>· {t('videos.replay')}</Text>}
             </Row>
             <Text variant="h2">{asset?.title}</Text>
             {!!asset?.description && <Text muted>{asset.description}</Text>}
@@ -129,9 +131,9 @@ export default function VideoScreen() {
             )}
             {tracks.length > 0 && (
               <View style={{ gap: 6 }}>
-                <Text variant="caption" muted>Captions</Text>
+                <Text variant="caption" muted>{t('videos.captions')}</Text>
                 <Row gap={8} style={{ flexWrap: 'wrap' }}>
-                  <Chip label="Off" selected={caption === null} onPress={() => chooseCaption(null)} />
+                  <Chip label={t('videos.captions.off')} selected={caption === null} onPress={() => chooseCaption(null)} />
                   {tracks.map((t) => (
                     <Chip key={t.id ?? t.language} label={t.label || t.language} selected={caption === t.language} onPress={() => chooseCaption(t.language)} />
                   ))}
@@ -139,8 +141,8 @@ export default function VideoScreen() {
               </View>
             )}
             <Row gap={8}>
-              <Button title="Share" variant="secondary" size="sm" onPress={() => void Share.share({ message: `${asset?.title} ${env.siteUrl ? `${env.siteUrl}/videos/${id}` : ''}`.trim() })} />
-              {canRemove && <Button title="Remove" variant="danger" size="sm" onPress={remove} />}
+              <Button title={t('videos.share')} variant="secondary" size="sm" onPress={() => void Share.share({ message: `${asset?.title} ${env.siteUrl ? `${env.siteUrl}/videos/${id}` : ''}`.trim() })} />
+              {canRemove && <Button title={t('videos.remove')} variant="danger" size="sm" onPress={remove} />}
             </Row>
           </View>
         </ScrollView>

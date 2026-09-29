@@ -1,10 +1,11 @@
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { FlatList, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
 import { Button, Row, Screen, Text } from '@/components/ui';
 import { VideoCard } from '@/components/VideoCard';
 import { useFocusedAsync, useOffline } from '@/lib/hooks';
+import { useI18n } from '@/lib/i18n';
 import { fetchMediaBase, MEDIA_SELECT, type MediaAsset } from '@/lib/media';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
@@ -16,6 +17,7 @@ export default function VideosScreen() {
   const offline = useOffline();
   const { hPadding } = useTheme();
   const { isHost } = useProfile();
+  const { t } = useI18n();
 
   const { data, error, loading, reload } = useFocusedAsync(async () => {
     const [base, list] = await Promise.all([
@@ -31,16 +33,17 @@ export default function VideosScreen() {
     offline, loading, error, data, onRetry: reload,
     isEmpty: (d) => d.videos.length === 0,
     empty: isHost
-      ? { title: 'No videos yet', body: 'Be the first to share one.', action: { title: 'Upload a video', onPress: () => router.push('/videos/upload') } }
-      : { title: 'No videos yet', body: 'Hosts’ uploads and live replays show up here.' },
+      ? { title: t('videos.empty'), body: t('videos.empty.host'), action: { title: t('videos.upload'), onPress: () => router.push('/videos/upload') } }
+      : { title: t('videos.empty'), body: t('videos.empty.viewer') },
   });
 
   return (
     <Screen edges={[]}>
+      <Stack.Screen options={{ title: t('videos.title') }} />
       {isHost && (
         <Row style={{ paddingHorizontal: hPadding, paddingVertical: 12, justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text muted>Uploads & live replays</Text>
-          <Button title="My videos" size="sm" variant="secondary" onPress={() => router.push('/videos/upload')} />
+          <Text muted>{t('videos.subtitle')}</Text>
+          <Button title={t('videos.mine')} size="sm" variant="secondary" onPress={() => router.push('/videos/upload')} />
         </Row>
       )}
       <StateView state={state}>

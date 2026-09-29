@@ -9,6 +9,7 @@ import { AgencyOwnerBadge, Avatar, Button, Card, Coin, compactNumber, HostBadge,
 import { useAnalytics } from '@/lib/analytics';
 import { env } from '@/lib/env';
 import { useFocusedAsync, useRealtime } from '@/lib/hooks';
+import { useI18n } from '@/lib/i18n';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
@@ -17,6 +18,7 @@ import { displayName } from '@/lib/types';
 export default function ProfileScreen() {
   const supabase = useSupabase();
   const { c } = useTheme();
+  const { t } = useI18n();
   const track = useAnalytics();
   const { profile, host, isHost, isPlatformAdmin, error, reload } = useProfile();
 
@@ -107,15 +109,15 @@ export default function ProfileScreen() {
         </FadeIn>
 
         <FadeIn delay={240} style={{ borderRadius: 18, backgroundColor: c.surface, overflow: 'hidden' }}>
-          {!verified && <ListRow icon="shield-checkmark-outline" label="Verification for hosting" color={c.gold} onPress={() => router.push('/hosting')} />}
-          <ListRow icon="wallet-outline" label="Wallet & history" onPress={() => router.push('/wallet')} />
-          <ListRow icon="play-circle-outline" label="Videos" onPress={() => router.push('/videos')} />
-          <ListRow icon="trophy-outline" label="Rankings" onPress={() => router.push('/rankings')} />
-          <ListRow icon="calendar-outline" label="Events" onPress={() => router.push('/events')} />
-          <ListRow icon="help-buoy-outline" label="Help & support" onPress={() => router.push('/support')} />
-          <ListRow icon="megaphone-outline" label="Share feedback" onPress={openFeedback} last={!isAgencyStaff && !isPlatformAdmin} />
-          {isAgencyStaff && <ListRow icon="business-outline" label="Agency portal" color={c.gold} onPress={() => router.push('/agency')} last={!isPlatformAdmin} />}
-          {isPlatformAdmin && <ListRow icon="analytics-outline" label="Owner command center" onPress={() => router.push('/admin')} last />}
+          {!verified && <ListRow icon="shield-checkmark-outline" label={t('menu.hostingVerification')} color={c.gold} onPress={() => router.push('/hosting')} />}
+          <ListRow icon="wallet-outline" label={t('menu.wallet')} onPress={() => router.push('/wallet')} />
+          <ListRow icon="play-circle-outline" label={t('menu.videos')} onPress={() => router.push('/videos')} />
+          <ListRow icon="trophy-outline" label={t('menu.rankings')} onPress={() => router.push('/rankings')} />
+          <ListRow icon="calendar-outline" label={t('menu.events')} onPress={() => router.push('/events')} />
+          <ListRow icon="help-buoy-outline" label={t('menu.support')} onPress={() => router.push('/support')} />
+          <ListRow icon="megaphone-outline" label={t('menu.feedback')} onPress={openFeedback} last={!isAgencyStaff && !isPlatformAdmin} />
+          {isAgencyStaff && <ListRow icon="business-outline" label={t('menu.agency')} color={c.gold} onPress={() => router.push('/agency')} last={!isPlatformAdmin} />}
+          {isPlatformAdmin && <ListRow icon="analytics-outline" label={t('menu.admin')} onPress={() => router.push('/admin')} last />}
         </FadeIn>
       </ScrollView>
     </Screen>

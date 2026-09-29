@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { IconName } from '@/components/ui';
 import { Ripple } from '@/components/Motion';
+import { useI18n } from '@/lib/i18n';
 import { fonts, useTheme } from '@/lib/theme';
 
 /**
@@ -41,6 +42,7 @@ function pillTabButton(icon: IconName, activeIcon: IconName, label: string) {
 // User app navigation (Zynalive canvas): Home · Party · Go live · Messages · Me
 export default function TabsLayout() {
   const { c } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   return (
     <Tabs
@@ -57,13 +59,13 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: c.background },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Home', tabBarButton: pillTabButton('home-outline', 'home', 'Home') }} />
-      <Tabs.Screen name="party" options={{ title: 'Party', tabBarButton: pillTabButton('people-outline', 'people', 'Party') }} />
+      <Tabs.Screen name="index" options={{ title: t('tab.home'), tabBarButton: pillTabButton('home-outline', 'home', t('tab.home')) }} />
+      <Tabs.Screen name="party" options={{ title: t('tab.party'), tabBarButton: pillTabButton('people-outline', 'people', t('tab.party')) }} />
       <Tabs.Screen
         name="create"
         options={{
-          title: 'Go live',
-          tabBarAccessibilityLabel: 'Go live',
+          title: t('tab.golive'),
+          tabBarAccessibilityLabel: t('tab.golive'),
           tabBarButton: ({ onPress, accessibilityState }) => (
             <View style={{ flex: 1, alignItems: 'center' }}>
               <View style={{ position: 'absolute', top: -18, width: 56, height: 56, alignItems: 'center', justifyContent: 'center' }}>
@@ -72,7 +74,7 @@ export default function TabsLayout() {
               <Pressable
                 onPress={onPress}
                 accessibilityRole="button"
-                accessibilityLabel="Go live"
+                accessibilityLabel={t('tab.golive')}
                 accessibilityState={accessibilityState}
                 style={({ pressed }) => ({
                   width: 56, height: 56, marginTop: -18, borderRadius: 28, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center',
@@ -85,8 +87,8 @@ export default function TabsLayout() {
           ),
         }}
       />
-      <Tabs.Screen name="messages" options={{ title: 'Messages', tabBarButton: pillTabButton('chatbox-outline', 'chatbox', 'Messages') }} />
-      <Tabs.Screen name="profile" options={{ title: 'Me', tabBarButton: pillTabButton('person-outline', 'person', 'Me') }} />
+      <Tabs.Screen name="messages" options={{ title: t('tab.messages'), tabBarButton: pillTabButton('chatbox-outline', 'chatbox', t('tab.messages')) }} />
+      <Tabs.Screen name="profile" options={{ title: t('tab.me'), tabBarButton: pillTabButton('person-outline', 'person', t('tab.me')) }} />
     </Tabs>
   );
 }

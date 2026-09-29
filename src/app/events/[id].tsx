@@ -7,6 +7,7 @@ import { resolveState, StateView, type ViewState } from '@/components/StateView'
 import { Avatar, Card, compactNumber, Row, Screen, Text, TextTabs } from '@/components/ui';
 import { EVENT_SELECT, eventPhase, scoreLabel, timeLeft, type AppEvent, type LeaderRow } from '@/lib/events';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
+import { useI18n } from '@/lib/i18n';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
@@ -21,6 +22,7 @@ export default function EventScreen() {
   const offline = useOffline();
   const { c, hPadding } = useTheme();
   const { profile } = useProfile();
+  const { t } = useI18n();
   const [role, setRole] = useState<Role>('host');
 
   const { data, error, loading, reload } = useFocusedAsync(async () => {
@@ -41,7 +43,7 @@ export default function EventScreen() {
 
   const event = data?.event;
   let state: ViewState = resolveState({ offline, loading, error, data, onRetry: reload });
-  if (state.kind === 'success' && !event) state = { kind: 'empty', title: 'Event not found', body: 'It may have been cancelled.' };
+  if (state.kind === 'success' && !event) state = { kind: 'empty', title: t('events.empty') };
   const phase = event ? eventPhase(event) : 'ended';
   const rewards = (event?.rewards ?? []).filter((r) => event?.kind === 'pk_battle' ? r.role === 'host' : r.role === role);
   const mine = data?.board.find((r) => r.user_id === profile?.id);
@@ -56,13 +58,13 @@ export default function EventScreen() {
         >
           <Card style={{ backgroundColor: phase === 'live' ? c.goldSurface : c.surface, borderColor: phase === 'live' ? c.goldBorder : c.divider }}>
             <Text variant="caption" color={phase === 'live' ? c.goldText : c.textMuted} style={{ fontWeight: '700' }}>
-              {phase === 'live' ? `LIVE · ends in ${timeLeft(event!.ends_at)}` : phase === 'upcoming' ? `Starts in ${timeLeft(event!.starts_at)}` : 'Ended'}
+              {phase === 'live' ? `LIVE · ${t('events.endsIn', { time: timeLeft(event!.ends_at) })}` : phase === 'upcoming' ? t('events.startsIn', { time: timeLeft(event!.starts_at) }) : t('events.ended')}
             </Text>
             <Text variant="h2">{event?.title}</Text>
             {!!event?.description && <Text muted>{event.description}</Text>}
             <Text variant="caption" muted>
-              {event?.kind === 'pk_battle' ? 'Win a PK battle: 3 pts · tie: 1 pt' : 'Every qualifying gift counts for the host and the sender'}
-              {event?.region ? '' : ' · Worldwide'}
+              {t(event?.kind === 'pk_battle' ? 'events.rules.pk_battle' : 'events.rules.gifting')}
+              {event?.region ? '' : ` · ${t('events.worldwide')}`}
             </Text>
             {!!data?.gifts.length && (
               <Row gap={8} style={{ flexWrap: 'wrap' }}>
@@ -73,23 +75,23 @@ export default function EventScreen() {
           </Card>
 
           {event?.kind === 'gifting' && (
-            <TextTabs options={[{ id: 'host', label: 'Top hosts' }, { id: 'gifter', label: 'Top gifters' }] as const} value={role} onChange={setRole} />
+            <TextTabs options={[{ id: 'host', label: t('events.topHosts') }, { id: 'gifter', label: t('events.topGifters') }] as const} value={role} onChange={setRole} />
           )}
 
           {rewards.length > 0 && (
             <Card>
-              <Text variant="h3">Rewards</Text>
+              <Text variant="h3">{t('events.rewards')}</Text>
               {rewards.map((r, i) => (
                 <Text key={i} muted>#{r.rank_from}{r.rank_to > r.rank_from ? `–${r.rank_to}` : ''} · {r.reward}</Text>
               ))}
             </Card>
           )}
 
-          {mine && <Text style={{ fontWeight: '700' }} color={c.gold}>You’re #{mine.rank} with {compactNumber(mine.score)} {scoreLabel(event!.kind)}</Text>}
+          {mine && <Text style={{ fontWeight: '700' }} color={c.gold}>{t('events.you', { rank: mine.rank, score: `${compactNumber(mine.score)} ${scoreLabel(event!.kind)}` })}</Text>}
 
           {data?.board.length === 0 && (
             <Text muted style={{ textAlign: 'center', marginTop: 16 }}>
-              {phase === 'upcoming' ? 'The leaderboard opens when the event starts.' : 'No scores yet — be the first!'}
+              {phase === 'upcoming' ? t('events.opensLater') : t('events.noScores')}
             </Text>
           )}
           {data?.board.map((r, i) => (

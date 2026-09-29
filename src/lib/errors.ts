@@ -1,3 +1,5 @@
+import { hasMessage, t } from './i18n';
+
 // Maps server error codes (RPC exceptions and edge-function error.code) to
 // user-facing copy. Unknown errors get a generic message; details stay server-side.
 const MESSAGES: Record<string, string> = {
@@ -83,7 +85,10 @@ export function errorCode(e: unknown): string {
   return 'unknown';
 }
 
+/** User-facing copy in the current language (English where a code has no translation yet). */
 export function friendlyError(e: unknown): string {
   const code = errorCode(e);
-  return MESSAGES[code] ?? 'Something went wrong. Please try again.';
+  const key = `error.${code}`;
+  if (hasMessage(key)) return t(key);
+  return MESSAGES[code] ?? t('error.generic');
 }

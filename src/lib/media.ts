@@ -74,12 +74,3 @@ export function formatDuration(ms: number | null): string {
   const sec = String(s % 60).padStart(2, '0');
   return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
 }
-
-export const STATUS_LABEL: Record<MediaStatus, string> = {
-  awaiting_upload: 'Uploading',
-  queued: 'Waiting to process',
-  processing: 'Processing',
-  ready: 'Ready',
-  failed: 'Failed',
-  removed: 'Removed',
-};

@@ -17,6 +17,7 @@ import { View } from 'react-native';
 import { LaunchScreen } from '@/components/LaunchScreen';
 import { Text } from '@/components/ui';
 import { env, missingRequiredEnv } from '@/lib/env';
+import { AppI18n } from '@/lib/i18n/AppI18n';
 import { ProfileProvider } from '@/lib/profile';
 import { initSentry, Sentry } from '@/lib/sentry';
 import { SupabaseProvider } from '@/lib/supabase';
@@ -156,11 +157,13 @@ function RootLayout() {
       <LaunchGate>
         <SupabaseProvider>
           <ProfileProvider>
-            <Analytics>
-              <IdentityAndScreens />
-              <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-              <RootNavigator />
-            </Analytics>
+            <AppI18n>
+              <Analytics>
+                <IdentityAndScreens />
+                <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+                <RootNavigator />
+              </Analytics>
+            </AppI18n>
           </ProfileProvider>
         </SupabaseProvider>
       </LaunchGate>
