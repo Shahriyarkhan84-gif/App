@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.1 — Live database brought in line with the repo
+
+- The live Supabase project only had an old MVP script: three tables (`users` with password hashes, `rooms`, `chat_messages`) in `public` with RLS disabled — the Security Advisor's 3 errors. Its demo rows (demo_host, demo_viewer, one demo room) were removed with them (`20260923000000_drop_mvp_placeholder.sql`), then all repo migrations were applied. RLS is on for every table; the advisor shows 0 errors.
+- Schema verified identical to a database built from the repo (functions, columns, constraints, policies, triggers, indexes, grants); migration history matches the file versions, so `supabase db push` works from here.
+- Fix: `review_host_application()` was executable by signed-out callers (it rejected them inside, but shouldn't be reachable) — revoked, with a must-pass check that anon can call no public function except `my_region()`.
+
 ## 0.8.0 — Core architecture complete: upload + HDR pipeline, subtitles, localization, regions, events
 
 - **Upload + HDR pipeline.** Hosts upload videos (Videos → My videos); the media worker probes them, detects HDR (PQ → HDR10, ARIB STD-B67 → HLG, else SDR), and encodes a ladder: 4K HDR and 1080p HDR (HEVC Main10 with HDR10 metadata) plus an always-present SDR fallback (tone-mapped H.264 1080/720/480/360), packaged as fMP4 HLS with a `VIDEO-RANGE` master playlist for adaptive bitrate. Live streams can be recorded (LiveKit egress, `media.record_live`) and replayed through the same pipeline. New tables `media_assets`, `media_renditions`, `media_views`; buckets `uploads` (private) and `media` (public); worker queue `media_process` (`WORKER_QUEUES`, `Dockerfile.media`). App: Videos feed, upload screen with realtime status, HLS player (expo-video).

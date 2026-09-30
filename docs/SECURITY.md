@@ -94,6 +94,16 @@ CNIC photos and the full CNIC number are sent to Didit and never stored by Zynal
   wallet freezes are `ai_actions` proposals executed only after owner approval.
 - Staff accounts can't be actioned by AI.
 
+## Supabase security advisor
+
+Expected findings, all by design: *signed-in users can execute SECURITY
+DEFINER functions* (every public RPC checks the caller and role inside; that
+is the write path — covered by `10_must_pass.sql`), *anon can execute
+`my_region()`* (returns Global for signed-out visitors, nothing private), and
+*RLS enabled, no policy* on `media_views` / `processed_webhook_events` (no
+client access at all). `10_must_pass.sql` asserts that anon can execute no
+other public function. Anything else the advisor reports is a bug.
+
 ## Review checklist (per change)
 
 AuthN/AuthZ · input validation (CHECK constraints + RPC validation) · SQLi

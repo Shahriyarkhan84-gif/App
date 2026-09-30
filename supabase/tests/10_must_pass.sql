@@ -424,5 +424,10 @@ select tests.fails($$select public.internal_finalize_due_events()$$, '%permissio
 select tests.fails($$select public.internal_media_ready(gen_random_uuid(), 'x/master.m3u8', null, '[]')$$, '%permission denied%', 'users cannot mark media processed');
 select tests.fails($$select public.internal_register_live_recording('room_x', 'EG_x', 'alice/x.mp4')$$, '%permission denied%', 'users cannot register recordings');
 reset role;
+-- Signed-out callers can't reach admin RPCs at all (security advisor 0028).
+select tests.ok(not exists (
+  select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.proname <> 'my_region' and has_function_privilege('anon', p.oid, 'execute')),
+  'anon can execute no public function except my_region()');
 
 drop schema tests cascade;

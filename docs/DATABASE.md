@@ -5,6 +5,7 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 
 | Migration | Contents |
 |---|---|
+| `…23000000_drop_mvp_placeholder.sql` | Removes the MVP script's placeholder tables (`users`, `rooms`, `chat_messages`, RLS off) and enums from the live project before the real schema; no-op on fresh databases |
 | `…010000_core.sql` | roles, profiles, agencies, agency_members, hosts (Host ID = user's 8-digit ID since `…110000`), rooms, streams, room_admins (max 5), room_bans, viewers, follows, user_blocks, messages, direct_messages, word_filters, notifications, audit_logs, platform_settings |
 | `…020000_economy.sql` | wallets, coin_transactions (ledger), gift_catalog, gifts, creator_earnings, earning_entries, platform_ledger, coin_packages, payments, processed_webhook_events, refund_requests, withdrawals + money RPCs + seed catalog/packages |
 | `…030000_moderation_ai.sql` | reports, moderation_actions, ai_jobs, ai_reports, ai_actions, message_translations, support_tickets, user_recommendations + social/room/moderation/agency RPCs, rankings |
@@ -27,6 +28,8 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 | `…25010000_media_pipeline.sql` | Upload + HDR pipeline: `media_assets` (probe + HDR metadata, `dynamic_range` sdr/hdr10/hlg, playback/thumbnail paths), `media_renditions` (ladder), `media_views`; private `uploads` bucket (hosts insert only their reserved `<id>/<asset>.<ext>` path) + public `media` bucket; `create_media_upload`, `submit_media_upload`, `update_media`, `remove_media`, `get_media`, `record_media_view`; service role: `internal_media_started/probed/ready/failed`, `internal_register_live_recording`. Every ladder must include an SDR rung. |
 | `…25020000_media_subtitles.sql` | `media_subtitles` (per-language WebVTT + HLS playlist, one source track), `media_assets.subtitle_status`; `internal_media_ready` queues `media_subtitles`; `internal_media_subtitles()` |
 | `…25030000_regions_events.sql` | `regions` (PK/IN/BD/GLOBAL active; ID/MY/TR/GULF/PH/NP ready), region from `signup_country`, `my_region()`; `coin_packages.region` (+ INR/BDT/USD packages) and `internal_create_payment` refuses other regions' packages; `gift_catalog.regions`; `events`, `event_scores` (kept by triggers on `gifts` and ended `pk_battles`), `event_results`; `upsert_event`, `cancel_event`, `finalize_event`, `event_leaderboard`, `internal_finalize_due_events` |
+
+| `…25040000_revoke_anon_review_host_application.sql` | Security advisor fix: signed-out callers can't execute `review_host_application()` |
 
 (Files `20260925…` sort after `20260924…`; the short names above drop the date prefix.)
 
