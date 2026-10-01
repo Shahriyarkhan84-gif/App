@@ -30,7 +30,10 @@ export default function SettingsScreen() {
           </Row>
         </View>
 
-        <ListRow icon="lock-closed-outline" label={t('settings.privacy')} onPress={() => router.push('/privacy')} last />
+        <View>
+          <ListRow icon="apps-outline" label={t('menu.styles')} onPress={() => router.push('/menus')} />
+          <ListRow icon="lock-closed-outline" label={t('settings.privacy')} onPress={() => router.push('/privacy')} last />
+        </View>
 
         <Button title={t('settings.signOut')} variant="ghost" onPress={() => signOut()} />
         <Button title={t('settings.delete')} variant="ghost" onPress={() => router.push('/delete-account')} style={{ marginTop: -8 }} icon={<Ionicons name="trash-outline" size={16} color={c.danger} />} />

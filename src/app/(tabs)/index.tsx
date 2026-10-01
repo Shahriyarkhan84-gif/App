@@ -9,10 +9,12 @@ import { LiveEventBanner } from '@/components/EventRow';
 import { RoomCard } from '@/components/RoomCard';
 import { FeaturedHost } from '@/components/FeaturedHost';
 import { FollowingLive, LiveBell } from '@/components/FollowingLive';
+import { SideMenuButton, type MenuItem } from '@/components/Menus';
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Chip, IconButton, Row, Screen, Text, TextTabs, Wordmark } from '@/components/ui';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
+import { useI18n } from '@/lib/i18n';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { fonts, useTheme } from '@/lib/theme';
@@ -35,6 +37,7 @@ export default function HomeScreen() {
   const { profile } = useProfile();
   const { c, hPadding } = useTheme();
   const offline = useOffline();
+  const { t } = useI18n();
   const { width } = useWindowDimensions();
   const [feed, setFeed] = useState<Feed>('popular');
   const [category, setCategory] = useState<(typeof CHIPS)[number]>('all');
@@ -80,11 +83,23 @@ export default function HomeScreen() {
     empty: category === 'all' ? emptyCopy : { title: `No ${categoryLabel(category)} lives`, body: 'Try another category.' },
   });
 
+  const sideMenu: MenuItem[] = [
+    { key: 'videos', icon: 'play-circle-outline', label: t('menu.videos'), onPress: () => router.push('/videos') },
+    { key: 'events', icon: 'calendar-outline', label: t('menu.events'), onPress: () => router.push('/events') },
+    { key: 'rankings', icon: 'trophy-outline', label: t('menu.rankings'), onPress: () => router.push('/rankings') },
+    { key: 'wallet', icon: 'wallet-outline', label: t('menu.wallet'), onPress: () => router.push('/wallet') },
+    { key: 'settings', icon: 'settings-outline', label: t('settings.title'), onPress: () => router.push('/settings') },
+    { key: 'support', icon: 'help-circle-outline', label: t('menu.support'), onPress: () => router.push('/support') },
+  ];
+
   return (
     <Screen>
       <View style={{ paddingHorizontal: hPadding, paddingTop: 4, gap: 4, maxWidth: 1100, width: '100%', alignSelf: 'center' }}>
         <Row style={{ justifyContent: 'space-between' }}>
-          <Wordmark />
+          <Row gap={10}>
+            <SideMenuButton items={sideMenu} header={<Wordmark />} />
+            <Wordmark />
+          </Row>
           <Row gap={8}>
             <IconButton icon="trophy-outline" label="Rankings" color={c.gold} onPress={() => router.push('/rankings')} />
             <IconButton icon="search" label="Search" onPress={() => router.push('/party')} />

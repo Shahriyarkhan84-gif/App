@@ -56,6 +56,7 @@ is tracked in [REMAINING_WORK.md](REMAINING_WORK.md).
 | Media pipeline | Supabase Storage (`uploads` private, `media` public) + media worker (ffmpeg: libx264/libx265/zscale; Whisper) | `supabase/migrations/…25010000_media_pipeline.sql`, `agents/zynalive_agents/media/`, `src/app/videos/` |
 | Localization | typed catalogs + provider, expo-localization (RTL) | `src/lib/i18n/` |
 | Regions & events | `regions`, regional `coin_packages`, `events` + scoring triggers | `…25030000_regions_events.sql`, `src/app/events/` |
+| Menus | 8-style menu kit (grid, side menu, tab bar, FAB, sheet, three dots, rail, rudder); main nav = tab bar with raised Go-live + | `src/components/Menus.tsx`, `src/app/(tabs)/_layout.tsx`, `src/app/menus.tsx` |
 
 "Microservices" from the architecture (auth, streaming, chat, economy, payments,
 creator-payouts, agencies, notifications, moderation, recommendations, AI,

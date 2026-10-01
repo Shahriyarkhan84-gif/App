@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.2 — Menu kit
+
+- **Eight menu styles** as reusable components in `src/components/Menus.tsx`, all taking the same `MenuItem` shape: Grid (`MenuGrid`), Side menu (`SideMenu`, `SideMenuButton`), Tab bar (`TabBar`, `TabBarItem`, `TabBarCenterButton`, `useTabBarStyle`), FAB speed dial (`FabMenu`), action Sheet (`ActionSheet`), Three dots (`OverflowMenu`), Rectangular rail (`NavRail`) and Rudder (`RudderBar`).
+- **Main navigation is now a classic tab bar**: edge to edge with a rounded top, icon over label, the active tab in the primary color, and a raised center **+** for Go live. It replaces the floating pill bar.
+- Used in the app: a side menu on Home (Videos, Events, Rankings, Wallet, Settings, Help), a ⋮ menu in the video player header (Share, Remove), and a FAB on the Videos feed for hosts (Upload video, Go live, Events).
+- Settings → Menu styles previews all eight. Menu labels are translated into English, Urdu, Hindi and Bengali.
+
 ## 0.8.1 — Live database brought in line with the repo
 
 - The live Supabase project only had an old MVP script: three tables (`users` with password hashes, `rooms`, `chat_messages`) in `public` with RLS disabled — the Security Advisor's 3 errors. Its demo rows (demo_host, demo_viewer, one demo room) were removed with them (`20260923000000_drop_mvp_placeholder.sql`), then all repo migrations were applied. RLS is on for every table; the advisor shows 0 errors.

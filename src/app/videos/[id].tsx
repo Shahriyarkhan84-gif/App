@@ -4,8 +4,9 @@ import { useVideoPlayer, VideoView, type SubtitleTrack, type VideoPlayer } from 
 import { useEffect, useRef, useState } from 'react';
 import { Alert, ScrollView, Share, View } from 'react-native';
 
+import { OverflowMenu, type MenuItem } from '@/components/Menus';
 import { resolveState, StateView, type ViewState } from '@/components/StateView';
-import { Avatar, Button, Chip, compactNumber, Row, Screen, Text } from '@/components/ui';
+import { Avatar, Chip, compactNumber, Row, Screen, Text } from '@/components/ui';
 import { rpc } from '@/lib/api';
 import { env } from '@/lib/env';
 import { friendlyError } from '@/lib/errors';
@@ -100,9 +101,15 @@ export default function VideoScreen() {
       },
     ]);
 
+  const share = () => void Share.share({ message: `${asset?.title} ${env.siteUrl ? `${env.siteUrl}/videos/${id}` : ''}`.trim() });
+  const actions: MenuItem[] = [
+    { key: 'share', icon: 'share-social-outline', label: t('videos.share'), onPress: share },
+    ...(canRemove ? [{ key: 'remove', icon: 'trash-outline' as const, label: t('videos.remove'), onPress: remove, destructive: true }] : []),
+  ];
+
   return (
     <Screen edges={[]}>
-      <Stack.Screen options={{ title: asset?.title ?? 'Video' }} />
+      <Stack.Screen options={{ title: asset?.title ?? 'Video', headerRight: asset?.status === 'ready' ? () => <OverflowMenu actions={actions} /> : undefined }} />
       <StateView state={state}>
         <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
           <View style={{ width: '100%', aspectRatio: aspect, backgroundColor: '#000', maxHeight: 560 }}>
@@ -140,10 +147,6 @@ export default function VideoScreen() {
                 </Row>
               </View>
             )}
-            <Row gap={8}>
-              <Button title={t('videos.share')} variant="secondary" size="sm" onPress={() => void Share.share({ message: `${asset?.title} ${env.siteUrl ? `${env.siteUrl}/videos/${id}` : ''}`.trim() })} />
-              {canRemove && <Button title={t('videos.remove')} variant="danger" size="sm" onPress={remove} />}
-            </Row>
           </View>
         </ScrollView>
       </StateView>

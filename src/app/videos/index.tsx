@@ -1,6 +1,8 @@
 import { router, Stack } from 'expo-router';
 import { FlatList, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { FabMenu } from '@/components/Menus';
 import { resolveState, StateView } from '@/components/StateView';
 import { Button, Row, Screen, Text } from '@/components/ui';
 import { VideoCard } from '@/components/VideoCard';
@@ -18,6 +20,7 @@ export default function VideosScreen() {
   const { hPadding } = useTheme();
   const { isHost } = useProfile();
   const { t } = useI18n();
+  const insets = useSafeAreaInsets();
 
   const { data, error, loading, reload } = useFocusedAsync(async () => {
     const [base, list] = await Promise.all([
@@ -53,7 +56,7 @@ export default function VideosScreen() {
           numColumns={2}
           onRefresh={reload}
           refreshing={loading && !!data}
-          contentContainerStyle={{ padding: hPadding, gap: 16 }}
+          contentContainerStyle={{ padding: hPadding, gap: 16, paddingBottom: isHost ? 110 : hPadding }}
           columnWrapperStyle={{ gap: 12 }}
           renderItem={({ item }) => (
             <View style={{ flex: 1 / 2 }}>
@@ -62,6 +65,17 @@ export default function VideosScreen() {
           )}
         />
       </StateView>
+      {isHost && (
+        <FabMenu
+          label={t('menu.create')}
+          bottom={insets.bottom + 24}
+          actions={[
+            { key: 'upload', icon: 'cloud-upload-outline', label: t('videos.upload'), onPress: () => router.push('/videos/upload') },
+            { key: 'live', icon: 'videocam', label: t('tab.golive'), onPress: () => router.push('/create') },
+            { key: 'events', icon: 'calendar-outline', label: t('menu.events'), onPress: () => router.push('/events') },
+          ]}
+        />
+      )}
     </Screen>
   );
 }
