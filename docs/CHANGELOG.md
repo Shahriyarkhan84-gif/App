@@ -6,6 +6,7 @@
 - **Main navigation is now a classic tab bar**: edge to edge with a rounded top, icon over label, the active tab in the primary color, and a raised center **+** for Go live. It replaces the floating pill bar.
 - Used in the app: a side menu on Home (Videos, Events, Rankings, Wallet, Settings, Help), a ⋮ menu in the video player header (Share, Remove), and a FAB on the Videos feed for hosts (Upload video, Go live, Events).
 - Settings → Menu styles previews all eight. Menu labels are translated into English, Urdu, Hindi and Bengali.
+- Design boards: `docs/design/menu-kit-{dark,light}.svg` (+ PNG previews), generated from the theme tokens and real Ionicons by `docs/design/menu_kit_svg.py`. The SVGs drop into Figma as named, editable layers and open in Photoshop/Illustrator.
 
 ## 0.8.1 — Live database brought in line with the repo
 
