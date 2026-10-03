@@ -39,6 +39,8 @@ insert into public.profiles (id, username, display_name, country) values
   ('frank', 'frank', 'Frank', 'BD'), ('owner', 'owner', 'Owner', 'PK'), ('root', 'root', 'Root', 'PK'),
   ('m1', 'mod_one', 'M1', 'PK'), ('m2', 'mod_two', 'M2', 'PK'), ('m3', 'mod_three', 'M3', 'PK'),
   ('m4', 'mod_four', 'M4', 'PK'), ('m5', 'mod_five', 'M5', 'PK');
+-- Sign-up country is recorded server-side at sign-up (see 60_signup_country.sql); it decides the region.
+update public.profiles set signup_country = country;
 update public.profiles set role = 'OWNER_ADMIN' where id = 'owner';
 update public.profiles set role = 'SUPER_ADMIN' where id = 'root';
 
@@ -183,13 +185,31 @@ select tests.ok((select sum(amount) from public.platform_ledger where ref_id = (
 select public.internal_attach_payment_ref((public.internal_create_payment('alice', 1)).id, 'cs_test_bad');
 select tests.ok(not (public.internal_credit_payment('cs_test_bad', 'pi_bad', 1, 'pkr') ->> 'credited')::boolean, 'amount mismatch rejected');
 select tests.ok(tests.balance('alice') = 350, 'mismatch credits nothing');
+
+-- 4b. Regional pricing: a buyer only gets their own region's packages. Region
+-- comes from the frozen sign-up country, so editing profiles.country can't
+-- unlock another market's (cheaper) prices.
+select tests.fails($$select public.internal_create_payment('alice', (select id from public.coin_packages where region = 'IN' and name = 'Mega'))$$,
+  '%invalid_package%', 'PK buyer cannot buy an IN package');
+select tests.fails($$select public.internal_create_payment('carol', (select id from public.coin_packages where region = 'PK' and name = 'Mega'))$$,
+  '%invalid_package%', 'IN buyer cannot buy a PK package');
+select tests.ok((public.internal_create_payment('carol', (select id from public.coin_packages where region = 'IN' and name = 'Starter'))).currency = 'inr',
+  'IN buyer pays in INR');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"alice"}', false);
+set role authenticated;
+update public.profiles set country = 'IN' where id = 'alice';
+select tests.ok((public.my_region()).code = 'PK', 'editing country does not change region');
+select tests.ok(not exists (select 1 from public.coin_packages where region <> 'PK'), 'only own-region packages are listed');
+select tests.fails($$update public.profiles set signup_country = 'IN' where id = 'alice'$$, '%permission denied%', 'sign-up country not client-writable');
+update public.profiles set country = 'PK' where id = 'alice';
 reset role;
 
 ---------------------------------------------------------------------------------------
 -- 5. A duplicated gift request cannot double-charge
 ---------------------------------------------------------------------------------------
 -- A cover picture is required to go live; hosts set it only from their own storage folder.
-update public.platform_settings set value = '{"covers_base": "https://cdn.test/covers"}' where key = 'media';
+update public.platform_settings set value = value || '{"covers_base": "https://cdn.test/covers"}' where key = 'media';
 select set_config('request.jwt.claims', '{"sub":"bob"}', false);
 set role authenticated;
 select tests.fails($$select public.go_live('Bob live', 'music')$$, '%cover_required%', 'go live without a cover');
@@ -390,5 +410,24 @@ select set_config('request.jwt.claims', '{"sub":"owner"}', false);
 set role authenticated;
 select tests.fails($$select public.create_agency('Second agency', 'dave')$$, '%agencies_one_per_owner%', 'one agency per owner');
 reset role;
+
+---------------------------------------------------------------------------------------
+-- Engagement events & media: no client writes to scores, events or processing state
+---------------------------------------------------------------------------------------
+select set_config('request.jwt.claims', '{"sub":"alice"}', false);
+set role authenticated;
+select tests.fails($$select public.upsert_event(null, 'My event', null, 'gifting', null, now(), now() + interval '1 day', null, '[]', true)$$,
+  '%forbidden%', 'users cannot create events');
+select tests.fails($$insert into public.event_scores (event_id, user_id, role, score) select id, 'alice', 'gifter', 999999 from public.events limit 1$$,
+  '%permission denied%', 'users cannot write event scores');
+select tests.fails($$select public.internal_finalize_due_events()$$, '%permission denied%', 'users cannot finalize events');
+select tests.fails($$select public.internal_media_ready(gen_random_uuid(), 'x/master.m3u8', null, '[]')$$, '%permission denied%', 'users cannot mark media processed');
+select tests.fails($$select public.internal_register_live_recording('room_x', 'EG_x', 'alice/x.mp4')$$, '%permission denied%', 'users cannot register recordings');
+reset role;
+-- Signed-out callers can't reach admin RPCs at all (security advisor 0028).
+select tests.ok(not exists (
+  select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.proname <> 'my_region' and has_function_privilege('anon', p.oid, 'execute')),
+  'anon can execute no public function except my_region()');
 
 drop schema tests cascade;

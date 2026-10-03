@@ -76,15 +76,16 @@ describe('GiftsService.sendGift', () => {
       applyCoinDelta: jest.fn().mockResolvedValue(wallet.coinBalance),
     };
     const battles = { applyGiftScore: jest.fn().mockResolvedValue(undefined) };
+    const events = { applyGift: jest.fn().mockResolvedValue(undefined) };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const service = new GiftsService(prisma as any, wallets as any, battles as any);
-    return { service, prisma, wallets, battles };
+    const service = new GiftsService(prisma as any, wallets as any, battles as any, events as any);
+    return { service, prisma, wallets, battles, events };
   }
 
   it('splits coins so host + stream + owner shares always sum to the total charged', async () => {
     const wallet = { coinBalance: 1000n, frozen: false };
     const { tx, created } = buildTx({ wallet });
-    const { service, wallets, battles } = buildService(tx, wallet);
+    const { service, wallets, battles, events } = buildService(tx, wallet);
 
     // Heart (id 3) = 10 coins, quantity 5 -> 50 coins total, matching the
     // "Heart (id 3) = 10 coins x 2" fixture's shape in 10_must_pass.sql.
@@ -103,6 +104,8 @@ describe('GiftsService.sendGift', () => {
 
     expect(wallets.applyCoinDelta).toHaveBeenCalledWith(tx, senderId, -50n, 'gift_sent', 'gift', 'gift_1', 'gift:gift_1');
     expect(battles.applyGiftScore).toHaveBeenCalledWith(roomId, 50n, tx);
+    // Event scoring runs inside the same transaction, with the charged total.
+    expect(events.applyGift).toHaveBeenCalledWith(tx, { hostId, senderId, giftId: 3, coinsTotal: 50n });
     void created;
   });
 
@@ -135,13 +138,14 @@ describe('GiftsService.sendGift', () => {
     const wallet = { coinBalance: 1000n, frozen: false };
     const existingGift = { id: 'gift_existing', senderId, idempotencyKey, coinsTotal: 50n };
     const { tx } = buildTx({ wallet, existingGift });
-    const { service, wallets, battles } = buildService(tx, wallet);
+    const { service, wallets, battles, events } = buildService(tx, wallet);
 
     const result = await service.sendGift(senderId, roomId, 3, 5, idempotencyKey);
 
     expect(result).toBe(existingGift);
     expect(wallets.applyCoinDelta).not.toHaveBeenCalled();
     expect(battles.applyGiftScore).not.toHaveBeenCalled();
+    expect(events.applyGift).not.toHaveBeenCalled(); // a replay never scores twice
     // Nothing past the idempotency check should even run.
     expect((tx as { room: { findUnique: jest.Mock } }).room.findUnique).not.toHaveBeenCalled();
   });

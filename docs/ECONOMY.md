@@ -63,3 +63,24 @@ pricing in `coin_packages`.
 
 Any shortfall (coins already spent) is recorded as a negative platform-ledger
 entry and the account is flagged for review.
+
+## Regional pricing
+
+Each region has its own coin packages (`coin_packages.region`): PKR for
+Pakistan, INR for India, BDT for Bangladesh and USD for Global (UK, the rest
+of the world, and markets not launched yet). A buyer's region is derived from
+`profiles.signup_country` — recorded server-side at sign-up and frozen — not
+from the editable `profiles.country`. `internal_create_payment()` (and
+`PaymentsService.createPayment` in the NestJS API) refuses a package from
+another region, so nobody can buy a cheaper market's coins
+(`10_must_pass.sql` §4b). Buyers with no recorded sign-up country fall back
+to Global pricing. The purchase split above applies per payment in its own
+currency; the withdrawal rate (`pkr_per_coin`) is still PKR-only, and
+withdrawals are enabled per region (`regions.features.withdrawals`: PK only).
+
+## Event rewards
+
+Engagement events (gifting races, PK battle leagues) only *read* the gift and
+battle rows through triggers; they never move coins. Rewards are recorded in
+`event_results` and announced to winners. Any coin prize is paid by an owner
+through the normal admin path, not by the event system.

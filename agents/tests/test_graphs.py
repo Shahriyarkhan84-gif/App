@@ -81,6 +81,7 @@ def test_report_graph_proposes_ladder_action(db, llm, world):
 def test_fraud_sweep_flags_circular_gifting(db, llm, world):
     as_user(db, "viewer1", "select public.become_host()")
     db.run("update public.hosts set verification_status = 'approved' where user_id = 'viewer1'")
+    db.run("update public.rooms set cover_url = 'https://cdn.test/viewer1.jpg' where host_id = 'viewer1'")
     as_user(db, "viewer1", "select public.go_live('alt', 'chat')")
     room_v1 = db.one("select id from public.rooms where host_id = 'viewer1'")["id"]
     db.run("insert into public.wallets (user_id, coin_balance) values ('host1', 5000) on conflict (user_id) do update set coin_balance = 5000")
@@ -203,3 +204,14 @@ def test_schedule_is_idempotent_per_bucket(db, llm, monkeypatch):
     worker.schedule(now)
     kinds = sorted(r["kind"] for r in db.all("select kind from public.ai_jobs"))
     assert kinds == ["ceo_briefing", "fraud_sweep", "recommendations"]
+
+
+def test_worker_finalizes_ended_events(db, llm, world, monkeypatch):
+    db.run("""insert into public.events (title, kind, starts_at, ends_at, status, rewards)
+              values ('Weekend race', 'gifting', now() - interval '2 days', now() - interval '1 minute', 'scheduled',
+                      '[{"role": "host", "rank_from": 1, "rank_to": 1, "reward": "Crown badge"}]')""")
+    event = db.one("select id from public.events")["id"]
+    db.run("insert into public.event_scores (event_id, user_id, role, score) values (%s, 'host1', 'host', 500)", (event,))
+    make_worker(db, llm, monkeypatch).finalize_events()
+    assert db.one("select status from public.events")["status"] == "finalized"
+    assert db.one("select reward from public.event_results where rank = 1")["reward"] == "Crown badge"

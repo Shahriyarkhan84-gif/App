@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/com
 import type { Prisma } from '@zynalive/database';
 
 import { PLATFORM_ADMIN_ROLES } from '../auth/roles.decorator';
+import { EventsService } from '../events/events.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 
@@ -21,6 +22,7 @@ export class BattlesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly realtime: RealtimeGateway,
+    private readonly events: EventsService,
   ) {}
 
   async invite(challengerUserId: string, targetRoomId: string) {
@@ -126,16 +128,26 @@ export class BattlesService {
 
     const winnerRoomId =
       battle.scoreA === battle.scoreB ? null : battle.scoreA > battle.scoreB ? battle.roomAId : battle.roomBId;
-    const [updated] = await this.prisma.$transaction([
-      this.prisma.pkBattle.update({
-        where: { id: battleId },
+    const updated = await this.prisma.$transaction(async (tx) => {
+      // Guarded on status so a concurrent end can't score the battle twice.
+      const { count } = await tx.pkBattle.updateMany({
+        where: { id: battleId, status: 'live' },
         data: { status: 'ended', endedAt: new Date(), winnerRoomId },
-      }),
-      this.prisma.room.updateMany({
+      });
+      if (!count) throw new BadRequestException('Not live');
+      await tx.room.updateMany({
         where: { id: { in: [battle.roomAId, battle.roomBId] } },
         data: { currentBattleId: null },
-      }),
-    ]);
+      });
+      // Same as the events_battle_score trigger: PK league points.
+      await this.events.applyBattle(tx, {
+        startedAt: battle.startedAt,
+        hostA: roomA.hostId,
+        hostB: roomB.hostId,
+        winnerHost: winnerRoomId === null ? null : winnerRoomId === battle.roomAId ? roomA.hostId : roomB.hostId,
+      });
+      return tx.pkBattle.findUniqueOrThrow({ where: { id: battleId } });
+    });
 
     await Promise.all([
       this.notify(roomA.hostId, 'pk_battle_ended', 'Battle ended', this.resultMessage(winnerRoomId, battle.roomAId), {

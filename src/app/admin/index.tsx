@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 
@@ -10,6 +10,7 @@ import { useFocusedAsync, useOffline } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
+import { EVENT_SELECT, eventPhase, type AppEvent, type EventReward } from '@/lib/events';
 import { formatMoney } from '@/lib/types';
 
 type Domain = { status: 'green' | 'amber' | 'red'; headline: string; highlights: string[]; risks: string[]; recommendations: string[] };
@@ -25,7 +26,7 @@ type Briefing = {
   };
 };
 
-const SECTIONS = ['Briefing', 'Host applications', 'Agencies', 'AI proposals', 'Reports', 'Withdrawals', 'Settings'] as const;
+const SECTIONS = ['Briefing', 'Host applications', 'Agencies', 'Events', 'AI proposals', 'Reports', 'Withdrawals', 'Settings'] as const;
 const DOMAIN_TITLES: Record<string, string> = { finance_ai: '💰 Finance AI', economy_ai: '🎁 Economy AI', streaming_ai: '📡 Streaming AI' };
 
 /** Owner command center: AI CEO output + the human-approval queue. */
@@ -41,6 +42,7 @@ export default function AdminScreen() {
       {section === 'Briefing' && <BriefingSection />}
       {section === 'Host applications' && <HostApplicationsSection />}
       {section === 'Agencies' && <AgenciesSection />}
+      {section === 'Events' && <EventsSection />}
       {section === 'AI proposals' && <ProposalsSection />}
       {section === 'Reports' && <ReportsSection />}
       {section === 'Withdrawals' && <WithdrawalsSection />}
@@ -354,6 +356,110 @@ function SettingsSection() {
           <Text muted>Gift split: {JSON.stringify(data?.gift_split)}</Text>
           <Text muted>Purchase split (bps): {JSON.stringify(data?.purchase_split)}</Text>
         </Card>
+      </ScrollView>
+    </StateView>
+  );
+}
+
+const DAY = 24 * 3600 * 1000;
+
+/** Engagement events: gifting races and PK battle leagues, global or per region. */
+function EventsSection() {
+  const supabase = useSupabase();
+  const { c } = useTheme();
+  const offline = useOffline();
+  const act = useAct();
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [kind, setKind] = useState<AppEvent['kind']>('gifting');
+  const [region, setRegion] = useState<string | null>(null);
+  const [startIn, setStartIn] = useState(0);
+  const [days, setDays] = useState(3);
+  const [hostReward, setHostReward] = useState('');
+  const [gifterReward, setGifterReward] = useState('');
+
+  const { data, error, loading, reload } = useFocusedAsync(async () => {
+    const [events, regions] = await Promise.all([
+      supabase.from('events').select(EVENT_SELECT).order('starts_at', { ascending: false }).limit(100),
+      supabase.from('regions').select('code,name,active').eq('active', true).order('sort'),
+    ]);
+    if (events.error) throw events.error;
+    return { events: (events.data ?? []) as AppEvent[], regions: (regions.data ?? []) as { code: string; name: string }[] };
+  }, []);
+
+  const save = (publish: boolean) => {
+    const starts = new Date(Date.now() + startIn * DAY);
+    const rewards: EventReward[] = [];
+    if (hostReward.trim()) rewards.push({ role: 'host', rank_from: 1, rank_to: 1, reward: hostReward.trim() });
+    if (gifterReward.trim() && kind === 'gifting') rewards.push({ role: 'gifter', rank_from: 1, rank_to: 3, reward: gifterReward.trim() });
+    void act('upsert_event', {
+      p_id: null, p_title: title.trim(), p_description: description.trim() || null, p_kind: kind, p_region: region,
+      p_starts_at: starts.toISOString(), p_ends_at: new Date(starts.getTime() + days * DAY).toISOString(),
+      p_gift_ids: null, p_rewards: rewards, p_publish: publish,
+    }, () => { setTitle(''); setDescription(''); setHostReward(''); setGifterReward(''); void reload(); });
+  };
+
+  return (
+    <StateView state={resolveState({ offline, loading, error, data, onRetry: reload })}>
+      <ScrollView contentContainerStyle={listStyle}>
+        <Card>
+          <Text variant="h3">New event</Text>
+          <Input value={title} onChangeText={setTitle} placeholder="Title, e.g. Eid Gifting Race" maxLength={80} />
+          <Input value={description} onChangeText={setDescription} placeholder="Description (optional)" maxLength={1000} multiline />
+          <Row gap={8} style={{ flexWrap: 'wrap' }}>
+            <Chip label="Gifting race" selected={kind === 'gifting'} onPress={() => setKind('gifting')} />
+            <Chip label="PK battle league" selected={kind === 'pk_battle'} onPress={() => setKind('pk_battle')} />
+          </Row>
+          <Text variant="caption" muted>Region</Text>
+          <Row gap={8} style={{ flexWrap: 'wrap' }}>
+            <Chip label="Worldwide" selected={region === null} onPress={() => setRegion(null)} />
+            {data?.regions.map((r) => <Chip key={r.code} label={r.name} selected={region === r.code} onPress={() => setRegion(r.code)} />)}
+          </Row>
+          <Text variant="caption" muted>Starts</Text>
+          <Row gap={8} style={{ flexWrap: 'wrap' }}>
+            {[0, 1, 7].map((d) => <Chip key={d} label={d === 0 ? 'Now' : `In ${d} day${d > 1 ? 's' : ''}`} selected={startIn === d} onPress={() => setStartIn(d)} />)}
+          </Row>
+          <Text variant="caption" muted>Runs for</Text>
+          <Row gap={8} style={{ flexWrap: 'wrap' }}>
+            {[1, 3, 7, 14, 30].map((d) => <Chip key={d} label={`${d} day${d > 1 ? 's' : ''}`} selected={days === d} onPress={() => setDays(d)} />)}
+          </Row>
+          <Input value={hostReward} onChangeText={setHostReward} placeholder="Reward for the #1 host (optional)" maxLength={120} />
+          {kind === 'gifting' && <Input value={gifterReward} onChangeText={setGifterReward} placeholder="Reward for the top 3 gifters (optional)" maxLength={120} />}
+          <Row gap={8}>
+            <Button title="Publish" disabled={title.trim().length < 3 || offline} onPress={() => save(true)} style={{ flex: 1 }} />
+            <Button title="Save draft" variant="secondary" disabled={title.trim().length < 3 || offline} onPress={() => save(false)} style={{ flex: 1 }} />
+          </Row>
+          <Text variant="caption" muted>Scores count automatically from gifts and battles. Rewards are announced to winners when the event ends; coin prizes are paid by an owner.</Text>
+        </Card>
+        {(data?.events ?? []).length === 0 && <Text muted style={{ textAlign: 'center' }}>No events yet.</Text>}
+        {(data?.events ?? []).map((e) => {
+          const phase = eventPhase(e);
+          const label = e.status === 'scheduled' ? (phase === 'ended' ? 'ended — ready to finalize' : phase) : e.status;
+          return (
+            <Card key={e.id}>
+              <Row style={{ justifyContent: 'space-between' }}>
+                <Text variant="h3" style={{ flexShrink: 1 }}>{e.title}</Text>
+                <Text variant="caption" color={phase === 'live' && e.status === 'scheduled' ? c.gold : c.textMuted}>{label}</Text>
+              </Row>
+              <Text variant="caption" muted>
+                {e.kind === 'pk_battle' ? 'PK battle league' : 'Gifting race'} · {e.region ?? 'Worldwide'} · {new Date(e.starts_at).toLocaleDateString()} – {new Date(e.ends_at).toLocaleDateString()}
+              </Text>
+              <Row gap={8}>
+                {(e.status === 'scheduled' || e.status === 'finalized') && <Button title="Leaderboard" size="sm" variant="secondary" onPress={() => router.push(`/events/${e.id}`)} />}
+                {e.status === 'draft' && (
+                  <Button title="Publish" size="sm" onPress={() => act('upsert_event', {
+                    p_id: e.id, p_title: e.title, p_description: e.description, p_kind: e.kind, p_region: e.region, p_starts_at: e.starts_at,
+                    p_ends_at: e.ends_at, p_gift_ids: e.gift_ids, p_rewards: e.rewards, p_publish: true,
+                  }, reload)} />
+                )}
+                {e.status === 'scheduled' && phase === 'ended' && <Button title="Finalize" size="sm" onPress={() => act('finalize_event', { p_id: e.id }, reload)} />}
+                {(e.status === 'draft' || (e.status === 'scheduled' && phase !== 'ended')) && (
+                  <Button title="Cancel" size="sm" variant="danger" onPress={() => act('cancel_event', { p_id: e.id }, reload)} />
+                )}
+              </Row>
+            </Card>
+          );
+        })}
       </ScrollView>
     </StateView>
   );

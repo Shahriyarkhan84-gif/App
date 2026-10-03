@@ -375,3 +375,18 @@ actually been done vs. planned.
   `AWS_REGION`/credentials configured, Stripe needs
   `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET`, and the AI worker needs
   `INTERNAL_API_SECRET` (see `apps/api/.env.example`).
+
+### Core architecture additions (0.8.0)
+
+Regions, media (upload + HDR pipeline, subtitles) and events were built on
+both stacks at once. In `apps/api`: `RegionsModule` (sign-up country recorded
+on every account-creation path, regional pricing in `PaymentsService`),
+`MediaModule` (presigned S3 uploads, internal worker callbacks, IVS
+recording-end registration), `EventsModule` (scoring runs inside
+`GiftsService.sendGift` and `BattlesService.end`, whose transaction is now
+status-guarded), and an `AuditLog` model (closing the audit gap noted
+above). **Verified for real:** `tsc --noEmit`, 27 Jest tests, `prisma db push`
+against Postgres 16, and the built API booted against that database with the
+regions/pricing/media/events flows exercised over HTTP (31 checks). **Not
+ported:** the media worker still reads/writes Supabase; repointing it to the
+`/internal/media/*` endpoints is part of Phase 8.

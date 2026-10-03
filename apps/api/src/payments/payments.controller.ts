@@ -23,6 +23,12 @@ export class PaymentsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('packages/mine')
+  myPackages(@CurrentUser() user: JwtPayload) {
+    return this.payments.listPackagesFor(user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('checkout')
   async checkout(@CurrentUser() user: JwtPayload, @Body() dto: CreateCheckoutDto) {
     const payment = await this.payments.createPayment(user.sub, dto.packageId);

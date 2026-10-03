@@ -33,7 +33,7 @@ export class AuthService {
     @Inject(SMS_PROVIDER) private readonly sms: SmsProvider,
   ) {}
 
-  async register(dto: RegisterDto): Promise<TokenPair> {
+  async register(dto: RegisterDto, signupCountry: string | null = null): Promise<TokenPair> {
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) throw new ConflictException('Email already in use');
 
@@ -43,6 +43,7 @@ export class AuthService {
         email: dto.email,
         passwordHash,
         displayName: dto.displayName,
+        signupCountry,
         wallet: { create: {} },
       },
     });
@@ -117,7 +118,7 @@ export class AuthService {
     return { ok: true };
   }
 
-  async verifyOtp(phone: string, code: string): Promise<TokenPair> {
+  async verifyOtp(phone: string, code: string, signupCountry: string | null = null): Promise<TokenPair> {
     const otp = await this.prisma.phoneOtp.findFirst({
       where: { phone, expiresAt: { gt: new Date() } },
       orderBy: { createdAt: 'desc' },
@@ -133,13 +134,13 @@ export class AuthService {
 
     const user = await this.prisma.user.upsert({
       where: { phone },
-      create: { phone, wallet: { create: {} } },
+      create: { phone, signupCountry, wallet: { create: {} } },
       update: {},
     });
     return this.issueTokenPair(user.id, user.role);
   }
 
-  async googleLogin(idToken: string): Promise<TokenPair> {
+  async googleLogin(idToken: string, signupCountry: string | null = null): Promise<TokenPair> {
     const clientId = this.config.getOrThrow<string>('GOOGLE_CLIENT_ID');
     const client = new OAuth2Client(clientId);
     let payload;
@@ -158,6 +159,7 @@ export class AuthService {
         email: payload.email,
         displayName: payload.name,
         avatarUrl: payload.picture,
+        signupCountry,
         wallet: { create: {} },
       },
       update: {},
@@ -165,7 +167,7 @@ export class AuthService {
     return this.issueTokenPair(user.id, user.role);
   }
 
-  async appleLogin(identityToken: string, displayName?: string): Promise<TokenPair> {
+  async appleLogin(identityToken: string, displayName?: string, signupCountry: string | null = null): Promise<TokenPair> {
     let payload;
     try {
       payload = await appleSignin.verifyIdToken(identityToken, {
@@ -181,6 +183,7 @@ export class AuthService {
         appleSub: payload.sub,
         email: payload.email,
         displayName,
+        signupCountry,
         wallet: { create: {} },
       },
       update: {},

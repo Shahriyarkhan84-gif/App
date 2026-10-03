@@ -17,10 +17,11 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
+from dataclasses import dataclass
 from typing import Callable
 
 from .config import Settings
-from .db import Database
+from .db import MEDIA_KINDS, Database
 from .graphs.ceo import build_ceo_graph
 from .graphs.creator_assist import build_creator_graph
 from .graphs.fraud import build_fraud_graph
@@ -29,11 +30,23 @@ from .graphs.recommendations import build_recommendations_graph
 from .graphs.support import build_support_graph
 from .graphs.translation import build_translation_graph
 from .llm import LLM, ClaudeLLM, LLMRefusal
+from .media.pipeline import FFmpegTools, MediaTools, process_media
+from .media.storage import Storage, SupabaseStorage
+from .media.subtitles import Transcriber, generate_subtitles
 
 log = logging.getLogger("zynalive.worker")
 
 
-def build_dispatch(db: Database, llm: LLM) -> dict[str, Callable[[dict], dict]]:
+@dataclass
+class MediaContext:
+    """What the media queue needs: object storage and the encoder."""
+    storage: Storage
+    tools: MediaTools
+    preset: str = "medium"
+    transcriber: Transcriber | None = None  # subtitles run only when a speech-to-text engine is available
+
+
+def build_dispatch(db: Database, llm: LLM, media: MediaContext | None = None) -> dict[str, Callable[[dict], dict]]:
     """Maps ai_jobs.kind -> a function running the matching graph on the job payload."""
     message = build_message_graph(db, llm)
     report = build_report_graph(db, llm)
@@ -47,7 +60,7 @@ def build_dispatch(db: Database, llm: LLM) -> dict[str, Callable[[dict], dict]]:
     def pick(*keys):
         return lambda state: {k: state.get(k) for k in keys}
 
-    return {
+    dispatch: dict[str, Callable[[dict], dict]] = {
         "moderate_message": lambda p: pick("outcome", "verdict")(message.invoke({"message_id": int(p["message_id"])})),
         "moderate_report": lambda p: pick("outcome", "assessment")(report.invoke({"report_id": p["report_id"]})),
         "fraud_sweep": lambda p: pick("proposals")(fraud.invoke({"user_ids": None})),
@@ -58,13 +71,36 @@ def build_dispatch(db: Database, llm: LLM) -> dict[str, Callable[[dict], dict]]:
         "recommendations": lambda p: pick("written")(recs.invoke({})),
         "ceo_briefing": lambda p: pick("report_id", "briefing")(ceo.invoke({})),
     }
+    if media is not None:
+        dispatch["media_process"] = lambda p: process_media(db, media.storage, media.tools, p["asset_id"], preset=media.preset)
+        if media.transcriber is not None:
+            transcriber = media.transcriber
+            dispatch["media_subtitles"] = lambda p: generate_subtitles(db, media.storage, media.tools, transcriber, llm, p["asset_id"])
+    return dispatch
+
+
+# Called once a job has used up its retries, so the user-visible record doesn't stay stuck.
+FINAL_FAILURE: dict[str, Callable[[Database, dict, str], None]] = {
+    "media_process": lambda db, p, err: db.run("select public.internal_media_failed(%s, %s)", (p["asset_id"], err[:300])),
+    "media_subtitles": lambda db, p, err: db.run("select public.internal_media_subtitles(%s, null, true)", (p["asset_id"],)),
+}
+
+
+def queue_kinds(dispatch: dict, queues: str) -> list[str]:
+    """Job kinds this replica claims (never a kind it has no handler for)."""
+    if queues == "media":
+        return [k for k in dispatch if k in MEDIA_KINDS]
+    if queues == "ai":
+        return [k for k in dispatch if k not in MEDIA_KINDS]
+    return list(dispatch)
 
 
 class Worker:
-    def __init__(self, settings: Settings, db: Database, llm: LLM):
+    def __init__(self, settings: Settings, db: Database, llm: LLM, media: MediaContext | None = None):
         self.settings = settings
         self.db = db
-        self.dispatch = build_dispatch(db, llm)
+        self.dispatch = build_dispatch(db, llm, media)
+        self.kinds = queue_kinds(self.dispatch, settings.queues)
         self.stop = threading.Event()
         self.slots = threading.Semaphore(settings.concurrency)
         self.pool = ThreadPoolExecutor(max_workers=settings.concurrency, thread_name_prefix="agent")
@@ -85,7 +121,12 @@ class Worker:
             self.db.fail_job(job["id"], f"refusal: {exc}", self.settings.max_attempts, self.settings.max_attempts)
             log.warning("job %s %s refused", job["id"], job["kind"])
         except Exception as exc:  # noqa: BLE001 - one bad job must not kill the worker
-            self.db.fail_job(job["id"], f"{type(exc).__name__}: {exc}", job["attempts"], self.settings.max_attempts)
+            error = f"{type(exc).__name__}: {exc}"
+            if self.db.fail_job(job["id"], error, job["attempts"], self.settings.max_attempts) and job["kind"] in FINAL_FAILURE:
+                try:
+                    FINAL_FAILURE[job["kind"]](self.db, job["payload"], error)
+                except Exception:  # noqa: BLE001
+                    log.exception("final-failure hook for job %s failed", job["id"])
             log.exception("job %s %s failed (attempt %s)", job["id"], job["kind"], job["attempts"])
         finally:
             self.slots.release()
@@ -94,7 +135,7 @@ class Worker:
         """Claims and starts as many jobs as there are free slots. Returns how many started."""
         started = 0
         while not self.stop.is_set() and self.slots.acquire(blocking=False):
-            job = self.db.claim_job()
+            job = self.db.claim_job(self.kinds)
             if job is None:
                 self.slots.release()
                 break
@@ -125,10 +166,16 @@ class Worker:
                 log.exception("ai_action %s failed", row["id"])
                 self.db.run("update public.ai_actions set status = 'failed', updated_at = now() where id = %s", (row["id"],))
 
+    def finalize_events(self) -> None:
+        """Engagement events that have ended: snapshot leaderboards and notify winners."""
+        row = self.db.one("select public.internal_finalize_due_events() as n")
+        if row and row["n"]:
+            log.info("finalized %s events", row["n"])
+
     # Main loop ------------------------------------------------------------------
 
     def run(self) -> None:
-        log.info("worker started (concurrency=%s)", self.settings.concurrency)
+        log.info("worker started (queues=%s, concurrency=%s)", self.settings.queues, self.settings.concurrency)
         last_housekeeping = 0.0
         while not self.stop.is_set():
             try:
@@ -136,8 +183,10 @@ class Worker:
                     requeued = self.db.requeue_stale()
                     if requeued:
                         log.warning("requeued %s stale jobs", requeued)
-                    self.schedule()
-                    self.execute_approved_actions()
+                    if self.settings.queues != "media":
+                        self.schedule()
+                        self.execute_approved_actions()
+                        self.finalize_events()
                     last_housekeeping = time.monotonic()
                 if self.drain_once() == 0:
                     self.stop.wait(self.settings.poll_interval_s)
@@ -148,11 +197,26 @@ class Worker:
         self.pool.shutdown(wait=True)
 
 
+def load_transcriber(model_size: str) -> Transcriber | None:
+    try:
+        from .media.subtitles import WhisperTranscriber
+        return WhisperTranscriber(model_size)
+    except ImportError:
+        log.warning("faster-whisper not installed: subtitle jobs stay queued (pip install '.[subtitles]')")
+        return None
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     settings = Settings()
     db = Database(settings.database_url, max_size=settings.concurrency + 2)
-    worker = Worker(settings, db, ClaudeLLM(settings.model_for))
+    media = None
+    if settings.queues in ("all", "media") and settings.supabase_url and settings.supabase_service_key:
+        media = MediaContext(SupabaseStorage(settings.supabase_url, settings.supabase_service_key), FFmpegTools(), settings.media_preset,
+                             load_transcriber(settings.subtitles_model))
+    elif settings.queues == "media":
+        raise SystemExit("WORKER_QUEUES=media needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY")
+    worker = Worker(settings, db, ClaudeLLM(settings.model_for), media)
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda *_: worker.stop.set())
     try:

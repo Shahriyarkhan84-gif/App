@@ -3,6 +3,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
 import { friendlyError } from '@/lib/errors';
+import { useI18n } from '@/lib/i18n';
 import { useTheme } from '@/lib/theme';
 
 import { Button, Text } from './ui';
@@ -36,19 +37,20 @@ function Message({ icon, title, body, children }: { icon: IconName; title: strin
 
 export function StateView({ state, children }: { state: ViewState; children?: ReactNode }) {
   const { c } = useTheme();
+  const { t } = useI18n();
   switch (state.kind) {
     case 'success':
       return <>{children}</>;
     case 'loading':
       return (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel="Loading">
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel={t('state.loading')}>
           <ActivityIndicator size="large" color={c.primary} />
         </View>
       );
     case 'error':
       return (
-        <Message icon="alert-circle-outline" title="Something went wrong" body={friendlyError(state.error)}>
-          {state.onRetry && <Button title="Try again" variant="secondary" onPress={state.onRetry} />}
+        <Message icon="alert-circle-outline" title={t('state.error.title')} body={friendlyError(state.error)}>
+          {state.onRetry && <Button title={t('state.retry')} variant="secondary" onPress={state.onRetry} />}
         </Message>
       );
     case 'empty':
@@ -59,14 +61,14 @@ export function StateView({ state, children }: { state: ViewState; children?: Re
       );
     case 'offline':
       return (
-        <Message icon="cloud-offline-outline" title="You're offline" body="Check your connection and try again.">
-          {state.onRetry && <Button title="Retry" variant="secondary" onPress={state.onRetry} />}
+        <Message icon="cloud-offline-outline" title={t('state.offline.title')} body={t('state.offline.body')}>
+          {state.onRetry && <Button title={t('state.offline.retry')} variant="secondary" onPress={state.onRetry} />}
         </Message>
       );
     case 'permission':
       return (
         <Message icon="lock-closed-outline" title={state.title} body={state.body}>
-          <Button title="Allow access" onPress={state.onGrant} />
+          <Button title={t('state.permission.allow')} onPress={state.onGrant} />
         </Message>
       );
     case 'disabled':

@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/com
 import type { Prisma } from '@zynalive/database';
 
 import { BattlesService } from '../battles/battles.service';
+import { EventsService } from '../events/events.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { WalletsService } from '../wallets/wallets.service';
 
@@ -14,6 +15,7 @@ export class GiftsService {
     private readonly prisma: PrismaService,
     private readonly wallets: WalletsService,
     private readonly battles: BattlesService,
+    private readonly events: EventsService,
   ) {}
 
   catalog() {
@@ -103,6 +105,8 @@ export class GiftsService {
       // Same effect as the SQL trigger on `gifts`, called explicitly here
       // since this transaction *is* the gift insert.
       await this.battles.applyGiftScore(roomId, total, tx);
+      // Same as the events_gift_score trigger: gifting-race scores, in this transaction.
+      await this.events.applyGift(tx, { hostId: room.hostId, senderId, giftId, coinsTotal: total });
 
       return gift;
     });

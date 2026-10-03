@@ -1,10 +1,34 @@
 # Changelog
 
-## 0.7.5 — Forgot password, PK battle banner
+## 0.8.3 — Forgot password, PK battle banner
 
 - Sign in now has "Forgot password?" → `src/app/(auth)/forgot-password.tsx`: email a reset code (Clerk `reset_password_email_code`), then enter the code and a new password; signs the user in on success. Accounts with 2FA are told to finish on the web app, the same as sign-in.
 - Home feed shows a "PK Battle Night" card linking to the most-watched live room that's in a battle, so battles can be found from Home.
 - EAS Update config (`runtimeVersion`, `updates.url`, build-profile channels) is in `app.json` / `eas.json`; the `expo-updates` package itself still needs installing before over-the-air updates work.
+
+## 0.8.2 — Menu kit
+
+- **Eight menu styles** as reusable components in `src/components/Menus.tsx`, all taking the same `MenuItem` shape: Grid (`MenuGrid`), Side menu (`SideMenu`, `SideMenuButton`), Tab bar (`TabBar`, `TabBarItem`, `TabBarCenterButton`, `useTabBarStyle`), FAB speed dial (`FabMenu`), action Sheet (`ActionSheet`), Three dots (`OverflowMenu`), Rectangular rail (`NavRail`) and Rudder (`RudderBar`).
+- **Main navigation is now a classic tab bar**: edge to edge with a rounded top, icon over label, the active tab in the primary color, and a raised center **+** for Go live. It replaces the floating pill bar.
+- Used in the app: a side menu on Home (Videos, Events, Rankings, Wallet, Settings, Help), a ⋮ menu in the video player header (Share, Remove), and a FAB on the Videos feed for hosts (Upload video, Go live, Events).
+- Settings → Menu styles previews all eight. Menu labels are translated into English, Urdu, Hindi and Bengali.
+- Design boards: `docs/design/menu-kit-{dark,light}.svg` (+ PNG previews), generated from the theme tokens and real Ionicons by `docs/design/menu_kit_svg.py`. The SVGs drop into Figma as named, editable layers and open in Photoshop/Illustrator.
+
+## 0.8.1 — Live database brought in line with the repo
+
+- The live Supabase project only had an old MVP script: three tables (`users` with password hashes, `rooms`, `chat_messages`) in `public` with RLS disabled — the Security Advisor's 3 errors. Its demo rows (demo_host, demo_viewer, one demo room) were removed with them (`20260923000000_drop_mvp_placeholder.sql`), then all repo migrations were applied. RLS is on for every table; the advisor shows 0 errors.
+- Schema verified identical to a database built from the repo (functions, columns, constraints, policies, triggers, indexes, grants); migration history matches the file versions, so `supabase db push` works from here.
+- Fix: `review_host_application()` was executable by signed-out callers (it rejected them inside, but shouldn't be reachable) — revoked, with a must-pass check that anon can call no public function except `my_region()`.
+
+## 0.8.0 — Core architecture complete: upload + HDR pipeline, subtitles, localization, regions, events
+
+- **Upload + HDR pipeline.** Hosts upload videos (Videos → My videos); the media worker probes them, detects HDR (PQ → HDR10, ARIB STD-B67 → HLG, else SDR), and encodes a ladder: 4K HDR and 1080p HDR (HEVC Main10 with HDR10 metadata) plus an always-present SDR fallback (tone-mapped H.264 1080/720/480/360), packaged as fMP4 HLS with a `VIDEO-RANGE` master playlist for adaptive bitrate. Live streams can be recorded (LiveKit egress, `media.record_live`) and replayed through the same pipeline. New tables `media_assets`, `media_renditions`, `media_views`; buckets `uploads` (private) and `media` (public); worker queue `media_process` (`WORKER_QUEUES`, `Dockerfile.media`). App: Videos feed, upload screen with realtime status, HLS player (expo-video).
+- **🤖 Subtitles.** Videos with audio get captions: Whisper transcription, Claude translation into English, Urdu, Hindi and Bengali, WebVTT + HLS subtitle tracks in the master playlist; the player's captions picker defaults to the viewer's language. `media_subtitles`, `media_assets.subtitle_status`.
+- **Localization layer.** `src/lib/i18n` with typed English/Urdu/Hindi/Bengali catalogs; language = saved choice → device → region default → English, mirrored to `profiles.language`; Urdu is RTL (`supportsRTL`). Settings → Language. Tabs, screen states, profile menu, error copy, videos and events are translated; other screens fall back to English until migrated.
+- **Regional variants.** `regions` (PK, IN, BD, Global active; Indonesia, Malaysia, Türkiye, Gulf, Philippines, Nepal ready to switch on) with currency, languages, timezone and feature switches. Regional coin pricing (INR/BDT/USD packages added); the region comes from the frozen sign-up country and `internal_create_payment()` refuses another region's package (must-pass). Gift catalog items can be limited to regions.
+- **Engagement events.** Gifting races (qualifying gifts, per region) and PK battle leagues (win 3, tie 1) with live leaderboards, rewards and automatic finalization + winner notifications. Owner command center → Events. Home shows the live event. Scores are kept by triggers; `send_gift()` is untouched.
+- **NestJS/Prisma mirror** of all of the above (`apps/api`: regions, media, events modules; Prisma models incl. `AuditLog`), with Jest tests.
+- Fixes: agent test fixtures set a cover before going live (required since 0.7.1); `package-lock.json` regenerated for the workspaces so `npm ci` works; USD prices keep their cents.
 
 ## 0.7.4 — PK battles
 

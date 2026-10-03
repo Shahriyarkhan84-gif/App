@@ -31,6 +31,7 @@ token plus `LIVEKIT_URL`.
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | rate limiting (optional; limits off without it) |
 | `RESEND_API_KEY`, `EMAIL_FROM` | welcome email (optional) |
 | `DIDIT_API_KEY`, `DIDIT_WORKFLOW_ID`, `DIDIT_WEBHOOK_SECRET` | `didit-session`, `didit-webhook` (host identity verification) |
+| `STORAGE_S3_ENDPOINT`, `STORAGE_S3_REGION`, `STORAGE_S3_ACCESS_KEY`, `STORAGE_S3_SECRET` | `livekit-webhook` live recordings: LiveKit egress writes into the `uploads` bucket through Supabase Storage's S3 endpoint (Project settings → Storage → S3 access keys). Only needed when `platform_settings.media.record_live` is on. |
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected automatically.
 
@@ -44,6 +45,18 @@ token plus `LIVEKIT_URL`.
 | `AI_MODEL_<BRANCH>` | — | Per-branch override: `MODERATION`, `FRAUD`, `SUPPORT`, `CREATOR_ASSIST`, `TRANSLATION`, `CEO` |
 | `AI_CONCURRENCY` | 4 | Parallel jobs per worker |
 | `AI_CEO_EVERY_MIN` / `AI_FRAUD_EVERY_MIN` / `AI_RECS_EVERY_MIN` | 60 / 30 / 15 | Schedules |
+| `WORKER_QUEUES` | `all` | `ai` (Dockerfile) · `media` (Dockerfile.media) · `all`. A replica never claims a job kind it has no handler for. |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | — | Media worker only: downloads sources from `uploads`, writes HLS to `media`. Server-side only. |
+| `MEDIA_PRESET` | `medium` | x264/x265 preset (`faster` to save CPU, `slow` for quality) |
+| `SUBTITLES_MODEL` | `small` | Whisper model size for subtitles (needs `pip install '.[subtitles]'`) |
+
+## Platform settings (owner-editable, `platform_settings.media`)
+
+`media_base` (public URL of the `media` bucket — set per environment), `uploads_enabled`, `hdr_enabled`, `uhd_enabled` (4K rung), `record_live`, `max_upload_mb` (2048), `max_duration_s` (3600), `max_pending_uploads` (5), `subtitles_enabled`, `subtitle_languages` (`["en","ur","hi","bn"]`).
+
+## NestJS API (`apps/api/.env`)
+
+Media adds `MEDIA_UPLOADS_BUCKET` (private S3 bucket for sources; clients get presigned PUTs) and `MEDIA_BASE_URL` (CloudFront in front of the media bucket), alongside the existing `AWS_*`, `INTERNAL_API_SECRET` (worker callbacks) and Stripe/JWT variables.
 
 ## Build-time
 

@@ -17,6 +17,7 @@ import { View } from 'react-native';
 import { LaunchScreen } from '@/components/LaunchScreen';
 import { Text } from '@/components/ui';
 import { env, missingRequiredEnv } from '@/lib/env';
+import { AppI18n } from '@/lib/i18n/AppI18n';
 import { ProfileProvider } from '@/lib/profile';
 import { initSentry, Sentry } from '@/lib/sentry';
 import { SupabaseProvider } from '@/lib/supabase';
@@ -112,6 +113,12 @@ function RootNavigator() {
         <Stack.Screen name="agency" options={{ title: 'Agency portal' }} />
         <Stack.Screen name="contributions/[id]" options={{ title: 'Contributions' }} />
         <Stack.Screen name="admin/index" options={{ title: 'Owner command center' }} />
+        <Stack.Screen name="videos/index" options={{ title: 'Videos' }} />
+        <Stack.Screen name="videos/upload" options={{ title: 'My videos' }} />
+        <Stack.Screen name="videos/[id]" options={{ title: 'Video' }} />
+        <Stack.Screen name="events/index" options={{ title: 'Events' }} />
+        <Stack.Screen name="events/[id]" options={{ title: 'Event' }} />
+        <Stack.Screen name="menus" options={{ title: 'Menu styles' }} />
       </Stack.Protected>
       <Stack.Protected guard={!isSignedIn}>
         <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
@@ -151,11 +158,13 @@ function RootLayout() {
       <LaunchGate>
         <SupabaseProvider>
           <ProfileProvider>
-            <Analytics>
-              <IdentityAndScreens />
-              <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-              <RootNavigator />
-            </Analytics>
+            <AppI18n>
+              <Analytics>
+                <IdentityAndScreens />
+                <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+                <RootNavigator />
+              </Analytics>
+            </AppI18n>
           </ProfileProvider>
         </SupabaseProvider>
       </LaunchGate>

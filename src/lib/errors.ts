@@ -1,3 +1,5 @@
+import { hasMessage, t } from './i18n';
+
 // Maps server error codes (RPC exceptions and edge-function error.code) to
 // user-facing copy. Unknown errors get a generic message; details stay server-side.
 const MESSAGES: Record<string, string> = {
@@ -54,6 +56,24 @@ const MESSAGES: Record<string, string> = {
   already_in_battle: "You're already in a battle.",
   target_already_in_battle: 'That host is already in a battle.',
   not_invitable: "This invite isn't pending anymore.",
+  uploads_disabled: 'Video uploads are temporarily unavailable.',
+  invalid_format: 'Use an MP4, MOV, M4V, WebM or MKV video.',
+  title_required: 'Add a title.',
+  invalid_visibility: 'Choose Public or Unlisted.',
+  too_many_pending: 'Wait for your other uploads to finish processing first.',
+  already_submitted: 'This video is already uploaded.',
+  upload_missing: 'The upload did not finish. Try again.',
+  not_found: 'That could not be found.',
+  too_long: 'That video is longer than the limit.',
+  file_too_large: 'That video is larger than the limit.',
+  invalid_package: 'That coin package is not available in your region.',
+  invalid_region: 'Unknown region.',
+  invalid_rewards: 'Check the rewards: each needs a rank range and a description.',
+  invalid_gift: 'That gift is not available.',
+  invalid_schedule: 'The event must end after it starts, in the future.',
+  event_locked: 'Running or finished events cannot be edited.',
+  event_not_ended: 'The event has not ended yet.',
+  not_finalizable: 'This event is already finalized or cancelled.',
 };
 
 export function errorCode(e: unknown): string {
@@ -65,7 +85,10 @@ export function errorCode(e: unknown): string {
   return 'unknown';
 }
 
+/** User-facing copy in the current language (English where a code has no translation yet). */
 export function friendlyError(e: unknown): string {
   const code = errorCode(e);
-  return MESSAGES[code] ?? 'Something went wrong. Please try again.';
+  const key = `error.${code}`;
+  if (hasMessage(key)) return t(key);
+  return MESSAGES[code] ?? t('error.generic');
 }

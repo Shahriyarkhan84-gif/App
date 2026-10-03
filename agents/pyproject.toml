@@ -12,6 +12,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+# Media worker speech-to-text for subtitles (Dockerfile.media installs it).
+subtitles = ["faster-whisper>=1.1,<2"]
 
 [project.scripts]
 zynalive-agents = "zynalive_agents.worker:main"

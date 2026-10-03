@@ -24,6 +24,17 @@ is tracked in [REMAINING_WORK.md](REMAINING_WORK.md).
                          ▼                             creator assist · translation ·
                   livekit-webhook (edge fn)            recommendations · AI CEO
  Stripe Checkout ──> stripe-webhook (edge fn) ──> internal_credit_payment() ──> coins
+
+ Upload pipeline:  app ──> uploads/<host>/<asset> ──┐
+ Live pipeline:    LiveKit egress (record_live) ────┤──> media worker (WORKER_QUEUES=media)
+                                                    │    ffprobe → HDR detection (PQ→HDR10, HLG, SDR)
+                                                    │    → 4K HDR · 1080p HDR · SDR fallback ladder
+                                                    │    → fMP4 HLS + VIDEO-RANGE master (adaptive bitrate)
+                                                    └──> media/<asset>/master.m3u8 ──> expo-video player
+                                                         + 🤖 Subtitles (Whisper → Claude translation → HLS tracks)
+ Localization layer: src/lib/i18n (en · ur (RTL) · hi · bn), region default language
+ Engagement layer:   PK battles + events (gifting races, battle leagues) scored by triggers
+ Regional variants:  regions (currency, language, timezone, features) → regional pricing
 ```
 
 ## Components
@@ -42,6 +53,10 @@ is tracked in [REMAINING_WORK.md](REMAINING_WORK.md).
 | Analytics / errors | PostHog, Sentry | `src/lib/analytics.ts`, `src/lib/sentry.ts` |
 | Feedback | ProductBridge board link | Profile → Share feedback |
 | Web hosting | Vercel (static Expo web export) | `vercel.json` |
+| Media pipeline | Supabase Storage (`uploads` private, `media` public) + media worker (ffmpeg: libx264/libx265/zscale; Whisper) | `supabase/migrations/…25010000_media_pipeline.sql`, `agents/zynalive_agents/media/`, `src/app/videos/` |
+| Localization | typed catalogs + provider, expo-localization (RTL) | `src/lib/i18n/` |
+| Regions & events | `regions`, regional `coin_packages`, `events` + scoring triggers | `…25030000_regions_events.sql`, `src/app/events/` |
+| Menus | 8-style menu kit (grid, side menu, tab bar, FAB, sheet, three dots, rail, rudder); main nav = tab bar with raised Go-live + | `src/components/Menus.tsx`, `src/app/(tabs)/_layout.tsx`, `src/app/menus.tsx` |
 
 "Microservices" from the architecture (auth, streaming, chat, economy, payments,
 creator-payouts, agencies, notifications, moderation, recommendations, AI,
@@ -71,6 +86,25 @@ and writes ledger rows — one transaction. See [ECONOMY.md](ECONOMY.md).
 **Buy coins** — `coins-checkout` creates a pending `payments` row priced from
 `coin_packages` (never from the client) and a Stripe Checkout session. Only the
 signed Stripe webhook can call `internal_credit_payment()`.
+
+**Upload a video** — `create_media_upload()` reserves the asset and fixes the
+object name → the app uploads to `uploads/<host id>/<asset>.<ext>` →
+`submit_media_upload()` checks the object exists and queues `media_process` →
+the media worker probes, detects HDR, encodes the ladder and calls
+`internal_media_ready()` (SDR rung mandatory) → the owner is notified and
+`media_subtitles` is queued if the video has audio. Players load
+`<media_base>/<asset>/master.m3u8`: HDR displays pick the PQ/HLG variants,
+everything else the SDR ladder, and bitrate adapts to the network.
+
+**Live → replay** — with `media.record_live` on, `livekit-webhook` starts a
+participant egress when the host joins; on `egress_ended` the recording is
+registered with `internal_register_live_recording()` and goes through the same
+pipeline. WebRTC live video is SDR, so replays come out SDR; HDR applies to
+uploads (true HDR *live* needs an HEVC/HDR ingest such as RTMP/SRT, not built).
+
+**Events** — admins publish an event (global or per region). Triggers on
+`gifts` and ended `pk_battles` update `event_scores`; the worker finalizes
+ended events (`event_results`, winner notifications).
 
 **AI** — Postgres RPCs enqueue `ai_jobs`; the worker claims them with
 `FOR UPDATE SKIP LOCKED`, runs the matching LangGraph graph, and writes results
