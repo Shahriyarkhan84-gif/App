@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.6 — Build roadmap
+
+- `docs/BUILD_ROADMAP.md`: the Frontend, Backend and Full Stack roadmaps mapped onto Zynalive (what each step is here, where it lives, status, what to build next) plus a suggested build order.
+
 ## 0.8.5 — White app
 
 - The app is always white now, whatever the phone's dark-mode setting: `useTheme()` returns the light palette, whose background is pure white (`#FFFFFF`) with lightly tinted surfaces; the purple/pink accents are unchanged. The light button gradient is the brand gradient (`#5B2A9E → #B341E0 → #FF6FB0`) so white button text stays readable.
