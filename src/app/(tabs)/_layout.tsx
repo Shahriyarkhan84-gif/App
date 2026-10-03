@@ -18,7 +18,7 @@ function tabButton(icon: IconName, activeIcon: IconName, label: string) {
   return TabButton;
 }
 
-// User app navigation: Home · Explore · Party · [+ Go live] · Messages · Me
+// User app navigation: Home · Explore · [+ Go live] · Messages · Me
 export default function TabsLayout() {
   const { c } = useTheme();
   const { t } = useI18n();
@@ -27,7 +27,8 @@ export default function TabsLayout() {
     <Tabs screenOptions={{ headerShown: false, tabBarShowLabel: false, tabBarStyle, sceneStyle: { backgroundColor: c.background } }}>
       <Tabs.Screen name="index" options={{ title: t('tab.home'), tabBarButton: tabButton('home-outline', 'home', t('tab.home')) }} />
       <Tabs.Screen name="explore" options={{ title: t('tab.explore'), tabBarButton: tabButton('compass-outline', 'compass', t('tab.explore')) }} />
-      <Tabs.Screen name="party" options={{ title: t('tab.party'), tabBarButton: tabButton('people-outline', 'people', t('tab.party')) }} />
+      {/* Party stays a route (Explore → Party rooms, Home → Search) but has no tab button. */}
+      <Tabs.Screen name="party" options={{ title: t('tab.party'), href: null }} />
       <Tabs.Screen
         name="create"
         options={{

@@ -125,13 +125,13 @@ def auth_top():
     return group('Top bar', icon_button('chevron-back', 24, 56, name='Back'), wordmark(W / 2, 86, 24, 'middle'))
 
 
-TABS = [('Home', 'home-outline', 'home'), ('Explore', 'compass-outline', 'compass'), ('Party', 'people-outline', 'people'), None,
+TABS = [('Home', 'home-outline', 'home'), ('Explore', 'compass-outline', 'compass'), None,
         ('Messages', 'chatbox-outline', 'chatbox'), ('Me', 'person-outline', 'person')]
 
 
 def tab_bar(active):
     top = H - 82
-    slot = W / 6
+    slot = W / len(TABS)
     parts = [f'<path id="Bar" d="M0 {top + 24} Q0 {top} 24 {top} H{W - 24} Q{W} {top} {W} {top + 24} V{H} H0 Z" fill="{C["tabBar"]}"/>']
     for i, t in enumerate(TABS):
         cx = slot * i + slot / 2
