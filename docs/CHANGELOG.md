@@ -1,8 +1,9 @@
 # Changelog
 
-## 0.8.3 — Forgot password, PK battle banner
+## 0.8.3 — Forgot password, notifications, PK battle banner
 
 - Sign in now has "Forgot password?" → `src/app/(auth)/forgot-password.tsx`: email a reset code (Clerk `reset_password_email_code`), then enter the code and a new password; signs the user in on success. Accounts with 2FA are told to finish on the web app, the same as sign-in.
+- Notifications (Messages → Notifications) match the design: "Mark all read", unread items highlighted as cards, short times ("2m", "Yesterday", "12 Sep"). The Home bell now opens this tab directly (`/messages?tab=notifications`) instead of Chats.
 - Home feed shows a "PK Battle Night" card linking to the most-watched live room that's in a battle, so battles can be found from Home.
 - EAS Update config (`runtimeVersion`, `updates.url`, build-profile channels) is in `app.json` / `eas.json`; the `expo-updates` package itself still needs installing before over-the-air updates work.
 

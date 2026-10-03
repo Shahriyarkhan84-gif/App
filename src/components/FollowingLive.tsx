@@ -78,7 +78,7 @@ export function LiveBell({ rooms }: { rooms: Room[] }) {
   return (
     <>
       <PressScale
-        onPress={() => (count > 0 ? setOpen(true) : router.push('/messages'))}
+        onPress={() => (count > 0 ? setOpen(true) : router.push({ pathname: '/messages', params: { tab: 'notifications' } }))}
         scaleTo={0.9}
         accessibilityRole="button"
         accessibilityLabel={count > 0 ? `Notifications. ${count} people you follow are live` : 'Notifications'}
@@ -104,7 +104,7 @@ export function LiveBell({ rooms }: { rooms: Room[] }) {
           variant="secondary"
           onPress={() => {
             setOpen(false);
-            router.push('/messages');
+            router.push({ pathname: '/messages', params: { tab: 'notifications' } });
           }}
         />
       </Sheet>

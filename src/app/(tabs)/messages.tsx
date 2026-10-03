@@ -1,5 +1,5 @@
 import { useAuth } from '@clerk/clerk-expo';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 
@@ -20,7 +20,14 @@ const TABS = [
 ] as const;
 
 export default function MessagesScreen() {
-  const [tab, setTab] = useState<'chats' | 'notifications'>('chats');
+  const params = useLocalSearchParams<{ tab?: string }>();
+  const [tab, setTab] = useState<'chats' | 'notifications'>(params.tab === 'notifications' ? 'notifications' : 'chats');
+  // Tabs stay mounted, so a later link to ?tab=notifications must switch an already-open screen.
+  const [seenParam, setSeenParam] = useState(params.tab);
+  if (params.tab !== seenParam) {
+    setSeenParam(params.tab);
+    if (params.tab === 'notifications') setTab('notifications');
+  }
   return (
     <Screen>
       <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 12 }}>
@@ -108,6 +115,12 @@ function Notifications() {
   }, [userId]);
   useRealtime('notifications', `user_id=eq.${userId}`, () => reload());
 
+  const unread = (data ?? []).filter((n) => !n.read_at).length;
+  const markAllRead = async () => {
+    await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('user_id', userId!).is('read_at', null);
+    reload();
+  };
+
   const open = async (n: Notification) => {
     if (!n.read_at) {
       await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', n.id);
@@ -123,18 +136,27 @@ function Notifications() {
 
   return (
     <StateView state={resolveState({ offline, loading, error, data, onRetry: reload, isEmpty: (d) => d.length === 0, empty: { title: 'All caught up' } })}>
+      {unread > 0 && (
+        <Pressable onPress={markAllRead} accessibilityRole="button" hitSlop={8} style={{ alignSelf: 'flex-end', paddingHorizontal: 16, paddingBottom: 6 }}>
+          <Text variant="label" color={c.accent} style={{ fontSize: 13 }}>Mark all read</Text>
+        </Pressable>
+      )}
       <FlatList
         data={data ?? []}
         keyExtractor={(n) => String(n.id)}
-        contentContainerStyle={{ paddingHorizontal: 16, gap: 4 }}
-        renderItem={({ item }) => (
-          <Pressable onPress={() => open(item)}>
-            <View style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.divider, opacity: item.read_at ? 0.6 : 1 }}>
-              <Text variant="label">{item.title}</Text>
-              {item.body && <Text muted numberOfLines={3}>{item.body}</Text>}
-              <Text variant="caption" muted>{new Date(item.created_at).toLocaleString()}</Text>
-            </View>
-          </Pressable>
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 6 }}
+        renderItem={({ item, index }) => (
+          <FadeIn delay={stagger(index, 50)}>
+            <PressScale scaleTo={0.98} onPress={() => open(item)} accessibilityRole="button">
+              <Row style={{ alignItems: 'flex-start', paddingVertical: 12, paddingHorizontal: 14, borderRadius: 16, backgroundColor: item.read_at ? 'transparent' : c.surface }}>
+                <View style={{ flex: 1, gap: 3 }}>
+                  <Text variant="label" style={{ fontSize: 15 }}>{item.title}</Text>
+                  {item.body && <Text variant="bodySmall" muted numberOfLines={3}>{item.body}</Text>}
+                </View>
+                <Text variant="caption" faint>{shortTime(item.created_at)}</Text>
+              </Row>
+            </PressScale>
+          </FadeIn>
         )}
       />
     </StateView>
@@ -147,5 +169,8 @@ function shortTime(iso: string) {
   if (mins < 1) return 'now';
   if (mins < 60) return `${mins}m`;
   if (mins < 60 * 24) return `${Math.round(mins / 60)}h`;
-  return d.toLocaleDateString();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 }
