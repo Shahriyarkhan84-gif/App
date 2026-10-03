@@ -6,6 +6,7 @@
 - **Home header**: the Rankings trophy is replaced by a Wallet button.
 - **Tab bar buttons**: the active tab gets a tinted pill behind its icon, labels stay on one line (10px under 360px width), and the center Go live button uses the brand gradient.
 - **Fix:** the active tab was never highlighted — the tab navigator reports focus as `aria-selected`, but the tab buttons only read `accessibilityState.selected`.
+- **Figma boards**: `docs/design/screens/*.svg` (one per screen) and `docs/design/app-screens.svg` (all ten side by side) — logo loading → Welcome → Sign up → Verify email → Sign in → Reset password ×2 → Home → Explore → Notifications, drawn from the screen code with the theme tokens, app fonts and real Ionicons. Drag into Figma for editable layers. Regenerate with `python3 docs/design/app_screens_svg.py`.
 - **All buttons**: shared `Button`, `IconButton`, `Chip`, tab items and menu tiles give a light tap vibration on press (`tapHaptic()` / `PressScale haptic` in `src/components/Motion.tsx`; no-op on web).
 
 ## 0.8.3 — Forgot password, notifications, writing logo, PK battle banner
