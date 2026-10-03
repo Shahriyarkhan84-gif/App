@@ -145,7 +145,7 @@ function MissingConfig() {
 }
 
 function RootLayout() {
-  const { c, scheme } = useTheme();
+  const { c } = useTheme();
   // A font that fails to load falls back to the system face; never block on it.
   const [fontsLoaded, fontError] = useFonts({ BricolageGrotesque_800ExtraBold, DMSans_400Regular, DMSans_500Medium, DMSans_700Bold });
   const fontsReady = fontsLoaded || !!fontError;
@@ -162,7 +162,7 @@ function RootLayout() {
             <AppI18n>
               <Analytics>
                 <IdentityAndScreens />
-                <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+                <StatusBar style="dark" />
                 <RootNavigator />
               </Analytics>
             </AppI18n>

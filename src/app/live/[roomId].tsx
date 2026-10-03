@@ -1,6 +1,7 @@
 import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { Alert, Pressable, Share, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -101,6 +102,7 @@ export default function LiveRoomScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
+      <StatusBar style="light" />
       <StateView state={state}>
         {r && token.data && (
           <>

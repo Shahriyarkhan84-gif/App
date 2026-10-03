@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useIsFocused } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -136,6 +137,7 @@ export default function CreateScreen() {
   if (state.kind === 'success' && ready) {
     return (
       <View style={{ flex: 1, backgroundColor: '#170B2E' }}>
+        {focused && <StatusBar style="light" />}
         {Platform.OS !== 'web' && focused && camera?.granted ? (
           <CameraView facing="front" style={StyleSheet.absoluteFill} />
         ) : (

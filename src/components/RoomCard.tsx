@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { View } from 'react-native';
 
-import { useTheme } from '@/lib/theme';
+import { liveColors, useTheme } from '@/lib/theme';
 import { categoryLabel, displayName, type Room } from '@/lib/types';
 
 import { PressScale } from './Motion';
@@ -16,7 +16,7 @@ export function RoomCard({ room, width, reason, rank }: { room: Room; width: num
   return (
     <Link href={{ pathname: '/live/[roomId]', params: { roomId: room.id } }} asChild>
       <PressScale style={{ width }} scaleTo={0.97} accessibilityLabel={`Watch ${name} live: ${room.title}`}>
-        <View style={{ width, height: Math.round(width * 1.33), borderRadius: radius[16], overflow: 'hidden', backgroundColor: c.surfaceRaised }}>
+        <View style={{ width, height: Math.round(width * 1.33), borderRadius: radius[16], overflow: 'hidden', backgroundColor: liveColors.surfaceRaised }}>
           {cover ? <Image source={cover} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
               <Text variant="display" color="rgba(255,255,255,0.14)" style={{ fontSize: 96, lineHeight: 110 }}>{name.replace('@', '').slice(0, 1).toUpperCase()}</Text>

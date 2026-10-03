@@ -1,4 +1,4 @@
-import { useWindowDimensions, useColorScheme } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 
 // Design tokens — Zynalive canvas (red live accent, gold coins, violet earnings;
 // Bricolage Grotesque display over DM Sans body).
@@ -94,11 +94,11 @@ const dark = {
 };
 
 const light: typeof dark = {
-  background: '#FDF3FA',
-  surface: '#FFFFFF',
-  surfaceRaised: '#F6E9FB',
-  border: '#EAD3F2',
-  divider: '#F1E0F6',
+  background: '#FFFFFF',
+  surface: '#F8F3FB',
+  surfaceRaised: '#F1E8F7',
+  border: '#E6D6F0',
+  divider: '#F0E6F5',
   tabBar: '#FFFFFF',
   text: '#241033',
   textMuted: '#6B5285',
@@ -120,17 +120,16 @@ const light: typeof dark = {
   warning: '#B7791F',
   danger: '#D9363E',
   overlay: 'rgba(0,0,0,0.45)',
-  gradient: ['#F6D9EE', '#B341E0', '#5B2A9E'] as Gradient,
+  gradient: ['#5B2A9E', '#B341E0', '#FF6FB0'] as Gradient,
   glow: 'rgba(147,51,234,0.35)',
 };
 
 export type Palette = typeof dark;
 
+/** The app is always white; only live video screens stay dark (`liveColors`). */
 export function useTheme() {
-  const scheme = useColorScheme();
-  const c = scheme === 'light' ? light : dark;
   const breakpoint = useBreakpoint();
-  return { c, scheme: scheme === 'light' ? 'light' : 'dark', spacing, radius, type, breakpoint, hPadding: H_PADDING[breakpoint] } as const;
+  return { c: light, scheme: 'light', spacing, radius, type, breakpoint, hPadding: H_PADDING[breakpoint] } as const;
 }
 
 // Live video screens are always dark regardless of system theme.

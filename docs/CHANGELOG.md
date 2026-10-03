@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.5 — White app
+
+- The app is always white now, whatever the phone's dark-mode setting: `useTheme()` returns the light palette, whose background is pure white (`#FFFFFF`) with lightly tinted surfaces; the purple/pink accents are unchanged. The light button gradient is the brand gradient (`#5B2A9E → #B341E0 → #FF6FB0`) so white button text stays readable.
+- Live video screens (live room, host live, Go live camera) stay dark (`liveColors`) and now set light status-bar text; everything else uses dark status-bar text. Room-card and featured-host placeholders (no cover/avatar) stay dark like video.
+- `app.json`: `userInterfaceStyle: light`, white splash and root background — these native settings take effect in the next build.
+- Figma boards (`docs/design/`) regenerated in the white palette.
+
 ## 0.8.4 — Explore tab, rebuilt buttons
 
 - **Explore tab** (`src/app/(tabs)/explore.tsx`): a tab, so the bar is Home · Explore · + Go live · Messages · Me — Party no longer has its own tab (it opens from Explore → Party rooms and Home → Search). Explore has a search button (→ party search) and shortcut tiles: Party rooms, Videos, Events, Rankings, Wallet, Become a host, Agency portal, Help & support, Edit profile, Settings. Rankings moved here from the Home header. Tab label translated (English, Urdu, Hindi, Bengali); tile descriptions fall back to English.

@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useSupabase } from '@/lib/supabase';
-import { useTheme } from '@/lib/theme';
+import { liveColors, useTheme } from '@/lib/theme';
 import { categoryLabel, displayName, type Room } from '@/lib/types';
 
 import { PressScale } from './Motion';
@@ -51,7 +51,7 @@ export function FeaturedHost({ room, following: initialFollowing }: { room: Room
       )}
       <LinearGradient colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.65)']} style={StyleSheet.absoluteFill} />
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', padding: 12, gap: 12 }}>
-        <View style={{ width: 60, height: 76, borderRadius: 12, overflow: 'hidden', backgroundColor: c.surfaceRaised }}>
+        <View style={{ width: 60, height: 76, borderRadius: 12, overflow: 'hidden', backgroundColor: liveColors.surfaceRaised }}>
           {room.host?.avatar_url ? (
             <Image source={room.host.avatar_url} style={{ width: '100%', height: '100%' }} contentFit="cover" />
           ) : (

@@ -23,9 +23,10 @@ GLYPHS = json.loads((ICONS / 'glyphmaps/Ionicons.json').read_text())
 CMAP, GSET, UPM, DESC = FONT.getBestCmap(), FONT.getGlyphSet(), FONT['head'].unitsPerEm, FONT['hhea'].descent
 
 W, H = 390, 844
-C = dict(background='#170B2E', surface='#241442', surfaceRaised='#2E1B54', border='#3A2569', divider='#2A1849', tabBar='#140A26',
-         text='#F7F1FF', textMuted='#C9B8E8', textFaint='#8F7AB8', primary='#B341E0', accent='#FF5FA2', gold='#FFC24B',
-         onGold='#2A1A00', success='#34C789')
+# Light palette from src/lib/theme.ts — the app is always white (live video screens stay dark).
+C = dict(background='#FFFFFF', surface='#F8F3FB', surfaceRaised='#F1E8F7', border='#E6D6F0', divider='#F0E6F5', tabBar='#FFFFFF',
+         text='#241033', textMuted='#6B5285', textFaint='#8C76A6', primary='#9333EA', accent='#EC4899', gold='#FFC24B',
+         onGold='#2A1A00', success='#1FA971')
 GRADIENT = ('#5B2A9E', '#B341E0', '#FF6FB0')
 BODY = "DM Sans"
 DISPLAY = "Bricolage Grotesque"
@@ -132,7 +133,7 @@ TABS = [('Home', 'home-outline', 'home'), ('Explore', 'compass-outline', 'compas
 def tab_bar(active):
     top = H - 82
     slot = W / len(TABS)
-    parts = [f'<path id="Bar" d="M0 {top + 24} Q0 {top} 24 {top} H{W - 24} Q{W} {top} {W} {top + 24} V{H} H0 Z" fill="{C["tabBar"]}"/>']
+    parts = [f'<path id="Bar" d="M0 {top + 24} Q0 {top} 24 {top} H{W - 24} Q{W} {top} {W} {top + 24} V{H} H0 Z" fill="{C["tabBar"]}" stroke="{C["border"]}" stroke-width="1"/>']
     for i, t in enumerate(TABS):
         cx = slot * i + slot / 2
         if t is None:
@@ -261,7 +262,7 @@ def s_home():
         x += w + 8
     featured = group('Featured host', '<clipPath id="clip-feat"><rect x="16" y="200" width="358" height="96" rx="18"/></clipPath>',
                      '<g clip-path="url(#clip-feat)">', rect(16, 200, 358, 96, 'url(#brand)'), rect(16, 200, 358, 96, '#0000005C'), '</g>',
-                     rect(28, 210, 60, 76, C['surfaceRaised'], 12, 'Avatar'), text('A', 58, 259, 30, '#FFFFFF59', 800, 'middle', DISPLAY),
+                     rect(28, 210, 60, 76, '#2E1B54', 12, 'Avatar'), text('A', 58, 259, 30, '#FFFFFF59', 800, 'middle', DISPLAY),
                      text('Areeba K.', 100, 240, 15, '#FFFFFF', 700), live_badge(178, 226),
                      text('Friday night singing · Music', 100, 262, 12, '#FFFFFFD9', 500),
                      rect(296, 232, 66, 32, '#FFFFFF', 16, 'Follow'), text('Follow', 329, 253, 12, C['primary'], 800, 'middle'))
@@ -360,10 +361,10 @@ def main():
         (OUT / f'{name.lower().replace(" ", "-")}.svg').write_text(screen_svg(name, fn))
     gap, pad = 80, 80
     bw, bh = pad * 2 + len(SCREENS) * W + (len(SCREENS) - 1) * gap, pad * 2 + H + 60
-    frames = ''.join(text(n, pad + i * (W + gap), pad + 20, 20, '#C9B8E8', 700, name=f'Label {n}') + screen_svg(n, fn, pad + i * (W + gap), pad + 60, False)
+    frames = ''.join(text(n, pad + i * (W + gap), pad + 20, 20, '#6B5285', 700, name=f'Label {n}') + screen_svg(n, fn, pad + i * (W + gap), pad + 60, False)
                      for i, (n, fn) in enumerate(SCREENS))
     board = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{bw}" height="{bh}" viewBox="0 0 {bw} {bh}">{DEFS}'
-             f'<rect id="Board" width="{bw}" height="{bh}" fill="#0E0620"/>{frames}</svg>')
+             f'<rect id="Board" width="{bw}" height="{bh}" fill="#EFE3F3"/>{frames}</svg>')
     (ROOT / 'docs/design/app-screens.svg').write_text(board)
     print(f'wrote {len(SCREENS)} screens to {OUT.relative_to(ROOT)} and docs/design/app-screens.svg')
 

@@ -1,6 +1,7 @@
 import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Alert, FlatList, Share, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -131,6 +132,7 @@ export default function HostLiveScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
+      <StatusBar style="light" />
       <StateView state={state}>
         {session.data?.token && roomId && (
           <>
