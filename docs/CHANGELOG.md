@@ -1,10 +1,10 @@
 # Changelog
 
-## 0.8.3 — Forgot password, notifications, logo fade, PK battle banner
+## 0.8.3 — Forgot password, notifications, writing logo, PK battle banner
 
 - Sign in now has "Forgot password?" → `src/app/(auth)/forgot-password.tsx`: email a reset code (Clerk `reset_password_email_code`), then enter the code and a new password; signs the user in on success. Accounts with 2FA are told to finish on the web app, the same as sign-in.
 - Notifications (Messages → Notifications) match the design: "Mark all read", unread items highlighted as cards, short times ("2m", "Yesterday", "12 Sep"). The Home bell now opens this tab directly (`/messages?tab=notifications`) instead of Chats.
-- Loading screen: the Z logo now fades in (0.9s, no bounce) instead of popping in, then the name and tagline fade in after it. Respects Reduce Motion.
+- Loading screen: the Z logo is now drawn in code (`src/components/LaunchScreen.tsx`, geometry measured from `assets/logo.png`) and written on stroke by stroke — top bar, diagonal, bottom bar, then the dot — followed by "zynalive" revealed left to right and the tagline fading in. No hand or pen is shown. Respects Reduce Motion. The loading screen's minimum time rose from 1.2s to 2.3s so the writing can finish.
 - Home feed shows a "PK Battle Night" card linking to the most-watched live room that's in a battle, so battles can be found from Home.
 - EAS Update config (`runtimeVersion`, `updates.url`, build-profile channels) is in `app.json` / `eas.json`; the `expo-updates` package itself still needs installing before over-the-air updates work.
 

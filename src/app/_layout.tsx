@@ -28,7 +28,8 @@ initSentry();
 void SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({ fade: true, duration: 300 });
 
-const MIN_LAUNCH_MS = 1200;
+// Long enough for LaunchScreen to finish writing the logo and name (~2.1s).
+const MIN_LAUNCH_MS = 2300;
 
 /** Shows the branded loading page until Clerk has restored the session (and for a short minimum). */
 function LaunchGate({ children }: { children: ReactNode }) {
