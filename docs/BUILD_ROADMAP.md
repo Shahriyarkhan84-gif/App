@@ -33,7 +33,7 @@ There are two backends in this repo. The live one is Supabase; the NestJS one is
 | 03 | Database | Postgres with row-level security | Prisma + PostgreSQL, `packages/database` | ✅ | Add the missing owner and agency screens' queries |
 | 04 | APIs | Database functions (RPCs) for money, roles, moderation; edge functions for webhooks | REST + Socket.IO in `apps/api` | ✅ | Local payment rails (JazzCash, Easypaisa) |
 | 05 | Authentication | Clerk sign-in, its token signs database access | JWT + refresh tokens + OTP + 2FA in `apps/api` | ✅ | Push notifications (`expo-notifications`) and SMS |
-| 06 | Deployment | Supabase migrations, EAS builds, CI in `.github/workflows/ci.yml` | Docker + Kubernetes plan | 🟡 | Install `expo-updates` once, then ship changes over the air; set up Play Billing for Android coin purchases |
+| 06 | Deployment | Supabase migrations, EAS builds, CI in `.github/workflows/ci.yml` | Docker + Kubernetes plan | 🟡 | `expo-updates` is installed; make one build, then ship changes over the air; set up Play Billing for Android coin purchases |
 
 Rules that stay in force at every backend step (from `AGENTS.md`): never trust the client for roles, balances, prices or payment success; coins are credited only from the verified Stripe webhook; every schema change gets row-level security and a test in `supabase/tests/10_must_pass.sql`.
 
@@ -56,7 +56,7 @@ Rules that stay in force at every backend step (from `AGENTS.md`): never trust t
 
 ## Suggested build order from here
 
-1. **Ship what exists:** one Android build with `expo-updates` baked in (the Free-plan build limit reset on Oct 1), then deliver changes over the air.
+1. **Ship what exists:** one Android build with `expo-updates` baked in (the Free-plan build limit reset on Oct 1; the package is already installed), then deliver changes over the air with `eas update`.
 2. **Push notifications:** closes the biggest gap in "Notifications" (product 14) and keeps viewers coming back.
 3. **Multi-guest party rooms and likes:** the largest missing screens from the design canvas.
 4. **Agency web dashboard (9 sections):** unlocks the agency business and agent recruitment.

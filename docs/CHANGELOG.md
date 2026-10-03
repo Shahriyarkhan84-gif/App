@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.7 — Over-the-air updates installed
+
+- `expo-updates` (~57.0.23) is installed; with the `runtimeVersion` / `updates.url` / channel config added earlier, the next native build can receive updates via `eas update --branch preview` (or `production`) without a rebuild. Builds made before this one cannot receive them. `runtimeVersion` follows `version` in `app.json`: bump it only when native code changes.
+
 ## 0.8.6 — Build roadmap
 
 - `docs/BUILD_ROADMAP.md`: the Frontend, Backend and Full Stack roadmaps mapped onto Zynalive (what each step is here, where it lives, status, what to build next) plus a suggested build order.
