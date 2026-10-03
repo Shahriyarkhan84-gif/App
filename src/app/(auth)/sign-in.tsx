@@ -41,6 +41,9 @@ export default function SignInScreen() {
       <SocialButtons onError={setError} />
       <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" autoComplete="email" placeholder="you@example.com" />
       <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" placeholder="••••••••" />
+      <Link href={{ pathname: '/forgot-password', params: email.trim() ? { email: email.trim() } : {} }} style={{ alignSelf: 'flex-end', color: c.accent, fontFamily: fonts.bold, paddingVertical: 6 }}>
+        Forgot password?
+      </Link>
       <FormError message={error} />
       <Button title="Sign in" loading={loading} disabled={!email || !password} onPress={onSubmit} />
       <Text muted style={{ textAlign: 'center' }}>

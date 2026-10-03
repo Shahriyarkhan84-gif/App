@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.5 — Forgot password, PK battle banner
+
+- Sign in now has "Forgot password?" → `src/app/(auth)/forgot-password.tsx`: email a reset code (Clerk `reset_password_email_code`), then enter the code and a new password; signs the user in on success. Accounts with 2FA are told to finish on the web app, the same as sign-in.
+- Home feed shows a "PK Battle Night" card linking to the most-watched live room that's in a battle, so battles can be found from Home.
+- EAS Update config (`runtimeVersion`, `updates.url`, build-profile channels) is in `app.json` / `eas.json`; the `expo-updates` package itself still needs installing before over-the-air updates work.
+
 ## 0.7.4 — PK battles
 
 - Two live hosts can battle head-to-head: a "Battle" button on the host's own live screen invites another live host; the challenged host gets a live accept/decline prompt; the challenger can cancel while waiting. Once accepted, both hosts' live video shows split-screen (each still publishing only to their own room) with a VS badge, a live score bar and countdown, visible to every viewer on either side.
