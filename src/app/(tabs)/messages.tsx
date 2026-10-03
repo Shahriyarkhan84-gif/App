@@ -9,6 +9,7 @@ import { Avatar, Row, Screen, Segmented, Text } from '@/components/ui';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
+import { shortTime } from '@/lib/time';
 import { displayName, type Profile } from '@/lib/types';
 
 type Thread = { otherId: string; other: Pick<Profile, 'display_name' | 'username' | 'avatar_url'> | null; last: string; at: string; unread: number };
@@ -161,16 +162,4 @@ function Notifications() {
       />
     </StateView>
   );
-}
-
-function shortTime(iso: string) {
-  const d = new Date(iso);
-  const mins = Math.round((Date.now() - d.getTime()) / 60000);
-  if (mins < 1) return 'now';
-  if (mins < 60) return `${mins}m`;
-  if (mins < 60 * 24) return `${Math.round(mins / 60)}h`;
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
-  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 }

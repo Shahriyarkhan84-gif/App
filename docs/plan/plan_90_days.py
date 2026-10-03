@@ -87,7 +87,7 @@ PHASES = [
   (D, 'Must-pass database tests for money and roles', 'supabase/tests'),
   (D, 'API tests for money rules', 'apps/api (Jest)'),
   (D, 'AI agent tests', 'agents (pytest)'),
-  (T, 'Component tests for the shared button, chip and tab bar', 'src/components'),
+  (D, 'Component tests for the shared button, chip and tab bar (npm test, runs in CI)', 'src/components/__tests__'),
   (T, 'End-to-end viewer flow on a real device: join, chat, gift, leave (Maestro)', 'EAS + Maestro'),
   (T, 'End-to-end host flow: go live, end, summary', 'EAS + Maestro'),
   (D, 'Security: row-level security on every table, no signed-out access to functions, secrets only on the server', 'migrations, 10_must_pass.sql'),

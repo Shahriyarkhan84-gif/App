@@ -133,6 +133,18 @@ export function TabBarItem({ icon, activeIcon, label, focused, onPress }: { icon
   );
 }
 
+// The tab navigator reports focus as `aria-selected`; `accessibilityState` is kept as a fallback.
+export type TabButtonProps = { onPress?: (e: GestureResponderEvent) => void; 'aria-selected'?: boolean; accessibilityState?: { selected?: boolean } };
+
+/** `tabBarButton` for a router tab: a TabBarItem that reads focus from the navigator. */
+export function tabButton(icon: IconName, activeIcon: IconName, label: string) {
+  function TabButton({ onPress, accessibilityState, 'aria-selected': ariaSelected }: TabButtonProps) {
+    return <TabBarItem icon={icon} activeIcon={activeIcon} label={label} focused={!!(ariaSelected ?? accessibilityState?.selected)} onPress={onPress} />;
+  }
+  TabButton.displayName = `TabButton(${label})`;
+  return TabButton;
+}
+
 /** Raised round Go live button in the middle of the tab bar. */
 export function TabBarCenterButton({ icon = 'add', label, onPress }: { icon?: IconName; label: string; onPress?: (e: GestureResponderEvent) => void }) {
   const { c } = useTheme();

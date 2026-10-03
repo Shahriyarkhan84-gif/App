@@ -1,22 +1,8 @@
 import { Tabs } from 'expo-router';
-import type { GestureResponderEvent } from 'react-native';
 
-import { TabBarCenterButton, TabBarItem, useTabBarStyle } from '@/components/Menus';
-import type { IconName } from '@/components/ui';
+import { TabBarCenterButton, tabButton, useTabBarStyle } from '@/components/Menus';
 import { useI18n } from '@/lib/i18n';
 import { useTheme } from '@/lib/theme';
-
-// The tab navigator reports focus as `aria-selected`; `accessibilityState` is kept as a fallback.
-type TabButtonProps = { onPress?: (e: GestureResponderEvent) => void; 'aria-selected'?: boolean; accessibilityState?: { selected?: boolean } };
-
-/** Classic tab bar button (icon over label) from the menu kit. */
-function tabButton(icon: IconName, activeIcon: IconName, label: string) {
-  function TabButton({ onPress, accessibilityState, 'aria-selected': ariaSelected }: TabButtonProps) {
-    return <TabBarItem icon={icon} activeIcon={activeIcon} label={label} focused={!!(ariaSelected ?? accessibilityState?.selected)} onPress={onPress} />;
-  }
-  TabButton.displayName = `TabButton(${label})`;
-  return TabButton;
-}
 
 // User app navigation: Home · Explore · [+ Go live] · Messages · Me
 export default function TabsLayout() {

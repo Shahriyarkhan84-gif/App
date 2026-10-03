@@ -51,4 +51,4 @@ Read `docs/ARCHITECTURE.md` first. Status of every product: `docs/REMAINING_WORK
 - **AI proposes, owners approve.** Agents may hide content or warn automatically; anything heavier becomes an `ai_actions` proposal.
 - **Every screen handles 7 states**: loading · success · error · empty · offline · permission · disabled (`src/components/StateView.tsx`).
 - **Update `docs/` in the same change** (architecture, database, API, economy, security, environment, changelog).
-- **Definition of done:** `npm run typecheck`, `npm run lint`, `npm run build:web`, `bash supabase/tests/run.sh`, and the agent tests (`cd agents && pytest`) all pass.
+- **Definition of done:** `npm run typecheck`, `npm run lint`, `npm test`, `npm run build:web`, `bash supabase/tests/run.sh`, and the agent tests (`cd agents && pytest`) all pass.

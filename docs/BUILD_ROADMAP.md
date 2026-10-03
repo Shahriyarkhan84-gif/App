@@ -20,7 +20,7 @@ Ideas to build on the frontend:
 
 1. **Haptics, motion and the logo animation are done**; next is a shared `<Skeleton>` loader so lists don't flash empty.
 2. **Localization**: move the remaining English strings into `src/lib/i18n/en.ts` as screens are touched (Urdu, Hindi and Bengali already exist).
-3. **Tests**: add component tests for the shared `Button`, `Chip` and tab bar, then end-to-end flows with Maestro (join → chat → gift → leave).
+3. **Tests**: component tests run with `npm test` (shared `Button`, `Chip`, tab bar, theme, times); next are end-to-end flows with Maestro (join → chat → gift → leave).
 
 ## Backend roadmap (JavaScript → Node.js → Database → APIs → Auth → Deployment)
 

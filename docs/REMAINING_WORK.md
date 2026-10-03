@@ -30,6 +30,6 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 - Media: resumable (TUS) uploads for very large files; storage lifecycle rule to purge removed videos; AI visual moderation of uploads (reports + admin takedown only for now); host-profile video tab.
 - NestJS stack: the media worker still talks to Supabase; pointing it at `apps/api` means calling the `/internal/media/*` endpoints and reading IVS recordings from S3.
 - Web dashboards for Agency (9 sections) and Owner (14 sections) beyond the command center.
-- Component and end-to-end tests for mobile flows (viewer join→chat→gift→leave; host go-live→end→summary) — needs a dev build on a device farm (e.g. Maestro on EAS).
+- End-to-end tests for mobile flows (viewer join→chat→gift→leave; host go-live→end→summary) — needs a dev build on a device farm (e.g. Maestro on EAS). Component tests exist (`npm test`, jest-expo + React Native Testing Library) for shared UI, the tab bar, theme and time formatting; extend them as screens change.
 - Store review: Google Play requires Play Billing for coins bought inside the Android app (Stripe is fine on the web). Plan: RevenueCat or `react-native-iap` + a server-side receipt check that credits coins through the same ledger path.
 - Store listing: fill the placeholders in `src/app/privacy.tsx` / `account-deletion.tsx` ([COMPANY LEGAL NAME], [SUPPORT EMAIL], [RETENTION PERIOD], [MINIMUM AGE]) and publish the web build so `/privacy` and `/account-deletion` have public URLs.
