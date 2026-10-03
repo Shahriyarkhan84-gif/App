@@ -1,5 +1,11 @@
+import * as Haptics from 'expo-haptics';
 import { useEffect, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, Animated, Easing, Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Platform, Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
+
+/** Light tap felt on press. No-op on web. */
+export function tapHaptic() {
+  if (Platform.OS !== 'web') void Haptics.selectionAsync().catch(() => {});
+}
 
 /** Fades + slides its children in after `delay` ms (skipped when Reduce Motion is on). */
 export function FadeIn({ delay = 0, from = 16, duration = 420, children, style }: { delay?: number; from?: number; duration?: number; children: ReactNode; style?: StyleProp<ViewStyle> }) {
@@ -125,7 +131,7 @@ export function Ripple({ size, color, period = 2200, delay = 0, ring = false }: 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /** Pressable that springs down slightly while pressed. */
-export function PressScale({ scaleTo = 0.96, style, onPressIn, onPressOut, children, ...rest }: Omit<PressableProps, 'style' | 'children'> & { scaleTo?: number; style?: StyleProp<ViewStyle>; children?: ReactNode }) {
+export function PressScale({ scaleTo = 0.96, haptic, style, onPressIn, onPressOut, children, ...rest }: Omit<PressableProps, 'style' | 'children'> & { scaleTo?: number; haptic?: boolean; style?: StyleProp<ViewStyle>; children?: ReactNode }) {
   const [v] = useState(() => new Animated.Value(1));
   const to = (value: number) => Animated.spring(v, { toValue: value, friction: 6, tension: 260, useNativeDriver: true }).start();
   return (
@@ -133,6 +139,7 @@ export function PressScale({ scaleTo = 0.96, style, onPressIn, onPressOut, child
       {...rest}
       onPressIn={(e) => {
         to(scaleTo);
+        if (haptic) tapHaptic();
         onPressIn?.(e);
       }}
       onPressOut={(e) => {

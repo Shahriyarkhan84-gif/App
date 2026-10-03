@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.4 — Explore tab, rebuilt buttons
+
+- **Explore tab** (`src/app/(tabs)/explore.tsx`): a 6th tab, so the bar is Home · Explore · Party · + Go live · Messages · Me. Explore has a search button (→ party search) and shortcut tiles: Party rooms, Videos, Events, Rankings, Wallet, Become a host, Agency portal, Help & support, Edit profile, Settings. Rankings moved here from the Home header. Tab label translated (English, Urdu, Hindi, Bengali); tile descriptions fall back to English.
+- **Home header**: the Rankings trophy is replaced by a Wallet button.
+- **Tab bar buttons**: the active tab gets a tinted pill behind its icon, labels stay on one line (10px under 360px width), and the center Go live button uses the brand gradient.
+- **Fix:** the active tab was never highlighted — the tab navigator reports focus as `aria-selected`, but the tab buttons only read `accessibilityState.selected`.
+- **All buttons**: shared `Button`, `IconButton`, `Chip`, tab items and menu tiles give a light tap vibration on press (`tapHaptic()` / `PressScale haptic` in `src/components/Motion.tsx`; no-op on web).
+
 ## 0.8.3 — Forgot password, notifications, writing logo, PK battle banner
 
 - Sign in now has "Forgot password?" → `src/app/(auth)/forgot-password.tsx`: email a reset code (Clerk `reset_password_email_code`), then enter the code and a new password; signs the user in on success. Accounts with 2FA are told to finish on the web app, the same as sign-in.

@@ -7,6 +7,10 @@ export const bn: Catalog = {
   'tab.golive': 'লাইভে যান',
   'tab.messages': 'মেসেজ',
   'tab.me': 'আমি',
+  'tab.explore': 'এক্সপ্লোর',
+
+  // Explore
+  'explore.title': 'এক্সপ্লোর',
 
   'state.error.title': 'কিছু একটা ভুল হয়েছে',
   'state.retry': 'আবার চেষ্টা করুন',

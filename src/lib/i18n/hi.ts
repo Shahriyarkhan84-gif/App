@@ -7,6 +7,10 @@ export const hi: Catalog = {
   'tab.golive': 'लाइव जाएं',
   'tab.messages': 'मैसेज',
   'tab.me': 'मैं',
+  'tab.explore': 'एक्सप्लोर',
+
+  // Explore
+  'explore.title': 'एक्सप्लोर',
 
   'state.error.title': 'कुछ गलत हो गया',
   'state.retry': 'फिर से कोशिश करें',

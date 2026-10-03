@@ -7,6 +7,27 @@ export const en = {
   'tab.golive': 'Go live',
   'tab.messages': 'Messages',
   'tab.me': 'Me',
+  'tab.explore': 'Explore',
+
+  // Explore
+  'explore.title': 'Explore',
+  'explore.subtitle': 'Rooms, events, rankings and more.',
+  'explore.search': 'Search parties and hosts',
+  'explore.watch': 'Watch',
+  'explore.account': 'You',
+  'explore.party': 'Party rooms',
+  'explore.party.body': 'Voice & video rooms',
+  'explore.videos.body': 'Replays and uploads',
+  'explore.events.body': 'Races and PK leagues',
+  'explore.rankings.body': 'Top hosts and gifters',
+  'explore.wallet.body': 'Coins and history',
+  'explore.host': 'Become a host',
+  'explore.host.body': 'Verify and go live',
+  'explore.agency.body': '4-digit agency code',
+  'explore.support.body': 'FAQ and support',
+  'explore.settings.body': 'Language and account',
+  'explore.profile': 'Edit profile',
+  'explore.profile.body': 'Photo, name and bio',
 
   // Screen states
   'state.error.title': 'Something went wrong',

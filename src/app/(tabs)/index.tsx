@@ -101,7 +101,7 @@ export default function HomeScreen() {
             <Wordmark />
           </Row>
           <Row gap={8}>
-            <IconButton icon="trophy-outline" label="Rankings" color={c.gold} onPress={() => router.push('/rankings')} />
+            <IconButton icon="wallet-outline" label="Wallet" color={c.gold} onPress={() => router.push('/wallet')} />
             <IconButton icon="search" label="Search" onPress={() => router.push('/party')} />
             <LiveBell rooms={data ? data.live.filter((r) => data.followed.has(r.host_id)) : []} />
           </Row>

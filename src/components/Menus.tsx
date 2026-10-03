@@ -34,7 +34,7 @@ export function MenuGrid({ items, columns = 2, style }: { items: MenuItem[]; col
     <View style={[{ flexDirection: 'row', flexWrap: 'wrap', gap }, style]}>
       {items.map((item, i) => (
         <Pop key={item.key} delay={i * 40} style={{ width: `${100 / columns - 4}%`, flexGrow: 1 }}>
-          <PressScale onPress={item.onPress} disabled={item.disabled} accessibilityRole="button" accessibilityLabel={item.label}>
+          <PressScale onPress={item.onPress} disabled={item.disabled} haptic accessibilityRole="button" accessibilityLabel={item.label}>
             <LinearGradient
               colors={item.destructive ? [c.danger, c.accent] : [c.violet, c.primary]}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
@@ -119,29 +119,34 @@ export function SideMenuButton({ items, header, color }: { items: MenuItem[]; he
 
 /** One tab: icon over label; the focused tab takes the primary color. */
 export function TabBarItem({ icon, activeIcon, label, focused, onPress }: { icon: IconName; activeIcon: IconName; label: string; focused: boolean; onPress?: (e: GestureResponderEvent) => void }) {
-  const { c } = useTheme();
+  const { c, radius } = useTheme();
+  // Six tabs on a narrow phone leave ~50px per label.
+  const narrow = useWindowDimensions().width < 360;
   return (
-    <Pressable onPress={onPress} accessibilityRole="tab" accessibilityState={{ selected: focused }} accessibilityLabel={label}
-      style={({ pressed }) => ({ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingTop: 8, opacity: pressed ? 0.7 : 1 })}>
-      <Ionicons name={focused ? activeIcon : icon} size={23} color={focused ? c.primary : c.textFaint} />
-      <Text variant="caption" color={focused ? c.primary : c.textFaint} style={{ fontSize: 11, fontWeight: focused ? '700' : '500' }}>{label}</Text>
-    </Pressable>
+    <PressScale onPress={onPress} haptic scaleTo={0.9} accessibilityRole="tab" accessibilityState={{ selected: focused }} accessibilityLabel={label}
+      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingTop: 8, paddingHorizontal: 2 }}>
+      <View style={{ width: 48, height: 28, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: focused ? `${c.primary}2E` : 'transparent' }}>
+        <Ionicons name={focused ? activeIcon : icon} size={22} color={focused ? c.primary : c.textFaint} />
+      </View>
+      <Text variant="caption" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} color={focused ? c.primary : c.textFaint} style={{ fontSize: narrow ? 10 : 11, fontWeight: focused ? '700' : '500' }}>{label}</Text>
+    </PressScale>
   );
 }
 
-/** Raised round center action of the tab bar (e.g. Go live). */
+/** Raised round Go live button in the middle of the tab bar. */
 export function TabBarCenterButton({ icon = 'add', label, onPress }: { icon?: IconName; label: string; onPress?: (e: GestureResponderEvent) => void }) {
   const { c } = useTheme();
   return (
     <View style={{ flex: 1, alignItems: 'center' }}>
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label}
-        style={({ pressed }) => ({
-          width: 54, height: 54, marginTop: -16, borderRadius: 27, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center',
-          borderWidth: 4, borderColor: c.tabBar, transform: [{ scale: pressed ? 0.94 : 1 }],
-          shadowColor: c.primary, shadowOpacity: 0.45, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 8,
-        })}>
-        <Ionicons name={icon} size={28} color={c.primaryText} />
-      </Pressable>
+      <PressScale onPress={onPress} haptic scaleTo={0.9} accessibilityRole="button" accessibilityLabel={label}
+        style={{
+          width: 56, height: 56, marginTop: -18, borderRadius: 28, borderWidth: 4, borderColor: c.tabBar, overflow: 'hidden',
+          shadowColor: c.glow, shadowOpacity: 1, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 8,
+        }}>
+        <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name={icon} size={28} color="#fff" />
+        </LinearGradient>
+      </PressScale>
     </View>
   );
 }

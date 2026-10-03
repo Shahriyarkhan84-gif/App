@@ -76,6 +76,7 @@ export function Button({ title, variant = 'primary', size = 'md', loading, icon,
       accessibilityRole="button"
       accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
       disabled={disabled || loading}
+      haptic
       style={[
         {
           minHeight: size === 'md' ? 52 : 40,
@@ -118,6 +119,7 @@ export function IconButton({ icon, label, onPress, color, badge }: { icon: IconN
       accessibilityRole="button"
       accessibilityLabel={label}
       scaleTo={0.9}
+      haptic
       style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}
     >
       <Ionicons name={icon} size={20} color={color ?? c.text} />
@@ -161,6 +163,7 @@ export function Chip({ label, selected, onPress }: { label: string; selected?: b
       accessibilityRole="button"
       accessibilityState={{ selected: !!selected }}
       scaleTo={0.93}
+      haptic
       style={{
         minHeight: 36,
         justifyContent: 'center',
