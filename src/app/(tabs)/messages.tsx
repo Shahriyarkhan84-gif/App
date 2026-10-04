@@ -1,11 +1,12 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { router, useLocalSearchParams } from 'expo-router';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Row, Screen, Segmented, Text } from '@/components/ui';
+import { Avatar, Coin, Row, Screen, Text } from '@/components/ui';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
@@ -15,14 +16,19 @@ import { displayName, type Profile } from '@/lib/types';
 type Thread = { otherId: string; other: Pick<Profile, 'display_name' | 'username' | 'avatar_url'> | null; last: string; at: string; unread: number };
 type Notification = { id: number; type: string; title: string; body: string | null; data: Record<string, string>; read_at: string | null; created_at: string };
 
-const TABS = [
-  { id: 'chats', label: 'Chats' },
-  { id: 'notifications', label: 'Notifications' },
-] as const;
+type Tab = 'chats' | 'fans' | 'gifts' | 'notifications';
+type IconName = keyof typeof Ionicons.glyphMap;
+// Shortcut tiles from the design canvas; tapping the open one goes back to Chats.
+const TILES: { id: Exclude<Tab, 'chats'>; label: string; icon: IconName }[] = [
+  { id: 'fans', label: 'New fans', icon: 'person-add-outline' },
+  { id: 'gifts', label: 'Gifts', icon: 'gift-outline' },
+  { id: 'notifications', label: 'System', icon: 'notifications-outline' },
+];
 
 export default function MessagesScreen() {
   const params = useLocalSearchParams<{ tab?: string }>();
-  const [tab, setTab] = useState<'chats' | 'notifications'>(params.tab === 'notifications' ? 'notifications' : 'chats');
+  const { c } = useTheme();
+  const [tab, setTab] = useState<Tab>(params.tab === 'notifications' ? 'notifications' : 'chats');
   // Tabs stay mounted, so a later link to ?tab=notifications must switch an already-open screen.
   const [seenParam, setSeenParam] = useState(params.tab);
   if (params.tab !== seenParam) {
@@ -33,9 +39,35 @@ export default function MessagesScreen() {
     <Screen>
       <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 12 }}>
         <Text variant="h1">Messages</Text>
-        <Segmented options={TABS} value={tab} onChange={setTab} />
+        <Row gap={8}>
+          {TILES.map((t) => {
+            const on = tab === t.id;
+            return (
+              <PressScale
+                key={t.id}
+                scaleTo={0.95}
+                haptic
+                onPress={() => setTab(on ? 'chats' : t.id)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={t.label}
+                style={{ flex: 1, alignItems: 'center', gap: 6, paddingVertical: 12, borderRadius: 16, backgroundColor: on ? c.primary : c.surface }}
+              >
+                <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? 'rgba(255,255,255,0.2)' : c.surfaceRaised }}>
+                  <Ionicons name={t.icon} size={20} color={on ? '#fff' : c.primary} />
+                </View>
+                <Text variant="caption" color={on ? '#fff' : c.text} style={{ fontWeight: '700' }}>{t.label}</Text>
+              </PressScale>
+            );
+          })}
+        </Row>
+        {tab !== 'chats' && (
+          <Pressable onPress={() => setTab('chats')} accessibilityRole="button" hitSlop={8} style={{ alignSelf: 'flex-start' }}>
+            <Text variant="label" color={c.accent} style={{ fontSize: 13 }}>‹ Back to chats</Text>
+          </Pressable>
+        )}
       </View>
-      {tab === 'chats' ? <Chats /> : <Notifications />}
+      {tab === 'chats' ? <Chats /> : tab === 'fans' ? <NewFans /> : tab === 'gifts' ? <GiftsReceived /> : <Notifications />}
     </Screen>
   );
 }
@@ -157,6 +189,87 @@ function Notifications() {
                 <Text variant="caption" faint>{shortTime(item.created_at)}</Text>
               </Row>
             </PressScale>
+          </FadeIn>
+        )}
+      />
+    </StateView>
+  );
+}
+
+type Fan = { follower_id: string; created_at: string; profile: Pick<Profile, 'display_name' | 'username' | 'avatar_url'> | null };
+
+/** People who followed you, newest first. */
+function NewFans() {
+  const supabase = useSupabase();
+  const { userId } = useAuth();
+  const offline = useOffline();
+  const { data, error, loading, reload } = useFocusedAsync<Fan[]>(async () => {
+    const { data, error } = await supabase.from('follows').select('follower_id,created_at').eq('followee_id', userId!).order('created_at', { ascending: false }).limit(100);
+    if (error) throw error;
+    const ids = (data ?? []).map((f) => f.follower_id);
+    const { data: profiles } = ids.length ? await supabase.from('profiles').select('id,display_name,username,avatar_url').in('id', ids) : { data: [] };
+    const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
+    return (data ?? []).map((f) => ({ ...f, profile: byId.get(f.follower_id) ?? null }));
+  }, [userId]);
+  return (
+    <StateView state={resolveState({ offline, loading, error, data, onRetry: reload, isEmpty: (d) => d.length === 0, empty: { title: 'No fans yet', body: 'Go live — people who follow you show up here.' } })}>
+      <FlatList
+        data={data ?? []}
+        keyExtractor={(f) => f.follower_id}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
+        renderItem={({ item, index }) => (
+          <FadeIn delay={stagger(index, 40)}>
+            <PressScale scaleTo={0.98} onPress={() => router.push({ pathname: '/user/[id]', params: { id: item.follower_id } })} accessibilityRole="button">
+              <Row style={{ paddingVertical: 10 }}>
+                <Avatar uri={item.profile?.avatar_url} name={displayName(item.profile)} size={46} />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text variant="label" numberOfLines={1}>{displayName(item.profile)}</Text>
+                  <Text variant="caption" faint>Started following you</Text>
+                </View>
+                <Text variant="caption" faint>{shortTime(item.created_at)}</Text>
+              </Row>
+            </PressScale>
+          </FadeIn>
+        )}
+      />
+    </StateView>
+  );
+}
+
+type GiftRow = { id: number; sender_id: string; quantity: number; coins_total: number; created_at: string; sender: Pick<Profile, 'display_name' | 'username' | 'avatar_url'> | null };
+
+/** Gifts you received in your lives. */
+function GiftsReceived() {
+  const supabase = useSupabase();
+  const { userId } = useAuth();
+  const offline = useOffline();
+  const { data, error, loading, reload } = useFocusedAsync<GiftRow[]>(async () => {
+    const { data, error } = await supabase.from('gifts').select('id,sender_id,quantity,coins_total,created_at').eq('host_id', userId!).order('created_at', { ascending: false }).limit(100);
+    if (error) throw error;
+    const ids = [...new Set((data ?? []).map((g) => g.sender_id))];
+    const { data: profiles } = ids.length ? await supabase.from('profiles').select('id,display_name,username,avatar_url').in('id', ids) : { data: [] };
+    const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
+    return (data ?? []).map((g) => ({ ...g, sender: byId.get(g.sender_id) ?? null }));
+  }, [userId]);
+  return (
+    <StateView state={resolveState({ offline, loading, error, data, onRetry: reload, isEmpty: (d) => d.length === 0, empty: { title: 'No gifts yet', body: 'Gifts viewers send in your lives show up here.' } })}>
+      <FlatList
+        data={data ?? []}
+        keyExtractor={(g) => String(g.id)}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
+        renderItem={({ item, index }) => (
+          <FadeIn delay={stagger(index, 40)}>
+            <Row style={{ paddingVertical: 10 }}>
+              <Avatar uri={item.sender?.avatar_url} name={displayName(item.sender)} size={46} />
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text variant="label" numberOfLines={1}>{displayName(item.sender)}</Text>
+                <Text variant="caption" faint>Sent {item.quantity > 1 ? `${item.quantity} gifts` : 'a gift'}</Text>
+              </View>
+              <View style={{ alignItems: 'flex-end', gap: 2 }}>
+                <Row gap={4}><Coin size={12} /><Text variant="label">{item.coins_total.toLocaleString()}</Text></Row>
+                <Text variant="caption" faint>{shortTime(item.created_at)}</Text>
+              </View>
+            </Row>
           </FadeIn>
         )}
       />

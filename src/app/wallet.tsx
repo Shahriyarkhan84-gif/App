@@ -6,7 +6,7 @@ import { Alert, Platform, ScrollView, View } from 'react-native';
 
 import { Pop, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { Button, Coin, Row, Screen, Text } from '@/components/ui';
+import { Button, Coin, Row, Screen, Segmented, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { startCoinCheckout } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -16,6 +16,12 @@ import { useTheme } from '@/lib/theme';
 import { formatMoney, type CoinPackage } from '@/lib/types';
 
 type Tx = { id: number; delta: number; kind: string; created_at: string };
+
+const HISTORY_TABS = [
+  { id: 'all', label: 'All' },
+  { id: 'purchases', label: 'Purchases' },
+  { id: 'gifts', label: 'Gifts sent' },
+] as const;
 
 const KIND_LABEL: Record<string, string> = {
   purchase: 'Coins purchased', gift_sent: 'Gift sent', refund: 'Refund reversal', chargeback: 'Chargeback reversal', adjustment: 'Adjustment',
@@ -29,6 +35,7 @@ export default function WalletScreen() {
   const offline = useOffline();
   const [buying, setBuying] = useState<number | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
+  const [tab, setTab] = useState<(typeof HISTORY_TABS)[number]['id']>('all');
 
   const { data, error, loading, reload } = useFocusedAsync(async () => {
     const [wallet, packages, txs] = await Promise.all([
@@ -108,11 +115,20 @@ export default function WalletScreen() {
                   onPress={() => buy(pick)}
                 />
               )}
-              <Text variant="caption" faint>Payments are processed by Stripe. Coins are added only after the payment is confirmed.</Text>
+              <Row gap={8} style={{ padding: 14, borderRadius: 16, backgroundColor: c.surface }}>
+                <Text style={{ flex: 1, fontSize: 15 }}>Pay with card</Text>
+                <Text variant="caption" faint>Secure checkout · Stripe</Text>
+              </Row>
+              <Text variant="caption" faint>Coins are added only after the payment is confirmed.</Text>
 
               <View style={{ gap: 4 }}>
                 <Text variant="h3">History</Text>
-                {data.txs.length === 0 ? <Text muted>No transactions yet.</Text> : data.txs.map((t) => {
+                <View style={{ paddingVertical: 6 }}>
+                  <Segmented options={HISTORY_TABS} value={tab} onChange={setTab} />
+                </View>
+                {(() => {
+                  const txs = data.txs.filter((t) => tab === 'all' || (tab === 'purchases' ? t.kind === 'purchase' : t.kind === 'gift_sent'));
+                  return txs.length === 0 ? <Text muted style={{ paddingVertical: 12 }}>{tab === 'gifts' ? 'No gifts sent yet.' : tab === 'purchases' ? 'No purchases yet.' : 'No transactions yet.'}</Text> : txs.map((t) => {
                   const credit = t.delta > 0;
                   return (
                     <Row key={t.id} style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.divider }}>
@@ -123,10 +139,18 @@ export default function WalletScreen() {
                         <Text style={{ fontWeight: '500', fontSize: 14 }}>{KIND_LABEL[t.kind] ?? t.kind}</Text>
                         <Text variant="caption" faint>{new Date(t.created_at).toLocaleString()}</Text>
                       </View>
-                      <Text variant="label" color={credit ? c.success : c.text}>{credit ? '+' : ''}{t.delta.toLocaleString()}</Text>
+                      <View style={{ alignItems: 'flex-end', gap: 3 }}>
+                        <Text variant="label" color={credit ? c.success : c.text}>{credit ? '+' : ''}{t.delta.toLocaleString()}</Text>
+                        <View style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, backgroundColor: t.kind === 'refund' || t.kind === 'chargeback' ? c.violetSurface : c.surface }}>
+                          <Text variant="caption" style={{ fontSize: 11, fontWeight: '700' }} color={t.kind === 'refund' || t.kind === 'chargeback' ? c.violetText : c.success}>
+                            {t.kind === 'refund' || t.kind === 'chargeback' ? 'Refunded' : 'Completed'}
+                          </Text>
+                        </View>
+                      </View>
                     </Row>
                   );
-                })}
+                });
+                })()}
               </View>
             </ScrollView>
           );

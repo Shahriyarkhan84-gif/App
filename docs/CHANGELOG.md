@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0 — Main screens match the design canvas
+
+- Home: the "Your Loop" strip (your ring → go live, then followed hosts live now) and the PK Battle banner are always shown; an empty feed shows a small message inside the page instead of replacing it.
+- Profile: Following / Fans / Friends tiles, both Coins and Diamonds cards (non-hosts get "Become a host"), and the canvas menu rows (Start a live stream, Host dashboard, Wallet & transactions…).
+- Wallet: History tabs (All / Purchases / Gifts sent) with a status chip per row; "Pay with card" row (Stripe stays the only payment rail).
+- Messages: New fans / Gifts / System shortcut tiles; New fans lists your followers, Gifts lists gifts received.
+- New Host dashboard (`/host/dashboard`): today's live time, diamonds, new followers and peak viewers; weekly live-hours goal; room admins (add from your followers / remove, via `set_room_admin`); account standing; recent lives.
+
 ## 0.8.11 — App points at the live Supabase project
 
 - `eas.json` (all build profiles) and the preview-update workflow pointed `EXPO_PUBLIC_SUPABASE_URL` at `rnlokiphyleoqtjwztdw`, a project that no longer exists, so every screen showed "Something went wrong" after sign-in. They now use the `zynalive` project (`mdfjbhzriuwxafeagnwo`, all 25 migrations applied) and its publishable key.

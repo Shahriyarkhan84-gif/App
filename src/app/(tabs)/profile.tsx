@@ -87,10 +87,10 @@ export default function ProfileScreen() {
           </Card>
         )}
 
-        <FadeIn delay={80} style={{ flexDirection: 'row', paddingVertical: 14, borderRadius: 18, backgroundColor: c.surface }}>
-          <Stat label="Friends" value={stats.data?.friends} />
-          <Stat label="Followers" value={stats.data?.followers} />
+        <FadeIn delay={80} style={{ flexDirection: 'row', gap: 8 }}>
           <Stat label="Following" value={stats.data?.following} />
+          <Stat label="Fans" value={stats.data?.followers} />
+          <Stat label="Friends" value={stats.data?.friends} />
         </FadeIn>
 
         <FadeIn delay={160} style={{ flexDirection: 'row', gap: 10 }}>
@@ -99,18 +99,20 @@ export default function ProfileScreen() {
             <Text variant="h1">{stats.data ? stats.data.coins.toLocaleString() : '–'}</Text>
             <Button title="Recharge" variant="gold" size="sm" onPress={() => router.push('/wallet')} />
           </View>
-          {isHost && (
-            <View style={{ flex: 1, padding: 16, borderRadius: 18, backgroundColor: c.violetSurface, borderWidth: 1, borderColor: c.violetBorder, gap: 10 }}>
-              <Row gap={6}><Ionicons name="diamond-outline" size={16} color={c.violetText} /><Text variant="bodySmall" color={c.violetText}>Earnings</Text></Row>
-              <Text variant="h1">{stats.data ? stats.data.earnings.toLocaleString() : '–'}</Text>
-              <Button title="Withdraw" variant="outline" size="sm" onPress={() => router.push('/earnings')} />
-            </View>
-          )}
+          <View style={{ flex: 1, padding: 16, borderRadius: 18, backgroundColor: c.violetSurface, borderWidth: 1, borderColor: c.violetBorder, gap: 10 }}>
+            <Row gap={6}><Ionicons name="diamond-outline" size={16} color={c.violetText} /><Text variant="bodySmall" color={c.violetText}>Diamonds earned</Text></Row>
+            <Text variant="h1">{isHost ? (stats.data ? stats.data.earnings.toLocaleString() : '–') : '0'}</Text>
+            {isHost
+              ? <Button title="Withdraw" variant="outline" size="sm" onPress={() => router.push('/earnings')} />
+              : <Button title="Become a host" variant="outline" size="sm" onPress={() => router.push('/hosting')} />}
+          </View>
         </FadeIn>
 
         <FadeIn delay={240} style={{ borderRadius: 18, backgroundColor: c.surface, overflow: 'hidden' }}>
+          <ListRow icon="videocam-outline" label="Start a live stream" color={c.primary} onPress={() => router.push('/create')} />
+          {isHost && <ListRow icon="grid-outline" label="Host dashboard" onPress={() => router.push('/host/dashboard')} />}
           {!verified && <ListRow icon="shield-checkmark-outline" label={t('menu.hostingVerification')} color={c.gold} onPress={() => router.push('/hosting')} />}
-          <ListRow icon="wallet-outline" label={t('menu.wallet')} onPress={() => router.push('/wallet')} />
+          <ListRow icon="wallet-outline" label="Wallet & transactions" onPress={() => router.push('/wallet')} />
           <ListRow icon="play-circle-outline" label={t('menu.videos')} onPress={() => router.push('/videos')} />
           <ListRow icon="trophy-outline" label={t('menu.rankings')} onPress={() => router.push('/rankings')} />
           <ListRow icon="calendar-outline" label={t('menu.events')} onPress={() => router.push('/events')} />
@@ -134,9 +136,10 @@ function Badge({ label, gold }: { label: string; gold?: boolean }) {
 }
 
 function Stat({ label, value }: { label: string; value?: number }) {
+  const { c } = useTheme();
   return (
-    <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
-      <Text variant="display" style={{ fontSize: 22, lineHeight: 28 }}>{value === undefined ? '–' : compactNumber(value)}</Text>
+    <View style={{ flex: 1, alignItems: 'center', gap: 2, paddingVertical: 12, borderRadius: 14, backgroundColor: c.surface }}>
+      <Text variant="display" style={{ fontSize: 18, lineHeight: 24 }}>{value === undefined ? '–' : compactNumber(value)}</Text>
       <Text variant="caption" muted>{label}</Text>
     </View>
   );

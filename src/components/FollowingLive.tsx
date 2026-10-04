@@ -111,3 +111,47 @@ export function LiveBell({ rooms }: { rooms: Room[] }) {
     </>
   );
 }
+
+/**
+ * "Your Loop" strip at the top of Home (design canvas): your own ring first — tap it to go
+ * live — then everyone you follow who is live right now. Always shown, even when nobody is live.
+ */
+export function LoopStrip({ me, rooms }: { me: { avatar_url?: string | null; name: string }; rooms: Room[] }) {
+  const { c } = useTheme();
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14, paddingVertical: 4 }}>
+      <PressScale
+        scaleTo={0.92}
+        onPress={() => router.push('/create')}
+        accessibilityRole="button"
+        accessibilityLabel="Your Loop. Go live"
+        style={{ width: 60, alignItems: 'center', gap: 4 }}
+      >
+        <View>
+          <Avatar uri={me.avatar_url} name={me.name} size={56} ring={c.border} />
+          <View style={{ position: 'absolute', right: -2, bottom: -2, width: 20, height: 20, borderRadius: 10, backgroundColor: c.primary, borderWidth: 2, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="add" size={13} color="#fff" />
+          </View>
+        </View>
+        <Text variant="caption" muted numberOfLines={1} style={{ fontSize: 11 }}>Your Loop</Text>
+      </PressScale>
+      {rooms.map((r, i) => {
+        const name = displayName(r.host);
+        return (
+          <Pop key={r.id} delay={stagger(i, 70)} from={0.3}>
+            <PressScale
+              scaleTo={0.92}
+              onPress={() => router.push({ pathname: '/live/[roomId]', params: { roomId: r.id } })}
+              accessibilityRole="button"
+              accessibilityLabel={`${name} is live. Watch`}
+              style={{ width: 60, alignItems: 'center', gap: 4 }}
+            >
+              <Avatar uri={r.host?.avatar_url} name={name} size={56} ring={c.primary} />
+              <Text variant="caption" muted numberOfLines={1} style={{ fontSize: 11 }}>{name}</Text>
+            </PressScale>
+          </Pop>
+        );
+      })}
+    </ScrollView>
+  );
+}

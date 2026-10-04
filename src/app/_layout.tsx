@@ -101,6 +101,7 @@ function RootNavigator() {
         <Stack.Screen name="live/[roomId]" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="host/live" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="host/summary" options={{ title: 'Stream summary', headerBackVisible: false }} />
+        <Stack.Screen name="host/dashboard" options={{ title: 'Host dashboard' }} />
         <Stack.Screen name="user/[id]" options={{ title: '' }} />
         <Stack.Screen name="chat/[userId]" options={{ title: 'Chat' }} />
         <Stack.Screen name="wallet" options={{ title: 'Wallet' }} />
