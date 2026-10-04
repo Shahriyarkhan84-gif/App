@@ -81,6 +81,12 @@ select public.approve_seat((select id from party), u) from unnest(array['pt_g2',
 select tests.fails($$select public.approve_seat((select id from party), 'pt_g7')$$, '%seats_full%', 'video party holds 6 guests');
 reset role;
 select tests.ok((select count(*) from public.room_seats where room_id = (select id from party)) = 6, '6 seats taken');
+-- Kicking a seated guest also frees their seat.
+select set_config('request.jwt.claims', '{"sub":"pt_host"}', false);
+set role authenticated;
+select public.room_moderate((select id from party), 'pt_g6', 'kick', 10);
+reset role;
+select tests.ok(not exists (select 1 from public.room_seats where user_id = 'pt_g6'), 'kicked guest loses their seat');
 
 -- Guests mute/leave only themselves; a viewer cannot remove a guest.
 select set_config('request.jwt.claims', '{"sub":"pt_g1"}', false);

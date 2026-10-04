@@ -141,7 +141,7 @@ select tests.ok((select count(*) from public.creator_earnings where host_id = 'b
 select tests.ok((select count(*) from public.creator_earnings where host_id = 'carol') = 0, 'agency A admin cannot see agency B earnings');
 select tests.ok((select count(*) from public.agencies) = 1, 'agency A admin sees only own agency');
 select tests.ok((select count(*) from public.agency_members where agency_id = tests.agency('Agency B')) = 0, 'no B members visible');
-select tests.fails($$select public.assign_host_to_agency('carol', tests.agency('Agency A'))$$, '%not_found_or_already_assigned%', 'poach host from B');
+select tests.fails($$select public.assign_host_to_agency('carol', tests.agency('Agency A'))$$, '%forbidden%', 'agency staff cannot assign hosts (poach from B)');
 select tests.fails($$select public.add_agency_member(tests.agency('Agency B'), 'alice', 'agent')$$, '%forbidden%', 'add member to other agency');
 select tests.fails($$select public.add_agency_member(null, 'alice', 'agent')$$, '%forbidden%', 'null agency');
 select tests.fails($$select public.assign_host_to_agency('alice', tests.agency('Agency B'))$$, '%forbidden%', 'recruit into other agency');
@@ -248,11 +248,18 @@ select tests.fails($$select public.send_gift((select id from public.rooms where 
 reset role;
 
 ---------------------------------------------------------------------------------------
--- Room admins: max 5, host-only management, active only while live
+-- Room admins: max 5, host-only management, active only while live, followers only
 ---------------------------------------------------------------------------------------
 select set_config('request.jwt.claims', '{"sub":"bob"}', false);
 set role authenticated;
+select tests.fails($$select public.set_room_admin('m1', true)$$, '%must_follow_host%', 'non-follower cannot be made room admin');
+reset role;
+insert into public.follows (follower_id, followee_id)
+  select u, 'bob' from unnest(array['alice', 'm1', 'm2', 'm3', 'm4', 'm5']) u on conflict do nothing;
+select set_config('request.jwt.claims', '{"sub":"bob"}', false);
+set role authenticated;
 select public.set_room_admin('alice', true);
+select public.set_room_admin('alice', true); -- re-adding an existing admin is a no-op
 select public.set_room_admin('m1', true); select public.set_room_admin('m2', true);
 select public.set_room_admin('m3', true); select public.set_room_admin('m4', true);
 select tests.fails($$select public.set_room_admin('m5', true)$$, '%room_admin_limit%', 'sixth room admin');
@@ -328,14 +335,37 @@ select tests.fails($$select public.request_withdrawal(1000, '{"type":"bank"}')$$
 reset role;
 select set_config('request.jwt.claims', '{"sub":"owner"}', false);
 set role authenticated;
-select public.set_platform_setting('withdrawal', '{"pkr_per_coin": 0.5, "min_coins": 1000}');
+select public.set_platform_setting('withdrawal', '{"pkr_per_coin": 0.5, "min_coins": 1000, "hold_days": 14}');
 reset role;
 select set_config('request.jwt.claims', '{"sub":"bob"}', false);
 set role authenticated;
-select tests.fails($$select public.request_withdrawal(999999, '{"type":"bank"}')$$, '%insufficient_earnings%', 'overdraw earnings');
-select tests.fails($$select public.request_withdrawal(10, '{"type":"bank"}')$$, '%below_minimum%', 'below minimum');
-select public.request_withdrawal(2000, '{"type":"easypaisa","account":"0300"}');
-select tests.ok((select balance = 3018 and held = 2000 from public.creator_earnings where host_id = 'bob'), 'coins held');
+-- A refunded/charged-back purchase whose coins were already gifted claws the host's share back.
+reset role;
+select tests.ok(exists (select 1 from public.earning_entries where host_id = 'bob' and kind = 'chargeback_clawback' and delta < 0),
+  'refund of already-gifted coins clawed back the host share');
+select set_config('request.jwt.claims', '{"sub":"bob"}', false);
+set role authenticated;
+-- New gift earnings are held for the dispute window before they can be withdrawn.
+select tests.ok((select coalesce(sum(delta), 0) from public.earning_entries where host_id = 'bob' and kind = 'gift') > 0, 'some of them are fresh gift earnings');
+select tests.fails($$select public.request_withdrawal((select balance from public.creator_earnings where host_id = 'bob'), '{"type":"easypaisa","account":"03001234567"}')$$, '%insufficient_earnings%', 'fresh gift earnings are held for the dispute window');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select public.set_platform_setting('withdrawal', '{"pkr_per_coin": 0.5, "min_coins": 1000, "hold_days": 0}');
+reset role;
+-- Withdrawals only where the host's region supports them (IN does not).
+select set_config('request.jwt.claims', '{"sub":"carol"}', false);
+set role authenticated;
+select tests.fails($$select public.request_withdrawal(1000, '{"type":"easypaisa","account":"03001234567"}')$$, '%withdrawals_unavailable%', 'region without withdrawals');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"bob"}', false);
+set role authenticated;
+select tests.fails($$select public.request_withdrawal(999999, '{"type":"bank","account":"PK36SCBL0000001123456702"}')$$, '%insufficient_earnings%', 'overdraw earnings');
+select tests.fails($$select public.request_withdrawal(10, '{"type":"bank","account":"PK36SCBL0000001123456702"}')$$, '%below_minimum%', 'below minimum');
+select tests.fails($$select public.request_withdrawal(2000, '{"type":"crypto","account":"03001234567"}')$$, '%invalid_payout_method%', 'unknown payout type');
+select tests.fails($$select public.request_withdrawal(2000, '{"type":"bank"}')$$, '%invalid_payout_method%', 'payout without account');
+select public.request_withdrawal(2000, '{"type":"easypaisa","account":"03001234567"}');
+select tests.ok((select balance = 3000 and held = 2000 from public.creator_earnings where host_id = 'bob'), 'coins held');
 select tests.ok((select amount_minor from public.withdrawals where host_id = 'bob') = 100000, '2000 coins * 0.5 PKR = 1000.00 PKR');
 select tests.fails($$select public.review_withdrawal((select id from public.withdrawals where host_id = 'bob'), true)$$, '%forbidden%', 'host approves own withdrawal');
 reset role;
@@ -343,7 +373,7 @@ select set_config('request.jwt.claims', '{"sub":"owner"}', false);
 set role authenticated;
 select public.review_withdrawal((select id from public.withdrawals where host_id = 'bob'), false, 'Verify account');
 reset role;
-select tests.ok((select balance = 5018 and held = 0 from public.creator_earnings where host_id = 'bob'), 'rejected withdrawal released');
+select tests.ok((select balance = 5000 and held = 0 from public.creator_earnings where host_id = 'bob'), 'rejected withdrawal released');
 
 ---------------------------------------------------------------------------------------
 -- AI trust boundary: proposals need owner approval

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.4 — Security fixes from the AI app review (server side)
+
+Migration `20261004030000_review_fixes.sql` (copy-paste version: `docs/sql/apply_review_fixes.sql`):
+- Refunds/chargebacks of coins that were already gifted claw the host's share back from their earnings (newest gifts first); anything already withdrawn flags the host for review.
+- Withdrawals: new gift earnings are held for `withdrawal.hold_days` (default 14) before they can be withdrawn; only in regions whose `features.withdrawals` is true; payout type must be easypaisa/jazzcash/bank with a 6–34 character account.
+- Only the platform owner can assign a host to an agency (agency staff could claim any host and see their payouts).
+- The legacy Didit session path needs an agency-linked host application first; a late Didit result for an older session can't demote an approved host.
+- Room admins must follow the host and be active; re-adding an admin is a no-op.
+- Kicking/blocking someone also removes them from their party seat and the seat queue.
+- `clerk-webhook`: Clerk `user.updated` syncs only the email, so it no longer wipes the name/photo users set in the app.
+- Tests: new must-pass cases for the hold window, region, payout validation, clawback, admin-must-follow, Didit demotion and kick-unseats.
+
 ## 0.9.3 — Fixes from the AI app review (app side)
 
 Six AI reviewers audited sign-in, browsing, live/party rooms, money, host/agency tools and release readiness. App-side fixes:

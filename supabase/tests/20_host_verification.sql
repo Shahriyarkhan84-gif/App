@@ -39,6 +39,13 @@ set role service_role;
 select tests.fails($$select public.internal_start_host_verification('ivan', 'ses_ivan')$$, '%not_a_host%', 'non-host verification');
 
 -- Session 1: in review, then declined.
+-- A Didit session needs an agency-linked host application first.
+select tests.fails($$select public.internal_start_host_verification('hana', 'ses_0')$$, '%application_required%', 'didit session without an agency application');
+reset role;
+insert into public.agencies (id, name) values ('00000000-0000-0000-0000-0000000000a1', 'Verify Agency');
+insert into public.host_applications (user_id, full_name, phone, cnic_last4, agency_code, agency_id, status)
+  values ('hana', 'Hana Test', '+923001234567', '1234', 'X', '00000000-0000-0000-0000-0000000000a1', 'approved');
+set role service_role;
 select public.internal_start_host_verification('hana', 'ses_1');
 select tests.ok((select verification_status from public.hosts where user_id = 'hana') = 'pending', 'pending after start');
 select public.internal_apply_host_verification('ses_1', 'In Review', '{"document_type":"Identity Card"}');
@@ -52,6 +59,9 @@ select public.internal_start_host_verification('hana', 'ses_2');
 select public.internal_apply_host_verification('ses_2', 'Approved', '{}');
 select tests.ok(not (public.internal_apply_host_verification('ses_2', 'Approved', '{}') ->> 'changed')::boolean, 'replay is a no-op');
 select tests.ok((select verification_status = 'approved' and verified_at is not null from public.hosts where user_id = 'hana'), 'approved');
+-- A late "Expired" for the approving session (e.g. the host also finished the in-app form) can't demote them.
+select public.internal_apply_host_verification('ses_2', 'Expired', '{}');
+select tests.ok((select verification_status = 'approved' and verified_at is not null from public.hosts where user_id = 'hana'), 'late Didit result does not demote an approved host');
 select tests.ok((select count(*) from public.notifications where user_id = 'hana' and type = 'verification' and title like 'You%verified%') = 1, 'one approval notification');
 select tests.ok((select verified_at is not null from public.profiles where id = 'hana'), 'approval marks the user verified (host badge)');
 -- A late webhook for the old session doesn't override the newer approval.

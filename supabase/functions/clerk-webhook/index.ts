@@ -50,9 +50,12 @@ Deno.serve(async (req) => {
       null;
     const name = [user.first_name, user.last_name].filter(Boolean).join(' ') || null;
 
-    const { error } = await db
-      .from('profiles')
-      .upsert({ id: user.id, email, display_name: name, avatar_url: user.image_url }, { onConflict: 'id' });
+    // Name and photo come from Clerk only when the profile is first created; after that the user
+    // edits them in the app, so updates sync just the email (and never wipe the in-app profile).
+    const { data: existing } = await db.from('profiles').select('id').eq('id', user.id).maybeSingle();
+    const { error } = existing
+      ? await db.from('profiles').update({ email }).eq('id', user.id)
+      : await db.from('profiles').upsert({ id: user.id, email, display_name: name, avatar_url: user.image_url }, { onConflict: 'id' });
     if (error) {
       console.error('profile upsert failed', error);
       return json({ error: { code: 'internal', message: 'Upsert failed' } }, 500);
