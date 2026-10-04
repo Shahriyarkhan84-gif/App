@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AuthHero, AuthTerms, FormError, OrDivider, SocialButtons } from '@/components/AuthForm';
+import { AuthHero, AuthTerms, FormError, OrDivider, PENDING_TASK_MESSAGE, SocialButtons } from '@/components/AuthForm';
 import { FadeIn } from '@/components/Motion';
 import { Button } from '@/components/ui';
 import { useTheme } from '@/lib/theme';
@@ -16,7 +16,7 @@ export default function WelcomeScreen() {
   // reason is visible instead of the screen just quietly resetting.
   const { notice } = useLocalSearchParams<{ notice?: string }>();
   const [error, setError] = useState<string | null>(
-    notice === 'sso_timeout' ? "Sign-in didn't finish. Please try again." : null,
+    notice === 'sso_timeout' ? "Sign-in didn't finish. Please try again." : notice === 'pending_task' ? PENDING_TASK_MESSAGE : null,
   );
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.background }}>

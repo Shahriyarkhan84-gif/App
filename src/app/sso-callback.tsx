@@ -1,4 +1,4 @@
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuth, useClerk, useSignUp } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
 
@@ -12,6 +12,9 @@ import { StateView } from '@/components/StateView';
 // Stack.Protected in _layout.tsx swaps to the signed-in stack once isSignedIn flips.
 export default function SSOCallback() {
   const { isLoaded, isSignedIn } = useAuth();
+  const { signUp } = useSignUp();
+  const clerk = useClerk();
+  const needsMoreInfo = signUp?.status === 'missing_requirements';
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -21,14 +24,21 @@ export default function SSOCallback() {
       router.replace('/');
       return;
     }
+    // New account the Clerk instance wants more fields for (username, phone…).
+    if (needsMoreInfo) {
+      router.replace('/complete-sign-up');
+      return;
+    }
     // Otherwise sign-in didn't complete (cancelled, failed, or the redirect never
     // carried a session back — see AuthForm.tsx's start()) — don't strand the user
     // on a spinner forever; send them back with a visible reason after a few seconds.
     const t = setTimeout(() => {
-      if (!isSignedIn) router.replace({ pathname: '/welcome', params: { notice: 'sso_timeout' } });
+      // A session held on a Clerk task (e.g. choose an organization) never counts as signed in.
+      const notice = clerk.session?.currentTask ? 'pending_task' : 'sso_timeout';
+      if (!isSignedIn) router.replace({ pathname: '/welcome', params: { notice } });
     }, 6000);
     return () => clearTimeout(t);
-  }, [isLoaded, isSignedIn]);
+  }, [isLoaded, isSignedIn, needsMoreInfo, clerk]);
 
   return <StateView state={{ kind: 'loading' }} />;
 }

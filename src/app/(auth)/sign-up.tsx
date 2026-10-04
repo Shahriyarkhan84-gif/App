@@ -46,6 +46,8 @@ export default function SignUpScreen() {
         // user can otherwise be left stranded on this (auth) screen when the
         // group's guard flips mid-navigation; push home explicitly.
         router.replace('/');
+      } else if (attempt.status === 'missing_requirements') {
+        router.push('/complete-sign-up');
       } else {
         setError('Verification incomplete. Please try again.');
       }

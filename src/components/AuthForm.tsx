@@ -1,4 +1,4 @@
-import { isClerkAPIResponseError, useAuth, useSSO } from '@clerk/clerk-expo';
+import { isClerkAPIResponseError, useAuth, useClerk, useSSO } from '@clerk/clerk-expo';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -41,6 +41,10 @@ export function useRedirectWhenSignedIn() {
     if (isSignedIn) router.replace('/');
   }, [isSignedIn]);
 }
+
+/** Shown when Clerk created the session but holds it on a task (e.g. "choose an organization"). */
+export const PENDING_TASK_MESSAGE =
+  'Your account is ready, but Clerk is asking for an extra step (choose an organization). The app owner needs to turn off Organizations in the Clerk dashboard.';
 
 export function clerkErrorMessage(err: unknown) {
   if (isClerkAPIResponseError(err)) return err.errors[0]?.longMessage ?? err.errors[0]?.message ?? 'Request failed';
@@ -125,6 +129,7 @@ export function SocialButtons({ onError, divider = true }: { onError: (message: 
   useWarmUpBrowser();
   useRedirectWhenSignedIn();
   const { startSSOFlow } = useSSO();
+  const clerk = useClerk();
   const [pending, setPending] = useState<string | null>(null);
 
   const start = async (strategy: 'oauth_google' | 'oauth_apple') => {
@@ -136,9 +141,14 @@ export function SocialButtons({ onError, divider = true }: { onError: (message: 
       });
       if (createdSessionId) {
         await setActive?.({ session: createdSessionId });
+        if (clerk.session?.currentTask) return onError(PENDING_TASK_MESSAGE);
         // See sign-up.tsx: push home explicitly rather than rely solely on
         // Stack.Protected's guard re-evaluation.
         router.replace('/');
+      } else if (signUp?.status === 'missing_requirements') {
+        // New account, but the Clerk instance requires fields Google/Apple don't
+        // provide (username, phone, password…): collect them in the app.
+        router.push('/complete-sign-up');
       } else if (authSessionResult?.type === 'cancel' || authSessionResult?.type === 'dismiss') {
         // User closed the browser sheet before finishing — not an error, just stop quietly.
       } else {

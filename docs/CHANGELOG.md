@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.10 — Google sign-in finishes in the app
+
+- Google/Apple sign-in used to bounce back to the welcome screen ("Sign-in didn't finish"): the Clerk instance requires username, phone number (SMS-verified), password and first/last name, and Google only provides some of them, so Clerk left the sign-up at `missing_requirements` with no session.
+- New screen `src/app/(auth)/complete-sign-up.tsx` ("Finish your profile") asks for exactly the fields Clerk still lists in `signUp.missingFields`, verifies the phone (or email) by code, then activates the session. Reached from Google/Apple (`SocialButtons`, `sso-callback`) and from the email sign-up form when its verification ends at `missing_requirements`.
+- A session Clerk holds on a task (Organizations with "membership required") now shows a clear message instead of the generic timeout; the fix for that one is turning Organizations off in the Clerk dashboard.
+- 4 new tests (`CompleteSignUp.test.tsx`); app tests 21/21.
+
 ## 0.8.9 — App tests
 
 - The mobile app has automated tests: `npm test` (jest-expo + React Native Testing Library), also run in CI and part of the definition of done. 17 tests cover `Button` (press, disabled, tap haptic), `IconButton`, `Chip` selection, `TabBarItem`, the router `tabButton` focus logic (regression test for the `aria-selected` bug; verified to fail if the bug returns), the always-white theme and `shortTime`.
