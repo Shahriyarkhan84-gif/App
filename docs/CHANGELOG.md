@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.11 — App points at the live Supabase project
+
+- `eas.json` (all build profiles) and the preview-update workflow pointed `EXPO_PUBLIC_SUPABASE_URL` at `rnlokiphyleoqtjwztdw`, a project that no longer exists, so every screen showed "Something went wrong" after sign-in. They now use the `zynalive` project (`mdfjbhzriuwxafeagnwo`, all 25 migrations applied) and its publishable key.
+- Still needed on the servers (not code): Supabase → Authentication → Third-party auth → add Clerk (`peaceful-aphid-8430.clerk.accounts.dev`), Clerk → Integrations → Supabase activated, and the edge functions (`livekit-token`, `coins-checkout`, webhooks…) deployed with their secrets — none are deployed yet.
+
 ## 0.8.10 — Google sign-in finishes in the app
 
 - Google/Apple sign-in used to bounce back to the welcome screen ("Sign-in didn't finish"): the Clerk instance requires username, phone number (SMS-verified), password and first/last name, and Google only provides some of them, so Clerk left the sign-up at `missing_requirements` with no session.
