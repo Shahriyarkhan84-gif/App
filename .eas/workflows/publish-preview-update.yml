@@ -1,0 +1,20 @@
+# Sends the current JavaScript to installed preview APKs over the air (no rebuild).
+# Run from the EAS dashboard or `npx eas-cli@latest workflow:run publish-preview-update.yml`.
+# Only for JS/asset changes: a new native library or app.json native change needs a new build.
+# The public EXPO_PUBLIC_* values mirror eas.json's preview build profile so the update
+# bundle is configured exactly like the APK.
+name: Publish preview update
+
+jobs:
+  update:
+    name: Send update to preview APKs
+    type: update
+    environment: preview
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: https://rnlokiphyleoqtjwztdw.supabase.co
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_NXWL0nHhmfzd1H54QnkdyA_taqa3cue
+      EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_cGVhY2VmdWwtYXBoaWQtODQzMC5jbGVyay5hY2NvdW50cy5kZXYk
+      EXPO_PUBLIC_SITE_URL: https://zynalive.com
+    params:
+      channel: preview
+      platform: android
