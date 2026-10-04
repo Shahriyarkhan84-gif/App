@@ -30,6 +30,8 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 | `…25030000_regions_events.sql` | `regions` (PK/IN/BD/GLOBAL active; ID/MY/TR/GULF/PH/NP ready), region from `signup_country`, `my_region()`; `coin_packages.region` (+ INR/BDT/USD packages) and `internal_create_payment` refuses other regions' packages; `gift_catalog.regions`; `events`, `event_scores` (kept by triggers on `gifts` and ended `pk_battles`), `event_results`; `upsert_event`, `cancel_event`, `finalize_event`, `event_leaderboard`, `internal_finalize_due_events` |
 
 | `…25040000_revoke_anon_review_host_application.sql` | Security advisor fix: signed-out callers can't execute `review_host_application()` |
+| `20261004010000_avatars.sql` | Public `avatars` storage bucket; signed-in users write only `avatars/<their id>/` (Edit profile → Change photo) |
+| `20261004020000_party_rooms.sql` | `rooms.mode` (`live`/`voice`/`video`), `room_seats` (voice 8 / video 6 guest seats), `seat_requests`; RPCs `set_room_mode`, `request_seat`, `approve_seat` (host or live room admin), `remove_from_seat`, `leave_seat`, `set_seat_muted`; seats/requests cleared when the room goes offline; no client write grants. Tests: `supabase/tests/97_party_rooms.sql` |
 
 (Files `20260925…` sort after `20260924…`; the short names above drop the date prefix.)
 

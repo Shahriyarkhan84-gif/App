@@ -35,6 +35,9 @@ export default function LiveRoomScreen() {
     const { data, error } = await supabase.from('rooms').select(ROOM_SELECT).eq('id', roomId).single();
     if (error) throw error;
     const r = normalizeRoom(data as never);
+    // Party rooms have their own screen (seats); the mode column may not exist yet, so ignore errors.
+    const { data: modeRow } = await supabase.from('rooms').select('mode').eq('id', roomId).maybeSingle();
+    if (modeRow?.mode === 'voice' || modeRow?.mode === 'video') router.replace({ pathname: '/party/[roomId]', params: { roomId } });
     const [admin, follow] = await Promise.all([
       supabase.from('room_admins').select('user_id').eq('room_id', roomId).eq('user_id', userId!).maybeSingle(),
       supabase.from('follows').select('followee_id').eq('follower_id', userId!).eq('followee_id', r.host_id).maybeSingle(),

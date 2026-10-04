@@ -74,9 +74,11 @@ export default function CreateScreen() {
   const goLive = async () => {
     setBusy(true);
     try {
-      await rpc(supabase, 'go_live', { p_title: title.trim() || 'Live now', p_category: category });
+      const live = await rpc<{ id: string; mode?: string }>(supabase, 'go_live', { p_title: title.trim() || 'Live now', p_category: category });
       track('went_live', { category });
-      router.push('/host/live');
+      // Voice/video parties (chosen on the Party tab) open the party room instead of the solo live screen.
+      if (live?.mode === 'voice' || live?.mode === 'video') router.push({ pathname: '/party/[roomId]', params: { roomId: live.id } });
+      else router.push('/host/live');
     } catch (e) {
       Alert.alert('Could not go live', friendlyError(e));
     } finally {

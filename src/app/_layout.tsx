@@ -99,6 +99,7 @@ function RootNavigator() {
       <Stack.Protected guard={!!isSignedIn}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="live/[roomId]" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="party/[roomId]" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="host/live" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="host/summary" options={{ title: 'Stream summary', headerBackVisible: false }} />
         <Stack.Screen name="host/dashboard" options={{ title: 'Host dashboard' }} />

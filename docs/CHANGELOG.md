@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.2 — Voice and video party rooms
+
+- Party tab → Start a party → Voice party (you + 8 guest seats, audio only), Video party (you + 6 guests on camera) or Solo live; then the usual Go live steps. Party rooms are listed first with a VOICE/VIDEO tag; opening a party from anywhere (including a live-room link) lands on `/party/[roomId]`.
+- Party room (`src/app/party/[roomId].tsx`, `PartyStage`, `PartySeats`): host seat + guest grid (circles for voice, tiles for video) with speaking rings and mute badges; viewers ask for a seat, the host or a room admin approves/declines from Requests; guests mute or leave; host can remove a guest or end the party; chat and gifts as in a live.
+- Backend: migration `20261004020000_party_rooms.sql` (seats, requests, RPCs, cleared on offline) and `livekit-token` accepts `as: 'guest'` — only a seated guest may publish (mic in voice, camera + mic in video); voice hosts publish mic only.
+- Party mode is read with its own query, so the rest of the app keeps working before the migration is applied.
+
 ## 0.9.1 — Host and account screens match the design canvas
 
 - Earnings: "Available diamonds" header and a "Where each gift goes" card read from `platform_settings.gift_split` (90 / 5 / 5 today); "Withdrawal history".

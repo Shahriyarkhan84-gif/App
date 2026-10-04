@@ -23,7 +23,7 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 
 ## Also pending
 
-- Design canvas screens not built yet: multi-guest voice & video party rooms (Party tab lists live rooms until then), likes, host dashboard, agency web dashboard.
+- Design canvas screens not built yet: likes, agency web dashboard. Voice/video party rooms and the host dashboard are built; party rooms need the `20261004020000_party_rooms.sql` migration and the `livekit-token` function deployed to the hosted project.
 
 - Localization: the layer and ur/hi/bn catalogs exist; screens outside tabs, states, profile menu, settings, videos and events still show English (move their strings into `src/lib/i18n/en.ts` as they're touched). Server notification copy is English.
 - Regions: withdrawals are PKR-only (`pkr_per_coin`); other regions need their own payout rate + rails before `features.withdrawals` is switched on. Inactive markets (ID, MY, TR, Gulf, PH, NP) need coin packages before activation.

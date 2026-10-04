@@ -24,7 +24,7 @@ export async function rpc<T = unknown>(supabase: SupabaseClient, fn: string, arg
   return data as T;
 }
 
-export function getLiveKitToken(supabase: SupabaseClient, roomId: string, as: 'viewer' | 'host') {
+export function getLiveKitToken(supabase: SupabaseClient, roomId: string, as: 'viewer' | 'host' | 'guest') {
   return invokeFn<{ token: string; url: string }>(supabase, 'livekit-token', { roomId, as });
 }
 
