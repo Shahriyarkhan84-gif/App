@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, Share, View } from 'react-native';
 
 import { FadeIn } from '@/components/Motion';
 import { StateView } from '@/components/StateView';
@@ -22,7 +22,7 @@ export default function StreamSummaryScreen() {
   const stream = useAsync(async () => {
     const { data, error } = await supabase.from('streams').select('*').eq('id', streamId).single();
     if (error) throw error;
-    return data as { started_at: string; ended_at: string; peak_viewers: number; gift_coins: number; ai_summary: Summary | null };
+    return data as { title: string | null; started_at: string; ended_at: string; peak_viewers: number; gift_coins: number; ai_summary: Summary | null };
   }, [streamId]);
 
   // The Creator Assist agent writes ai_summary shortly after the stream ends.
@@ -40,9 +40,9 @@ export default function StreamSummaryScreen() {
             <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, gap: 4 }}>
               <Row gap={8}>
                 <Ionicons name="checkmark-circle" size={22} color="#fff" />
-                <Text variant="h1" color="#fff">Stream summary</Text>
+                <Text variant="h1" color="#fff">Stream ended</Text>
               </Row>
-              <Text color="rgba(255,255,255,0.85)">Nice work — here’s how this stream went.</Text>
+              <Text color="rgba(255,255,255,0.85)">{s?.title ? `${s.title} · ` : ''}{minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes}m`}</Text>
             </LinearGradient>
           </FadeIn>
 
@@ -72,7 +72,12 @@ export default function StreamSummaryScreen() {
             </Card>
           </FadeIn>
 
-          <Button title="Done" onPress={() => router.replace('/create')} />
+          <Button title="Back to home" onPress={() => router.replace('/')} />
+          <Button
+            title="Share highlights"
+            variant="secondary"
+            onPress={() => Share.share({ message: `I just went live on Zynalive — ${s?.peak_viewers ?? 0} peak viewers and ${(s?.gift_coins ?? 0).toLocaleString()} gift coins!` })}
+          />
         </ScrollView>
       </StateView>
     </Screen>

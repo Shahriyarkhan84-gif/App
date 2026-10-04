@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -5,7 +6,7 @@ import { Alert, ScrollView, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
 import { FadeIn } from '@/components/Motion';
-import { Button, Card, Chip, Coin, Input, Row, Screen, Text } from '@/components/ui';
+import { Button, Card, Chip, Input, Row, Screen, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -37,10 +38,11 @@ export default function EarningsScreen() {
   const verified = host?.verification_status === 'approved';
 
   const { data, error, loading, reload } = useFocusedAsync(async () => {
-    const [earnings, withdrawals, settings] = await Promise.all([
+    const [earnings, withdrawals, settings, split] = await Promise.all([
       supabase.from('creator_earnings').select('balance,held,lifetime').eq('host_id', userId!).maybeSingle(),
       supabase.from('withdrawals').select('*').eq('host_id', userId!).order('created_at', { ascending: false }).limit(30),
       supabase.from('platform_settings').select('value').eq('key', 'withdrawal').single(),
+      supabase.from('platform_settings').select('value').eq('key', 'gift_split').maybeSingle(),
     ]);
     const cfg = settings.data?.value as { pkr_per_coin: number | null; min_coins: number } | undefined;
     return {
@@ -48,6 +50,7 @@ export default function EarningsScreen() {
       withdrawals: (withdrawals.data ?? []) as Withdrawal[],
       rate: cfg?.pkr_per_coin ?? null,
       minCoins: cfg?.min_coins ?? 0,
+      split: (split.data?.value as { host_pct: number; stream_pct: number; owner_pct: number } | undefined) ?? null,
     };
   }, [userId]);
 
@@ -76,14 +79,36 @@ export default function EarningsScreen() {
           <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
             <FadeIn>
               <View style={{ padding: 20, borderRadius: 22, gap: 10, backgroundColor: c.violetSurface, experimental_backgroundImage: 'linear-gradient(135deg, #4B32B8, #1B1830)' }}>
-                <Text variant="bodySmall" color={c.violetText}>Available to withdraw</Text>
-                <Row gap={10}><Coin size={26} /><Text variant="display" color="#fff" accessibilityLiveRegion="polite">{data.earnings.balance.toLocaleString()}</Text></Row>
+                <Text variant="bodySmall" color={c.violetText}>Available diamonds</Text>
+                <Row gap={10}><Ionicons name="diamond" size={24} color="#CFC8FF" /><Text variant="display" color="#fff" accessibilityLiveRegion="polite">{data.earnings.balance.toLocaleString()}</Text></Row>
                 <Row gap={24}>
                   <View><Text variant="label" color="#fff">{data.earnings.held.toLocaleString()}</Text><Text variant="caption" color={c.violetText}>In review</Text></View>
                   <View><Text variant="label" color="#fff">{data.earnings.lifetime.toLocaleString()}</Text><Text variant="caption" color={c.violetText}>Lifetime</Text></View>
                 </Row>
               </View>
             </FadeIn>
+
+            {data.split && (
+              <Card>
+                <Text variant="h3">Where each gift goes</Text>
+                <Text muted>For every 100 coins a viewer gifts you:</Text>
+                {[
+                  { label: 'You (host)', pct: data.split.host_pct, color: c.primary },
+                  { label: 'Stream pool', pct: data.split.stream_pct, color: c.gold },
+                  { label: 'Platform', pct: data.split.owner_pct, color: c.textFaint },
+                ].map((r) => (
+                  <View key={r.label} style={{ gap: 4 }}>
+                    <Row style={{ justifyContent: 'space-between' }}>
+                      <Text>{r.label}</Text>
+                      <Text variant="label">{r.pct} · {r.pct}%</Text>
+                    </Row>
+                    <View style={{ height: 6, borderRadius: 3, backgroundColor: c.surfaceRaised, overflow: 'hidden' }}>
+                      <View style={{ width: `${r.pct}%`, height: '100%', backgroundColor: r.color }} />
+                    </View>
+                  </View>
+                ))}
+              </Card>
+            )}
 
             <Card>
               <Text variant="h3">Withdraw</Text>
@@ -108,7 +133,7 @@ export default function EarningsScreen() {
               )}
             </Card>
 
-            <Text variant="h3">Withdrawals</Text>
+            <Text variant="h3">Withdrawal history</Text>
             {data.withdrawals.length === 0 ? <Text muted>None yet.</Text> : data.withdrawals.map((w) => (
               <Row key={w.id} style={{ justifyContent: 'space-between', paddingVertical: 6 }}>
                 <View>

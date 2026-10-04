@@ -8,7 +8,7 @@ import { ContributionsCard } from '@/components/Contributions';
 import { LiveAvatar } from '@/components/FollowingLive';
 import { PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Button, RoleBadges, Row, Screen, Text } from '@/components/ui';
+import { Avatar, Button, compactNumber, RoleBadges, Row, Screen, Text } from '@/components/ui';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
 import { countryName, flag } from '@/lib/country';
@@ -28,15 +28,24 @@ export default function UserProfileScreen() {
   const [following, setFollowing] = useState<boolean | null>(null);
 
   const { data, error, loading, reload } = useAsync(async () => {
-    const [profile, host, room, followers, follow] = await Promise.all([
+    const [profile, host, room, followers, follow, followingList] = await Promise.all([
       supabase.from('profiles').select('id,user_number,verified_at,username,display_name,avatar_url,bio,country,signup_country,language,role,status,status_until').eq('id', id).single(),
       supabase.from('hosts').select('host_code,total_live_seconds').eq('user_id', id).maybeSingle(),
       supabase.from('rooms').select('id,status,title,viewer_count').eq('host_id', id).maybeSingle(),
       supabase.from('follows').select('*', { count: 'exact', head: true }).eq('followee_id', id),
       supabase.from('follows').select('followee_id').eq('follower_id', userId!).eq('followee_id', id).maybeSingle(),
+      supabase.from('follows').select('followee_id', { count: 'exact' }).eq('follower_id', id).limit(1000),
     ]);
     if (profile.error) throw profile.error;
-    return { profile: profile.data as Profile, host: host.data, room: room.data, followers: followers.count ?? 0, follows: !!follow.data };
+    // Friends = people they follow who follow them back.
+    const theirFollowees = (followingList.data ?? []).map((f) => f.followee_id);
+    const friends = theirFollowees.length
+      ? (await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('followee_id', id).in('follower_id', theirFollowees)).count ?? 0
+      : 0;
+    return {
+      profile: profile.data as Profile, host: host.data, room: room.data, followers: followers.count ?? 0, follows: !!follow.data,
+      following: followingList.count ?? 0, friends,
+    };
   }, [id, userId]);
 
   const isMe = id === userId;
@@ -123,7 +132,18 @@ export default function UserProfileScreen() {
                   <Text variant="caption">{flag(data.profile.signup_country)} {countryName(data.profile.signup_country)}</Text>
                 </View>
               )}
-              <Text variant="label">{data.followers.toLocaleString()} followers</Text>
+              <Row gap={20} style={{ paddingVertical: 4 }}>
+                {[
+                  { label: 'Friends', value: data.friends },
+                  { label: 'Followers', value: data.followers },
+                  { label: 'Following', value: data.following },
+                ].map((s) => (
+                  <View key={s.label} style={{ alignItems: 'center' }}>
+                    <Text variant="h3">{compactNumber(s.value)}</Text>
+                    <Text variant="caption" muted>{s.label}</Text>
+                  </View>
+                ))}
+              </Row>
               {data.profile.bio && <Text style={{ textAlign: 'center' }}>{data.profile.bio}</Text>}
             </View>
             {data.host && <ContributionsCard hostId={id} />}

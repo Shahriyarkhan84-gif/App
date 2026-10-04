@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.1 — Host and account screens match the design canvas
+
+- Earnings: "Available diamonds" header and a "Where each gift goes" card read from `platform_settings.gift_split` (90 / 5 / 5 today); "Withdrawal history".
+- Stream summary: "Stream ended · title · duration", Back to home and Share highlights.
+- Public profile: Friends · Followers · Following row.
+- Help & support: Ask AI support banner, Popular questions (tap to expand), "Still need help?" form.
+- Edit profile: profile photo with Change photo (picked, cropped square, resized to 512px, uploaded to `avatars/<user id>/`). New migration `20261004010000_avatars.sql` adds the public `avatars` bucket where users can write only their own folder; it is not yet applied to the hosted project.
+
 ## 0.9.0 — Main screens match the design canvas
 
 - Home: the "Your Loop" strip (your ring → go live, then followed hosts live now) and the PK Battle banner are always shown; an empty feed shows a small message inside the page instead of replacing it.
