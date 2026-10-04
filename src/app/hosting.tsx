@@ -54,7 +54,7 @@ export default function HostingScreen() {
         ? { title: 'Refresh status', onPress: () => void reload(), loading: false }
         : { title: status === 'declined' ? 'Try again with Didit' : 'Continue verification', onPress: openDidit, loading: false };
 
-  const stepIndex = status === 'declined' ? 0 : STEPS.indexOf(status === 'unverified' ? 'unverified' : status === 'in_review' ? 'in_review' : 'approved');
+  const stepIndex = status === 'declined' ? 0 : status === 'approved' ? 2 : status === 'unverified' ? 0 : 1;
 
   return (
     <Screen edges={['bottom']}>
@@ -73,7 +73,7 @@ export default function HostingScreen() {
               ))}
             </Row>
             <Text variant="caption" color="rgba(255,255,255,0.75)">
-              {status === 'unverified' ? 'Step 1 of 3 · Submit your ID' : status === 'in_review' ? 'Step 2 of 3 · Under review' : 'Step 3 of 3 · Approved'}
+              {status === 'approved' ? 'Step 3 of 3 · Approved' : status === 'declined' ? 'Not approved · You can submit again' : status === 'unverified' ? 'Step 1 of 3 · Submit your ID' : 'Step 2 of 3 · Under review'}
             </Text>
           </LinearGradient>
         </FadeIn>

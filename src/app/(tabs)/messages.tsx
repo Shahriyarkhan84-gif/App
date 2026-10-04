@@ -154,11 +154,9 @@ function Notifications() {
     reload();
   };
 
-  const open = async (n: Notification) => {
-    if (!n.read_at) {
-      await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', n.id);
-      reload();
-    }
+  const open = (n: Notification) => {
+    // Navigate right away; mark read in the background.
+    if (!n.read_at) void supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', n.id).then(() => reload());
     if (n.type.startsWith('pk_battle_')) router.push('/host/live');
     else if (n.data?.room_id) router.push({ pathname: '/live/[roomId]', params: { roomId: n.data.room_id } });
     else if (n.type === 'withdrawal') router.push('/earnings');

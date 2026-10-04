@@ -36,9 +36,19 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
     return data as GiftItem[];
   }, []);
   const wallet = useAsync(async () => {
-    const { data } = await supabase.from('wallets').select('coin_balance,frozen').eq('user_id', userId!).maybeSingle();
-    return data ?? { coin_balance: 0, frozen: false };
+    const [{ data, error }, split] = await Promise.all([
+      supabase.from('wallets').select('coin_balance,frozen').eq('user_id', userId!).maybeSingle(),
+      supabase.from('platform_settings').select('value').eq('key', 'gift_split').maybeSingle(),
+    ]);
+    // A failed load must not look like an empty wallet.
+    if (error) throw error;
+    const hostPct = (split.data?.value as { host_pct?: number } | undefined)?.host_pct ?? null;
+    return { ...(data ?? { coin_balance: 0, frozen: false }), hostPct };
   }, [userId, visible]);
+
+  // A different gift or quantity is a different send: never reuse the old idempotency key for it.
+  const pick = (g: GiftItem) => { setSelected(g); setKey(idempotencyKey()); };
+  const pickQuantity = (q: number) => { setQuantity(q); setKey(idempotencyKey()); };
   useRealtime('wallets', `user_id=eq.${userId}`, () => wallet.reload(), visible);
 
   const total = (selected?.coin_price ?? 0) * quantity;
@@ -83,7 +93,7 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
           return (
             <Pop key={g.id} delay={stagger(i, 40)} from={0.6} style={{ width: '23%' }}>
             <PressScale
-              onPress={() => setSelected(g)}
+              onPress={() => pick(g)}
               accessibilityRole="button"
               accessibilityLabel={`${g.name}, ${g.coin_price} coins`}
               accessibilityState={{ selected: on }}
@@ -102,10 +112,11 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
       </View>
       <Row gap={8}>
         {QUANTITIES.map((q) => (
-          <Chip key={q} label={`×${q}`} selected={quantity === q} onPress={() => setQuantity(q)} />
+          <Chip key={q} label={`×${q}`} selected={quantity === q} onPress={() => pickQuantity(q)} />
         ))}
       </Row>
       {error && <Text color={c.danger}>{error}</Text>}
+      {wallet.error && <Text color={c.danger}>Couldn&apos;t load your balance. Close and try again.</Text>}
       {wallet.data?.frozen ? (
         <Text color={c.warning}>Your wallet is on hold while a payment is reviewed.</Text>
       ) : insufficient ? (
@@ -113,7 +124,7 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
       ) : (
         <Row>
           <Text variant="bodySmall" muted style={{ flex: 1 }}>
-            {selected ? `${selected.name} ×${quantity} · ${total.toLocaleString()} coins. The host gets 90%.` : 'Pick a gift to send.'}
+            {selected ? `${selected.name} ×${quantity} · ${total.toLocaleString()} coins.${wallet.data?.hostPct != null ? ` The host gets ${wallet.data.hostPct}%.` : ''}` : 'Pick a gift to send.'}
           </Text>
           <Button title="Send" disabled={!selected} loading={sending} onPress={send} style={{ minHeight: 44, paddingHorizontal: 26 }} />
         </Row>

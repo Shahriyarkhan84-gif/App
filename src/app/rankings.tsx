@@ -34,7 +34,9 @@ export default function RankingsScreen() {
   const [kind, setKind] = useState<Kind>('creator');
   const [period, setPeriod] = useState<Period>('week');
 
-  const rankings = useAsync(() => rpc<Ranking[]>(supabase, 'get_rankings', { p_kind: kind, p_period: period }), [kind, period]);
+  // Rows remember which tab they belong to, so switching tabs never shows (or opens) the previous tab's rows.
+  const rankings = useAsync(async () => ({ kind, period, rows: await rpc<Ranking[]>(supabase, 'get_rankings', { p_kind: kind, p_period: period }) }), [kind, period]);
+  const current = rankings.data && rankings.data.kind === kind && rankings.data.period === period ? rankings.data.rows : undefined;
 
   const open = (r: Ranking) => {
     if (kind === 'live') router.push({ pathname: '/live/[roomId]', params: { roomId: r.subject_id } });
@@ -42,7 +44,7 @@ export default function RankingsScreen() {
   };
   const score = (r: Ranking) => (kind === 'live' ? `${compactNumber(r.score)} watching` : compactNumber(Number(r.score)));
 
-  const rows = rankings.data ?? [];
+  const rows = current ?? [];
   // Podium order: 2nd, 1st, 3rd.
   const podium = [rows[1], rows[0], rows[2]].filter(Boolean) as Ranking[];
 
@@ -58,7 +60,7 @@ export default function RankingsScreen() {
       )}
       <StateView
         state={resolveState({
-          offline, loading: rankings.loading, error: rankings.error, data: rankings.data, onRetry: rankings.reload,
+          offline, loading: rankings.loading || !current, error: rankings.error, data: current, onRetry: rankings.reload,
           isEmpty: (d) => d.length === 0, empty: { title: 'No rankings yet', body: 'Rankings fill up as people go live and send gifts.' },
         })}
       >

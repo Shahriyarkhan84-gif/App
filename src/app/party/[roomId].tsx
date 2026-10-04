@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -69,7 +69,17 @@ export default function PartyRoomScreen() {
 
   useRealtime('room_seats', `room_id=eq.${roomId}`, () => party.reload());
   useRealtime('seat_requests', `room_id=eq.${roomId}`, () => party.reload());
-  useRealtime('rooms', `id=eq.${roomId}`, () => party.reload());
+  // Viewer-count updates are patched in place; only a status change (live → ended) refetches.
+  const [viewers, setViewers] = useState<number | null>(null);
+  const status = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    status.current = party.data?.room.status;
+  }, [party.data?.room.status]);
+  useRealtime('rooms', `id=eq.${roomId}`, (e) => {
+    const next = e.new as { status?: string; viewer_count?: number };
+    if (typeof next.viewer_count === 'number') setViewers(next.viewer_count);
+    if (next.status && next.status !== status.current) party.reload();
+  });
 
   const p = party.data;
   const isHost = !!p && p.room.host_id === userId;
@@ -80,10 +90,19 @@ export default function PartyRoomScreen() {
   const queue = canManage && p ? p.requests : [];
 
   // A new token whenever your role changes (taking or leaving a seat changes what you may publish).
+  // The token remembers the role it was issued for: the stage only connects with a token that
+  // matches your current role (a just-approved guest must not join with their old viewer token).
   const token = useAsync(async () => {
     if (p?.room.status !== 'live') return null;
-    return getLiveKitToken(supabase, roomId, role);
+    return { ...(await getLiveKitToken(supabase, roomId, role)), role };
   }, [roomId, p?.room.status, role]);
+  const [dropped, setDropped] = useState(false);
+  // Only the stage for the current token may report a dropped connection; an old stage closing
+  // because the role changed (seat approved/left) is expected.
+  const activeToken = useRef<string | null>(null);
+  useEffect(() => {
+    activeToken.current = token.data?.token ?? null;
+  }, [token.data?.token]);
 
   const act = async (fn: () => Promise<unknown>, failTitle: string) => {
     setBusy(true);
@@ -156,7 +175,8 @@ export default function PartyRoomScreen() {
   else if (token.error) state = errorCode(token.error) === 'banned_from_room' || errorCode(token.error) === 'account_restricted'
     ? { kind: 'disabled', title: "You can't join this party", body: friendlyError(token.error) }
     : { kind: 'error', error: token.error, onRetry: token.reload };
-  else if (!token.data) state = { kind: 'loading' };
+  else if (dropped) state = { kind: 'error', error: new Error('Lost connection to the party.'), onRetry: () => { setDropped(false); token.reload(); } };
+  else if (!token.data || token.data.role !== role) state = { kind: 'loading' };
 
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
@@ -170,7 +190,7 @@ export default function PartyRoomScreen() {
                 <Text variant="label" color={c.text} numberOfLines={1}>{p.room.title}</Text>
                 <Text variant="caption" color={c.textMuted}>{p.mode === 'video' ? 'Video party' : 'Voice party'} · {p.seats.length}/{CAPACITY[p.mode]} seats</Text>
               </View>
-              <ViewerCount count={p.room.viewer_count ?? 0} />
+              <ViewerCount count={viewers ?? p.room.viewer_count ?? 0} />
               <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Leave party" style={round('rgba(255,255,255,0.1)')}>
                 <Ionicons name="close" size={22} color={c.text} />
               </Pressable>
@@ -178,7 +198,7 @@ export default function PartyRoomScreen() {
 
             <ScrollView style={{ flexGrow: 0, maxHeight: p.mode === 'video' ? '58%' : '48%' }} contentContainerStyle={{ paddingVertical: 8 }}>
               <PartyStage
-                key={role}
+                key={token.data.token}
                 token={token.data.token}
                 url={token.data.url}
                 mode={p.mode}
@@ -186,7 +206,10 @@ export default function PartyRoomScreen() {
                 publishing={role !== 'viewer'}
                 micOn={micOn}
                 onSeatPress={onSeatPress}
-                onError={() => token.reload()}
+                onDisconnected={((t) => () => {
+                  if (activeToken.current === t) setDropped(true);
+                })(token.data.token)}
+                onError={(e) => Alert.alert('Microphone or camera problem', friendlyError(e))}
               />
             </ScrollView>
 

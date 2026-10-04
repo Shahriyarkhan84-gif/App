@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.3 — Fixes from the AI app review (app side)
+
+Six AI reviewers audited sign-in, browsing, live/party rooms, money, host/agency tools and release readiness. App-side fixes:
+- Accounts: switching accounts on one device never shows the previous user's profile, role or admin menus (`src/lib/profile.tsx`).
+- Party rooms: an approved guest now connects with their guest token (stage only mounts with a token issued for the current role), so they can be heard; a dropped connection shows a retry instead of a silent spinner; mic/camera errors no longer loop token refreshes; viewer-count updates no longer refetch the room.
+- Home no longer refetches the whole feed on every viewer join/leave anywhere.
+- Host live: a stream ended elsewhere takes the host to the summary; an expired PK battle is ended once, not on every render; "Return to stream" / "Back to your live" open the party room for voice/video parties.
+- Chat shows the newest 200 messages (was the oldest 200).
+- Edit profile waits for your profile before showing the form, so Save can't blank your name/bio.
+- Wallet, earnings and the gift sheet show an error instead of a 0 balance when loading fails; after checkout the wallet shows "Waiting for payment confirmation" until the coins land; a changed gift or quantity gets a new idempotency key; the host share shown comes from `gift_split`.
+- Rankings never show/open the previous tab's rows; hosting shows "Not approved" / "Under review" instead of "Approved" for declined/pending hosts; Follow ignores double taps; notifications open immediately; featured host keeps the right follow state; Google sign-in waits 15s (was 6s) on slow networks; sign-up → complete-sign-up can't go back to a used code screen.
+- Accessibility: form inputs are announced by their label; auth errors are announced.
+
 ## 0.9.2 — Voice and video party rooms
 
 - Party tab → Start a party → Voice party (you + 8 guest seats, audio only), Video party (you + 6 guests on camera) or Solo live; then the usual Go live steps. Party rooms are listed first with a VOICE/VIDEO tag; opening a party from anywhere (including a live-room link) lands on `/party/[roomId]`.

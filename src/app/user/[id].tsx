@@ -57,7 +57,10 @@ export default function UserProfileScreen() {
     track('profile_shared', { user_id: id! });
   };
 
+  const [followBusy, setFollowBusy] = useState(false);
   const toggleFollow = async () => {
+    if (followBusy) return;
+    setFollowBusy(true);
     const next = !isFollowing;
     setFollowing(next);
     const { error } = next
@@ -65,6 +68,7 @@ export default function UserProfileScreen() {
       : await supabase.from('follows').delete().eq('follower_id', userId!).eq('followee_id', id);
     if (error) setFollowing(!next);
     else track('follow_toggled', { user_id: id, following: next });
+    setFollowBusy(false);
   };
 
   const moreActions = () =>

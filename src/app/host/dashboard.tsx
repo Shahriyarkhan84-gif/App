@@ -22,6 +22,8 @@ type Person = Pick<Profile, 'id' | 'display_name' | 'username' | 'avatar_url'>;
 type StreamRow = { id: string; title: string | null; started_at: string; ended_at: string | null; peak_viewers: number; gift_coins: number };
 type Dashboard = {
   live: boolean;
+  roomId: string | null;
+  party: boolean;
   today: { seconds: number; sessions: number; diamonds: number; gifts: number; newFollowers: number; totalFollowers: number; peak: number };
   weekSeconds: number;
   admins: Person[];
@@ -55,8 +57,9 @@ export default function HostDashboardScreen() {
     const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
     const weekStart = new Date(dayStart); weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
 
-    const [room, week, recent, giftsToday, followersToday, followersTotal, warnings, fans] = await Promise.all([
+    const [room, modeRow, week, recent, giftsToday, followersToday, followersTotal, warnings, fans] = await Promise.all([
       supabase.from('rooms').select('id,status').eq('host_id', me).maybeSingle(),
+      supabase.from('rooms').select('mode').eq('host_id', me).maybeSingle(),
       supabase.from('streams').select('id,title,started_at,ended_at,peak_viewers,gift_coins').eq('host_id', me).gte('started_at', weekStart.toISOString()),
       supabase.from('streams').select('id,title,started_at,ended_at,peak_viewers,gift_coins').eq('host_id', me).order('started_at', { ascending: false }).limit(5),
       supabase.from('gifts').select('host_share').eq('host_id', me).gte('created_at', dayStart.toISOString()),
@@ -78,6 +81,8 @@ export default function HostDashboardScreen() {
     const gifts = giftsToday.data ?? [];
     return {
       live: room.data?.status === 'live',
+      roomId: room.data?.id ?? null,
+      party: modeRow.data?.mode === 'voice' || modeRow.data?.mode === 'video',
       today: {
         seconds: todayRows.reduce((n, s) => n + seconds(s, now), 0),
         sessions: todayRows.length,
@@ -129,7 +134,11 @@ export default function HostDashboardScreen() {
               </Row>
             </Row>
 
-            <Button title={data.live ? 'Back to your live' : 'Go live now'} onPress={() => router.push(data.live ? '/host/live' : '/create')} />
+            <Button title={data.live ? 'Back to your live' : 'Go live now'} onPress={() => {
+              if (!data.live) router.push('/create');
+              else if (data.party && data.roomId) router.push({ pathname: '/party/[roomId]', params: { roomId: data.roomId } });
+              else router.push('/host/live');
+            }} />
 
             <View style={{ gap: 8 }}>
               <Text variant="h3">Today</Text>

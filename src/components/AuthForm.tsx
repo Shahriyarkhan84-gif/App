@@ -121,7 +121,7 @@ export function Field(props: TextInputProps & { label: string }) {
 export function FormError({ message }: { message: string | null }) {
   const { c } = useTheme();
   if (!message) return null;
-  return <Text color={c.danger}>{message}</Text>;
+  return <Text color={c.danger} accessibilityRole="alert" accessibilityLiveRegion="polite">{message}</Text>;
 }
 
 /** Google / Apple sign-in through Clerk's SSO flow. */

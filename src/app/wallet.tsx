@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
-import { Alert, Platform, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, ScrollView, View } from 'react-native';
 
 import { Pop, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
@@ -35,6 +35,8 @@ export default function WalletScreen() {
   const offline = useOffline();
   const [buying, setBuying] = useState<number | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
+  // After checkout the coins arrive from the payment webhook; show that we're waiting rather than an unchanged balance.
+  const [awaiting, setAwaiting] = useState<number | null>(null);
   const [tab, setTab] = useState<(typeof HISTORY_TABS)[number]['id']>('all');
 
   const { data, error, loading, reload } = useFocusedAsync(async () => {
@@ -44,6 +46,8 @@ export default function WalletScreen() {
       supabase.from('coin_transactions').select('id,delta,kind,created_at').eq('user_id', userId!).order('created_at', { ascending: false }).limit(50),
     ]);
     if (packages.error) throw packages.error;
+    // A failed balance load must show an error, not a 0 balance.
+    if (wallet.error) throw wallet.error;
     return { wallet: wallet.data ?? { coin_balance: 0, frozen: false }, packages: packages.data as CoinPackage[], txs: (txs.data ?? []) as Tx[] };
   }, [userId]);
   // Coins are credited by the Stripe webhook; the balance updates live.
@@ -56,7 +60,10 @@ export default function WalletScreen() {
       const returnTo = Linking.createURL('/checkout-return');
       const { url } = await startCoinCheckout(supabase, pkg.id, returnTo);
       if (Platform.OS === 'web') window.location.assign(url);
-      else await WebBrowser.openAuthSessionAsync(url, returnTo);
+      else {
+        const result = await WebBrowser.openAuthSessionAsync(url, returnTo);
+        if (result.type === 'success' && !result.url.includes('cancel')) setAwaiting(data?.wallet.coin_balance ?? 0);
+      }
       reload();
     } catch (e) {
       Alert.alert('Checkout unavailable', friendlyError(e));
@@ -107,6 +114,18 @@ export default function WalletScreen() {
                 </View>
               </View>
 
+              {awaiting !== null && data.wallet.coin_balance === awaiting && (
+                <Row gap={10} style={{ padding: 14, borderRadius: 16, backgroundColor: c.violetSurface, borderWidth: 1, borderColor: c.violetBorder }}>
+                  <ActivityIndicator color={c.violetText} />
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text variant="label">Waiting for payment confirmation</Text>
+                    <Text variant="caption" muted>Coins are added as soon as the payment provider confirms. Don&apos;t pay again.</Text>
+                  </View>
+                </Row>
+              )}
+              {awaiting !== null && data.wallet.coin_balance > awaiting && (
+                <Text variant="label" color={c.success} accessibilityRole="alert">Payment confirmed — coins added.</Text>
+              )}
               {pick && (
                 <Button
                   title={buying ? 'Opening checkout…' : `Buy ${pick.coins.toLocaleString()} coins · ${formatMoney(pick.price_minor, pick.currency)}`}

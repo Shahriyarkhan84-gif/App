@@ -41,12 +41,14 @@ export default function CreateScreen() {
 
   const room = useFocusedAsync(async () => {
     if (!profile) return null;
-    const [{ data }, { data: setting }] = await Promise.all([
+    const [{ data }, { data: setting }, { data: modeRow }] = await Promise.all([
       supabase.from('rooms').select('id,status,title,category,cover_url').eq('host_id', profile.id).maybeSingle(),
       supabase.from('platform_settings').select('value').eq('key', 'host_verification').maybeSingle(),
+      supabase.from('rooms').select('mode').eq('host_id', profile.id).maybeSingle(),
     ]);
+    const mode = (modeRow?.mode ?? 'live') as 'live' | 'voice' | 'video';
     const verificationRequired = (setting?.value as { required_to_go_live?: boolean } | undefined)?.required_to_go_live !== false;
-    return data ? { ...data, verificationRequired } : { verificationRequired, status: null, title: '', cover_url: null as string | null };
+    return data ? { ...data, mode, verificationRequired } : { verificationRequired, mode, id: null as string | null, status: null, title: '', cover_url: null as string | null };
   }, [profile?.id, isHost]);
 
   // Didit results arrive as a notification; refresh the host's status when one lands.
@@ -234,7 +236,12 @@ export default function CreateScreen() {
                 <Text variant="h3">{"You're live"}</Text>
               </Row>
               <Text muted>{room.data?.title}</Text>
-              <Button title="Return to stream" onPress={() => router.push('/host/live')} />
+              <Button
+                title="Return to stream"
+                onPress={() => (room.data?.mode !== 'live' && room.data?.id
+                  ? router.push({ pathname: '/party/[roomId]', params: { roomId: room.data.id } })
+                  : router.push('/host/live'))}
+              />
             </Card>
             </FadeIn>
           )}

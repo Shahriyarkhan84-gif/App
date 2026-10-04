@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 
 import { PressScale } from '@/components/Motion';
+import { StateView } from '@/components/StateView';
 import { Avatar, Button, Input, Screen, Text } from '@/components/ui';
 import { env } from '@/lib/env';
 import { friendlyError } from '@/lib/errors';
@@ -15,6 +16,14 @@ import { useTheme } from '@/lib/theme';
 import { displayName as nameOf } from '@/lib/types';
 
 export default function EditProfileScreen() {
+  const { profile, error, reload } = useProfile();
+  // The form is seeded from the profile, so it only mounts once the profile has loaded —
+  // otherwise Save could overwrite the real name/bio with empty fields.
+  if (!profile) return <Screen edges={['bottom']}><StateView state={error ? { kind: 'error', error, onRetry: reload } : { kind: 'loading' }} /></Screen>;
+  return <EditProfileForm key={profile.id} />;
+}
+
+function EditProfileForm() {
   const supabase = useSupabase();
   const { c } = useTheme();
   const { profile, reload } = useProfile();

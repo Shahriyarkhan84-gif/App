@@ -44,6 +44,9 @@ export default function EarningsScreen() {
       supabase.from('platform_settings').select('value').eq('key', 'withdrawal').single(),
       supabase.from('platform_settings').select('value').eq('key', 'gift_split').maybeSingle(),
     ]);
+    // A failed load must show an error, not a zero balance.
+    if (earnings.error) throw earnings.error;
+    if (withdrawals.error) throw withdrawals.error;
     const cfg = settings.data?.value as { pkr_per_coin: number | null; min_coins: number } | undefined;
     return {
       earnings: earnings.data ?? { balance: 0, held: 0, lifetime: 0 },

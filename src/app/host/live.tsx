@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, FlatList, Share, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -42,7 +42,14 @@ export default function HostLiveScreen() {
 
   const roomId = session.data?.room.id;
   useRealtime('rooms', `id=eq.${roomId}`, (p) => {
-    const next = p.new as { viewer_count: number; current_battle_id: string | null };
+    const next = p.new as { viewer_count: number; current_battle_id: string | null; status?: string; current_stream_id?: string | null };
+    // Ended elsewhere (LiveKit room closed, or another device): go to the summary.
+    if (next.status && next.status !== 'live') {
+      const streamId = session.data?.room.current_stream_id;
+      if (streamId) router.replace({ pathname: '/host/summary', params: { streamId } });
+      else router.replace('/create');
+      return;
+    }
     setViewers(next.viewer_count);
     setBattleId(next.current_battle_id);
   }, !!roomId);
@@ -52,7 +59,14 @@ export default function HostLiveScreen() {
 
   const effectiveBattleId = battleId !== undefined ? battleId : (session.data?.room.current_battle_id ?? null);
   const { battle, opponentRoom, mySide, secondsLeft } = usePkBattleState(roomId, effectiveBattleId);
-  if (secondsLeft === 0) void endBattleIfExpired(supabase, battle);
+  // End an expired battle once per battle (not on every render).
+  const endedBattle = useRef<string | null>(null);
+  useEffect(() => {
+    if (secondsLeft === 0 && battle && endedBattle.current !== battle.id) {
+      endedBattle.current = battle.id;
+      void endBattleIfExpired(supabase, battle);
+    }
+  }, [secondsLeft, battle, supabase]);
 
   const opponents = useFocusedAsync<Room[]>(async () => {
     if (!inviteOpen) return [];

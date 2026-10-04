@@ -29,11 +29,12 @@ export default function ChatScreen() {
     const [msgs, other] = await Promise.all([
       supabase.from('direct_messages').select('*')
         .or(`and(sender_id.eq.${userId},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${userId})`)
-        .order('created_at', { ascending: true }).limit(200),
+        .order('created_at', { ascending: false }).limit(200),
       supabase.from('profiles').select('display_name,username,avatar_url').eq('id', otherId).maybeSingle(),
     ]);
     if (msgs.error) throw msgs.error;
-    return { messages: msgs.data as DM[], other: other.data };
+    // Newest 200, shown oldest first.
+    return { messages: (msgs.data as DM[]).reverse(), other: other.data };
   }, [userId, otherId]);
 
   useRealtime('direct_messages', `recipient_id=eq.${userId}`, (p) => {

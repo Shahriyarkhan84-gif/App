@@ -309,6 +309,7 @@ export function Input({ label, error, style, ...props }: TextInputProps & { labe
     <View style={{ gap: 6 }}>
       {label && <Text variant="bodySmall" muted style={{ fontWeight: '500' }}>{label}</Text>}
       <TextInput
+        accessibilityLabel={label}
         placeholderTextColor={c.textFaint}
         style={[
           type.body as TextStyle,

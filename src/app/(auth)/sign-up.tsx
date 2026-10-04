@@ -47,7 +47,8 @@ export default function SignUpScreen() {
         // group's guard flips mid-navigation; push home explicitly.
         router.replace('/');
       } else if (attempt.status === 'missing_requirements') {
-        router.push('/complete-sign-up');
+        // replace: Back must not return to the already-used code screen.
+        router.replace('/complete-sign-up');
       } else {
         setError('Verification incomplete. Please try again.');
       }

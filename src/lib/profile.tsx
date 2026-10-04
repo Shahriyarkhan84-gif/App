@@ -33,10 +33,23 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<Error | null>(null);
 
   const fullName = user?.fullName ?? null;
+  const userId = user?.id ?? null;
+
+  // Switching accounts on one device must never show the previous user's profile, role or menus.
+  const [seenUser, setSeenUser] = useState(userId);
+  if (seenUser !== userId) {
+    setSeenUser(userId);
+    setProfile(null);
+    setHost(null);
+    setError(null);
+  }
+
   const reload = useCallback(async () => {
     setLoading(true);
     try {
       const p = await rpc<Profile>(supabase, 'ensure_profile', { p_display_name: fullName, p_region: getLocales()[0]?.regionCode ?? null });
+      // A late reply for a user who has since signed out is dropped.
+      if (userId && p.id !== userId) return;
       const { data: h } = await supabase.from('hosts').select('host_code,agency_id,status,verification_status').eq('user_id', p.id).maybeSingle();
       setProfile(p);
       setHost(h ?? null);
@@ -47,7 +60,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [supabase, fullName]);
+  }, [supabase, fullName, userId]);
 
   useEffect(() => {
     if (!isSignedIn) return;
@@ -62,14 +75,16 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     };
   }, [isSignedIn, reload]);
 
+  const mine = isSignedIn && profile?.id === userId ? profile : null;
+  const myHost = mine ? host : null;
   const value: ProfileState = {
-    profile: isSignedIn ? profile : null,
-    host: isSignedIn ? host : null,
+    profile: mine,
+    host: myHost,
     loading,
     error,
     reload,
-    isHost: !!host && host.status === 'active',
-    isPlatformAdmin: profile?.role === 'OWNER_ADMIN' || profile?.role === 'SUPER_ADMIN',
+    isHost: !!myHost && myHost.status === 'active',
+    isPlatformAdmin: mine?.role === 'OWNER_ADMIN' || mine?.role === 'SUPER_ADMIN',
   };
   return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;
 }

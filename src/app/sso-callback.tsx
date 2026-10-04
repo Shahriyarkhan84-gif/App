@@ -36,7 +36,7 @@ export default function SSOCallback() {
       // A session held on a Clerk task (e.g. choose an organization) never counts as signed in.
       const notice = clerk.session?.currentTask ? 'pending_task' : 'sso_timeout';
       if (!isSignedIn) router.replace({ pathname: '/welcome', params: { notice } });
-    }, 6000);
+    }, 15000); // slow networks can take a while to hand the session back
     return () => clearTimeout(t);
   }, [isLoaded, isSignedIn, needsMoreInfo, clerk]);
 

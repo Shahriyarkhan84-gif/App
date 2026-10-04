@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
 
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -61,10 +61,16 @@ export default function HomeScreen() {
   }, [userId]);
 
   // Rooms going live/offline update the feed in real time.
+  // `rooms` has no full replica identity, so p.old is empty: compare with what the feed shows instead.
+  // Viewer-count updates (many per second) must not refetch the feed.
+  const liveIds = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    liveIds.current = new Set((data?.live ?? []).map((r) => r.id));
+  }, [data]);
   useRealtime('rooms', undefined, (p) => {
-    const before = (p.old as { status?: string }).status;
-    const after = (p.new as { status?: string }).status;
-    if (before !== after) reload();
+    const next = p.new as { id?: string; status?: string };
+    if (!next.id) return;
+    if (liveIds.current.has(next.id) !== (next.status === 'live')) reload();
   });
 
   const rooms = data ? pickFeed(data, feed, profile?.country ?? null).filter((r) => category === 'all' || r.category === category) : [];
@@ -122,7 +128,7 @@ export default function HomeScreen() {
           />
           {feed === 'popular' && category === 'all' && rooms[0] && (
             <FadeIn>
-              <FeaturedHost room={rooms[0]} following={data!.followed.has(rooms[0].host_id)} />
+              <FeaturedHost key={rooms[0].host_id} room={rooms[0]} following={data!.followed.has(rooms[0].host_id)} />
             </FadeIn>
           )}
           {feed === 'popular' && category === 'all' && (
