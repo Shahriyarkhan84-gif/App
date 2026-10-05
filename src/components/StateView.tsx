@@ -18,7 +18,7 @@ export type ViewState =
   | { kind: 'error'; error: unknown; onRetry?: () => void }
   | { kind: 'empty'; title: string; body?: string; action?: { title: string; onPress: () => void } }
   | { kind: 'offline'; onRetry?: () => void }
-  | { kind: 'permission'; title: string; body: string; onGrant: () => void }
+  | { kind: 'permission'; title: string; body: string; onGrant: () => void; grantTitle?: string }
   | { kind: 'disabled'; title: string; body?: string };
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -31,6 +31,7 @@ function Message({ icon, title, body, children, onRefresh }: { icon: IconName; t
   const { c } = useTheme();
   return (
     <ScrollView
+      testID="state-view-scroll"
       style={{ flex: 1 }}
       contentContainerStyle={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}
       refreshControl={onRefresh ? <RefreshControl refreshing={false} onRefresh={onRefresh} tintColor={c.textMuted} /> : undefined}
@@ -76,7 +77,7 @@ export function StateView({ state, children }: { state: ViewState; children?: Re
     case 'permission':
       return (
         <Message icon="lock-closed-outline" title={state.title} body={state.body}>
-          <Button title={t('state.permission.allow')} onPress={state.onGrant} />
+          <Button title={state.grantTitle ?? t('state.permission.allow')} onPress={state.onGrant} />
         </Message>
       );
     case 'disabled':

@@ -23,6 +23,16 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 
 ## Also pending
 
+- **Testing switch — must revert before real hosts join:** on the hosted project `host_verification.required_to_go_live` is `false` (set 2026-10-05 so the owner can test going live before Didit is deployed). Restore with `update public.platform_settings set value = jsonb_set(value, '{required_to_go_live}', 'true') where key = 'host_verification';`. Withdrawals still require verification.
+- Hosted project settings set by hand: `media.covers_base` = `https://mdfjbhzriuwxafeagnwo.supabase.co/storage/v1/object/public/covers` (2026-10-05). Each new environment needs its own value (see `docs/ENVIRONMENT.md`), or `set_room_cover` raises `not_configured`.
+- From the third AI review, not fixed yet:
+  - A guest removed from a seat keeps publish rights until they reconnect (tokens last 2 h): needs a LiveKit room-service call (`updateParticipant`/`removeParticipant`) from an edge function on remove/kick/end.
+  - A room stays `live` if the host's app dies before LiveKit connects (no LiveKit room → no `room_finished`): needs a pg_cron sweep. The host can now always end it from Go live → End live.
+  - Earnings hold is 14 days; card disputes can arrive later (owner approval of withdrawals is the backstop). Consider `hold_days` ≥ 60.
+  - Avatars: clients can set any `avatar_url`; move to a `set_avatar(path)` RPC like covers.
+  - DMs: no AI moderation, no block/report in the chat header, no cap on messages to strangers.
+  - Chat polls every 15 s and party reloads 6 queries per seat change: move to realtime payloads before large rooms.
+  - Sign-in with a second factor or Clerk's new-device check shows "use the web app"; needs an in-app code step.
 - Design canvas screens not built yet: likes, agency web dashboard. Voice/video party rooms and the host dashboard are built; `livekit-token` and `livekit-webhook` are deployed to the hosted project (2026-10-05); going live needs the `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` and `CLERK_ISSUER` Edge Function secrets and the LiveKit Cloud webhook pointed at `/functions/v1/livekit-webhook`. Other functions (checkout, Stripe/Clerk/Didit webhooks, delete-account, host-application) are not deployed yet.
 
 - Localization: the layer and ur/hi/bn catalogs exist; screens outside tabs, states, profile menu, settings, videos and events still show English (move their strings into `src/lib/i18n/en.ts` as they're touched). Server notification copy is English.

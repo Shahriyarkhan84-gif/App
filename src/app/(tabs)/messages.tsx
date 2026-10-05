@@ -4,6 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 
+import { useTabBarSpace } from '@/components/Menus';
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Avatar, Coin, Row, Screen, Text } from '@/components/ui';
@@ -73,6 +74,7 @@ export default function MessagesScreen() {
 }
 
 function Chats() {
+  const tabSpace = useTabBarSpace();
   const supabase = useSupabase();
   const { userId } = useAuth();
   const { c } = useTheme();
@@ -108,7 +110,7 @@ function Chats() {
       <FlatList
         data={data ?? []}
         keyExtractor={(t) => t.otherId}
-        contentContainerStyle={{ paddingHorizontal: 16 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16 }}
         renderItem={({ item, index }) => (
           <FadeIn delay={stagger(index, 50)}>
           <PressScale scaleTo={0.98} onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: item.otherId } })} accessibilityRole="button">
@@ -136,6 +138,7 @@ function Chats() {
 }
 
 function Notifications() {
+  const tabSpace = useTabBarSpace();
   const supabase = useSupabase();
   const { userId } = useAuth();
   const { c } = useTheme();
@@ -175,7 +178,7 @@ function Notifications() {
       <FlatList
         data={data ?? []}
         keyExtractor={(n) => String(n.id)}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 6 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16, gap: 6 }}
         renderItem={({ item, index }) => (
           <FadeIn delay={stagger(index, 50)}>
             <PressScale scaleTo={0.98} onPress={() => open(item)} accessibilityRole="button">
@@ -198,6 +201,7 @@ type Fan = { follower_id: string; created_at: string; profile: Pick<Profile, 'di
 
 /** People who followed you, newest first. */
 function NewFans() {
+  const tabSpace = useTabBarSpace();
   const supabase = useSupabase();
   const { userId } = useAuth();
   const offline = useOffline();
@@ -214,7 +218,7 @@ function NewFans() {
       <FlatList
         data={data ?? []}
         keyExtractor={(f) => f.follower_id}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16 }}
         renderItem={({ item, index }) => (
           <FadeIn delay={stagger(index, 40)}>
             <PressScale scaleTo={0.98} onPress={() => router.push({ pathname: '/user/[id]', params: { id: item.follower_id } })} accessibilityRole="button">
@@ -238,6 +242,7 @@ type GiftRow = { id: number; sender_id: string; quantity: number; coins_total: n
 
 /** Gifts you received in your lives. */
 function GiftsReceived() {
+  const tabSpace = useTabBarSpace();
   const supabase = useSupabase();
   const { userId } = useAuth();
   const offline = useOffline();
@@ -254,7 +259,7 @@ function GiftsReceived() {
       <FlatList
         data={data ?? []}
         keyExtractor={(g) => String(g.id)}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16 }}
         renderItem={({ item, index }) => (
           <FadeIn delay={stagger(index, 40)}>
             <Row style={{ paddingVertical: 10 }}>

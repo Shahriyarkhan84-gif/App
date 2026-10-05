@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { getLiveKitToken, rpc } from '@/lib/api';
+import { errorCode } from '@/lib/errors';
 import { useAsync, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
 import { liveColors as c } from '@/lib/theme';
@@ -149,12 +150,14 @@ export function PkBattleBar({ battle, mySide, secondsLeft }: { battle: PkBattle;
 }
 
 /** Ends a battle whose clock has run out — safe to call speculatively; the RPC no-ops if it isn't live. */
-export async function endBattleIfExpired(supabase: SupabaseClient, battle: PkBattle | null) {
-  if (!battle || battle.status !== 'live' || !battle.ends_at) return;
-  if (new Date(battle.ends_at).getTime() > Date.now()) return;
+export async function endBattleIfExpired(supabase: SupabaseClient, battle: PkBattle | null): Promise<boolean> {
+  if (!battle || battle.status !== 'live' || !battle.ends_at) return true;
+  if (new Date(battle.ends_at).getTime() > Date.now()) return true;
   try {
     await rpc(supabase, 'end_pk_battle', { p_battle_id: battle.id });
-  } catch {
-    // Another participant (or this same check elsewhere) may have already ended it.
+    return true;
+  } catch (e) {
+    // Already ended by the other side is fine; anything else (e.g. network) should be retried.
+    return errorCode(e) === 'not_live';
   }
 }

@@ -32,7 +32,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const fullName = user?.fullName ?? null;
+  // Email sign-ups have no full name: fall back to the username they chose, so they aren't "Zynalive user".
+  const fullName = user?.fullName || user?.username || null;
   const userId = user?.id ?? null;
 
   // Switching accounts on one device must never show the previous user's profile, role or menus.

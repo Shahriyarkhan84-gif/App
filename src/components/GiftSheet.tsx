@@ -59,10 +59,17 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
     setKey(idempotencyKey());
   };
   useRealtime('wallets', `user_id=eq.${userId}`, () => wallet.reload(), visible);
+  // An old error (e.g. not enough coins) shouldn't greet the user next time the sheet opens.
+  const close = () => {
+    setError(null);
+    onClose();
+  };
 
   const total = (selected?.coin_price ?? 0) * quantity;
   const balance = wallet.data?.coin_balance ?? 0;
-  const insufficient = !!selected && total > balance;
+  // Until the wallet loads, the balance is unknown: don't claim the user needs more coins.
+  const balanceKnown = !!wallet.data;
+  const insufficient = balanceKnown && !!selected && total > balance;
 
   const send = async () => {
     if (!selected) return;
@@ -85,13 +92,13 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose}>
+    <Sheet visible={visible} onClose={close}>
       <Row style={{ justifyContent: 'space-between' }}>
         <Text variant="h2">Gifts</Text>
         <Row gap={6}>
           <Coin />
-          <Text variant="label" accessibilityLabel={`Balance ${balance} coins`}>{balance.toLocaleString()}</Text>
-          <Pressable onPress={() => { onClose(); router.push('/wallet'); }} accessibilityRole="link" hitSlop={10} style={{ marginLeft: 8 }}>
+          <Text variant="label" accessibilityLabel={`Balance ${balance} coins`}>{balanceKnown ? balance.toLocaleString() : "…"}</Text>
+          <Pressable onPress={() => { close(); router.push('/wallet'); }} accessibilityRole="link" hitSlop={10} style={{ marginLeft: 8 }}>
             <Text variant="bodySmall" color={c.gold} style={{ fontWeight: '700' }}>Recharge</Text>
           </Pressable>
         </Row>
@@ -129,13 +136,13 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
       {wallet.data?.frozen ? (
         <Text color={c.warning}>Your wallet is on hold while a payment is reviewed.</Text>
       ) : insufficient ? (
-        <Button title={`Need ${(total - balance).toLocaleString()} more coins — Recharge`} variant="gold" onPress={() => { onClose(); router.push('/wallet'); }} />
+        <Button title={`Need ${(total - balance).toLocaleString()} more coins — Recharge`} variant="gold" onPress={() => { close(); router.push('/wallet'); }} />
       ) : (
         <Row>
           <Text variant="bodySmall" muted style={{ flex: 1 }}>
             {selected ? `${selected.name} ×${quantity} · ${total.toLocaleString()} coins.${wallet.data?.hostPct != null ? ` The host gets ${wallet.data.hostPct}%.` : ''}` : 'Pick a gift to send.'}
           </Text>
-          <Button title="Send" disabled={!selected} loading={sending} onPress={send} style={{ minHeight: 44, paddingHorizontal: 26 }} />
+          <Button title="Send" disabled={!selected || !balanceKnown} loading={sending} onPress={send} style={{ minHeight: 44, paddingHorizontal: 26 }} />
         </Row>
       )}
     </Sheet>

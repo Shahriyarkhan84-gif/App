@@ -66,7 +66,8 @@ export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress, ac
 
   const send = async () => {
     const body = draft.trim();
-    if (!body) return;
+    // The keyboard's send key ignores the button's disabled state, so guard here too.
+    if (!body || sending) return;
     setSending(true);
     try {
       await rpc(supabase, 'send_chat_message', { p_room: roomId, p_body: body });

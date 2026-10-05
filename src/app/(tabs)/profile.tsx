@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { Alert, ScrollView, View } from 'react-native';
 
+import { useTabBarSpace } from '@/components/Menus';
 import { StateView } from '@/components/StateView';
 import { FadeIn } from '@/components/Motion';
 import { AgencyOwnerBadge, Avatar, Button, Card, Coin, compactNumber, HostBadge, IconButton, ListRow, Row, Screen, Text } from '@/components/ui';
@@ -16,6 +17,7 @@ import { useTheme } from '@/lib/theme';
 import { displayName } from '@/lib/types';
 
 export default function ProfileScreen() {
+  const tabSpace = useTabBarSpace();
   const supabase = useSupabase();
   const { c } = useTheme();
   const { t } = useI18n();
@@ -59,7 +61,7 @@ export default function ProfileScreen() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingTop: 8, gap: 18, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingTop: 8, paddingBottom: tabSpace + 16, gap: 18, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
         <Row style={{ justifyContent: 'space-between' }}>
           <IconButton icon="create-outline" label="Edit profile" onPress={() => router.push('/profile-edit')} />
           <Text variant="h2">Me</Text>

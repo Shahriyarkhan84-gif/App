@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.9.6 — Third AI review pass
+
+Hosted project: `media.covers_base` set (covers failed with "not configured", which blocked every first live); `livekit-token` redeployed (muted users can't take a party mic). Review fixes, avatars and party-rooms SQL are applied on the hosted project.
+
+Server (migration `20261005010000_round3_fixes.sql`, copy-paste `docs/sql/apply_round3_fixes.sql`):
+- Gift `clawed_coins` and `idempotency_key` are no longer readable by clients (column grants).
+- A room mute takes the person off their party seat and out of the queue; muted users can't be seated.
+- A just-approved party guest no longer loses the seat when their old connection leaves (20-second grace).
+- New profiles get `country` from their signup country, so Nearby works; empty display names are filled from the Clerk username.
+- `request_translation`: app languages only, visible messages only, 30 per minute per user.
+
+App:
+- The floating tab bar no longer covers the bottom of Home, Me, Messages, Party and the Go-live button.
+- Go live: profile errors show Retry instead of spinning; voice parties only need the microphone; blocked permissions open phone settings; "End live" is always reachable (Go live card, and the live/party screens when they can't connect).
+- Live and viewer screens no longer reconnect on every re-render; a dropped connection shows Reconnect; raw SDK errors are replaced with friendly copy.
+- Realtime handlers always see current state (fixes Home not showing the first live when nobody else is live).
+- PK battles retry the auto-end if the network fails.
+- Sign-up: Resend code / Change email; complete-sign-up checks the 8–20 character username; offline auth errors are friendly; Clerk's extra-step message shows instead of a spinner.
+- Gift sheet: balance shows "…" until loaded and Send waits for it; old errors clear on close. Chat and Follow ignore double taps.
+- Buying coins while checkout isn't deployed says "not configured yet" instead of "try again".
+- Edit profile: Save waits for a photo upload; general save errors no longer show under Username.
+- Tests: StateView pull-to-refresh, username rule, gift privacy, mute/seat rules, seat grace.
+
 ## 0.9.5 — Second AI review pass
 
 Server (same copy-paste file, `docs/sql/apply_review_fixes.sql`, now covers both rounds):
@@ -55,7 +78,7 @@ Six AI reviewers audited sign-in, browsing, live/party rooms, money, host/agency
 - Stream summary: "Stream ended · title · duration", Back to home and Share highlights.
 - Public profile: Friends · Followers · Following row.
 - Help & support: Ask AI support banner, Popular questions (tap to expand), "Still need help?" form.
-- Edit profile: profile photo with Change photo (picked, cropped square, resized to 512px, uploaded to `avatars/<user id>/`). New migration `20261004010000_avatars.sql` adds the public `avatars` bucket where users can write only their own folder; it is not yet applied to the hosted project.
+- Edit profile: profile photo with Change photo (picked, cropped square, resized to 512px, uploaded to `avatars/<user id>/`). New migration `20261004010000_avatars.sql` adds the public `avatars` bucket where users can write only their own folder; applied to the hosted project 2026-10-05.
 
 ## 0.9.0 — Main screens match the design canvas
 

@@ -109,10 +109,26 @@ select set_config('request.jwt.claims', '{"sub":"pt_g7"}', false);
 set role authenticated;
 select public.request_seat((select id from party));
 reset role;
+-- A seat given seconds ago survives the old connection leaving (the guest is reconnecting).
+select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 'pt_host'), 'pt_g2', false, 3);
+select tests.ok(exists (select 1 from public.room_seats where user_id = 'pt_g2'), 'a just-given seat survives the reconnect');
+update public.room_seats set created_at = now() - interval '1 minute' where user_id = 'pt_g2';
 select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 'pt_host'), 'pt_g2', false, 3);
 select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 'pt_host'), 'pt_g7', false, 2);
 select tests.ok(not exists (select 1 from public.room_seats where user_id = 'pt_g2'), 'leaving the room frees the seat');
 select tests.ok(not exists (select 1 from public.seat_requests where user_id = 'pt_g7'), 'leaving the room drops the request');
+
+-- A room mute takes the guest off their seat; a muted user can't be seated.
+select set_config('request.jwt.claims', '{"sub":"pt_host"}', false);
+set role authenticated;
+select public.room_moderate((select id from party), 'pt_g3', 'mute', 10);
+reset role;
+select tests.ok(not exists (select 1 from public.room_seats where user_id = 'pt_g3'), 'muted guest loses their seat');
+insert into public.seat_requests (room_id, user_id) select id, 'pt_g3' from party;
+select set_config('request.jwt.claims', '{"sub":"pt_host"}', false);
+set role authenticated;
+select tests.fails($$select public.approve_seat((select id from party), 'pt_g3')$$, '%banned_from_room%', 'muted user cannot be seated');
+reset role;
 
 -- A restricted room admin can't moderate.
 update public.profiles set status = 'restricted' where id = 'pt_admin';

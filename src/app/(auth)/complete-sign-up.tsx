@@ -89,7 +89,10 @@ export default function CompleteSignUpScreen() {
       await advance();
     });
 
-  if (!isLoaded || signUp?.status !== 'missing_requirements') return <StateView state={{ kind: 'loading' }} />;
+  if (!isLoaded || signUp?.status !== 'missing_requirements') {
+    // A message (e.g. Clerk holding the session on an extra step) must show instead of a spinner.
+    return error ? <AuthShell title="Almost there" subtitle={error}><Button title="Back to start" variant="ghost" onPress={() => router.replace('/welcome')} /></AuthShell> : <StateView state={{ kind: 'loading' }} />;
+  }
 
   if (step !== 'details') {
     const target = step === 'phone_code' ? values.phoneNumber || 'your phone' : signUp.emailAddress ?? 'your email';
@@ -104,13 +107,15 @@ export default function CompleteSignUpScreen() {
   }
 
   const set = (k: keyof typeof values) => (v: string) => setValues((prev) => ({ ...prev, [k]: v }));
-  const ready = (Object.keys(needs) as (keyof typeof needs)[]).every((k) => !needs[k] || values[k].trim().length > 0);
+  // Usernames follow the Clerk rule (8–20 characters), checked here so the user isn't surprised later.
+  const usernameOk = !needs.username || (values.username.trim().length >= 8 && values.username.trim().length <= 20);
+  const ready = usernameOk && (Object.keys(needs) as (keyof typeof needs)[]).every((k) => !needs[k] || values[k].trim().length > 0);
 
   return (
     <AuthShell title="Finish your profile" subtitle="Just a few more details to create your Zynalive account.">
       {needs.firstName && <Field label="First name" value={values.firstName} onChangeText={set('firstName')} autoCapitalize="words" autoComplete="given-name" />}
       {needs.lastName && <Field label="Last name" value={values.lastName} onChangeText={set('lastName')} autoCapitalize="words" autoComplete="family-name" />}
-      {needs.username && <Field label="Username" value={values.username} onChangeText={set('username')} autoComplete="username" placeholder="yourname" />}
+      {needs.username && <Field label="Username" value={values.username} onChangeText={set('username')} autoComplete="username" placeholder="8–20 characters" />}
       {needs.phoneNumber && (
         <Field label="Phone number" value={values.phoneNumber} onChangeText={set('phoneNumber')} keyboardType="phone-pad" autoComplete="tel" placeholder="+92 300 1234567" />
       )}

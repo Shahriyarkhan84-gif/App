@@ -40,9 +40,11 @@ Deno.serve(
         .select('kind,expires_at')
         .eq('room_id', roomId)
         .eq('user_id', userId)
-        .in('kind', ['kick', 'block']);
-      const active = (bans ?? []).some((b) => !b.expires_at || new Date(b.expires_at) > new Date());
-      if (active) throw new HttpError(403, 'banned_from_room');
+        .in('kind', ['kick', 'block', 'mute']);
+      const activeKinds = (bans ?? []).filter((b) => !b.expires_at || new Date(b.expires_at) > new Date()).map((b) => b.kind);
+      if (activeKinds.includes('kick') || activeKinds.includes('block')) throw new HttpError(403, 'banned_from_room');
+      // A muted person may still watch, but never gets a microphone as a party guest.
+      if (as === 'guest' && activeKinds.includes('mute')) throw new HttpError(403, 'muted_in_room');
     }
 
     let guestSources: TrackSource[] = [];

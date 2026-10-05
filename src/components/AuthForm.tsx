@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View, type TextInputProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { friendlyError } from '@/lib/errors';
 import { useTheme } from '@/lib/theme';
 
 import { FadeIn, Float } from './Motion';
@@ -48,7 +49,9 @@ export const PENDING_TASK_MESSAGE =
 
 export function clerkErrorMessage(err: unknown) {
   if (isClerkAPIResponseError(err)) return err.errors[0]?.longMessage ?? err.errors[0]?.message ?? 'Request failed';
-  return err instanceof Error ? err.message : 'Something went wrong';
+  // Network failures ("Network request failed") and other raw errors get the app's friendly copy.
+  if (err instanceof Error && /network|fetch|timed? ?out/i.test(err.message)) return 'No internet connection. Check your connection and try again.';
+  return friendlyError(err);
 }
 
 const TILES = ['#5B2A9E', '#8B3CD6', '#B341E0', '#FF6FB0'];

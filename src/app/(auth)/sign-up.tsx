@@ -54,12 +54,23 @@ export default function SignUpScreen() {
       }
     });
 
+  const [resent, setResent] = useState(false);
+  const onResend = () =>
+    run(async () => {
+      await signUp!.prepareEmailAddressVerification({ strategy: 'email_code' });
+      setResent(true);
+      setTimeout(() => setResent(false), 30000);
+    });
+
   if (awaitingCode) {
     return (
       <AuthShell title="Check your email" subtitle={`We sent a 6-digit code to ${email}.`}>
         <Field label="Verification code" value={code} onChangeText={setCode} keyboardType="number-pad" autoComplete="one-time-code" placeholder="123456" />
         <FormError message={error} />
         <Button title="Verify & continue" loading={loading} disabled={code.length < 6} onPress={onVerify} />
+        {/* A slow or spam-filtered email must not strand the user on this screen. */}
+        <Button title={resent ? 'Code sent again' : 'Resend code'} variant="ghost" disabled={loading || resent} onPress={onResend} />
+        <Button title="Change email" variant="ghost" disabled={loading} onPress={() => { setAwaitingCode(false); setCode(''); setError(null); }} />
       </AuthShell>
     );
   }

@@ -347,6 +347,14 @@ select tests.ok(exists (select 1 from public.earning_entries where host_id = 'bo
 -- reversal can't take the same gift again.
 select tests.ok((select sum(clawed_coins) from public.gifts where sender_id = 'alice') = 20, 'clawed coins recorded per gift');
 select tests.ok(not exists (select 1 from public.gifts where clawed_coins > coins_total), 'never more than the gift');
+-- Who charged back, and send keys, are private: clients can read the gift feed but not these.
+select set_config('request.jwt.claims', '{"sub":"bob"}', false);
+set role authenticated;
+select tests.fails($$select clawed_coins from public.gifts limit 1$$, '%permission denied%', 'clawed coins are private');
+select tests.fails($$select idempotency_key from public.gifts limit 1$$, '%permission denied%', 'gift send keys are private');
+select tests.ok((select count(*) from public.gifts where sender_id = 'alice') > 0, 'gift feed still readable');
+select tests.fails($$select public.request_translation(1, 'xx')$$, '%invalid_language%', 'only app languages can be translated');
+reset role;
 select set_config('request.jwt.claims', '{"sub":"bob"}', false);
 set role authenticated;
 -- New gift earnings are held for the dispute window before they can be withdrawn.

@@ -1,6 +1,6 @@
 import { useFocusEffect } from 'expo-router';
 import { useNetworkState } from 'expo-network';
-import { useCallback, useEffect, useState, type DependencyList } from 'react';
+import { useCallback, useEffect, useRef, useState, type DependencyList } from 'react';
 
 import { useSupabase } from './supabase';
 
@@ -65,17 +65,21 @@ export function useRealtime(
   enabled = true,
 ) {
   const supabase = useSupabase();
+  // Always call the latest callback, so handlers see current state (not the first render's).
+  const handler = useRef(onChange);
+  useEffect(() => {
+    handler.current = onChange;
+  });
   useEffect(() => {
     if (!enabled) return;
     const channel = supabase
       .channel(`${table}:${filter ?? 'all'}:${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table, filter }, (payload) =>
-        onChange(payload as unknown as { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }),
+        handler.current(payload as unknown as { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }),
       )
       .subscribe();
     return () => {
       void supabase.removeChannel(channel);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, table, filter, enabled]);
 }

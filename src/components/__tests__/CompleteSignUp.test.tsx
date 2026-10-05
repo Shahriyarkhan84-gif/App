@@ -37,9 +37,13 @@ beforeEach(() => {
 it('asks only for the fields Clerk is missing', async () => {
   await render(<CompleteSignUpScreen />);
   expect(screen.getByText('Finish your profile')).toBeTruthy();
-  expect(screen.getByPlaceholderText('yourname')).toBeTruthy();
+  expect(screen.getByPlaceholderText('8–20 characters')).toBeTruthy();
   expect(screen.getByPlaceholderText('+92 300 1234567')).toBeTruthy();
   expect(screen.queryByText('Password')).toBeNull();
+  expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
+  // Usernames shorter than Clerk's 8-character minimum keep Continue disabled.
+  await fireEvent.changeText(screen.getByPlaceholderText('8–20 characters'), 'short');
+  await fireEvent.changeText(screen.getByPlaceholderText('+92 300 1234567'), '+923001234567');
   expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
 });
 
@@ -48,7 +52,7 @@ it('saves the details, then asks for the SMS code', async () => {
     mockSignUp.unverifiedFields = ['phone_number'];
   });
   await render(<CompleteSignUpScreen />);
-  await fireEvent.changeText(screen.getByPlaceholderText('yourname'), ' zyna_fan ');
+  await fireEvent.changeText(screen.getByPlaceholderText('8–20 characters'), ' zyna_fan ');
   await fireEvent.changeText(screen.getByPlaceholderText('+92 300 1234567'), '+923001234567');
   await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
 
@@ -66,7 +70,7 @@ it('signs in once the code completes the sign-up', async () => {
     mockSignUp.createdSessionId = 'sess_1';
   });
   await render(<CompleteSignUpScreen />);
-  await fireEvent.changeText(screen.getByPlaceholderText('yourname'), 'zyna_fan');
+  await fireEvent.changeText(screen.getByPlaceholderText('8–20 characters'), 'zyna_fan');
   await fireEvent.changeText(screen.getByPlaceholderText('+92 300 1234567'), '+923001234567');
   await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
   await fireEvent.changeText(await screen.findByPlaceholderText('123456'), '424242');

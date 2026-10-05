@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, Share, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -50,6 +50,14 @@ export default function LiveRoomScreen() {
     return getLiveKitToken(supabase, roomId, 'viewer');
   }, [roomId, room.data?.room.status]);
 
+  // Stable per token: inline callbacks would make LiveKit reconnect on every re-render (each
+  // viewer-count update). A failed or dropped connection shows a Reconnect state instead.
+  const [dropped, setDropped] = useState<string | null>(null);
+  const stageToken = token.data?.token ?? null;
+  const onStageDisconnected = useCallback(() => setDropped(stageToken), [stageToken]);
+  const onStageError = useCallback(() => setDropped(stageToken), [stageToken]);
+  const reconnect = () => { setDropped(null); token.reload(); };
+
   useEffect(() => {
     if (token.data) track('room_joined', { room_id: roomId });
   }, [token.data, roomId, track]);
@@ -62,13 +70,16 @@ export default function LiveRoomScreen() {
   const { battle, opponentRoom, mySide, secondsLeft } = usePkBattleState(r?.id, r?.current_battle_id);
   const battleLive = battle?.status === 'live' && !!opponentRoom;
 
+  const followBusy = useRef(false);
   const toggleFollow = async () => {
-    if (!r) return;
+    if (!r || followBusy.current) return;
+    followBusy.current = true;
     const next = !isFollowing;
     setFollowing(next);
     const { error } = next
       ? await supabase.from('follows').insert({ followee_id: r.host_id })
       : await supabase.from('follows').delete().eq('follower_id', userId!).eq('followee_id', r.host_id);
+    followBusy.current = false;
     if (error) setFollowing(!next);
     else track('follow_toggled', { user_id: r.host_id, following: next });
   };
@@ -102,6 +113,7 @@ export default function LiveRoomScreen() {
     ? { kind: 'disabled', title: "You can't join this room", body: friendlyError(token.error) }
     : { kind: 'error', error: token.error, onRetry: token.reload };
   else if (!token.data) state = { kind: 'loading' };
+  else if (dropped && dropped === stageToken) state = { kind: 'error', error: new Error('connection_lost'), onRetry: reconnect };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
@@ -113,7 +125,7 @@ export default function LiveRoomScreen() {
               <>
                 <PkBattleStage
                   mySide={mySide}
-                  myStage={<LiveStage token={token.data.token} url={token.data.url} role="viewer" onError={() => token.reload()} />}
+                  myStage={<LiveStage token={token.data.token} url={token.data.url} role="viewer" onError={onStageError} onDisconnected={onStageDisconnected} />}
                   opponentRoom={opponentRoom!}
                   mySideLabel={displayName(r.host)}
                   opponentSideLabel={displayName(opponentRoom!.host)}
@@ -121,7 +133,7 @@ export default function LiveRoomScreen() {
                 <PkBattleBar battle={battle!} mySide={mySide} secondsLeft={secondsLeft} />
               </>
             ) : (
-              <LiveStage token={token.data.token} url={token.data.url} role="viewer" onError={() => token.reload()} />
+              <LiveStage token={token.data.token} url={token.data.url} role="viewer" onError={onStageError} onDisconnected={onStageDisconnected} />
             )}
             <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, gap: 10 }}>
               <Row gap={8}>

@@ -97,10 +97,12 @@ function EditProfileForm() {
           <Button title={uploading ? 'Uploading…' : 'Change photo'} variant="ghost" size="sm" loading={uploading} onPress={changePhoto} />
         </View>
         <Input label="Display name" value={displayName} onChangeText={setDisplayName} maxLength={50} />
-        <Input label="Username" value={username} onChangeText={(t) => setUsername(t.toLowerCase())} autoCapitalize="none" error={usernameValid ? error : '3–24 letters, numbers, _ or .'} />
+        <Input label="Username" value={username} onChangeText={(t) => setUsername(t.toLowerCase())} autoCapitalize="none" error={usernameValid ? (error === 'That username is taken.' ? error : null) : '3–24 letters, numbers, _ or .'} />
         <Input label="Bio" value={bio} onChangeText={setBio} maxLength={280} multiline style={{ minHeight: 80, paddingTop: 12 }} />
         <Input label="Country code" value={country} onChangeText={(t) => setCountry(t.toUpperCase().slice(0, 2))} placeholder="PK" autoCapitalize="characters" error={countryValid ? null : 'Two-letter code, e.g. PK, IN, BD'} />
-        <Button title="Save" onPress={save} loading={saving} disabled={!usernameValid || !countryValid} />
+        {error && error !== 'That username is taken.' && <Text color={c.danger} accessibilityRole="alert">{error}</Text>}
+        {/* Saving closes the screen, so wait for a photo upload to finish first. */}
+        <Button title="Save" onPress={save} loading={saving} disabled={!usernameValid || !countryValid || uploading} />
         <Text variant="caption" faint style={{ textAlign: 'center' }}>Your photo, name and bio are public.</Text>
       </ScrollView>
     </Screen>

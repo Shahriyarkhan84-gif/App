@@ -9,7 +9,7 @@ import { LiveEventBanner } from '@/components/EventRow';
 import { RoomCard } from '@/components/RoomCard';
 import { FeaturedHost } from '@/components/FeaturedHost';
 import { LiveBell, LoopStrip } from '@/components/FollowingLive';
-import { SideMenuButton, type MenuItem } from '@/components/Menus';
+import { type MenuItem, SideMenuButton, useTabBarSpace } from '@/components/Menus';
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Chip, IconButton, Row, Screen, Text, TextTabs, Wordmark } from '@/components/ui';
@@ -32,6 +32,7 @@ const CHIPS = ['all', ...CATEGORIES] as const;
 type HomeData = { live: Room[]; followed: Set<string>; recommended: Map<string, { reason: string | null; score: number }> };
 
 export default function HomeScreen() {
+  const tabSpace = useTabBarSpace();
   const supabase = useSupabase();
   const { userId } = useAuth();
   const { profile } = useProfile();
@@ -74,7 +75,7 @@ export default function HomeScreen() {
   useEffect(() => () => { if (pending.current) clearTimeout(pending.current); }, []);
   useRealtime('rooms', undefined, (p) => {
     const next = p.new as { id?: string; status?: string };
-    if (!next.id || liveIds.current.size === 0 && !data) return;
+    if (!next.id || !data) return;
     const shown = liveIds.current.has(next.id);
     const live = next.status === 'live';
     const changed = shown ? !live : live && liveIds.current.size < 60;
@@ -128,7 +129,7 @@ export default function HomeScreen() {
       </View>
       <StateView state={state}>
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: hPadding, paddingBottom: 32, gap: 12, maxWidth: 1100, width: '100%', alignSelf: 'center' }}
+          contentContainerStyle={{ paddingHorizontal: hPadding, paddingBottom: tabSpace + 32, gap: 12, maxWidth: 1100, width: '100%', alignSelf: 'center' }}
           refreshControl={<RefreshControl refreshing={loading && !!data} onRefresh={reload} tintColor={c.text} />}
         >
           <LoopStrip

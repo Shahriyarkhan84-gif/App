@@ -201,7 +201,7 @@ export default function PartyRoomScreen() {
   else if (token.error) state = errorCode(token.error) === 'banned_from_room' || errorCode(token.error) === 'account_restricted'
     ? { kind: 'disabled', title: "You can't join this party", body: friendlyError(token.error) }
     : { kind: 'error', error: token.error, onRetry: token.reload };
-  else if (dropped) state = { kind: 'error', error: new Error('Lost connection to the party.'), onRetry: () => { setDropped(false); token.reload(); } };
+  else if (dropped) state = { kind: 'error', error: new Error('connection_lost'), onRetry: () => { setDropped(false); token.reload(); } };
   else if (!token.data || token.data.role !== role) state = { kind: 'loading' };
 
   return (
@@ -280,6 +280,12 @@ export default function PartyRoomScreen() {
           </View>
         )}
       </StateView>
+      {isHost && state.kind === 'error' && (
+        // The host can always end the party, even when the stage can't connect.
+        <View style={{ position: 'absolute', left: 24, right: 24, bottom: insets.bottom + 24 }}>
+          <Button title="End party" variant="danger" onPress={endParty} loading={busy} />
+        </View>
+      )}
 
       <Sheet visible={queueOpen} onClose={() => setQueueOpen(false)} title="Seat requests">
         {queue.length === 0 ? (

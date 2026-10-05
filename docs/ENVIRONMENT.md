@@ -52,7 +52,7 @@ token plus `LIVEKIT_URL`.
 
 ## Platform settings (owner-editable, `platform_settings.media`)
 
-`media_base` (public URL of the `media` bucket — set per environment), `uploads_enabled`, `hdr_enabled`, `uhd_enabled` (4K rung), `record_live`, `max_upload_mb` (2048), `max_duration_s` (3600), `max_pending_uploads` (5), `subtitles_enabled`, `subtitle_languages` (`["en","ur","hi","bn"]`).
+`media_base` (public URL of the `media` bucket — set per environment), `covers_base` (public URL of the `covers` bucket, e.g. `https://<ref>.supabase.co/storage/v1/object/public/covers` — required, or hosts can't add a cover and so can't go live), `uploads_enabled`, `hdr_enabled`, `uhd_enabled` (4K rung), `record_live`, `max_upload_mb` (2048), `max_duration_s` (3600), `max_pending_uploads` (5), `subtitles_enabled`, `subtitle_languages` (`["en","ur","hi","bn"]`).
 
 ## NestJS API (`apps/api/.env`)
 

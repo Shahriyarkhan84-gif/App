@@ -6,9 +6,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { router, useIsFocused } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useTabBarSpace } from '@/components/Menus';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { HostVerificationCard } from '@/components/HostVerificationCard';
@@ -25,11 +26,12 @@ import { liveColors, useTheme } from '@/lib/theme';
 import { CATEGORIES, categoryLabel } from '@/lib/types';
 
 export default function CreateScreen() {
+  const tabSpace = useTabBarSpace();
   const supabase = useSupabase();
   const { c } = useTheme();
   const track = useAnalytics();
   const offline = useOffline();
-  const { profile, host, isHost, reload: reloadProfile } = useProfile();
+  const { profile, host, isHost, error: profileError, reload: reloadProfile } = useProfile();
   const [camera, requestCamera] = useCameraPermissions();
   const [mic, requestMic] = useMicrophonePermissions();
   const [title, setTitle] = useState('');
@@ -88,6 +90,18 @@ export default function CreateScreen() {
     }
   };
 
+  const endLive = async () => {
+    setBusy(true);
+    try {
+      await rpc(supabase, 'end_live');
+      room.reload();
+    } catch (e) {
+      Alert.alert('Could not end the live', friendlyError(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const soloLive = async () => {
     setBusy(true);
     try {
@@ -124,24 +138,37 @@ export default function CreateScreen() {
   };
   const cover = room.data?.cover_url ?? null;
 
-  const needsPermission = Platform.OS !== 'web' && (!camera?.granted || !mic?.granted);
+  // Voice parties publish the mic only, so they don't need the camera.
+  const voiceOnly = room.data?.mode === 'voice';
+  const needsPermission = Platform.OS !== 'web' && ((!voiceOnly && !camera?.granted) || !mic?.granted);
+  const canAsk = (voiceOnly || camera?.canAskAgain !== false) && mic?.canAskAgain !== false;
 
   let state: ViewState = { kind: 'success' };
-  if (!profile) state = offline ? { kind: 'offline', onRetry: reloadProfile } : { kind: 'loading' };
+  if (!profile) {
+    state = offline ? { kind: 'offline', onRetry: reloadProfile }
+      : profileError ? { kind: 'error', error: profileError, onRetry: reloadProfile }
+      : { kind: 'loading' };
+  }
   else if (profile.status !== 'active') state = { kind: 'disabled', title: 'Going live is paused', body: 'Your account is currently restricted. Check Messages for details.' };
   else if (host && host.status !== 'active') state = { kind: 'disabled', title: 'Hosting suspended', body: 'Contact support or your agency for details.' };
-  else if (isHost && !needsVerification && needsPermission && (camera?.canAskAgain !== false || mic?.canAskAgain !== false)) {
+  else if (isHost && !needsVerification && needsPermission && canAsk) {
     state = {
       kind: 'permission',
-      title: 'Camera & microphone',
-      body: 'Zynalive needs your camera and microphone to broadcast.',
+      title: voiceOnly ? 'Microphone' : 'Camera & microphone',
+      body: voiceOnly ? 'Zynalive needs your microphone for a voice party.' : 'Zynalive needs your camera and microphone to broadcast.',
       onGrant: async () => {
-        await requestCamera();
+        if (!voiceOnly) await requestCamera();
         await requestMic();
       },
     };
   } else if (isHost && !needsVerification && needsPermission) {
-    state = { kind: 'disabled', title: 'Permissions blocked', body: 'Enable camera and microphone for Zynalive in your device settings.' };
+    state = {
+      kind: 'permission',
+      title: 'Permissions blocked',
+      body: voiceOnly ? 'Turn on the microphone for Zynalive in your phone settings.' : 'Turn on the camera and microphone for Zynalive in your phone settings.',
+      grantTitle: 'Open settings',
+      onGrant: () => void Linking.openSettings(),
+    };
   }
 
   if (state.kind === 'success' && isHost && !needsVerification && !room.data) {
@@ -203,7 +230,7 @@ export default function CreateScreen() {
             </View>
           </View>
         </SafeAreaView>
-        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: lc.tabBar, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 16, paddingBottom: 20, gap: 10 }}>
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: tabSpace, backgroundColor: lc.tabBar, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 16, paddingBottom: 20, gap: 10 }}>
           <Button
             title={cover ? 'Go live' : 'Add a cover to go live'}
             onPress={goLive}
@@ -220,7 +247,7 @@ export default function CreateScreen() {
   return (
     <Screen>
       <StateView state={state}>
-        <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 560, width: '100%', alignSelf: 'center' }}>
+        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: tabSpace + 16, gap: 16, maxWidth: 560, width: '100%', alignSelf: 'center' }}>
           <FadeIn style={{ borderRadius: 22, overflow: 'hidden' }}>
             <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, gap: 6 }}>
               <Row gap={8}>
@@ -264,6 +291,8 @@ export default function CreateScreen() {
                   ? router.push({ pathname: '/party/[roomId]', params: { roomId: room.data.id } })
                   : router.push('/host/live'))}
               />
+              {/* Always reachable, even when the live screen can't connect. */}
+              <Button title="End live" variant="ghost" loading={busy} onPress={endLive} />
             </Card>
             </FadeIn>
           )}

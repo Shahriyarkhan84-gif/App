@@ -175,6 +175,11 @@ export function useTabBarStyle(): ViewStyle {
   };
 }
 
+/** Height the floating tab bar covers at the bottom of a tab screen; add it to bottom padding. */
+export function useTabBarSpace(): number {
+  return 62 + useSafeAreaInsets().bottom;
+}
+
 /** Static tab bar for previews and non-router screens. */
 export function TabBar({ items, value, onChange, center }: { items: (MenuItem & { activeIcon?: IconName })[]; value: string; onChange: (key: string) => void; center?: MenuItem }) {
   const { c } = useTheme();

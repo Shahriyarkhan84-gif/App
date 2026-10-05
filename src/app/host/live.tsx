@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, FlatList, Share, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -61,14 +61,20 @@ export default function HostLiveScreen() {
   const { battle, opponentRoom, mySide, secondsLeft } = usePkBattleState(roomId, effectiveBattleId);
   // End an expired battle once per battle (not on every render).
   const endedBattle = useRef<string | null>(null);
+  const endRetry = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
     // ceil() means 0 only once ends_at has passed; the time check keeps the guard from being
     // spent on a call endBattleIfExpired would skip.
     if (secondsLeft === 0 && battle?.ends_at && endedBattle.current !== battle.id && new Date(battle.ends_at).getTime() <= Date.now()) {
       endedBattle.current = battle.id;
-      void endBattleIfExpired(supabase, battle);
+      const attempt = (left: number) => void endBattleIfExpired(supabase, battle).then((ok) => {
+        // A failed call (e.g. network) is retried a few times instead of leaving the battle live.
+        if (!ok && left > 0) endRetry.current = setTimeout(() => attempt(left - 1), 3000);
+      });
+      attempt(3);
     }
   }, [secondsLeft, battle, supabase]);
+  useEffect(() => () => clearTimeout(endRetry.current), []);
 
   const opponents = useFocusedAsync<Room[]>(async () => {
     if (!inviteOpen) return [];
@@ -128,7 +134,9 @@ export default function HostLiveScreen() {
           try {
             await rpc(supabase, 'end_live');
             track('live_ended', { room_id: roomId! });
-            router.replace({ pathname: '/host/summary', params: { streamId: session.data?.room.current_stream_id ?? '' } });
+            const streamId = session.data?.room.current_stream_id;
+            if (streamId) router.replace({ pathname: '/host/summary', params: { streamId } });
+            else router.replace('/create');
           } catch (e) {
             Alert.alert('Could not end stream', friendlyError(e));
             setEnding(false);
@@ -137,8 +145,25 @@ export default function HostLiveScreen() {
       },
     ]);
 
+  // Stable per token: inline callbacks would make LiveKit reconnect (and re-alert) on every
+  // re-render. One alert per token; a dropped connection shows Reconnect (and End stays reachable).
+  const stageToken = session.data?.token?.token ?? null;
+  const reloadSession = session.reload;
+  const [dropped, setDropped] = useState<string | null>(null);
+  const alerted = useRef<string | null>(null);
+  const onStageDisconnected = useCallback(() => setDropped(stageToken), [stageToken]);
+  const onStageError = useCallback((e: Error) => {
+    if (alerted.current === stageToken) return;
+    alerted.current = stageToken;
+    Alert.alert('Camera or connection problem', friendlyError(e), [
+      { text: 'OK', style: 'cancel' },
+      { text: 'Reconnect', onPress: () => reloadSession() },
+    ]);
+  }, [stageToken, reloadSession]);
+
   let state: ViewState = { kind: 'success' };
   if (session.error) state = { kind: 'error', error: session.error, onRetry: session.reload };
+  else if (dropped && dropped === stageToken) state = { kind: 'error', error: new Error('connection_lost'), onRetry: () => { setDropped(null); session.reload(); } };
   else if (!session.data) state = { kind: 'loading' };
   else if (!session.data.token) state = { kind: 'empty', title: "You're not live", action: { title: 'Back', onPress: () => router.back() } };
 
@@ -156,7 +181,7 @@ export default function HostLiveScreen() {
               <>
                 <PkBattleStage
                   mySide={mySide}
-                  myStage={<LiveStage token={session.data.token.token} url={session.data.token.url} role="host" onError={(e) => Alert.alert('Connection problem', e.message)} />}
+                  myStage={<LiveStage token={session.data.token.token} url={session.data.token.url} role="host" onError={onStageError} onDisconnected={onStageDisconnected} />}
                   opponentRoom={opponentRoom!}
                   mySideLabel="You"
                   opponentSideLabel={displayName(opponentRoom!.host)}
@@ -164,7 +189,7 @@ export default function HostLiveScreen() {
                 <PkBattleBar battle={battle!} mySide={mySide} secondsLeft={secondsLeft} />
               </>
             ) : (
-              <LiveStage token={session.data.token.token} url={session.data.token.url} role="host" onError={(e) => Alert.alert('Connection problem', e.message)} />
+              <LiveStage token={session.data.token.token} url={session.data.token.url} role="host" onError={onStageError} onDisconnected={onStageDisconnected} />
             )}
             <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12 }}>
               <Row>
@@ -207,6 +232,12 @@ export default function HostLiveScreen() {
           </>
         )}
       </StateView>
+      {state.kind === 'error' && (
+        // A live that can't connect must still be endable, or the room stays "live" for viewers.
+        <View style={{ position: 'absolute', left: 24, right: 24, bottom: insets.bottom + 24 }}>
+          <Button title="End live" variant="danger" onPress={end} loading={ending} />
+        </View>
+      )}
 
       <Sheet visible={inviteOpen} onClose={() => setInviteOpen(false)} title="PK battle a live host">
         <FlatList

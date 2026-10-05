@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, RefreshControl, TextInput, View } from 'react-native';
 
+import { useTabBarSpace } from '@/components/Menus';
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Avatar, Button, compactNumber, RoleBadges, Row, Screen, Sheet, Text } from '@/components/ui';
@@ -20,6 +21,7 @@ type Person = Pick<Profile, 'id' | 'user_number' | 'display_name' | 'username' |
 
 /** Party: voice and video party rooms first, then every live room; search people and Host IDs. */
 export default function PartyScreen() {
+  const tabSpace = useTabBarSpace();
   const supabase = useSupabase();
   const { c, radius } = useTheme();
   const offline = useOffline();
@@ -117,7 +119,7 @@ export default function PartyScreen() {
         <FlatList
           data={matchingRooms}
           keyExtractor={(r) => r.id}
-          contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: 40 }}
+          contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: tabSpace + 24 }}
           refreshControl={<RefreshControl refreshing={rooms.loading && !!rooms.data} onRefresh={rooms.reload} tintColor={c.text} />}
           ListHeaderComponent={
             matchingPeople.length > 0 ? (
