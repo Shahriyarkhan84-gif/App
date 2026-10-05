@@ -21,6 +21,9 @@ import { useSupabase } from '@/lib/supabase';
 import { fonts, useTheme } from '@/lib/theme';
 import { CATEGORIES, categoryLabel, displayName, normalizeRooms, ROOM_SELECT, type Room, roomHref } from '@/lib/types';
 
+/** Live rooms fetched for Home; Popular, Following, Nearby and New are all cut from this list. */
+const LIVE_LIMIT = 200;
+
 type Feed = 'following' | 'popular' | 'nearby' | 'new';
 const FEEDS: { id: Feed; label: string }[] = [
   { id: 'following', label: 'Following' },
@@ -32,7 +35,7 @@ const CHIPS = ['all', ...CATEGORIES] as const;
 
 // live: top 60 by viewers (Popular). Following and New load their own lists, so smaller and newer
 // rooms still show once more than 60 rooms are live.
-type HomeData = { live: Room[]; followingLive: Room[]; newest: Room[]; followed: Set<string>; recommended: Map<string, { reason: string | null; score: number }> };
+type HomeData = { all: Room[]; live: Room[]; followingLive: Room[]; newest: Room[]; followed: Set<string>; recommended: Map<string, { reason: string | null; score: number }> };
 
 export default function HomeScreen() {
   const tabSpace = useTabBarSpace();
@@ -50,41 +53,37 @@ export default function HomeScreen() {
   const cardWidth = (Math.min(width, 1100) - hPadding * 2 - 10 * (columns - 1)) / columns;
 
   const { data, error, loading, reload } = useFocusedAsync<HomeData>(async () => {
+    // One round trip: the server is far away (us-east-1), so every sequential request adds ~0.5 s.
+    // Popular, Following and New are all cut from the same list of live rooms.
     const [live, follows, recs] = await Promise.all([
-      supabase.from('rooms').select(ROOM_SELECT).eq('status', 'live').order('viewer_count', { ascending: false }).limit(60),
+      supabase.from('rooms').select(ROOM_SELECT).eq('status', 'live').order('viewer_count', { ascending: false }).limit(LIVE_LIMIT),
       supabase.from('follows').select('followee_id').eq('follower_id', userId!),
       // Written by the Recommendations agent (LangGraph worker).
       supabase.from('user_recommendations').select('room_id,reason,score').eq('user_id', userId!).order('score', { ascending: false }).limit(10),
     ]);
     if (live.error) throw live.error;
     if (follows.error) throw follows.error;
-    const followedIds = (follows.data ?? []).map((f) => f.followee_id);
-    const [followingLive, newest] = await Promise.all([
-      followedIds.length
-        ? supabase.from('rooms').select(ROOM_SELECT).eq('status', 'live').in('host_id', followedIds.slice(0, 300)).order('viewer_count', { ascending: false }).limit(60)
-        : Promise.resolve({ data: [], error: null }),
-      supabase.from('rooms').select(ROOM_SELECT).eq('status', 'live').order('updated_at', { ascending: false }).limit(60),
-    ]);
-    if (followingLive.error) throw followingLive.error;
-    if (newest.error) throw newest.error;
+    const all = normalizeRooms(live.data);
+    const followedIds = new Set((follows.data ?? []).map((f) => f.followee_id));
     return {
-      live: normalizeRooms(live.data),
-      followingLive: normalizeRooms(followingLive.data),
-      newest: normalizeRooms(newest.data),
-      followed: new Set((follows.data ?? []).map((f) => f.followee_id)),
+      all,
+      live: all.slice(0, 60),
+      followingLive: all.filter((r) => followedIds.has(r.host_id)).slice(0, 60),
+      newest: [...all].sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? '')).slice(0, 60),
+      followed: followedIds,
       recommended: new Map((recs.data ?? []).map((r) => [r.room_id, { reason: r.reason, score: r.score }])),
     };
-  }, [userId]);
+  }, [userId], `home:${userId}`);
 
   // Rooms going live/offline update the feed in real time.
   // `rooms` has no full replica identity, so p.old is empty: compare with what the feed shows instead.
   // Viewer-count updates (many per second) must not refetch the feed.
   const liveIds = useRef<Set<string>>(new Set());
   useEffect(() => {
-    liveIds.current = new Set((data?.live ?? []).map((r) => r.id));
+    liveIds.current = new Set((data?.all ?? []).map((r) => r.id));
   }, [data]);
   // Viewer joins/leaves update `rooms` constantly with status still 'live'. Refetch only when a room
-  // we show goes offline, or a room we don't show goes live while the feed isn't full (limit 60) —
+  // we show goes offline, or a room we don't show goes live while the list isn't full (LIVE_LIMIT) —
   // debounced, and never before the first load.
   const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (pending.current) clearTimeout(pending.current); }, []);
@@ -93,7 +92,7 @@ export default function HomeScreen() {
     if (!next.id || !data) return;
     const shown = liveIds.current.has(next.id);
     const live = next.status === 'live';
-    const changed = shown ? !live : live && liveIds.current.size < 60;
+    const changed = shown ? !live : live && liveIds.current.size < LIVE_LIMIT;
     if (!changed || pending.current) return;
     pending.current = setTimeout(() => { pending.current = null; reload(); }, 1500);
   });

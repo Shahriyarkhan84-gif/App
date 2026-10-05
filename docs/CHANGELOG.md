@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.10 — Faster loading
+
+The database is in us-east-1, so every request from Pakistan costs ~0.5 s round trip; screens that made requests one after another felt slow.
+- Home loads in one round trip (was two): Popular, Following, Nearby and New are cut from one list of up to 200 live rooms.
+- Start-up loads the profile and host row together (was one after the other).
+- Home and Me show their last result instantly when reopened during the session, then refresh (`useAsync(..., cacheKey)`, memory only, keyed by user).
+
 ## 0.9.9 — 50-user run (every corner)
 
 50 simulated users (viewers, hosts, party guests, agencies, owners, abusers) walked every screen. Fixes:

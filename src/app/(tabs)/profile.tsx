@@ -47,7 +47,7 @@ export default function ProfileScreen() {
       // Diamonds earned = everything ever earned, not just what's withdrawable right now.
       earnings: (earnings.data as { lifetime: number } | null)?.lifetime ?? 0,
     };
-  }, [profile?.id, !!host]);
+  }, [profile?.id, !!host], profile ? `me:${profile.id}` : undefined);
   useRealtime('wallets', profile ? `user_id=eq.${profile.id}` : undefined, () => stats.reload(), !!profile);
 
   const openFeedback = async () => {

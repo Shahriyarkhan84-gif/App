@@ -6,21 +6,33 @@ import { useSupabase } from './supabase';
 
 type AsyncState<T> = { data: T | undefined; error: Error | null; loading: boolean; reload: () => void };
 
-/** Minimal data-fetching hook; re-runs when deps change or `reload` is called. */
-export function useAsync<T>(fn: () => Promise<T>, deps: DependencyList): AsyncState<T> {
+// Last result per cacheKey, for this app session only (memory, cleared when the app closes).
+const cache = new Map<string, unknown>();
+
+/**
+ * Minimal data-fetching hook; re-runs when deps change or `reload` is called.
+ * With a `cacheKey`, a screen opens showing its last result at once while fresh data loads
+ * (the server is far away, so a cold load takes a second or more). Include the user id in
+ * the key so one account never sees another's data.
+ */
+export function useAsync<T>(fn: () => Promise<T>, deps: DependencyList, cacheKey?: string): AsyncState<T> {
   const [nonce, setNonce] = useState(0);
   // Identifies the current request; `loading` is true until a result for it lands.
   const key = JSON.stringify([...deps, nonce]);
   const [state, setState] = useState<{ key: string | null; data: T | undefined; error: Error | null }>({
     key: null,
-    data: undefined,
+    data: cacheKey ? (cache.get(cacheKey) as T | undefined) : undefined,
     error: null,
   });
 
   useEffect(() => {
     let cancelled = false;
     fn().then(
-      (data) => !cancelled && setState({ key, data, error: null }),
+      (data) => {
+        if (cancelled) return;
+        if (cacheKey) cache.set(cacheKey, data);
+        setState({ key, data, error: null });
+      },
       (e: unknown) =>
         !cancelled && setState((prev) => ({ key, data: prev.data, error: e instanceof Error ? e : new Error(String(e)) })),
     );
@@ -35,8 +47,8 @@ export function useAsync<T>(fn: () => Promise<T>, deps: DependencyList): AsyncSt
 }
 
 /** Like useAsync, but also refetches whenever the screen regains focus. */
-export function useFocusedAsync<T>(fn: () => Promise<T>, deps: DependencyList) {
-  const state = useAsync(fn, deps);
+export function useFocusedAsync<T>(fn: () => Promise<T>, deps: DependencyList, cacheKey?: string) {
+  const state = useAsync(fn, deps, cacheKey);
   const { reload } = state;
   const [focusedOnce, setFocusedOnce] = useState(false);
   useFocusEffect(

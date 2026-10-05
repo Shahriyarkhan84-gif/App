@@ -55,9 +55,13 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const reload = useCallback(async () => {
     setLoading(true);
     try {
-      const p = await rpc<Profile>(supabase, 'ensure_profile', { p_display_name: fullName, p_region: getLocales()[0]?.regionCode ?? null });
+      // Both at once (one round trip to the far-away server instead of two). The profile id is the
+      // Clerk user id, so the host row can be read before ensure_profile returns.
+      const [p, { data: h }] = await Promise.all([
+        rpc<Profile>(supabase, 'ensure_profile', { p_display_name: fullName, p_region: getLocales()[0]?.regionCode ?? null }),
+        supabase.from('hosts').select('host_code,agency_id,status,verification_status').eq('user_id', userId!).maybeSingle(),
+      ]);
       if (p.id !== currentUser.current) return;
-      const { data: h } = await supabase.from('hosts').select('host_code,agency_id,status,verification_status').eq('user_id', p.id).maybeSingle();
       setProfile(p);
       setHost(h ?? null);
       setError(null);
