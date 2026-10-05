@@ -23,7 +23,7 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 
 ## Also pending
 
-- Going live requires an approved ID check again (`host_verification.required_to_go_live` = `true`, restored 2026-10-05 after testing). The `host-application` (Didit) function isn't deployed yet, so new hosts can't verify until it is.
+- Going live requires an approved ID check again (`host_verification.required_to_go_live` = `true`, restored 2026-10-05 after testing). `host-application` (Didit ID + face match) is deployed (2026-10-05); it needs the `DIDIT_API_KEY` secret and at least one active agency (applicants must enter a 4-digit agency code).
 - Hosted project settings set by hand: `media.covers_base` = `https://mdfjbhzriuwxafeagnwo.supabase.co/storage/v1/object/public/covers` (2026-10-05). Each new environment needs its own value (see `docs/ENVIRONMENT.md`), or `set_room_cover` raises `not_configured`.
 - Hosted project settings set by hand: `media.media_base` (2026-10-05), alongside `covers_base`.
 - Host auto-approval is now opt-in (`host_verification.auto_approve`, default off): every application waits for the owner in the command center until Didit liveness is wired in.
@@ -38,7 +38,7 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
   - A late LiveKit `room_finished` for the previous live can end a new live started within LiveKit's empty-room window (fixed room names): compare `event.room.creationTime` with the stream start in `internal_end_stream_by_livekit_room`.
   - A seat whose guest vanishes within the 20 s reconnect grace stays taken until the host removes it: needs a sweep (pg_cron).
   - Sign-in with a second factor or Clerk's new-device check shows "use the web app"; needs an in-app code step.
-- Design canvas screens not built yet: likes, agency web dashboard. Voice/video party rooms and the host dashboard are built; `livekit-token` and `livekit-webhook` are deployed to the hosted project (2026-10-05); going live needs the `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` and `CLERK_ISSUER` Edge Function secrets and the LiveKit Cloud webhook pointed at `/functions/v1/livekit-webhook`. Other functions (checkout, Stripe/Clerk/Didit webhooks, delete-account, host-application) are not deployed yet.
+- Design canvas screens not built yet: likes, agency web dashboard. Voice/video party rooms and the host dashboard are built; `livekit-token` and `livekit-webhook` are deployed to the hosted project (2026-10-05); going live needs the `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` and `CLERK_ISSUER` Edge Function secrets and the LiveKit Cloud webhook pointed at `/functions/v1/livekit-webhook`. `host-application` is deployed too. Other functions (checkout, Stripe/Clerk/Didit webhooks, delete-account) are not deployed yet.
 
 - Localization: the layer and ur/hi/bn catalogs exist; screens outside tabs, states, profile menu, settings, videos and events still show English (move their strings into `src/lib/i18n/en.ts` as they're touched). Server notification copy is English.
 - Regions: withdrawals are PKR-only (`pkr_per_coin`); other regions need their own payout rate + rails before `features.withdrawals` is switched on. Inactive markets (ID, MY, TR, Gulf, PH, NP) need coin packages before activation.
