@@ -88,6 +88,18 @@ export default function CreateScreen() {
     }
   };
 
+  const soloLive = async () => {
+    setBusy(true);
+    try {
+      await rpc(supabase, 'set_room_mode', { p_mode: 'live' });
+      room.reload();
+    } catch (e) {
+      Alert.alert('Could not switch', friendlyError(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   // Covers are required to go live: uploaded to covers/<user id>/ and attached by set_room_cover().
   const pickCover = async () => {
     if (!profile) return;
@@ -173,6 +185,16 @@ export default function CreateScreen() {
               <Ionicons name={cover ? 'create-outline' : 'add-circle'} size={22} color={cover ? lc.textMuted : lc.accent} />
             </Pressable>
             <Input label="Stream title" value={title} onChangeText={setTitle} placeholder="What are you streaming?" maxLength={80} style={{ backgroundColor: lc.surfaceRaised, borderColor: '#3A3547', color: lc.text, minHeight: 44 }} />
+            {room.data && room.data.mode !== 'live' && (
+              // The party choice sticks to the room, so say so here and let the host switch back.
+              <Row gap={8} style={{ backgroundColor: lc.surfaceRaised, borderRadius: 12, padding: 12 }}>
+                <Ionicons name={room.data.mode === 'video' ? 'videocam' : 'mic'} size={18} color={lc.accent} />
+                <Text variant="bodySmall" color={lc.text} style={{ flex: 1 }}>{room.data.mode === 'video' ? 'Video party' : 'Voice party'}: guests can join you on seats.</Text>
+                <Pressable onPress={soloLive} disabled={busy} accessibilityRole="button" accessibilityLabel="Switch to a solo live">
+                  <Text variant="label" color={lc.accent}>Solo live</Text>
+                </Pressable>
+              </Row>
+            )}
             <View style={{ gap: 8 }}>
               <Text variant="bodySmall" color={lc.textMuted}>Category</Text>
               <Row gap={8} style={{ flexWrap: 'wrap' }}>

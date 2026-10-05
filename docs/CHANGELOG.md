@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.9.5 — Second AI review pass
+
+Server (same copy-paste file, `docs/sql/apply_review_fixes.sql`, now covers both rounds):
+- Clawback goes oldest gift first, records `gifts.clawed_coins` so no gift is clawed twice, locks host earnings in a fixed order, and flags hosts whose earnings were already withdrawn or requested.
+- A payout method with no type is rejected; hosts with no recorded signup country keep withdrawals (older accounts).
+- The legacy Didit path needs an *approved* agency application; an approved host is only demoted by a decline (the downgrade trigger is replaced by a rule in `internal_apply_host_verification`).
+- Suspended room admins can't moderate; the room type can't change while live (`already_live`); leaving the LiveKit room frees your party seat and queue place; ending a stream ends or cancels its PK battle; gifts after a battle's clock runs out don't score.
+- `clerk-webhook` no longer writes to deleted accounts.
+
+App:
+- Every loading, error and empty screen scrolls, with pull-to-refresh on errors.
+- PK battles reliably end when the timer hits 0:00; re-tapping the same gift keeps its idempotency key.
+- Party rooms: no reconnect/alert loop after a media error (one alert, with Reconnect); closing the party gives up your seat; other rooms' seat changes are ignored.
+- Go live shows when the room is set to a voice/video party, with a switch back to a solo live.
+- Home realtime is debounced and only refetches when the shown list would change; unknown user profiles show "This account doesn't exist"; event tabs never show the other tab's data; chat can't send while offline.
+- Fixed a flaky DB test (agency code `9999` could collide with a random code).
+
 ## 0.9.4 — Security fixes from the AI app review (server side)
 
 Migration `20261004030000_review_fixes.sql` (copy-paste version: `docs/sql/apply_review_fixes.sql`):

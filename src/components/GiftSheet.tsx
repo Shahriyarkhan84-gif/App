@@ -47,8 +47,17 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
   }, [userId, visible]);
 
   // A different gift or quantity is a different send: never reuse the old idempotency key for it.
-  const pick = (g: GiftItem) => { setSelected(g); setKey(idempotencyKey()); };
-  const pickQuantity = (q: number) => { setQuantity(q); setKey(idempotencyKey()); };
+  // Re-tapping the same choice keeps the key, so a retry after a network error can't charge twice.
+  const pick = (g: GiftItem) => {
+    if (g.id === selected?.id) return;
+    setSelected(g);
+    setKey(idempotencyKey());
+  };
+  const pickQuantity = (q: number) => {
+    if (q === quantity) return;
+    setQuantity(q);
+    setKey(idempotencyKey());
+  };
   useRealtime('wallets', `user_id=eq.${userId}`, () => wallet.reload(), visible);
 
   const total = (selected?.coin_price ?? 0) * quantity;

@@ -1,6 +1,6 @@
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { getLocales } from 'expo-localization';
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { rpc } from './api';
 import { Sentry } from './sentry';
@@ -44,17 +44,24 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     setError(null);
   }
 
+  // The user signed in right now (not the one a request started for), so a slow reply for a
+  // previous account can't overwrite the current one.
+  const currentUser = useRef(userId);
+  useEffect(() => {
+    currentUser.current = userId;
+  }, [userId]);
+
   const reload = useCallback(async () => {
     setLoading(true);
     try {
       const p = await rpc<Profile>(supabase, 'ensure_profile', { p_display_name: fullName, p_region: getLocales()[0]?.regionCode ?? null });
-      // A late reply for a user who has since signed out is dropped.
-      if (userId && p.id !== userId) return;
+      if (p.id !== currentUser.current) return;
       const { data: h } = await supabase.from('hosts').select('host_code,agency_id,status,verification_status').eq('user_id', p.id).maybeSingle();
       setProfile(p);
       setHost(h ?? null);
       setError(null);
     } catch (e) {
+      if (currentUser.current !== userId) return;
       setError(e as Error);
       Sentry.captureException(e);
     } finally {

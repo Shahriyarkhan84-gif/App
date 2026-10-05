@@ -28,21 +28,23 @@ export default function EventScreen() {
   const { data, error, loading, reload } = useFocusedAsync(async () => {
     const { data: event, error: e1 } = await supabase.from('events').select(EVENT_SELECT).eq('id', id).maybeSingle();
     if (e1) throw e1;
-    if (!event) return { event: null, board: [] as LeaderRow[], gifts: [] as GiftItem[] };
+    if (!event) return { role, event: null, board: [] as LeaderRow[], gifts: [] as GiftItem[] };
     const ev = event as AppEvent;
     const [board, gifts] = await Promise.all([
       supabase.rpc('event_leaderboard', { p_event_id: id, p_role: ev.kind === 'pk_battle' ? 'host' : role, p_limit: 50 }),
       ev.gift_ids?.length ? supabase.from('gift_catalog').select('id,name,icon,coin_price').in('id', ev.gift_ids) : Promise.resolve({ data: [] }),
     ]);
     if (board.error) throw board.error;
-    return { event: ev, board: (board.data ?? []) as LeaderRow[], gifts: (gifts.data ?? []) as GiftItem[] };
+    return { role, event: ev, board: (board.data ?? []) as LeaderRow[], gifts: (gifts.data ?? []) as GiftItem[] };
   }, [id, role]);
 
   // Scores move with every qualifying gift / battle.
   useRealtime('event_scores', `event_id=eq.${id}`, () => reload(), !!data?.event && eventPhase(data.event) === 'live');
 
   const event = data?.event;
-  let state: ViewState = resolveState({ offline, loading, error, data, onRetry: reload });
+  // Board rows belong to the tab they were loaded for; while the other tab loads, show loading.
+  const fresh = data && data.role === role ? data : undefined;
+  let state: ViewState = resolveState({ offline, loading, error, data: fresh, onRetry: reload });
   if (state.kind === 'success' && !event) state = { kind: 'empty', title: t('events.empty') };
   const phase = event ? eventPhase(event) : 'ended';
   const rewards = (event?.rewards ?? []).filter((r) => event?.kind === 'pk_battle' ? r.role === 'host' : r.role === role);

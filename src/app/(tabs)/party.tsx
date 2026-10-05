@@ -29,12 +29,11 @@ export default function PartyScreen() {
   const [modes, setModes] = useState<Map<string, Mode>>(new Map());
 
   const rooms = useFocusedAsync<Room[]>(async () => {
-    const [{ data, error }, modeRows] = await Promise.all([
-      supabase.from('rooms').select(ROOM_SELECT).eq('status', 'live').order('viewer_count', { ascending: false }).limit(60),
-      // Party mode is fetched on its own so the list still loads before the party migration is applied.
-      supabase.from('rooms').select('id,mode').eq('status', 'live').limit(60),
-    ]);
+    const { data, error } = await supabase.from('rooms').select(ROOM_SELECT).eq('status', 'live').order('viewer_count', { ascending: false }).limit(60);
     if (error) throw error;
+    // Party mode is fetched on its own (for exactly these rooms) so the list still loads without it.
+    const ids = ((data ?? []) as { id: string }[]).map((r) => r.id);
+    const modeRows = ids.length ? await supabase.from('rooms').select('id,mode').in('id', ids) : { data: [] };
     const byId = new Map(((modeRows.data ?? []) as { id: string; mode: Mode }[]).map((r) => [r.id, r.mode]));
     setModes(byId);
     const list = normalizeRooms(data);

@@ -29,7 +29,7 @@ export default function UserProfileScreen() {
 
   const { data, error, loading, reload } = useAsync(async () => {
     const [profile, host, room, followers, follow, followingList] = await Promise.all([
-      supabase.from('profiles').select('id,user_number,verified_at,username,display_name,avatar_url,bio,country,signup_country,language,role,status,status_until').eq('id', id).single(),
+      supabase.from('profiles').select('id,user_number,verified_at,username,display_name,avatar_url,bio,country,signup_country,language,role,status,status_until').eq('id', id).maybeSingle(),
       supabase.from('hosts').select('host_code,total_live_seconds').eq('user_id', id).maybeSingle(),
       supabase.from('rooms').select('id,status,title,viewer_count').eq('host_id', id).maybeSingle(),
       supabase.from('follows').select('*', { count: 'exact', head: true }).eq('followee_id', id),
@@ -37,6 +37,7 @@ export default function UserProfileScreen() {
       supabase.from('follows').select('followee_id', { count: 'exact' }).eq('follower_id', id).limit(1000),
     ]);
     if (profile.error) throw profile.error;
+    if (!profile.data) return null; // unknown or removed user
     // Friends = people they follow who follow them back.
     const theirFollowees = (followingList.data ?? []).map((f) => f.followee_id);
     const friends = theirFollowees.length
@@ -108,7 +109,7 @@ export default function UserProfileScreen() {
           ) : undefined,
         }}
       />
-      <StateView state={resolveState({ offline, loading, error, data, onRetry: reload })}>
+      <StateView state={resolveState({ offline, loading, error, data, onRetry: reload, isEmpty: (d) => d === null, empty: { title: "This account doesn't exist", body: "It may have been deleted." } })}>
         {data && (
           <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
             <View style={{ alignItems: 'center', gap: 8 }}>

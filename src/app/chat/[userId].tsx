@@ -50,7 +50,8 @@ export default function ChatScreen() {
 
   const send = async () => {
     const body = draft.trim();
-    if (!body) return;
+    // The keyboard's return key bypasses the disabled Send button.
+    if (!body || sending || offline) return;
     setSending(true);
     try {
       await rpc(supabase, 'send_direct_message', { p_recipient: otherId, p_body: body });

@@ -62,7 +62,9 @@ export default function HostLiveScreen() {
   // End an expired battle once per battle (not on every render).
   const endedBattle = useRef<string | null>(null);
   useEffect(() => {
-    if (secondsLeft === 0 && battle && endedBattle.current !== battle.id) {
+    // ceil() means 0 only once ends_at has passed; the time check keeps the guard from being
+    // spent on a call endBattleIfExpired would skip.
+    if (secondsLeft === 0 && battle?.ends_at && endedBattle.current !== battle.id && new Date(battle.ends_at).getTime() <= Date.now()) {
       endedBattle.current = battle.id;
       void endBattleIfExpired(supabase, battle);
     }

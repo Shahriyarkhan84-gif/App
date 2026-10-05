@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -67,8 +67,10 @@ export default function PartyRoomScreen() {
     };
   }, [roomId, userId]);
 
-  useRealtime('room_seats', `room_id=eq.${roomId}`, () => party.reload());
-  useRealtime('seat_requests', `room_id=eq.${roomId}`, () => party.reload());
+  // Realtime doesn't apply the filter to DELETE events, so check the room (it's in both keys).
+  const ownRoom = (e: { new: Record<string, unknown>; old: Record<string, unknown> }) => (e.new?.room_id ?? e.old?.room_id) === roomId;
+  useRealtime('room_seats', `room_id=eq.${roomId}`, (e) => { if (ownRoom(e)) party.reload(); });
+  useRealtime('seat_requests', `room_id=eq.${roomId}`, (e) => { if (ownRoom(e)) party.reload(); });
   // Viewer-count updates are patched in place; only a status change (live → ended) refetches.
   const [viewers, setViewers] = useState<number | null>(null);
   const status = useRef<string | undefined>(undefined);
@@ -103,6 +105,30 @@ export default function PartyRoomScreen() {
   useEffect(() => {
     activeToken.current = token.data?.token ?? null;
   }, [token.data?.token]);
+  // Stable per token: the LiveKit connect effect re-runs whenever these change identity, so inline
+  // callbacks would reconnect (and re-alert) on every re-render. One alert per token, with a retry.
+  const stageToken = token.data?.token ?? null;
+  const reloadToken = token.reload;
+  const onStageDisconnected = useCallback(() => {
+    if (activeToken.current === stageToken) setDropped(true);
+  }, [stageToken]);
+  const alerted = useRef<string | null>(null);
+  const onStageError = useMemo(() => (e: Error) => {
+    if (alerted.current === stageToken) return;
+    alerted.current = stageToken;
+    Alert.alert('Microphone or camera problem', friendlyError(e), [
+      { text: 'OK', style: 'cancel' },
+      { text: 'Reconnect', onPress: () => reloadToken() },
+    ]);
+  }, [stageToken, reloadToken]);
+  // Leaving the screen gives up your seat, so ghost guests don't hold seats.
+  const seated = useRef(false);
+  useEffect(() => {
+    seated.current = role === 'guest';
+  }, [role]);
+  useEffect(() => () => {
+    if (seated.current) void rpc(supabase, 'leave_seat', { p_room: roomId }).catch(() => undefined);
+  }, [supabase, roomId]);
 
   const act = async (fn: () => Promise<unknown>, failTitle: string) => {
     setBusy(true);
@@ -206,10 +232,8 @@ export default function PartyRoomScreen() {
                 publishing={role !== 'viewer'}
                 micOn={micOn}
                 onSeatPress={onSeatPress}
-                onDisconnected={((t) => () => {
-                  if (activeToken.current === t) setDropped(true);
-                })(token.data.token)}
-                onError={(e) => Alert.alert('Microphone or camera problem', friendlyError(e))}
+                onDisconnected={onStageDisconnected}
+                onError={onStageError}
               />
             </ScrollView>
 

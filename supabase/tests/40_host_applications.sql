@@ -42,7 +42,7 @@ select tests.ok((public.internal_submit_host_application('ha_noage', 'No Age', '
 select tests.ok((public.internal_submit_host_application('ha_bad', 'Sara Ali', '+923211234567', '2222', '4821', 'Approved', 'Declined', 12, true, true, 22, 'r5', 'r6') ->> 'status') = 'declined', 'face mismatch declined');
 -- Under 18 → declined.
 select tests.ok((public.internal_submit_host_application('ha_kid', 'Young One', '+923331234567', '3333', '4821', 'Approved', 'Approved', 90, true, true, 16, 'r7', 'r8') ->> 'status') = 'declined', 'minor declined');
-select tests.fails($$select public.internal_submit_host_application('ha_bad', 'Sara Ali', '+923211234567', '2222', '9999', 'Approved', 'Approved', 90, true, true, 22, 'r9', 'r10')$$, '%invalid_agency_code%', 'unknown agency code');
+select tests.fails($$select public.internal_submit_host_application('ha_bad', 'Sara Ali', '+923211234567', '2222', '0999', 'Approved', 'Approved', 90, true, true, 22, 'r9', 'r10')$$, '%invalid_agency_code%', 'unknown agency code');
 select tests.fails($$select public.internal_submit_host_application('ha_ok', 'Ayesha Khan', '+923001234567', '4567', '4821', 'Approved', 'Approved', 90, true, true, 25, 'r11', 'r12')$$, '%already_verified%', 'no re-application once approved');
 select tests.fails($$select public.internal_submit_host_application('ha_bad', 'Sara Ali', '+923211234567', '2222', null, 'Approved', 'Approved', 90, true, true, 22, 'r15', 'r16')$$, '%agency_code_required%', 'agency code required');
 select tests.fails($$select public.internal_submit_host_application('ha_bad', 'Sara Ali', '0321', '2222', '4821', 'Approved', 'Approved', 90, true, true, 22, 'r13', 'r14')$$, '%host_applications_phone_check%', 'phone format enforced');

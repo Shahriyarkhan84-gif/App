@@ -55,7 +55,7 @@ export function usePkBattleState(myRoomId: string | undefined, battleId: string 
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, [live]);
-  const secondsLeft = live ? Math.max(0, Math.round((new Date(battle!.ends_at!).getTime() - now) / 1000)) : null;
+  const secondsLeft = live ? Math.max(0, Math.ceil((new Date(battle!.ends_at!).getTime() - now) / 1000)) : null;
 
   return { battle, opponentRoom: opponent.data ?? null, mySide, secondsLeft };
 }

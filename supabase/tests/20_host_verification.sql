@@ -68,6 +68,10 @@ select tests.ok((select verified_at is not null from public.profiles where id = 
 select tests.ok(not (public.internal_apply_host_verification('ses_1', 'Approved', '{}') ->> 'applied_to_host')::boolean, 'stale session ignored');
 select tests.fails($$select public.internal_start_host_verification('hana', 'ses_3')$$, '%already_verified%', 'no new session once approved');
 select tests.fails($$select public.internal_apply_host_verification('ses_unknown', 'Approved', '{}')$$, '%unknown_session%', 'unknown session');
+-- The approving session reversing itself (Didit declines after review) does demote.
+select public.internal_apply_host_verification('ses_2', 'Declined', '{}');
+select tests.ok((select verification_status from public.hosts where user_id = 'hana') = 'declined', 'approving session can decline');
+select public.internal_apply_host_verification('ses_2', 'Approved', '{}');
 reset role;
 
 -- Verified hosts can go live; users only see their own verification records.

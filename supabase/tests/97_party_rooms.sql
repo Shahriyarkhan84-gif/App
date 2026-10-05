@@ -21,7 +21,7 @@ insert into public.profiles (id, username, display_name) values
   ('pt_g1', 'pt_g1', 'G1'), ('pt_g2', 'pt_g2', 'G2'), ('pt_g3', 'pt_g3', 'G3'), ('pt_g4', 'pt_g4', 'G4'),
   ('pt_g5', 'pt_g5', 'G5'), ('pt_g6', 'pt_g6', 'G6'), ('pt_g7', 'pt_g7', 'G7'), ('pt_kicked', 'pt_kicked', 'Kicked');
 insert into public.hosts (user_id) values ('pt_host');
-insert into public.rooms (host_id, status, cover_url) values ('pt_host', 'live', 'https://cdn.test/p.jpg');
+insert into public.rooms (host_id, status, cover_url) values ('pt_host', 'offline', 'https://cdn.test/p.jpg');
 insert into public.room_admins (room_id, user_id) select id, 'pt_admin' from public.rooms where host_id = 'pt_host';
 insert into public.room_bans (room_id, user_id, kind, created_by) select id, 'pt_kicked', 'kick', 'pt_host' from public.rooms where host_id = 'pt_host';
 create temp table party as select id from public.rooms where host_id = 'pt_host';
@@ -39,6 +39,13 @@ select set_config('request.jwt.claims', '{"sub":"pt_host"}', false);
 set role authenticated;
 select public.set_room_mode('video');
 select tests.fails($$select public.set_room_mode('karaoke')$$, '%invalid_mode%', 'unknown mode rejected');
+reset role;
+update public.rooms set status = 'live' where host_id = 'pt_host';
+-- The room type is fixed while live.
+select set_config('request.jwt.claims', '{"sub":"pt_host"}', false);
+set role authenticated;
+select tests.fails($$select public.set_room_mode('voice')$$, '%already_live%', 'cannot change mode mid-live');
+select public.set_room_mode('video');
 reset role;
 
 -- Clients cannot write seats or requests directly.
@@ -97,19 +104,24 @@ select public.leave_seat((select id from party));
 reset role;
 select tests.ok(not exists (select 1 from public.room_seats where user_id = 'pt_g1'), 'guest left seat');
 
--- Switching to voice keeps seats 1–6 (cap 8); switching to a normal live clears them.
-select set_config('request.jwt.claims', '{"sub":"pt_host"}', false);
+-- Leaving the LiveKit room gives up the seat and the place in the queue.
+select set_config('request.jwt.claims', '{"sub":"pt_g7"}', false);
 set role authenticated;
-select public.set_room_mode('live');
+select public.request_seat((select id from party));
 reset role;
-select tests.ok(not exists (select 1 from public.room_seats where room_id = (select id from party)), 'normal live has no seats');
-select tests.ok(not exists (select 1 from public.seat_requests where room_id = (select id from party)), 'normal live has no requests');
+select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 'pt_host'), 'pt_g2', false, 3);
+select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 'pt_host'), 'pt_g7', false, 2);
+select tests.ok(not exists (select 1 from public.room_seats where user_id = 'pt_g2'), 'leaving the room frees the seat');
+select tests.ok(not exists (select 1 from public.seat_requests where user_id = 'pt_g7'), 'leaving the room drops the request');
+
+-- A restricted room admin can't moderate.
+update public.profiles set status = 'restricted' where id = 'pt_admin';
+select set_config('request.jwt.claims', '{"sub":"pt_admin"}', false);
+set role authenticated;
+select tests.fails($$select public.remove_from_seat((select id from party), 'pt_g3')$$, '%forbidden%', 'restricted admin cannot moderate');
+reset role;
 
 -- Seats end with the live.
-select set_config('request.jwt.claims', '{"sub":"pt_host"}', false);
-set role authenticated;
-select public.set_room_mode('voice');
-reset role;
 select set_config('request.jwt.claims', '{"sub":"pt_g7"}', false);
 set role authenticated;
 select public.request_seat((select id from party));

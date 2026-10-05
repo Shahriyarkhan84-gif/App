@@ -343,6 +343,10 @@ set role authenticated;
 reset role;
 select tests.ok(exists (select 1 from public.earning_entries where host_id = 'bob' and kind = 'chargeback_clawback' and delta < 0),
   'refund of already-gifted coins clawed back the host share');
+-- Each gift records the coins clawed from it, exactly the 20-coin shortfall, so a later
+-- reversal can't take the same gift again.
+select tests.ok((select sum(clawed_coins) from public.gifts where sender_id = 'alice') = 20, 'clawed coins recorded per gift');
+select tests.ok(not exists (select 1 from public.gifts where clawed_coins > coins_total), 'never more than the gift');
 select set_config('request.jwt.claims', '{"sub":"bob"}', false);
 set role authenticated;
 -- New gift earnings are held for the dispute window before they can be withdrawn.
@@ -364,6 +368,7 @@ select tests.fails($$select public.request_withdrawal(999999, '{"type":"bank","a
 select tests.fails($$select public.request_withdrawal(10, '{"type":"bank","account":"PK36SCBL0000001123456702"}')$$, '%below_minimum%', 'below minimum');
 select tests.fails($$select public.request_withdrawal(2000, '{"type":"crypto","account":"03001234567"}')$$, '%invalid_payout_method%', 'unknown payout type');
 select tests.fails($$select public.request_withdrawal(2000, '{"type":"bank"}')$$, '%invalid_payout_method%', 'payout without account');
+select tests.fails($$select public.request_withdrawal(2000, '{"account":"03001234567"}')$$, '%invalid_payout_method%', 'payout without a type');
 select public.request_withdrawal(2000, '{"type":"easypaisa","account":"03001234567"}');
 select tests.ok((select balance = 3000 and held = 2000 from public.creator_earnings where host_id = 'bob'), 'coins held');
 select tests.ok((select amount_minor from public.withdrawals where host_id = 'bob') = 100000, '2000 coins * 0.5 PKR = 1000.00 PKR');

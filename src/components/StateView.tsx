@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps, ReactNode } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, View } from 'react-native';
 
 import { friendlyError } from '@/lib/errors';
 import { useI18n } from '@/lib/i18n';
@@ -23,15 +23,23 @@ export type ViewState =
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
-function Message({ icon, title, body, children }: { icon: IconName; title: string; body?: string; children?: ReactNode }) {
+/**
+ * Error/empty/offline/permission/disabled message. It scrolls (long text, small phones, large
+ * fonts never get cut off) and, when the state can be retried, pull-to-refresh retries it.
+ */
+function Message({ icon, title, body, children, onRefresh }: { icon: IconName; title: string; body?: string; children?: ReactNode; onRefresh?: () => void }) {
   const { c } = useTheme();
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}>
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}
+      refreshControl={onRefresh ? <RefreshControl refreshing={false} onRefresh={onRefresh} tintColor={c.textMuted} /> : undefined}
+    >
       <Ionicons name={icon} size={40} color={c.textMuted} />
       <Text variant="h3" style={{ textAlign: 'center' }}>{title}</Text>
       {body && <Text muted style={{ textAlign: 'center' }}>{body}</Text>}
       {children}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -49,7 +57,7 @@ export function StateView({ state, children }: { state: ViewState; children?: Re
       );
     case 'error':
       return (
-        <Message icon="alert-circle-outline" title={t('state.error.title')} body={friendlyError(state.error)}>
+        <Message icon="alert-circle-outline" title={t('state.error.title')} body={friendlyError(state.error)} onRefresh={state.onRetry}>
           {state.onRetry && <Button title={t('state.retry')} variant="secondary" onPress={state.onRetry} />}
         </Message>
       );
@@ -61,7 +69,7 @@ export function StateView({ state, children }: { state: ViewState; children?: Re
       );
     case 'offline':
       return (
-        <Message icon="cloud-offline-outline" title={t('state.offline.title')} body={t('state.offline.body')}>
+        <Message icon="cloud-offline-outline" title={t('state.offline.title')} body={t('state.offline.body')} onRefresh={state.onRetry}>
           {state.onRetry && <Button title={t('state.offline.retry')} variant="secondary" onPress={state.onRetry} />}
         </Message>
       );

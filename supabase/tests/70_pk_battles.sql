@@ -109,6 +109,27 @@ select tests.ok((select current_battle_id from public.rooms where host_id = 'pk_
 select tests.ok((select current_battle_id from public.rooms where host_id = 'pk_host_b') is null, 'room B freed after decline');
 
 ---------------------------------------------------------------------------------------
+-- Late gifts don't score; ending a stream ends its battle and frees the opponent
+---------------------------------------------------------------------------------------
+select set_config('request.jwt.claims', '{"sub":"pk_host_a"}', false);
+set role authenticated;
+select public.invite_pk_battle((select id from public.rooms where host_id = 'pk_host_b'));
+reset role;
+select set_config('request.jwt.claims', '{"sub":"pk_host_b"}', false);
+set role authenticated;
+select public.respond_pk_battle((select id from public.pk_battles where status = 'invited' limit 1), true);
+reset role;
+update public.pk_battles set ends_at = now() - interval '1 second' where status = 'live';
+select set_config('request.jwt.claims', '{"sub":"pk_viewer"}', false);
+set role authenticated;
+select public.send_gift((select id from public.rooms where host_id = 'pk_host_a'), 3, 1, 'pk-gift-late-1');
+reset role;
+select tests.ok((select score_a from public.pk_battles where status = 'live') = 0, 'gifts after the clock runs out do not score');
+select private.end_stream((select id from public.rooms where host_id = 'pk_host_a'));
+select tests.ok(not exists (select 1 from public.pk_battles where status in ('live', 'invited')), 'ending the stream ends its battle');
+select tests.ok((select current_battle_id from public.rooms where host_id = 'pk_host_b') is null, 'opponent freed when the stream ends');
+
+---------------------------------------------------------------------------------------
 -- Anon is blocked outright
 ---------------------------------------------------------------------------------------
 select set_config('request.jwt.claims', '{}', false);

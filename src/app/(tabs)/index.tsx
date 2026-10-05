@@ -67,10 +67,19 @@ export default function HomeScreen() {
   useEffect(() => {
     liveIds.current = new Set((data?.live ?? []).map((r) => r.id));
   }, [data]);
+  // Viewer joins/leaves update `rooms` constantly with status still 'live'. Refetch only when a room
+  // we show goes offline, or a room we don't show goes live while the feed isn't full (limit 60) —
+  // debounced, and never before the first load.
+  const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (pending.current) clearTimeout(pending.current); }, []);
   useRealtime('rooms', undefined, (p) => {
     const next = p.new as { id?: string; status?: string };
-    if (!next.id) return;
-    if (liveIds.current.has(next.id) !== (next.status === 'live')) reload();
+    if (!next.id || liveIds.current.size === 0 && !data) return;
+    const shown = liveIds.current.has(next.id);
+    const live = next.status === 'live';
+    const changed = shown ? !live : live && liveIds.current.size < 60;
+    if (!changed || pending.current) return;
+    pending.current = setTimeout(() => { pending.current = null; reload(); }, 1500);
   });
 
   const rooms = data ? pickFeed(data, feed, profile?.country ?? null).filter((r) => category === 'all' || r.category === category) : [];
@@ -128,7 +137,7 @@ export default function HomeScreen() {
           />
           {feed === 'popular' && category === 'all' && rooms[0] && (
             <FadeIn>
-              <FeaturedHost key={rooms[0].host_id} room={rooms[0]} following={data!.followed.has(rooms[0].host_id)} />
+              <FeaturedHost key={`${rooms[0].host_id}-${data!.followed.has(rooms[0].host_id)}`} room={rooms[0]} following={data!.followed.has(rooms[0].host_id)} />
             </FadeIn>
           )}
           {feed === 'popular' && category === 'all' && (

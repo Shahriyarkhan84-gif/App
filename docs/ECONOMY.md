@@ -64,6 +64,13 @@ pricing in `coin_packages`.
 Any shortfall (coins already spent) is recorded as a negative platform-ledger
 entry and the account is flagged for review.
 
+**Clawback.** When the reversed coins were already gifted, the hosts' share of the gifts the
+buyer sent after the purchase is taken back from their earnings, oldest gift first (coins are
+spent oldest first). Each gift records `clawed_coins`, so no gift is clawed twice. This is
+deliberately conservative: if the buyer also had older coins, the clawed gifts may have been
+paid partly with those. Earnings never go negative: anything a host already withdrew or has
+requested flags them (`account_review`) for the owner to check their pending withdrawals.
+
 ## Regional pricing
 
 Each region has its own coin packages (`coin_packages.region`): PKR for
