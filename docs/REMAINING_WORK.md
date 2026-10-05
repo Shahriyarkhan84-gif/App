@@ -23,7 +23,7 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 
 ## Also pending
 
-- Design canvas screens not built yet: likes, agency web dashboard. Voice/video party rooms and the host dashboard are built; party rooms need the `20261004020000_party_rooms.sql` migration and the `livekit-token` function deployed to the hosted project.
+- Design canvas screens not built yet: likes, agency web dashboard. Voice/video party rooms and the host dashboard are built; `livekit-token` and `livekit-webhook` are deployed to the hosted project (2026-10-05); going live needs the `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` and `CLERK_ISSUER` Edge Function secrets and the LiveKit Cloud webhook pointed at `/functions/v1/livekit-webhook`. Other functions (checkout, Stripe/Clerk/Didit webhooks, delete-account, host-application) are not deployed yet.
 
 - Localization: the layer and ur/hi/bn catalogs exist; screens outside tabs, states, profile menu, settings, videos and events still show English (move their strings into `src/lib/i18n/en.ts` as they're touched). Server notification copy is English.
 - Regions: withdrawals are PKR-only (`pkr_per_coin`); other regions need their own payout rate + rails before `features.withdrawals` is switched on. Inactive markets (ID, MY, TR, Gulf, PH, NP) need coin packages before activation.
