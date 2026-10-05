@@ -30,6 +30,7 @@ export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress, ac
   const [translations, setTranslations] = useState<Record<number, string>>({});
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
+  const inFlight = useRef(false);
   const [selected, setSelected] = useState<ChatMessage | null>(null);
   const senderCache = useRef(new Map<string, ChatMessage['sender']>());
   const listRef = useRef<FlatList<ChatMessage>>(null);
@@ -66,16 +67,20 @@ export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress, ac
 
   const send = async () => {
     const body = draft.trim();
-    // The keyboard's send key ignores the button's disabled state, so guard here too.
-    if (!body || sending) return;
+    // The keyboard's send key ignores the button's disabled state; a ref also catches two presses
+    // in the same frame.
+    if (!body || inFlight.current) return;
+    inFlight.current = true;
     setSending(true);
     try {
       await rpc(supabase, 'send_chat_message', { p_room: roomId, p_body: body });
-      setDraft('');
+      // Keep anything typed while it was sending.
+      setDraft((d) => (d.trim() === body ? '' : d));
       track('chat_sent', { room_id: roomId });
     } catch (e) {
       Alert.alert('Message not sent', friendlyError(e));
     } finally {
+      inFlight.current = false;
       setSending(false);
     }
   };

@@ -80,6 +80,9 @@ export default function PartyRoomScreen() {
   useRealtime('rooms', `id=eq.${roomId}`, (e) => {
     const next = e.new as { status?: string; viewer_count?: number };
     if (typeof next.viewer_count === 'number') setViewers(next.viewer_count);
+    // Before the first load there's nothing to compare with; reloading then would restart the
+    // load on every viewer-count update and the party could never finish loading.
+    if (!status.current) return;
     if (next.status && next.status !== status.current) party.reload();
   });
 
@@ -99,6 +102,11 @@ export default function PartyRoomScreen() {
     return { ...(await getLiveKitToken(supabase, roomId, role)), role };
   }, [roomId, p?.room.status, role]);
   const [dropped, setDropped] = useState(false);
+  const tokenErrorCode = token.error ? errorCode(token.error) : null;
+  const reloadParty = party.reload;
+  useEffect(() => {
+    if (tokenErrorCode === 'muted_in_room' || tokenErrorCode === 'not_seated') reloadParty();
+  }, [tokenErrorCode, reloadParty]);
   // Only the stage for the current token may report a dropped connection; an old stage closing
   // because the role changed (seat approved/left) is expected.
   const activeToken = useRef<string | null>(null);
@@ -118,7 +126,7 @@ export default function PartyRoomScreen() {
     alerted.current = stageToken;
     Alert.alert('Microphone or camera problem', friendlyError(e), [
       { text: 'OK', style: 'cancel' },
-      { text: 'Reconnect', onPress: () => reloadToken() },
+      { text: 'Reconnect', onPress: () => { setDropped(false); reloadToken(); } },
     ]);
   }, [stageToken, reloadToken]);
   // Leaving the screen gives up your seat, so ghost guests don't hold seats.
@@ -156,8 +164,10 @@ export default function PartyRoomScreen() {
         text: 'End',
         style: 'destructive',
         onPress: () => act(async () => {
+          const streamId = p?.room.current_stream_id;
           await rpc(supabase, 'end_live');
-          router.replace('/host/dashboard');
+          if (streamId) router.replace({ pathname: '/host/summary', params: { streamId } });
+          else router.replace('/host/dashboard');
         }, 'Could not end the party'),
       },
     ]);
@@ -198,6 +208,8 @@ export default function PartyRoomScreen() {
   let state: ViewState = { kind: 'success' };
   if (!p) state = offline ? { kind: 'offline', onRetry: party.reload } : party.error ? { kind: 'error', error: party.error, onRetry: party.reload } : { kind: 'loading' };
   else if (p.room.status !== 'live') state = { kind: 'empty', title: 'This party has ended', body: `Follow ${displayName(p.room.host)} to know when they're live next.`, action: { title: 'Back to Party', onPress: () => router.replace('/party') } };
+  // Muted or no longer seated: the seat is gone, so reload and rejoin as a viewer (no error).
+  else if (token.error && (errorCode(token.error) === 'muted_in_room' || errorCode(token.error) === 'not_seated')) state = { kind: 'loading' };
   else if (token.error) state = errorCode(token.error) === 'banned_from_room' || errorCode(token.error) === 'account_restricted'
     ? { kind: 'disabled', title: "You can't join this party", body: friendlyError(token.error) }
     : { kind: 'error', error: token.error, onRetry: token.reload };
@@ -217,7 +229,8 @@ export default function PartyRoomScreen() {
                 <Text variant="caption" color={c.textMuted}>{p.mode === 'video' ? 'Video party' : 'Voice party'} · {p.seats.length}/{CAPACITY[p.mode]} seats</Text>
               </View>
               <ViewerCount count={viewers ?? p.room.viewer_count ?? 0} />
-              <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Leave party" style={round('rgba(255,255,255,0.1)')}>
+              {/* The host's X ends the party (leaving would silently drop the broadcast). */}
+              <Pressable onPress={isHost ? endParty : () => router.back()} accessibilityRole="button" accessibilityLabel={isHost ? 'End party' : 'Leave party'} style={round('rgba(255,255,255,0.1)')}>
                 <Ionicons name="close" size={22} color={c.text} />
               </Pressable>
             </Row>

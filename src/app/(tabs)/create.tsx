@@ -59,7 +59,8 @@ export default function CreateScreen() {
   }, !!profile);
 
   const verification = host?.verification_status ?? 'unverified';
-  const needsVerification = isHost && room.data?.verificationRequired !== false && verification !== 'approved';
+  // Wait for the room/settings before deciding, so the verification card doesn't flash.
+  const needsVerification = isHost && !!room.data && room.data.verificationRequired !== false && verification !== 'approved';
 
   const becomeHost = async () => {
     setBusy(true);

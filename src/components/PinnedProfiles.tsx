@@ -11,7 +11,7 @@ import { LiveAvatar } from './FollowingLive';
 import { PressScale } from './Motion';
 import { Avatar, Row, Text } from './ui';
 
-type Pinned = {
+export type Pinned = {
   id: string;
   user_number: number | null;
   display_name: string | null;
@@ -24,32 +24,38 @@ type Pinned = {
  * Verified IDs the owner pinned to Home. Shown whether or not they're live: tapping opens their
  * live room when they're live, otherwise their profile. Hidden when nothing is pinned.
  */
-export function PinnedProfiles() {
+export function PinnedProfiles({ refreshKey }: { refreshKey?: unknown }) {
   const supabase = useSupabase();
-  const { c } = useTheme();
+  // refreshKey: Home's pull-to-refresh and live-room updates also refresh this row.
   const { data } = useFocusedAsync<Pinned[]>(async () => {
     const { data: pins, error } = await supabase.from('pinned_profiles').select('user_id,position').order('position').order('created_at');
     if (error) throw error;
     const ids = (pins ?? []).map((p) => p.user_id);
     if (!ids.length) return [];
     const [profiles, rooms] = await Promise.all([
-      supabase.from('profiles').select('id,user_number,display_name,username,avatar_url,verified_at').in('id', ids),
+      supabase.from('profiles').select('id,user_number,display_name,username,avatar_url,owner_verified_at').in('id', ids),
       supabase.from('rooms').select('id,host_id,mode').in('host_id', ids).eq('status', 'live'),
     ]);
     if (profiles.error) throw profiles.error;
+    if (rooms.error) throw rooms.error;
     const live = new Map(((rooms.data ?? []) as { id: string; host_id: string; mode: string | null }[]).map((r) => [r.host_id, r]));
     const byId = new Map((profiles.data ?? []).map((p) => [p.id, p]));
     return ids.flatMap((id) => {
       const p = byId.get(id);
-      // Only verified accounts show, even if a pin outlived its verification.
-      if (!p?.verified_at) return [];
+      // Only owner-verified accounts show, even if a pin outlived its verification.
+      if (!p?.owner_verified_at) return [];
       const r = live.get(id);
       return [{ ...p, room: r ? { id: r.id, mode: r.mode } : null }];
     });
-  }, []);
+  }, [refreshKey]);
 
   if (!data?.length) return null;
+  return <PinnedRow items={data} />;
+}
 
+/** The Verified row itself (also used by previews with sample data). */
+export function PinnedRow({ items }: { items: Pinned[] }) {
+  const { c } = useTheme();
   const open = (p: Pinned) => {
     if (p.room) {
       if (p.room.mode === 'voice' || p.room.mode === 'video') router.push({ pathname: '/party/[roomId]', params: { roomId: p.room.id } });
@@ -66,7 +72,7 @@ export function PinnedProfiles() {
         <Text variant="label">Verified</Text>
       </Row>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
-        {data.map((p) => {
+        {items.map((p) => {
           const name = displayName(p);
           return (
             <PressScale

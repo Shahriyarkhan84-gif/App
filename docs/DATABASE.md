@@ -12,7 +12,7 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 | `…040000_access.sql` | grants, RLS policies, Realtime publication |
 | `…060000_host_verification.sql` | `hosts.verification_status`, `host_verifications`, Didit RPCs; go-live and withdrawals require verification ([HOST_VERIFICATION.md](HOST_VERIFICATION.md)) |
 | `…070000_user_number.sql` | `profiles.user_number`: random unique public ID, set by trigger on insert and frozen on update (8 digits since `…100000_user_number_8_digits.sql`) |
-| `…080000_verified_badge.sql` | `profiles.verified_at`: set by trigger when host verification is approved (Host badge), cleared if declined |
+| `…080000_verified_badge.sql` | `profiles.verified_at`: set by trigger when host verification is approved (Host badge); the owner's blue tick is the separate `owner_verified_at`, cleared if declined |
 | `…090000_account_deletion.sql` | `profiles.deleted_at`, `internal_delete_account()` (service role): removes personal data and social graph, anonymises the profile, keeps money/moderation records |
 | `…110000_host_id_equals_user_id.sql` | `hosts.host_code` = `profiles.user_number` (set by trigger, frozen); sequence dropped |
 | `…190000_signup_country.sql` | `profiles.signup_country` set once at sign-up (edge header, else device region), frozen, cleared on deletion; `ensure_profile(p_display_name, p_region)` |
@@ -32,6 +32,7 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 | `…25040000_revoke_anon_review_host_application.sql` | Security advisor fix: signed-out callers can't execute `review_host_application()` |
 | `…20261005010000_round3_fixes.sql` | gift `clawed_coins`/`idempotency_key` private (column grants), mutes unseat party guests, 20 s seat grace on reconnect, `ensure_profile` sets `country`, `request_translation` limits |
 | `…20261005020000_pinned_profiles.sql` | `pinned_profiles` (verified IDs pinned on Home; public read, no client writes) + owner RPCs `set_profile_verified`, `set_profile_pinned` |
+| `…20261005030000_owner_verified.sql` | `profiles.owner_verified_at` (owner's blue tick, required for Home pins; cleared with its pin on account deletion), visible-only pin limit, empty display-name backfill, `muted_in_room` from `request_seat`/`approve_seat` |
 | `20261004010000_avatars.sql` | Public `avatars` storage bucket; signed-in users write only `avatars/<their id>/` (Edit profile → Change photo) |
 | `20261004020000_party_rooms.sql` | `rooms.mode` (`live`/`voice`/`video`), `room_seats` (voice 8 / video 6 guest seats), `seat_requests`; RPCs `set_room_mode`, `request_seat`, `approve_seat` (host or live room admin), `remove_from_seat`, `leave_seat`, `set_seat_muted`; seats/requests cleared when the room goes offline; no client write grants. Tests: `supabase/tests/97_party_rooms.sql` |
 

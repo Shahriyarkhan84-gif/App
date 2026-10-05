@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, FlatList, Share, View } from 'react-native';
@@ -41,10 +41,29 @@ export default function HostLiveScreen() {
   }, [userId]);
 
   const roomId = session.data?.room.id;
+  // Set once the live is ending, so the summary opens once and Back no longer asks.
+  const leaving = useRef(false);
+  const endRef = useRef(endNow);
+  useEffect(() => {
+    endRef.current = endNow;
+  });
+  // Android Back (or any navigation away) would drop the broadcast while viewers still see "live":
+  // ask whether to end it instead.
+  const navigation = useNavigation();
+  useEffect(() => navigation.addListener('beforeRemove', (e) => {
+    if (leaving.current || !session.data?.token) return;
+    e.preventDefault();
+    Alert.alert('End your stream?', 'Leaving this screen ends your live.', [
+      { text: 'Keep streaming', style: 'cancel' },
+      { text: 'End', style: 'destructive', onPress: () => void endRef.current() },
+    ]);
+  }), [navigation, session.data?.token]);
   useRealtime('rooms', `id=eq.${roomId}`, (p) => {
     const next = p.new as { viewer_count: number; current_battle_id: string | null; status?: string; current_stream_id?: string | null };
     // Ended elsewhere (LiveKit room closed, or another device): go to the summary.
     if (next.status && next.status !== 'live') {
+      if (leaving.current) return; // end() is already navigating
+      leaving.current = true;
       const streamId = session.data?.room.current_stream_id;
       if (streamId) router.replace({ pathname: '/host/summary', params: { streamId } });
       else router.replace('/create');
@@ -123,26 +142,25 @@ export default function HostLiveScreen() {
     track('room_shared', { room_id: roomId });
   };
 
+  async function endNow() {
+    setEnding(true);
+    leaving.current = true;
+    try {
+      await rpc(supabase, 'end_live');
+      track('live_ended', { room_id: roomId! });
+      const streamId = session.data?.room.current_stream_id;
+      if (streamId) router.replace({ pathname: '/host/summary', params: { streamId } });
+      else router.replace('/create');
+    } catch (e) {
+      leaving.current = false;
+      Alert.alert('Could not end stream', friendlyError(e));
+      setEnding(false);
+    }
+  }
   const end = () =>
     Alert.alert('End your stream?', undefined, [
       { text: 'Keep streaming', style: 'cancel' },
-      {
-        text: 'End',
-        style: 'destructive',
-        onPress: async () => {
-          setEnding(true);
-          try {
-            await rpc(supabase, 'end_live');
-            track('live_ended', { room_id: roomId! });
-            const streamId = session.data?.room.current_stream_id;
-            if (streamId) router.replace({ pathname: '/host/summary', params: { streamId } });
-            else router.replace('/create');
-          } catch (e) {
-            Alert.alert('Could not end stream', friendlyError(e));
-            setEnding(false);
-          }
-        },
-      },
+      { text: 'End', style: 'destructive', onPress: () => void endNow() },
     ]);
 
   // Stable per token: inline callbacks would make LiveKit reconnect (and re-alert) on every
@@ -181,7 +199,7 @@ export default function HostLiveScreen() {
               <>
                 <PkBattleStage
                   mySide={mySide}
-                  myStage={<LiveStage token={session.data.token.token} url={session.data.token.url} role="host" onError={onStageError} onDisconnected={onStageDisconnected} />}
+                  myStage={<LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" onError={onStageError} onDisconnected={onStageDisconnected} />}
                   opponentRoom={opponentRoom!}
                   mySideLabel="You"
                   opponentSideLabel={displayName(opponentRoom!.host)}
@@ -189,7 +207,7 @@ export default function HostLiveScreen() {
                 <PkBattleBar battle={battle!} mySide={mySide} secondsLeft={secondsLeft} />
               </>
             ) : (
-              <LiveStage token={session.data.token.token} url={session.data.token.url} role="host" onError={onStageError} onDisconnected={onStageDisconnected} />
+              <LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" onError={onStageError} onDisconnected={onStageDisconnected} />
             )}
             <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12 }}>
               <Row>

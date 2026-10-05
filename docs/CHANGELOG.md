@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.8 — Fourth AI review pass
+
+- Owner verification has its own column (`profiles.owner_verified_at`, blue tick) instead of sharing `verified_at` with Didit (Host badge): a Didit result no longer undoes the owner's choice, and owner-verified non-hosts no longer show "Host". Pins need the owner tick; the pin limit counts only pins that show; deleting an account clears its tick and pin. Migration `20261005030000_owner_verified.sql` (copy-paste `docs/sql/apply_owner_verified.sql`).
+- Home's Verified row refreshes with Home (pull-to-refresh, live changes); owner buttons update at once.
+- Host live: Android Back asks before ending the live; End opens the summary once; Reconnect remounts the camera; opening your own room from another device opens the host screen instead of kicking your broadcast. The party host's X ends the party and opens the summary.
+- Party: no endless loading in busy rooms; a muted guest rejoins as a viewer instead of an error; muted users get "You're muted" wording when asking for a seat.
+- Sign-up: username length hint, Resend timer cleared, clearer offline/timeout messages; empty display names are backfilled.
+- Chat: a ref guard stops same-frame double sends and keeps text typed while sending.
+- Purple main buttons sharing a row (Follow, Verify ID) now take their full width; the PK opponent video no longer crashes the web build.
+
 ## 0.9.7 — Verified IDs pinned on Home
 
 - Home shows a **Verified** row of accounts the owner pinned, whether or not they're live (tap: live room if live, otherwise their profile).

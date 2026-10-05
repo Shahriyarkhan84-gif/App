@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 
 import { AuthShell, clerkErrorMessage, Field, FormError, PENDING_TASK_MESSAGE, useRedirectWhenSignedIn } from '@/components/AuthForm';
 import { StateView } from '@/components/StateView';
-import { Button } from '@/components/ui';
+import { Button, Text } from '@/components/ui';
+import { useTheme } from '@/lib/theme';
 
 type Step = 'details' | 'phone_code' | 'email_code';
 
@@ -15,6 +16,7 @@ type Step = 'details' | 'phone_code' | 'email_code';
  * the phone or email by code if needed, then activates the session.
  */
 export default function CompleteSignUpScreen() {
+  const { c } = useTheme();
   const { signUp, setActive, isLoaded } = useSignUp();
   const clerk = useClerk();
   useRedirectWhenSignedIn();
@@ -116,6 +118,9 @@ export default function CompleteSignUpScreen() {
       {needs.firstName && <Field label="First name" value={values.firstName} onChangeText={set('firstName')} autoCapitalize="words" autoComplete="given-name" />}
       {needs.lastName && <Field label="Last name" value={values.lastName} onChangeText={set('lastName')} autoCapitalize="words" autoComplete="family-name" />}
       {needs.username && <Field label="Username" value={values.username} onChangeText={set('username')} autoComplete="username" placeholder="8–20 characters" />}
+      {needs.username && values.username.trim().length > 0 && !usernameOk && (
+        <Text variant="caption" color={c.danger}>Usernames are 8–20 characters ({values.username.trim().length} now).</Text>
+      )}
       {needs.phoneNumber && (
         <Field label="Phone number" value={values.phoneNumber} onChangeText={set('phoneNumber')} keyboardType="phone-pad" autoComplete="tel" placeholder="+92 300 1234567" />
       )}

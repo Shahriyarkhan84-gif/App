@@ -56,6 +56,15 @@ export function Stage({ role }: { role: LiveStageProps['role'] }) {
   return <VideoTrack trackRef={trackRef} style={StyleSheet.absoluteFill} objectFit="cover" mirror={role === 'host'} />;
 }
 
+/** A muted, view-only connection to another room (the PK opponent's half of the split). */
+export function OpponentStage({ token, url }: { token: string; url: string }) {
+  return (
+    <LiveKitRoom serverUrl={url} token={token} connect audio={false} video={false}>
+      <Stage role="viewer" />
+    </LiveKitRoom>
+  );
+}
+
 const styles = StyleSheet.create({
   waiting: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: '#000' },
 });

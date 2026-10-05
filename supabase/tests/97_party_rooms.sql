@@ -127,7 +127,7 @@ select tests.ok(not exists (select 1 from public.room_seats where user_id = 'pt_
 insert into public.seat_requests (room_id, user_id) select id, 'pt_g3' from party;
 select set_config('request.jwt.claims', '{"sub":"pt_host"}', false);
 set role authenticated;
-select tests.fails($$select public.approve_seat((select id from party), 'pt_g3')$$, '%banned_from_room%', 'muted user cannot be seated');
+select tests.fails($$select public.approve_seat((select id from party), 'pt_g3')$$, '%muted_in_room%', 'muted user cannot be seated');
 reset role;
 
 -- A restricted room admin can't moderate.

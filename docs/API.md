@@ -21,7 +21,7 @@ All return `{ error: { code, message } }` on failure. User-facing functions requ
 
 | Area | RPCs |
 |---|---|
-| Profile | `ensure_profile(p_display_name?, p_region?)`, `become_host`; owner only: `set_profile_verified(p_user, p_verified)` (verified badge; removing it also unpins), `set_profile_pinned(p_user, p_pinned, p_position?)` (verified accounts only, max 20 → `not_verified` / `pin_limit`) |
+| Profile | `ensure_profile(p_display_name?, p_region?)`, `become_host`; owner only: `set_profile_verified(p_user, p_verified)` (owner's blue tick `owner_verified_at`, separate from the Didit Host badge; removing it also unpins), `set_profile_pinned(p_user, p_pinned, p_position?)` (owner-verified accounts only, max 20 shown → `not_verified` / `pin_limit`; order is `p_position`, then pin time) |
 | Live | `set_room_cover(p_path)` (file in `covers/<user id>/`), `go_live(p_title, p_category)` (needs a cover → else `cover_required`), `end_live()` |
 | Media | `create_media_upload(p_title, p_extension, p_description?, p_visibility?)` → asset with fixed `source_path` (upload the file to `uploads/<source_path>`), `submit_media_upload(p_asset_id)`, `update_media(p_asset_id, p_title, p_description, p_visibility)`, `remove_media(p_asset_id, p_reason?)` (owner, or admin takedown), `get_media(p_asset_id)` (also unlisted), `record_media_view(p_asset_id)`. Playback: `<media.media_base>/<playback_path>` (HLS master, VIDEO-RANGE tagged, subtitle tracks). |
 | Regions & events | `my_region()`, `event_leaderboard(p_event_id, p_role: host/gifter, p_limit?)`; admins: `upsert_event(p_id?, p_title, p_description, p_kind: gifting/pk_battle, p_region?, p_starts_at, p_ends_at, p_gift_ids?, p_rewards, p_publish)`, `cancel_event(p_id)`, `finalize_event(p_id)` |

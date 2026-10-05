@@ -6,6 +6,8 @@ export type Profile = {
   user_number: number;
   /** Set by the database when the user passes host verification (Host badge). */
   verified_at: string | null;
+  /** Owner's blue tick (separate from the Didit Host badge). */
+  owner_verified_at?: string | null;
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
@@ -29,7 +31,7 @@ export type Room = {
   viewer_count: number;
   current_stream_id: string | null;
   current_battle_id: string | null;
-  host?: Pick<Profile, 'id' | 'display_name' | 'username' | 'avatar_url' | 'country' | 'verified_at' | 'role'> | null;
+  host?: Pick<Profile, 'id' | 'display_name' | 'username' | 'avatar_url' | 'country' | 'verified_at' | 'owner_verified_at' | 'role'> | null;
 };
 
 export type PkBattle = {

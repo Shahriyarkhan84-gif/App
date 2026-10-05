@@ -137,7 +137,7 @@ export default function HomeScreen() {
             me={{ avatar_url: profile?.avatar_url, name: displayName(profile) }}
             rooms={data ? data.live.filter((r) => data.followed.has(r.host_id)) : []}
           />
-          <PinnedProfiles />
+          <PinnedProfiles refreshKey={data} />
           {feed === 'popular' && category === 'all' && rooms[0] && (
             <FadeIn>
               <FeaturedHost key={`${rooms[0].host_id}-${data!.followed.has(rooms[0].host_id)}`} room={rooms[0]} following={data!.followed.has(rooms[0].host_id)} />

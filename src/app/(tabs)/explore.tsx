@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, type Href } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 
+import { useTabBarSpace } from '@/components/Menus';
 import { Pop, PressScale } from '@/components/Motion';
 import { Row, Screen, Text, type IconName } from '@/components/ui';
 import { useI18n } from '@/lib/i18n';
@@ -29,6 +30,7 @@ const YOU: Shortcut[] = [
 
 /** Discovery hub: one place for every destination that isn't a main tab. */
 export default function ExploreScreen() {
+  const tabSpace = useTabBarSpace();
   const { c, hPadding, radius } = useTheme();
   const { t } = useI18n();
   let i = 0;
@@ -56,7 +58,7 @@ export default function ExploreScreen() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: hPadding, paddingTop: 8, paddingBottom: 120, gap: 16, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: hPadding, paddingTop: 8, paddingBottom: tabSpace + 24, gap: 16, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
         <View style={{ gap: 2 }}>
           <Text variant="h1">{t('explore.title')}</Text>
           <Text muted>{t('explore.subtitle')}</Text>

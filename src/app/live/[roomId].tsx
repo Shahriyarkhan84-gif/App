@@ -45,8 +45,14 @@ export default function LiveRoomScreen() {
     return { room: r, isRoomAdmin: !!admin.data, follows: !!follow.data };
   }, [roomId, userId]);
 
+  // Your own room opens the host screen: a viewer connection with your identity would kick your broadcast.
+  const ownRoom = !!room.data && room.data.room.host_id === userId;
+  useEffect(() => {
+    if (ownRoom) router.replace('/host/live');
+  }, [ownRoom]);
+
   const token = useAsync(async () => {
-    if (room.data?.room.status !== 'live') return null;
+    if (room.data?.room.status !== 'live' || room.data.room.host_id === userId) return null;
     return getLiveKitToken(supabase, roomId, 'viewer');
   }, [roomId, room.data?.room.status]);
 

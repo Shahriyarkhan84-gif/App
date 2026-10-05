@@ -1,4 +1,3 @@
-import { LiveKitRoom } from '@livekit/react-native';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { useEffect, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
@@ -10,7 +9,7 @@ import { useSupabase } from '@/lib/supabase';
 import { liveColors as c } from '@/lib/theme';
 import { displayName, normalizeRoom, ROOM_SELECT, type PkBattle, type Room } from '@/lib/types';
 
-import { Stage } from './LiveStage';
+import { OpponentStage } from './LiveStage';
 import { Avatar, Row, Text } from './ui';
 
 /** Height of the split-video block, matching the design canvas's ~44% of screen. */
@@ -74,9 +73,7 @@ function OpponentPane({ opponentRoom }: { opponentRoom: Room }) {
     );
   }
   return (
-    <LiveKitRoom serverUrl={token.data.url} token={token.data.token} connect audio={false} video={false}>
-      <Stage role="viewer" />
-    </LiveKitRoom>
+    <OpponentStage url={token.data.url} token={token.data.token} />
   );
 }
 

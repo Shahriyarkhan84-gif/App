@@ -107,7 +107,10 @@ export function Button({ title, variant = 'primary', size = 'md', loading, icon,
   // overflow:hidden (needed to clip the gradient to the pill shape) would
   // otherwise clip the shadow too on iOS.
   if (variant !== 'primary' || disabled) return button;
-  return <View style={{ shadowColor: c.glow, shadowOpacity: 1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 8, borderRadius: radius.pill }}>{button}</View>;
+  // The glow wrapper must take the button's own sizing (flex/width), or a flex:1 button in a row shrinks.
+  const flat = StyleSheet.flatten(style) ?? {};
+  const outer: ViewStyle = { flex: flat.flex, flexGrow: flat.flexGrow, flexShrink: flat.flexShrink, flexBasis: flat.flexBasis, width: flat.width, alignSelf: flat.alignSelf, minWidth: flat.minWidth };
+  return <View style={[outer, { shadowColor: c.glow, shadowOpacity: 1, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 8, borderRadius: radius.pill }]}>{button}</View>;
 }
 
 /** Round 44pt icon-only button (header actions). */
@@ -280,12 +283,15 @@ export function AgencyOwnerBadge({ small }: { small?: boolean }) {
 }
 
 /** Host and/or Agency owner tags for a profile; renders nothing when neither applies. */
-export function RoleBadges({ profile, small }: { profile?: { verified_at?: string | null; role?: string | null } | null; small?: boolean }) {
+export function RoleBadges({ profile, small }: { profile?: { verified_at?: string | null; owner_verified_at?: string | null; role?: string | null } | null; small?: boolean }) {
+  const { c } = useTheme();
   const host = !!profile?.verified_at;
+  const ticked = !!profile?.owner_verified_at;
   const owner = profile?.role === 'AGENCY_ADMIN';
-  if (!host && !owner) return null;
+  if (!host && !owner && !ticked) return null;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+      {ticked && <Ionicons name="checkmark-circle" size={small ? 14 : 18} color={c.primary} accessibilityLabel="Verified account" />}
       {host && <HostBadge small={small} />}
       {owner && <AgencyOwnerBadge small={small} />}
     </View>

@@ -1,6 +1,6 @@
 import { useSignUp } from '@clerk/clerk-expo';
 import { Link, router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { AuthShell, clerkErrorMessage, Field, FormError, SocialButtons, useRedirectWhenSignedIn } from '@/components/AuthForm';
 import { Button, Text } from '@/components/ui';
@@ -55,11 +55,14 @@ export default function SignUpScreen() {
     });
 
   const [resent, setResent] = useState(false);
+  const resendTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(resendTimer.current), []);
   const onResend = () =>
     run(async () => {
       await signUp!.prepareEmailAddressVerification({ strategy: 'email_code' });
       setResent(true);
-      setTimeout(() => setResent(false), 30000);
+      clearTimeout(resendTimer.current);
+      resendTimer.current = setTimeout(() => setResent(false), 30000);
     });
 
   if (awaitingCode) {
@@ -70,7 +73,7 @@ export default function SignUpScreen() {
         <Button title="Verify & continue" loading={loading} disabled={code.length < 6} onPress={onVerify} />
         {/* A slow or spam-filtered email must not strand the user on this screen. */}
         <Button title={resent ? 'Code sent again' : 'Resend code'} variant="ghost" disabled={loading || resent} onPress={onResend} />
-        <Button title="Change email" variant="ghost" disabled={loading} onPress={() => { setAwaitingCode(false); setCode(''); setError(null); }} />
+        <Button title="Change email" variant="ghost" disabled={loading} onPress={() => { setAwaitingCode(false); setCode(''); setError(null); setResent(false); clearTimeout(resendTimer.current); }} />
       </AuthShell>
     );
   }

@@ -489,7 +489,8 @@ select tests.fails($$select public.set_profile_pinned('frank', true)$$, '%not_ve
 select public.set_profile_verified('frank', true);
 select public.set_profile_pinned('frank', true, 1);
 reset role;
-select tests.ok((select verified_at is not null from public.profiles where id = 'frank'), 'owner verified the account');
+select tests.ok((select owner_verified_at is not null from public.profiles where id = 'frank'), 'owner verified the account');
+select tests.ok((select verified_at is null from public.profiles where id = 'frank'), 'owner tick is not the Host (Didit) badge');
 select tests.ok(exists (select 1 from public.pinned_profiles where user_id = 'frank'), 'frank is pinned');
 select tests.ok(has_column_privilege('anon', 'public.pinned_profiles', 'user_id', 'select'), 'pins are public');
 select set_config('request.jwt.claims', '{"sub":"owner"}', false);

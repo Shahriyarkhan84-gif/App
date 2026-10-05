@@ -32,6 +32,8 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
   - Avatars: clients can set any `avatar_url`; move to a `set_avatar(path)` RPC like covers.
   - DMs: no AI moderation, no block/report in the chat header, no cap on messages to strangers.
   - Chat polls every 15 s and party reloads 6 queries per seat change: move to realtime payloads before large rooms.
+  - A late LiveKit `room_finished` for the previous live can end a new live started within LiveKit's empty-room window (fixed room names): compare `event.room.creationTime` with the stream start in `internal_end_stream_by_livekit_room`.
+  - A seat whose guest vanishes within the 20 s reconnect grace stays taken until the host removes it: needs a sweep (pg_cron).
   - Sign-in with a second factor or Clerk's new-device check shows "use the web app"; needs an in-app code step.
 - Design canvas screens not built yet: likes, agency web dashboard. Voice/video party rooms and the host dashboard are built; `livekit-token` and `livekit-webhook` are deployed to the hosted project (2026-10-05); going live needs the `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` and `CLERK_ISSUER` Edge Function secrets and the LiveKit Cloud webhook pointed at `/functions/v1/livekit-webhook`. Other functions (checkout, Stripe/Clerk/Didit webhooks, delete-account, host-application) are not deployed yet.
 
