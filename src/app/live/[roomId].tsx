@@ -3,7 +3,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, Share, View } from 'react-native';
+import { Pressable, Share, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChatPanel } from '@/components/ChatPanel';
@@ -12,6 +12,7 @@ import { LiveStage } from '@/components/LiveStage';
 import { PkBattleBar, PkBattleStage, usePkBattleState } from '@/components/PkBattle';
 import { StateView, type ViewState } from '@/components/StateView';
 import { Avatar, LiveBadge, RoleBadges, Row, Text, ViewerCount } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { getLiveKitToken, rpc } from '@/lib/api';
 import { errorCode, friendlyError } from '@/lib/errors';
@@ -51,10 +52,25 @@ export default function LiveRoomScreen() {
     if (ownRoom) router.replace('/host/live');
   }, [ownRoom]);
 
+  // Status from realtime wins over the first fetch, so a host going live again reconnects viewers.
+  const liveStatus = live.status ?? room.data?.room.status;
   const token = useAsync(async () => {
-    if (room.data?.room.status !== 'live' || room.data.room.host_id === userId) return null;
+    if (liveStatus !== 'live' || !room.data || room.data.room.host_id === userId) return null;
     return getLiveKitToken(supabase, roomId, 'viewer');
-  }, [roomId, room.data?.room.status]);
+  }, [roomId, liveStatus, !!room.data]);
+  // The token says the room isn't live (we missed the end event): refresh the room → "ended" screen.
+  const tokenCode = token.error ? errorCode(token.error) : null;
+  const reloadRoom = room.reload;
+  useEffect(() => {
+    if (tokenCode === 'room_not_live') reloadRoom();
+  }, [tokenCode, reloadRoom]);
+  // Removed or blocked by the host while watching: show it and drop the connection.
+  const [removed, setRemoved] = useState(false);
+  useRealtime('room_bans', userId ? `user_id=eq.${userId}` : undefined, (p) => {
+    const b = p.new as { room_id?: string; kind?: string; expires_at?: string | null };
+    if (b.room_id === roomId && (b.kind === 'kick' || b.kind === 'block') && (!b.expires_at || new Date(b.expires_at) > new Date())) setRemoved(true);
+  }, !!userId);
+  const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
   // Stable per token: inline callbacks would make LiveKit reconnect on every re-render (each
   // viewer-count update). A failed or dropped connection shows a Reconnect state instead.
@@ -62,7 +78,7 @@ export default function LiveRoomScreen() {
   const stageToken = token.data?.token ?? null;
   const onStageDisconnected = useCallback(() => setDropped(stageToken), [stageToken]);
   const onStageError = useCallback(() => setDropped(stageToken), [stageToken]);
-  const reconnect = () => { setDropped(null); token.reload(); };
+  const reconnect = () => { setDropped(null); room.reload(); token.reload(); };
 
   useEffect(() => {
     if (token.data) track('room_joined', { room_id: roomId });
@@ -114,6 +130,7 @@ export default function LiveRoomScreen() {
 
   let state: ViewState = { kind: 'success' };
   if (!r) state = offline ? { kind: 'offline', onRetry: room.reload } : room.error ? { kind: 'error', error: room.error, onRetry: room.reload } : { kind: 'loading' };
+  else if (removed) state = { kind: 'disabled', title: "You can't join this room", body: 'The host removed you from this live.' };
   else if (r.status !== 'live') state = { kind: 'empty', title: 'This stream has ended', body: `Follow ${displayName(r.host)} to know when they're live next.`, action: { title: 'View profile', onPress: () => router.replace({ pathname: '/user/[id]', params: { id: r.host_id } }) } };
   else if (token.error) state = errorCode(token.error) === 'banned_from_room' || errorCode(token.error) === 'account_restricted'
     ? { kind: 'disabled', title: "You can't join this room", body: friendlyError(token.error) }
@@ -167,7 +184,7 @@ export default function LiveRoomScreen() {
                 </Row>
                 <View style={{ flex: 1 }} />
                 <ViewerCount count={r.viewer_count ?? 0} />
-                <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Leave live room" style={roundButton('rgba(0,0,0,0.45)')}>
+                <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="Leave live room" style={roundButton('rgba(0,0,0,0.45)')}>
                   <Ionicons name="close" size={22} color={c.text} />
                 </Pressable>
               </Row>

@@ -2,10 +2,11 @@ import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
+import { FlatList, KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
 import { Avatar, Button, Input, Row, Screen, Text } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useAsync, useOffline, useRealtime } from '@/lib/hooks';

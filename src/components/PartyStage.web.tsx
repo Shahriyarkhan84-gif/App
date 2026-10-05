@@ -1,5 +1,5 @@
-import { isTrackReference, LiveKitRoom, RoomAudioRenderer, useLocalParticipant, useParticipants, useTracks, VideoTrack } from '@livekit/components-react';
-import { Track, VideoPresets } from 'livekit-client';
+import { isTrackReference, LiveKitRoom, RoomAudioRenderer, useLocalParticipant, useParticipants, useConnectionState, useTracks, VideoTrack } from '@livekit/components-react';
+import { ConnectionState, Track, VideoPresets } from 'livekit-client';
 import { useEffect } from 'react';
 
 import { PartySeats } from './PartySeats';
@@ -12,7 +12,8 @@ export function PartyStage({ token, url, mode, seats, publishing, micOn, onSeatP
       serverUrl={url}
       token={token}
       connect
-      audio={publishing}
+      // Join muted if the mic is off: connecting must never switch a muted mic on.
+      audio={publishing && micOn}
       video={publishing && mode === 'video' ? { resolution: VideoPresets.h540.resolution } : false}
       options={{ adaptiveStream: true, dynacast: true }}
       onDisconnected={onDisconnected}
@@ -29,9 +30,11 @@ function Seats({ mode, seats, publishing, micOn, onSeatPress }: Pick<PartyStageP
   const tracks = useTracks([Track.Source.Camera]);
   const { localParticipant } = useLocalParticipant();
 
+  // Re-apply once connected too (a reconnect or remount must keep a muted mic muted).
+  const connection = useConnectionState();
   useEffect(() => {
-    if (publishing) void localParticipant.setMicrophoneEnabled(micOn);
-  }, [publishing, micOn, localParticipant]);
+    if (publishing && connection === ConnectionState.Connected) void localParticipant.setMicrophoneEnabled(micOn);
+  }, [publishing, micOn, localParticipant, connection]);
 
   const speaking = new Set(participants.filter((p) => p.isSpeaking).map((p) => p.identity));
   return (

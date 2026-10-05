@@ -68,7 +68,10 @@ export class StripeWebhookController {
       case 'charge.dispute.closed': {
         const dispute = event.data.object as Stripe.Dispute;
         const intent = typeof dispute.payment_intent === 'string' ? dispute.payment_intent : dispute.payment_intent?.id;
-        if (intent) await this.payments.disputePayment(intent, dispute.status === 'won' ? 'won' : 'lost');
+        // Only an exact 'lost' takes coins back; inquiries closed in our favour release like a win.
+        const stage = dispute.status === 'lost' ? 'lost'
+          : ['won', 'warning_closed', 'prevented'].includes(dispute.status) ? 'won' : null;
+        if (intent && stage) await this.payments.disputePayment(intent, stage);
         break;
       }
       default:

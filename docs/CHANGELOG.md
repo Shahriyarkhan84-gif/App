@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.9.9 — 50-user run (every corner)
+
+50 simulated users (viewers, hosts, party guests, agencies, owners, abusers) walked every screen. Fixes:
+
+Server (migration `20261005040000_round5_fixes.sql`, copy-paste `docs/sql/apply_round5_fixes.sql`):
+- Host auto-approval is **off by default**: a fully Didit-approved application waits for the owner (`in_review`, reason `liveness_not_checked`) unless `host_verification.auto_approve` is `true`.
+- Blocks: `block_user` / `unblock_user` RPCs; blocking removes follows both ways; DMs and new follows are refused across a block either way; deleted accounts can't be followed.
+- Banning an account clears its blue tick and Home pin; deleting an account frees its party seats; rankings skip deleted and banned accounts.
+- Withdrawals: `my_withdrawable_coins()` (balance minus gifts still in the hold window); an approved withdrawal whose payout failed can be rejected (coins return); hosts are notified when paid.
+- Payments: a dispute closed in our favour (`won`, `warning_closed`, `prevented`) unfreezes the wallet when no other dispute is open; refunds only for paid payments.
+- PK battles: both rooms locked in order and must be solo lives; late accepts and late gifts after the timer don't count.
+- Realtime now carries `room_bans` (a removed viewer leaves at once) and `streams`; uploads stuck "awaiting upload" for over a day expire.
+- `livekit-token` (deployed v10): restricted accounts can watch but not publish.
+
+App:
+- Party: the mic starts only once connected and only when not muted; Decline/Approve can't double-fire; a failed mute save puts the mic back.
+- Watching: the room status drives the token; a host removal shows "The host removed you" instead of a frozen video; Close always has somewhere to go.
+- Home: Following uses followed hosts' live rooms, Newest is by start time, Nearby joins popular and newest in your country, rooms open by mode (party vs live).
+- Me: errors show instead of zeros; "Diamonds earned" is lifetime; the badge says pending/declined/not verified; suspended hosts keep Withdraw.
+- Wallet: a cancelled checkout no longer shows "waiting for payment"; web shows the Stripe result. Earnings shows what can be withdrawn now and checks the amount before sending.
+- Notifications open the right screen (videos, events, verification). Blocking from a profile uses the server RPC; follower counts move with the Follow button.
+- Owner tools: confirmations before bans, approving AI proposals and withdrawals; proposals show names; saving the withdrawal rate keeps `hold_days`.
+- Sign-in/up/reset handle Clerk session tasks; local phone numbers (0300…) become +92; Resend on the finish-sign-up code screen; Urdu/RTL applies from launch.
+- Web: confirmations work in the browser (`src/lib/alert.web.ts`). Settings opens as a screen; sign-out returns to start. Light-theme faint text has more contrast.
+
 ## 0.9.8 — Fourth AI review pass
 
 - Owner verification has its own column (`profiles.owner_verified_at`, blue tick) instead of sharing `verified_at` with Didit (Host badge): a Didit result no longer undoes the owner's choice, and owner-verified non-hosts no longer show "Host". Pins need the owner tick; the pin limit counts only pins that show; deleting an account clears its tick and pin. Migration `20261005030000_owner_verified.sql` (copy-paste `docs/sql/apply_owner_verified.sql`).

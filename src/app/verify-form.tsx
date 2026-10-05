@@ -4,10 +4,11 @@ import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 
 import { FadeIn, Pop } from '@/components/Motion';
 import { Button, Card, HostBadge, Row, Screen, Text } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { submitHostApplication, type HostApplicationResult } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';

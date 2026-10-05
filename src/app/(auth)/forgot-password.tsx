@@ -1,12 +1,13 @@
-import { useSignIn } from '@clerk/clerk-expo';
+import { useClerk, useSignIn } from '@clerk/clerk-expo';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
-import { AuthShell, clerkErrorMessage, Field, FormError, useRedirectWhenSignedIn } from '@/components/AuthForm';
+import { AuthShell, clerkErrorMessage, Field, FormError, PENDING_TASK_MESSAGE, useRedirectWhenSignedIn } from '@/components/AuthForm';
 import { Button } from '@/components/ui';
 
 export default function ForgotPasswordScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
+  const clerk = useClerk();
   useRedirectWhenSignedIn();
   const params = useLocalSearchParams<{ email?: string }>();
   const [email, setEmail] = useState(params.email ?? '');
@@ -40,6 +41,7 @@ export default function ForgotPasswordScreen() {
       const attempt = await signIn!.attemptFirstFactor({ strategy: 'reset_password_email_code', code: code.trim(), password });
       if (attempt.status === 'complete') {
         await setActive!({ session: attempt.createdSessionId });
+        if (clerk.session?.currentTask) return setError(PENDING_TASK_MESSAGE);
         router.replace('/');
       } else {
         // needs_second_factor: sign-in.tsx doesn't support 2FA on mobile either.

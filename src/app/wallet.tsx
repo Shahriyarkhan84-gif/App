@@ -1,12 +1,14 @@
 import { useAuth } from '@clerk/clerk-expo';
 import * as Linking from 'expo-linking';
+import { useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Platform, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Platform, ScrollView, View } from 'react-native';
 
 import { Pop, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Button, Coin, Row, Screen, Segmented, Text } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { startCoinCheckout } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -37,6 +39,8 @@ export default function WalletScreen() {
   const [selected, setSelected] = useState<number | null>(null);
   // After checkout the coins arrive from the payment webhook; show that we're waiting rather than an unchanged balance.
   const [awaiting, setAwaiting] = useState<number | null>(null);
+  // Set when Stripe sends the web app back here (?status=success|cancelled).
+  const { status: returnStatus } = useLocalSearchParams<{ status?: string }>();
   const [tab, setTab] = useState<(typeof HISTORY_TABS)[number]['id']>('all');
 
   const { data, error, loading, reload } = useFocusedAsync(async () => {
@@ -48,6 +52,7 @@ export default function WalletScreen() {
     if (packages.error) throw packages.error;
     // A failed balance load must show an error, not a 0 balance.
     if (wallet.error) throw wallet.error;
+    if (txs.error) throw txs.error;
     return { wallet: wallet.data ?? { coin_balance: 0, frozen: false }, packages: packages.data as CoinPackage[], txs: (txs.data ?? []) as Tx[] };
   }, [userId]);
   // Coins are credited by the Stripe webhook; the balance updates live.
@@ -62,7 +67,7 @@ export default function WalletScreen() {
       if (Platform.OS === 'web') window.location.assign(url);
       else {
         const result = await WebBrowser.openAuthSessionAsync(url, returnTo);
-        if (result.type === 'success' && !result.url.includes('cancel')) setAwaiting(data?.wallet.coin_balance ?? 0);
+        if (result.type === 'success' && result.url.includes('status=success')) setAwaiting(data?.wallet.coin_balance ?? 0);
       }
       reload();
     } catch (e) {
@@ -123,6 +128,10 @@ export default function WalletScreen() {
                   </View>
                 </Row>
               )}
+              {awaiting === null && returnStatus === 'success' && (
+                <Text variant="label" accessibilityRole="alert">Payment received — your coins appear here as soon as it&apos;s confirmed. Don&apos;t pay again.</Text>
+              )}
+              {returnStatus === 'cancelled' && <Text variant="caption" muted accessibilityRole="alert">Checkout cancelled — you weren&apos;t charged.</Text>}
               {awaiting !== null && data.wallet.coin_balance > awaiting && (
                 <Text variant="label" color={c.success} accessibilityRole="alert">Payment confirmed — coins added.</Text>
               )}

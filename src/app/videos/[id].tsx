@@ -2,11 +2,12 @@ import { useEvent, useEventListener } from 'expo';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useVideoPlayer, VideoView, type SubtitleTrack, type VideoPlayer } from 'expo-video';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, ScrollView, Share, View } from 'react-native';
+import { ScrollView, Share, View } from 'react-native';
 
 import { OverflowMenu, type MenuItem } from '@/components/Menus';
 import { resolveState, StateView, type ViewState } from '@/components/StateView';
 import { Avatar, Chip, compactNumber, Row, Screen, Text } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { rpc } from '@/lib/api';
 import { env } from '@/lib/env';
 import { friendlyError } from '@/lib/errors';
@@ -79,6 +80,7 @@ export default function VideoScreen() {
   const asset = data?.asset;
   let state: ViewState = resolveState({ offline, loading, error, data, onRetry: reload });
   if (state.kind === 'success' && (!asset || asset.status === 'removed')) state = { kind: 'empty', title: t('videos.unavailable') };
+  else if (state.kind === 'success' && asset?.status === 'failed') state = { kind: 'error', error: new Error('This video could not be processed. Upload it again from Your videos.') };
   else if (state.kind === 'success' && asset && asset.status !== 'ready') state = { kind: 'disabled', title: t('videos.processing'), body: t('videos.processing.body') };
   else if (state.kind === 'success' && !data?.base) state = { kind: 'disabled', title: 'Playback not configured', body: 'Video playback is not set up yet.' };
 

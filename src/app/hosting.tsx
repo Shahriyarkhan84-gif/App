@@ -33,23 +33,26 @@ const TIPS = [
 export default function HostingScreen() {
   const { c } = useTheme();
   const offline = useOffline();
-  const { profile, host, isHost, reload } = useProfile();
+  const { profile, host, error, reload } = useProfile();
 
   // Didit results arrive as a notification; refresh when one lands.
   useRealtime('notifications', profile ? `user_id=eq.${profile.id}` : undefined, (p) => {
     if ((p.new as { type?: string }).type === 'verification') void reload();
   }, !!profile);
 
-  if (!profile) return <Screen edges={[]}><StateView state={offline ? { kind: 'offline', onRetry: reload } : { kind: 'loading' }} /></Screen>;
+  if (!profile) return <Screen edges={[]}><StateView state={offline ? { kind: 'offline', onRetry: reload } : error ? { kind: 'error', error, onRetry: reload } : { kind: 'loading' }} /></Screen>;
 
   const status = host?.verification_status ?? 'unverified';
   const approved = status === 'approved';
 
   const openDidit = () => router.push('/verify-form');
-  const cta = !isHost
+  // Suspended hosts keep their approval: they get the status, not another Didit check.
+  const cta = !host
     ? { title: 'Continue verification', onPress: openDidit, loading: false }
     : approved
-      ? { title: 'Go live', onPress: () => router.push('/create'), loading: false }
+      ? host.status === 'active'
+        ? { title: 'Go live', onPress: () => router.push('/create'), loading: false }
+        : { title: 'Contact support', onPress: () => router.push('/support'), loading: false }
       : status === 'in_review'
         ? { title: 'Refresh status', onPress: () => void reload(), loading: false }
         : { title: status === 'declined' ? 'Try again with Didit' : 'Continue verification', onPress: openDidit, loading: false };

@@ -163,6 +163,11 @@ function Notifications() {
     if (n.type.startsWith('pk_battle_')) router.push('/host/live');
     else if (n.data?.room_id) router.push({ pathname: '/live/[roomId]', params: { roomId: n.data.room_id } });
     else if (n.type === 'withdrawal') router.push('/earnings');
+    else if (n.type === 'media_removed') router.push('/videos/upload');
+    else if (n.type === 'media_ready' && n.data?.asset_id) router.push({ pathname: '/videos/[id]', params: { id: n.data.asset_id } });
+    else if (n.type === 'media_failed') router.push('/videos/upload');
+    else if (n.data?.event_id) router.push({ pathname: '/events/[id]', params: { id: String(n.data.event_id) } });
+    else if (n.type === 'verification') router.push('/hosting');
     else if (n.type === 'coins_credited' || n.type === 'refund') router.push('/wallet');
     else if (n.type === 'support') router.push('/support');
     else if (n.type === 'ceo_briefing' || n.type === 'ai_proposal') router.push('/admin');

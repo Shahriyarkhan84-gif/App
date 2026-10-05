@@ -153,7 +153,7 @@ export function SocialButtons({ onError, divider = true }: { onError: (message: 
       } else if (signUp?.status === 'missing_requirements') {
         // New account, but the Clerk instance requires fields Google/Apple don't
         // provide (username, phone, password…): collect them in the app.
-        router.push('/complete-sign-up');
+        router.replace('/complete-sign-up');
       } else if (authSessionResult?.type === 'cancel' || authSessionResult?.type === 'dismiss') {
         // User closed the browser sheet before finishing — not an error, just stop quietly.
       } else {

@@ -72,7 +72,7 @@ export default function AgencyPortalScreen() {
                 </View>
                 <Text variant="bodySmall" color={c.goldText}>New hosts enter this code in “Verify with Didit”. Once they pass, they join your agency automatically. This code is yours for good — it never changes.</Text>
                 <Row gap={8}>
-                  <Button title="Share code" icon={<Ionicons name="share-social-outline" size={16} color={c.onGold} />} variant="gold" size="sm" onPress={() => void shareCode(data)} />
+                  {data.agency.status === 'active' && <Button title="Share code" icon={<Ionicons name="share-social-outline" size={16} color={c.onGold} />} variant="gold" size="sm" onPress={() => void shareCode(data)} />}
                 </Row>
               </Card>
             </FadeIn>

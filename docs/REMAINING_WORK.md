@@ -25,6 +25,9 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 
 - **Testing switch — must revert before real hosts join:** on the hosted project `host_verification.required_to_go_live` is `false` (set 2026-10-05 so the owner can test going live before Didit is deployed). Restore with `update public.platform_settings set value = jsonb_set(value, '{required_to_go_live}', 'true') where key = 'host_verification';`. Withdrawals still require verification.
 - Hosted project settings set by hand: `media.covers_base` = `https://mdfjbhzriuwxafeagnwo.supabase.co/storage/v1/object/public/covers` (2026-10-05). Each new environment needs its own value (see `docs/ENVIRONMENT.md`), or `set_room_cover` raises `not_configured`.
+- Hosted project settings set by hand: `media.media_base` (2026-10-05), alongside `covers_base`.
+- Host auto-approval is now opt-in (`host_verification.auto_approve`, default off): every application waits for the owner in the command center until Didit liveness is wired in.
+- From the 50-user run, not fixed yet: removing a guest/viewer doesn't disconnect them from LiveKit until their token ends (needs `removeParticipant`); PK scores use LiveKit identity counts that can double-count reconnects; live-egress webhooks can create duplicate replays; message translation is not shown in DMs; no unread badges on tabs; no refund UI in the command center; host-live diamonds start at 0 after an app restart; DM screen keyboard overlap on some Android phones; Follow buttons in lists are below 44 px.
 - From the third AI review, not fixed yet:
   - A guest removed from a seat keeps publish rights until they reconnect (tokens last 2 h): needs a LiveKit room-service call (`updateParticipant`/`removeParticipant`) from an edge function on remove/kick/end.
   - A room stays `live` if the host's app dies before LiveKit connects (no LiveKit room → no `room_finished`): needs a pg_cron sweep. The host can now always end it from Go live → End live.

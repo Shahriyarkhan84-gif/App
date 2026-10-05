@@ -13,15 +13,18 @@ const APP_URL_PREFIXES = ['zynalive://', 'exp://', 'exps://'];
  * back to it, which closes the in-app browser. Otherwise go to `fallback`.
  */
 export function ReturnBounce({ fallback }: { fallback: Href }) {
-  const { to } = useLocalSearchParams<{ to?: string }>();
+  const { to, status } = useLocalSearchParams<{ to?: string; status?: string }>();
 
   useEffect(() => {
+    // Pass the outcome (e.g. Stripe's status=success|cancelled) on, so the app can tell a purchase from a cancel.
+    const safeStatus = status && /^[a-z_]{1,20}$/.test(status) ? status : undefined;
     if (Platform.OS === 'web' && to && APP_URL_PREFIXES.some((p) => to.startsWith(p))) {
-      window.location.replace(to);
+      window.location.replace(safeStatus ? `${to}${to.includes('?') ? '&' : '?'}status=${safeStatus}` : to);
       return;
     }
-    router.replace(fallback);
-  }, [to, fallback]);
+    if (safeStatus && typeof fallback === 'string') router.replace(`${fallback}?status=${safeStatus}` as Href);
+    else router.replace(fallback);
+  }, [to, status, fallback]);
 
   return <StateView state={{ kind: 'loading' }} />;
 }

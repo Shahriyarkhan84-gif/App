@@ -2,14 +2,15 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, FlatList, Pressable, RefreshControl, TextInput, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, TextInput, View } from 'react-native';
 
 import { useTabBarSpace } from '@/components/Menus';
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Avatar, Button, compactNumber, RoleBadges, Row, Screen, Sheet, Text } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { rpc } from '@/lib/api';
-import { friendlyError } from '@/lib/errors';
+import { errorCode, friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
 import { fonts, useTheme } from '@/lib/theme';
@@ -26,7 +27,7 @@ export default function PartyScreen() {
   const { c, radius } = useTheme();
   const offline = useOffline();
   const [query, setQuery] = useState('');
-  const [people, setPeople] = useState<{ q: string; rows: Person[] } | null>(null);
+  const [people, setPeople] = useState<{ q: string; rows: Person[]; failed?: boolean } | null>(null);
   const [starting, setStarting] = useState(false);
   const [modes, setModes] = useState<Map<string, Mode>>(new Map());
 
@@ -50,7 +51,9 @@ export default function PartyScreen() {
       await rpc(supabase, 'set_room_mode', { p_mode: mode });
       router.push('/create');
     } catch (e) {
-      Alert.alert('Could not start a party', friendlyError(e));
+      // Not a host yet: Go live is where hosting starts; the party type is picked again after.
+      if (errorCode(e) === 'not_a_host') router.push('/create');
+      else Alert.alert('Could not start a party', friendlyError(e));
     }
   };
 
@@ -61,16 +64,23 @@ export default function PartyScreen() {
     let cancelled = false;
     const t = setTimeout(async () => {
       let rows: Person[] = [];
+      let failed = false;
       if (/^\d{8}$/.test(q)) {
-        const { data } = await supabase.from('profiles').select('id,user_number,display_name,username,avatar_url,country').eq('user_number', Number(q)).limit(1);
+        const { data, error } = await supabase.from('profiles').select('id,user_number,display_name,username,avatar_url,country')
+          .eq('user_number', Number(q)).is('deleted_at', null).limit(1);
+        if (error) failed = true;
         rows = (data ?? []) as Person[];
       } else {
-        const term = q.replace(/[%_,()@]/g, ' ').trim();
-        const { data } = await supabase.from('profiles').select('id,user_number,display_name,username,avatar_url,country')
-          .or(`username.ilike.%${term}%,display_name.ilike.%${term}%`).limit(10);
-        rows = (data ?? []) as Person[];
+        // Characters that would break the filter syntax are dropped; too short a term searches nothing.
+        const term = q.replace(/[%_,()@*.:"\\]/g, ' ').trim();
+        if (term.length >= 2) {
+          const { data, error } = await supabase.from('profiles').select('id,user_number,display_name,username,avatar_url,country')
+            .or(`username.ilike.%${term}%,display_name.ilike.%${term}%`).is('deleted_at', null).limit(10);
+          if (error) failed = true;
+          rows = (data ?? []) as Person[];
+        }
       }
-      if (!cancelled) setPeople({ q, rows });
+      if (!cancelled) setPeople({ q, rows, failed });
     }, 300);
     return () => {
       cancelled = true;
@@ -89,7 +99,7 @@ export default function PartyScreen() {
     offline, loading: rooms.loading, error: rooms.error, data: rooms.data, onRetry: rooms.reload,
     isEmpty: () => matchingRooms.length === 0 && matchingPeople.length === 0 && !(searching && people?.q !== q),
     empty: searching
-      ? { title: 'No matches', body: 'Try another name or an 8-digit ID.' }
+      ? (people?.failed ? { title: "Couldn't search right now", body: 'Check your connection and try again.' } : { title: 'No matches', body: 'Try another name or an 8-digit ID.' })
       : { title: 'No rooms are live', body: 'Start your own and invite your fans.' },
   });
 

@@ -3,7 +3,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, FlatList, Share, View } from 'react-native';
+import { FlatList, Share, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChatPanel } from '@/components/ChatPanel';
@@ -12,6 +12,7 @@ import { LiveStage } from '@/components/LiveStage';
 import { endBattleIfExpired, PkBattleBar, PkBattleStage, usePkBattleState } from '@/components/PkBattle';
 import { StateView, type ViewState } from '@/components/StateView';
 import { Avatar, Button, IconButton, LiveBadge, Row, Sheet, Text } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { getLiveKitToken, rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';

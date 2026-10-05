@@ -4,7 +4,7 @@ import { Link } from 'expo-router';
 import { View } from 'react-native';
 
 import { liveColors, useTheme } from '@/lib/theme';
-import { categoryLabel, displayName, type Room } from '@/lib/types';
+import { categoryLabel, displayName, type Room, roomHref } from '@/lib/types';
 
 import { PressScale } from './Motion';
 import { LiveBadge, RoleBadges, Text, ViewerCount } from './ui';
@@ -14,7 +14,7 @@ export function RoomCard({ room, width, reason, rank }: { room: Room; width: num
   const cover = room.cover_url ?? room.host?.avatar_url;
   const name = displayName(room.host);
   return (
-    <Link href={{ pathname: '/live/[roomId]', params: { roomId: room.id } }} asChild>
+    <Link href={roomHref(room)} asChild>
       <PressScale style={{ width }} scaleTo={0.97} accessibilityLabel={`Watch ${name} live: ${room.title}`}>
         <View style={{ width, height: Math.round(width * 1.33), borderRadius: radius[16], overflow: 'hidden', backgroundColor: liveColors.surfaceRaised }}>
           {cover ? <Image source={cover} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : (

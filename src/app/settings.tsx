@@ -1,9 +1,10 @@
 import { useClerk } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { Alert, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { Button, Chip, ListRow, Row, Screen, Text } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { LANGUAGES, useI18n, type Language } from '@/lib/i18n';
 import { useTheme } from '@/lib/theme';
 
@@ -35,7 +36,7 @@ export default function SettingsScreen() {
           <ListRow icon="lock-closed-outline" label={t('settings.privacy')} onPress={() => router.push('/privacy')} last />
         </View>
 
-        <Button title={t('settings.signOut')} variant="ghost" onPress={() => signOut()} />
+        <Button title={t('settings.signOut')} variant="ghost" onPress={async () => { await signOut(); router.replace('/'); }} />
         <Button title={t('settings.delete')} variant="ghost" onPress={() => router.push('/delete-account')} style={{ marginTop: -8 }} icon={<Ionicons name="trash-outline" size={16} color={c.danger} />} />
       </ScrollView>
     </Screen>

@@ -102,7 +102,7 @@ const light: typeof dark = {
   tabBar: '#FFFFFF',
   text: '#241033',
   textMuted: '#6B5285',
-  textFaint: '#8C76A6',
+  textFaint: '#75609A',
   primary: '#9333EA',
   primaryText: '#FFFFFF',
   accent: '#EC4899',

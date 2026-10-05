@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
 import { useTheme } from '@/lib/theme';
-import { displayName, type Room } from '@/lib/types';
+import { displayName, type Room, roomHref } from '@/lib/types';
 
 import { Pop, PressScale, Pulse, Ripple, Spin, stagger } from './Motion';
 import { Avatar, Button, Row, Sheet, Text } from './ui';
@@ -53,7 +53,7 @@ export function FollowingLive({ rooms, header = true, onOpen }: { rooms: Room[];
                 scaleTo={0.92}
                 onPress={() => {
                   onOpen?.();
-                  router.push({ pathname: '/live/[roomId]', params: { roomId: r.id } });
+                  router.push(roomHref(r));
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={`${name} is live. Watch`}
@@ -141,7 +141,7 @@ export function LoopStrip({ me, rooms }: { me: { avatar_url?: string | null; nam
           <Pop key={r.id} delay={stagger(i, 70)} from={0.3}>
             <PressScale
               scaleTo={0.92}
-              onPress={() => router.push({ pathname: '/live/[roomId]', params: { roomId: r.id } })}
+              onPress={() => router.push(roomHref(r))}
               accessibilityRole="button"
               accessibilityLabel={`${name} is live. Watch`}
               style={{ width: 60, alignItems: 'center', gap: 4 }}

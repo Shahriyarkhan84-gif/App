@@ -3,11 +3,12 @@ import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { PressScale } from '@/components/Motion';
 import { StateView } from '@/components/StateView';
 import { Avatar, Button, Input, Screen, Text } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { env } from '@/lib/env';
 import { friendlyError } from '@/lib/errors';
 import { useProfile } from '@/lib/profile';

@@ -387,6 +387,22 @@ set role authenticated;
 select public.review_withdrawal((select id from public.withdrawals where host_id = 'bob'), false, 'Verify account');
 reset role;
 select tests.ok((select balance = 5000 and held = 0 from public.creator_earnings where host_id = 'bob'), 'rejected withdrawal released');
+-- An approved withdrawal whose payout failed can be rejected: the coins go back to the host.
+select set_config('request.jwt.claims', '{"sub":"bob"}', false);
+set role authenticated;
+select public.request_withdrawal(2000, '{"type":"easypaisa","account":"03001234567"}');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select public.review_withdrawal((select id from public.withdrawals where host_id = 'bob' and status = 'requested'), true);
+reset role;
+select tests.ok((select balance = 3000 and held = 0 from public.creator_earnings where host_id = 'bob'), 'approved withdrawal leaves the balance');
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select public.review_withdrawal((select id from public.withdrawals where host_id = 'bob' and status = 'approved'), false, 'Payout failed');
+select tests.fails($$select public.review_withdrawal((select id from public.withdrawals where host_id = 'bob' and status = 'rejected' order by updated_at desc limit 1), false)$$, '%not_found%', 'a rejected withdrawal cannot be rejected twice');
+reset role;
+select tests.ok((select balance = 5000 and held = 0 from public.creator_earnings where host_id = 'bob'), 'failed payout returned to the host');
 
 ---------------------------------------------------------------------------------------
 -- AI trust boundary: proposals need owner approval
@@ -498,5 +514,30 @@ set role authenticated;
 select public.set_profile_verified('frank', false);
 reset role;
 select tests.ok(not exists (select 1 from public.pinned_profiles where user_id = 'frank'), 'removing verification unpins');
+
+---------------------------------------------------------------------------------------
+-- Blocking works both ways; a ban clears the owner tick and pin; disputes unfreeze
+---------------------------------------------------------------------------------------
+insert into public.follows (follower_id, followee_id) values ('carol', 'frank'), ('frank', 'carol') on conflict do nothing;
+select set_config('request.jwt.claims', '{"sub":"carol"}', false);
+set role authenticated;
+select public.block_user('frank');
+select tests.fails($$select public.send_direct_message('frank', 'hi')$$, '%blocked%', 'the blocker cannot message the blocked person either');
+select tests.fails($$insert into public.follows (follower_id, followee_id) values ('carol', 'frank')$$, '%row-level security%', 'no following someone you blocked');
+reset role;
+select tests.ok(not exists (select 1 from public.follows where (follower_id = 'carol' and followee_id = 'frank') or (follower_id = 'frank' and followee_id = 'carol')), 'blocking removes follows both ways');
+
+insert into public.profiles (id, username, owner_verified_at) values ('pin_ban', 'pin_ban', now());
+insert into public.pinned_profiles (user_id) values ('pin_ban');
+update public.profiles set status = 'banned' where id = 'pin_ban';
+select tests.ok(not exists (select 1 from public.pinned_profiles where user_id = 'pin_ban')
+  and (select owner_verified_at is null from public.profiles where id = 'pin_ban'), 'a ban clears the owner tick and Home pin');
+
+select public.internal_attach_payment_ref((public.internal_create_payment('alice', 1)).id, 'cs_dispute_close');
+select (public.internal_credit_payment('cs_dispute_close', 'pi_close', (select price_minor from public.coin_packages where id = 1), (select currency from public.coin_packages where id = 1)));
+select public.internal_dispute_payment('pi_close', 'opened');
+select tests.ok((select frozen from public.wallets where user_id = 'alice'), 'dispute freezes the wallet');
+select public.internal_dispute_payment('pi_close', 'closed');
+select tests.ok(not (select frozen from public.wallets where user_id = 'alice'), 'an inquiry closed in our favour unfreezes the wallet');
 
 drop schema tests cascade;

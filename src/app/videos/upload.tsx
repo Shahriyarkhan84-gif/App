@@ -1,11 +1,12 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router, Stack } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { resolveState, StateView, type ViewState } from '@/components/StateView';
 import { Button, Card, Chip, Input, Row, Screen, Text } from '@/components/ui';
 import { VideoCard } from '@/components/VideoCard';
+import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -69,22 +70,28 @@ export default function UploadScreen() {
     if (!picked) return;
     const ext = videoExtension(picked.uri, picked.mimeType)!;
     setUploading(true);
+    let created: MediaAsset | null = null;
     try {
       const asset = await rpc<MediaAsset>(supabase, 'create_media_upload', {
         p_title: title.trim(), p_extension: ext, p_description: description.trim() || null, p_visibility: visibility,
       });
+      created = asset;
       // Blob keeps the file on the native side instead of copying it into JS memory.
       const body = await (await fetch(picked.uri)).blob();
       const { error: upErr } = await supabase.storage.from('uploads').upload(asset.source_path, body, { contentType: videoMime(ext) });
       if (upErr) throw upErr;
       await rpc(supabase, 'submit_media_upload', { p_asset_id: asset.id });
+      created = null;
       track('video_uploaded', { ext, visibility });
       setPicked(null);
       setTitle('');
       setDescription('');
       reload();
     } catch (e) {
+      // Don't leave a half-made video stuck "waiting for upload" in the list.
+      if (created) await rpc(supabase, 'remove_media', { p_asset_id: created.id, p_reason: null }).catch(() => undefined);
       Alert.alert('Upload failed', friendlyError(e));
+      reload();
     } finally {
       setUploading(false);
     }

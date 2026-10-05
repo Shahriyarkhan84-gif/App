@@ -30,6 +30,8 @@ Deno.serve(
     ]);
     if (!room) throw new HttpError(404, 'room_not_found');
     if (status === 'banned') throw new HttpError(403, 'account_restricted');
+    // Restricted accounts may still watch, but never publish (host or party guest).
+    if (as !== 'viewer' && status !== 'active') throw new HttpError(403, 'account_restricted');
     if (room.status !== 'live') throw new HttpError(409, 'room_not_live');
 
     const isHost = room.host_id === userId;

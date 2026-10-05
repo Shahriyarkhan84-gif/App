@@ -2,11 +2,12 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
 import { FadeIn } from '@/components/Motion';
 import { Button, Card, Chip, Input, Row, Screen, Text } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -38,11 +39,13 @@ export default function EarningsScreen() {
   const verified = host?.verification_status === 'approved';
 
   const { data, error, loading, reload } = useFocusedAsync(async () => {
-    const [earnings, withdrawals, settings, split] = await Promise.all([
+    const [earnings, withdrawals, settings, split, withdrawable] = await Promise.all([
       supabase.from('creator_earnings').select('balance,held,lifetime').eq('host_id', userId!).maybeSingle(),
       supabase.from('withdrawals').select('*').eq('host_id', userId!).order('created_at', { ascending: false }).limit(30),
       supabase.from('platform_settings').select('value').eq('key', 'withdrawal').single(),
       supabase.from('platform_settings').select('value').eq('key', 'gift_split').maybeSingle(),
+      // Gifts still inside the hold window can't be withdrawn yet; the server enforces this too.
+      supabase.rpc('my_withdrawable_coins'),
     ]);
     // A failed load must show an error, not a zero balance.
     if (earnings.error) throw earnings.error;
@@ -53,12 +56,19 @@ export default function EarningsScreen() {
       withdrawals: (withdrawals.data ?? []) as Withdrawal[],
       rate: cfg?.pkr_per_coin ?? null,
       minCoins: cfg?.min_coins ?? 0,
+      withdrawable: withdrawable.error ? null : Number(withdrawable.data ?? 0),
       split: (split.data?.value as { host_pct: number; stream_pct: number; owner_pct: number } | undefined) ?? null,
     };
   }, [userId]);
 
   const amount = Number.parseInt(coins, 10);
-  const valid = Number.isFinite(amount) && amount > 0 && account.trim().length >= 6;
+  const max = data ? data.withdrawable ?? data.earnings.balance : 0;
+  const amountError = !coins || !data ? null
+    : amount < data.minCoins ? `Minimum ${data.minCoins.toLocaleString()} coins`
+    : amount > max ? `You can withdraw up to ${max.toLocaleString()} coins right now`
+    : null;
+  const accountError = account && account.trim().length < 6 ? 'Enter the full account number' : null;
+  const valid = Number.isFinite(amount) && amount > 0 && !amountError && account.trim().length >= 6;
 
   const withdraw = async () => {
     setSubmitting(true);
@@ -125,12 +135,15 @@ export default function EarningsScreen() {
               ) : (
                 <>
                   <Text muted>1 coin = Rs {data.rate} · minimum {data.minCoins.toLocaleString()} coins</Text>
-                  <Input label="Coins" value={coins} onChangeText={(t) => setCoins(t.replace(/\D/g, ''))} keyboardType="number-pad" placeholder={String(data.minCoins)} />
+                  {data.withdrawable !== null && data.withdrawable < data.earnings.balance && (
+                    <Text variant="caption" muted>{data.withdrawable.toLocaleString()} coins can be withdrawn now; newer gifts unlock after the hold period.</Text>
+                  )}
+                  <Input label="Coins" value={coins} onChangeText={(t) => setCoins(t.replace(/\D/g, '').slice(0, 9))} keyboardType="number-pad" placeholder={String(data.minCoins)} error={amountError ?? undefined} />
                   {Number.isFinite(amount) && amount > 0 && <Text variant="label">≈ Rs {(amount * data.rate).toLocaleString()}</Text>}
                   <Row gap={8} style={{ flexWrap: 'wrap' }}>
                     {METHODS.map((m) => <Chip key={m.id} label={m.label} selected={method === m.id} onPress={() => setMethod(m.id)} />)}
                   </Row>
-                  <Input label={method === 'bank' ? 'IBAN' : 'Mobile account number'} value={account} onChangeText={setAccount} autoCapitalize="characters" />
+                  <Input label={method === 'bank' ? 'IBAN' : 'Mobile account number'} value={account} onChangeText={setAccount} autoCapitalize="characters" error={accountError ?? undefined} />
                   <Button title="Request withdrawal" onPress={withdraw} loading={submitting} disabled={!valid || offline} />
                 </>
               )}

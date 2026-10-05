@@ -1,9 +1,10 @@
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
 import { Button, Card, Chip, Input, Row, Screen, Text } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline } from '@/lib/hooks';
@@ -11,7 +12,7 @@ import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 import { EVENT_SELECT, eventPhase, type AppEvent, type EventReward } from '@/lib/events';
-import { formatMoney } from '@/lib/types';
+import { displayName, formatMoney } from '@/lib/types';
 
 type Domain = { status: 'green' | 'amber' | 'red'; headline: string; highlights: string[]; risks: string[]; recommendations: string[] };
 type Briefing = {
@@ -123,6 +124,11 @@ function BriefingSection() {
   );
 }
 
+/** Ask before an action that's hard to undo (bans, approvals that move money or apply penalties). */
+function confirmThen(title: string, message: string, label: string, run: () => void) {
+  Alert.alert(title, message, [{ text: 'Cancel', style: 'cancel' }, { text: label, style: 'destructive', onPress: run }]);
+}
+
 type Proposal = { id: number; agent: string; action_type: string; target_user_id: string | null; rationale: string; confidence: number | null; params: Record<string, unknown>; created_at: string };
 
 function ProposalsSection() {
@@ -134,6 +140,13 @@ function ProposalsSection() {
     if (error) throw error;
     return data as Proposal[];
   }, []);
+  // Show who a proposal is about, not just a raw user id.
+  const ids = [...new Set((data ?? []).map((p) => p.target_user_id).filter((x): x is string => !!x))];
+  const { data: names } = useFocusedAsync(async () => {
+    if (!ids.length) return {} as Record<string, string>;
+    const { data: rows } = await supabase.from('profiles').select('id,user_number,display_name,username').in('id', ids);
+    return Object.fromEntries((rows ?? []).map((r) => [r.id, `${displayName(r)} · ID ${r.user_number ?? '–'}`])) as Record<string, string>;
+  }, [ids.join(',')]);
   return (
     <StateView state={resolveState({ offline, loading, error, data, onRetry: reload, isEmpty: (d) => d.length === 0, empty: { title: 'No pending AI proposals' } })}>
       <ScrollView contentContainerStyle={listStyle}>
@@ -141,10 +154,10 @@ function ProposalsSection() {
           <Card key={p.id}>
             <Text variant="caption" muted>{p.agent} AI · {new Date(p.created_at).toLocaleString()}{p.confidence != null ? ` · ${Math.round(p.confidence * 100)}% confident` : ''}</Text>
             <Text variant="h3">{p.action_type.replace(/_/g, ' ')}{p.params.hours ? ` (${String(p.params.hours)}h)` : ''}</Text>
-            <Text variant="caption" muted>User {p.target_user_id}</Text>
+            <Text variant="caption" muted>{p.target_user_id ? names?.[p.target_user_id] ?? `User ${p.target_user_id}` : 'No user'}</Text>
             <Text>{p.rationale}</Text>
             <Row>
-              <Button title="Approve" size="sm" onPress={() => act('review_ai_action', { p_action_id: p.id, p_approve: true }, reload)} />
+              <Button title="Approve" size="sm" onPress={() => confirmThen('Approve AI proposal?', `${p.action_type.replace(/_/g, ' ')} for ${names?.[p.target_user_id ?? ''] ?? 'this user'} will be applied now.`, 'Approve', () => act('review_ai_action', { p_action_id: p.id, p_approve: true }, reload))} />
               <Button title="Reject" size="sm" variant="secondary" onPress={() => act('review_ai_action', { p_action_id: p.id, p_approve: false }, reload)} />
             </Row>
           </Card>
@@ -180,7 +193,7 @@ function ReportsSection() {
             <Row style={{ flexWrap: 'wrap' }}>
               <Button title="Warn" size="sm" onPress={() => act('apply_moderation_action', { p_user: r.target_user_id, p_action: 'warning', p_reason: r.ai_assessment?.summary ?? r.reason, p_report: r.id }, reload)} />
               <Button title="Restrict 24h" size="sm" variant="secondary" onPress={() => act('apply_moderation_action', { p_user: r.target_user_id, p_action: 'temp_restriction', p_reason: r.ai_assessment?.summary ?? r.reason, p_hours: 24, p_report: r.id }, reload)} />
-              <Button title="Ban 7d" size="sm" variant="danger" onPress={() => act('apply_moderation_action', { p_user: r.target_user_id, p_action: 'temp_ban', p_reason: r.ai_assessment?.summary ?? r.reason, p_hours: 168, p_report: r.id }, reload)} />
+              <Button title="Ban 7d" size="sm" variant="danger" onPress={() => confirmThen('Ban for 7 days?', 'They are signed out of lives, chat and gifts for a week.', 'Ban', () => act('apply_moderation_action', { p_user: r.target_user_id, p_action: 'temp_ban', p_reason: r.ai_assessment?.summary ?? r.reason, p_hours: 168, p_report: r.id }, reload))} />
               <Button title="Dismiss" size="sm" variant="ghost" onPress={() => act('dismiss_report', { p_report: r.id }, reload)} />
             </Row>
           </Card>
@@ -298,7 +311,7 @@ function WithdrawalsSection() {
             <Text muted>Host {w.host_id} · {w.payout_method.type} {w.payout_method.account ?? ''} · {w.status}</Text>
             {w.status === 'requested' ? (
               <Row>
-                <Button title="Approve" size="sm" onPress={() => act('review_withdrawal', { p_withdrawal_id: w.id, p_approve: true }, reload)} />
+                <Button title="Approve" size="sm" onPress={() => confirmThen('Approve withdrawal?', `${formatMoney(w.amount_minor, w.currency)} to ${w.payout_method.type} ${w.payout_method.account ?? ''}. Send the payout, then mark it paid.`, 'Approve', () => act('review_withdrawal', { p_withdrawal_id: w.id, p_approve: true }, reload))} />
                 <Button title="Reject" size="sm" variant="secondary" onPress={() => act('review_withdrawal', { p_withdrawal_id: w.id, p_approve: false, p_note: 'Rejected by owner' }, reload)} />
               </Row>
             ) : (
@@ -317,6 +330,7 @@ function WithdrawalsSection() {
 }
 
 function SettingsSection() {
+  const { c } = useTheme();
   const supabase = useSupabase();
   const offline = useOffline();
   const act = useAct();
@@ -328,6 +342,9 @@ function SettingsSection() {
     return Object.fromEntries((data ?? []).map((r) => [r.key, r.value])) as Record<string, Record<string, number | null>>;
   }, []);
   const w = data?.withdrawal;
+  const rateNum = Number(rate);
+  const settingError = rate && (!Number.isFinite(rateNum) || rateNum <= 0 || rateNum > 1000) ? 'PKR per coin must be a number above 0'
+    : minCoins && Number(minCoins) < 1 ? 'Minimum coins must be at least 1' : null;
 
   return (
     <StateView state={resolveState({ offline, loading, error, data, onRetry: reload })}>
@@ -340,13 +357,15 @@ function SettingsSection() {
           </Text>
           <Input label="PKR per coin" value={rate} onChangeText={setRate} keyboardType="decimal-pad" placeholder={String(w?.pkr_per_coin ?? '0.5')} />
           <Input label="Minimum coins" value={minCoins} onChangeText={(t) => setMinCoins(t.replace(/\D/g, ''))} keyboardType="number-pad" placeholder={String(w?.min_coins ?? 1000)} />
+          {settingError && <Text variant="caption" color={c.danger}>{settingError}</Text>}
           <Button
             title="Save"
-            disabled={!rate && !minCoins}
+            disabled={(!rate && !minCoins) || !!settingError}
             onPress={() =>
               act('set_platform_setting', {
                 p_key: 'withdrawal',
-                p_value: { pkr_per_coin: rate ? Number(rate) : w?.pkr_per_coin ?? null, min_coins: minCoins ? Number(minCoins) : w?.min_coins ?? 1000 },
+                // The setting is replaced whole, so keep its other keys (e.g. hold_days).
+                p_value: { ...(w ?? {}), pkr_per_coin: rate ? Number(rate) : w?.pkr_per_coin ?? null, min_coins: minCoins ? Number(minCoins) : w?.min_coins ?? 1000 },
               }, () => { setRate(''); setMinCoins(''); reload(); })
             }
           />

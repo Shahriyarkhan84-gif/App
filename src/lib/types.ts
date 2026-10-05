@@ -31,6 +31,8 @@ export type Room = {
   viewer_count: number;
   current_stream_id: string | null;
   current_battle_id: string | null;
+  /** 'live' (solo) or a 'voice' / 'video' party. */
+  mode?: string | null;
   host?: Pick<Profile, 'id' | 'display_name' | 'username' | 'avatar_url' | 'country' | 'verified_at' | 'owner_verified_at' | 'role'> | null;
 };
 
@@ -64,7 +66,7 @@ export type CoinPackage = { id: number; name: string; coins: number; price_minor
 
 // rooms.host_id -> hosts.user_id -> profiles.id
 export const ROOM_SELECT =
-  'id,host_id,title,category,cover_url,status,viewer_count,current_stream_id,current_battle_id,updated_at,hostRow:hosts(profile:profiles(id,display_name,username,avatar_url,country,verified_at,role))';
+  'id,host_id,title,category,cover_url,status,viewer_count,current_stream_id,current_battle_id,updated_at,mode,hostRow:hosts(profile:profiles(id,display_name,username,avatar_url,country,verified_at,owner_verified_at,role))';
 
 type RawRoom = Omit<Room, 'host'> & { hostRow?: { profile: Room['host'] } | null };
 
@@ -96,3 +98,10 @@ export function formatMoney(minor: number, currency: string) {
 export const CATEGORIES = ['chat', 'music', 'gaming', 'talent', 'education', 'other'] as const;
 export type Category = (typeof CATEGORIES)[number];
 export const categoryLabel = (c: string) => c.charAt(0).toUpperCase() + c.slice(1);
+
+/** Where a room opens: party rooms have their own screen (seats), solo lives the live screen. */
+export function roomHref(room: { id: string; mode?: string | null }) {
+  return room.mode === 'voice' || room.mode === 'video'
+    ? ({ pathname: '/party/[roomId]', params: { roomId: room.id } } as const)
+    : ({ pathname: '/live/[roomId]', params: { roomId: room.id } } as const);
+}

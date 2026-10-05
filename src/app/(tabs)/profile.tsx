@@ -1,12 +1,13 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Alert, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { useTabBarSpace } from '@/components/Menus';
 import { StateView } from '@/components/StateView';
 import { FadeIn } from '@/components/Motion';
 import { AgencyOwnerBadge, Avatar, Button, Card, Coin, compactNumber, HostBadge, IconButton, ListRow, Row, Screen, Text } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { env } from '@/lib/env';
 import { useFocusedAsync, useRealtime } from '@/lib/hooks';
@@ -30,8 +31,9 @@ export default function ProfileScreen() {
       supabase.from('follows').select('*', { count: 'exact', head: true }).eq('followee_id', profile.id),
       supabase.from('follows').select('followee_id', { count: 'exact' }).eq('follower_id', profile.id).limit(1000),
       supabase.from('wallets').select('coin_balance').eq('user_id', profile.id).maybeSingle(),
-      isHost ? supabase.from('creator_earnings').select('balance').eq('host_id', profile.id).maybeSingle() : Promise.resolve({ data: null }),
+      host ? supabase.from('creator_earnings').select('lifetime').eq('host_id', profile.id).maybeSingle() : Promise.resolve({ data: null, error: null }),
     ]);
+    for (const r of [followers, following, wallet, earnings]) if (r.error) throw r.error;
     // Friends = people you follow who follow you back.
     const followeeIds = (following.data ?? []).map((f) => f.followee_id);
     const friends = followeeIds.length
@@ -42,9 +44,10 @@ export default function ProfileScreen() {
       followers: followers.count ?? 0,
       following: following.count ?? 0,
       coins: wallet.data?.coin_balance ?? 0,
-      earnings: (earnings.data as { balance: number } | null)?.balance ?? 0,
+      // Diamonds earned = everything ever earned, not just what's withdrawable right now.
+      earnings: (earnings.data as { lifetime: number } | null)?.lifetime ?? 0,
     };
-  }, [profile?.id, isHost]);
+  }, [profile?.id, !!host]);
   useRealtime('wallets', profile ? `user_id=eq.${profile.id}` : undefined, () => stats.reload(), !!profile);
 
   const openFeedback = async () => {
@@ -75,7 +78,7 @@ export default function ProfileScreen() {
             <Text variant="bodySmall" muted selectable accessibilityLabel={`Your ID ${String(profile.user_number).split('').join(' ')}`}>ID {profile.user_number}</Text>
             {(host || isAgencyOwner) && (
               <Row gap={6} style={{ flexWrap: 'wrap' }}>
-                {host && (verified ? <HostBadge /> : <Badge label="Verification pending" />)}
+                {host && (verified ? <HostBadge /> : <Badge label={host.verification_status === 'declined' ? 'Verification declined' : host.verification_status === 'unverified' ? 'Not verified' : 'Verification pending'} />)}
                 {isAgencyOwner && <AgencyOwnerBadge />}
               </Row>
             )}
@@ -103,8 +106,8 @@ export default function ProfileScreen() {
           </View>
           <View style={{ flex: 1, padding: 16, borderRadius: 18, backgroundColor: c.violetSurface, borderWidth: 1, borderColor: c.violetBorder, gap: 10 }}>
             <Row gap={6}><Ionicons name="diamond-outline" size={16} color={c.violetText} /><Text variant="bodySmall" color={c.violetText}>Diamonds earned</Text></Row>
-            <Text variant="h1">{isHost ? (stats.data ? stats.data.earnings.toLocaleString() : '–') : '0'}</Text>
-            {isHost
+            <Text variant="h1">{host ? (stats.data ? stats.data.earnings.toLocaleString() : '–') : '0'}</Text>
+            {host
               ? <Button title="Withdraw" variant="outline" size="sm" onPress={() => router.push('/earnings')} />
               : <Button title="Become a host" variant="outline" size="sm" onPress={() => router.push('/hosting')} />}
           </View>

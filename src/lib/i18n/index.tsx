@@ -114,6 +114,12 @@ export function I18nProvider({
   const language = resolveLanguage(saved, deviceLanguage(), regionDefault ?? null);
   useLayoutEffect(() => setCurrent(language), [language]);
 
+  // Direction follows the effective language from launch, not only after a manual switch
+  // (on native the flip takes effect from the next start; web flips at once).
+  useEffect(() => {
+    if (loaded) applyDirection(isRtl(language));
+  }, [language, loaded]);
+
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') document.documentElement.lang = language;
     if (loaded) onLanguage?.(language);

@@ -122,6 +122,7 @@ function RootNavigator() {
         <Stack.Screen name="events/index" options={{ title: 'Events' }} />
         <Stack.Screen name="events/[id]" options={{ title: 'Event' }} />
         <Stack.Screen name="menus" options={{ title: 'Menu styles' }} />
+        <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       </Stack.Protected>
       <Stack.Protected guard={!isSignedIn}>
         <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />

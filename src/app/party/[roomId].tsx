@@ -3,7 +3,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChatPanel } from '@/components/ChatPanel';
@@ -12,6 +12,7 @@ import type { PartyMode, Seat } from '@/components/PartySeats';
 import { PartyStage } from '@/components/PartyStage';
 import { StateView, type ViewState } from '@/components/StateView';
 import { Avatar, Button, Row, Sheet, Text, ViewerCount } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { getLiveKitToken, rpc } from '@/lib/api';
 import { errorCode, friendlyError } from '@/lib/errors';
 import { useAsync, useOffline, useRealtime } from '@/lib/hooks';
@@ -139,6 +140,7 @@ export default function PartyRoomScreen() {
   }, [supabase, roomId]);
 
   const act = async (fn: () => Promise<unknown>, failTitle: string) => {
+    if (busy) return; // one seat action at a time (double taps)
     setBusy(true);
     try {
       await fn();
@@ -155,7 +157,8 @@ export default function PartyRoomScreen() {
   const toggleMic = () => {
     const next = !micOn;
     setMicOn(next);
-    if (role === 'guest') void rpc(supabase, 'set_seat_muted', { p_room: roomId, p_muted: !next }).catch(() => undefined);
+    // The server's mute flag is what others see; if saving it fails, put the mic back so both agree.
+    if (role === 'guest') void rpc(supabase, 'set_seat_muted', { p_room: roomId, p_muted: !next }).catch(() => setMicOn(!next));
   };
   const endParty = () =>
     Alert.alert('End the party?', 'Everyone leaves their seat.', [
@@ -311,7 +314,7 @@ export default function PartyRoomScreen() {
                 <Row key={id} gap={10} style={{ paddingVertical: 8 }}>
                   <Avatar uri={who?.avatar_url} name={displayName(who)} size={36} />
                   <Text style={{ flex: 1 }} numberOfLines={1}>{displayName(who)}</Text>
-                  <Button title="Decline" variant="ghost" size="sm" onPress={() => act(() => rpc(supabase, 'remove_from_seat', { p_room: roomId, p_user: id }), 'Could not decline')} />
+                  <Button title="Decline" variant="ghost" size="sm" disabled={busy} onPress={() => act(() => rpc(supabase, 'remove_from_seat', { p_room: roomId, p_user: id }), 'Could not decline')} />
                   <Button title="Approve" size="sm" loading={busy} onPress={() => act(() => rpc(supabase, 'approve_seat', { p_room: roomId, p_user: id }), 'Could not approve')} />
                 </Row>
               );

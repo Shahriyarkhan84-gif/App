@@ -2,13 +2,14 @@ import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, Share, View } from 'react-native';
+import { ScrollView, Share, View } from 'react-native';
 
 import { ContributionsCard } from '@/components/Contributions';
 import { LiveAvatar } from '@/components/FollowingLive';
 import { PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Avatar, Button, compactNumber, RoleBadges, Row, Screen, Text } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
 import { countryName, flag } from '@/lib/country';
@@ -30,7 +31,7 @@ export default function UserProfileScreen() {
 
   const { data, error, loading, reload } = useAsync(async () => {
     const [profile, host, room, followers, follow, followingList, pin] = await Promise.all([
-      supabase.from('profiles').select('id,user_number,verified_at,owner_verified_at,username,display_name,avatar_url,bio,country,signup_country,language,role,status,status_until').eq('id', id).maybeSingle(),
+      supabase.from('profiles').select('id,user_number,verified_at,owner_verified_at,username,display_name,avatar_url,bio,country,signup_country,language,role,status,status_until,deleted_at').eq('id', id).maybeSingle(),
       supabase.from('hosts').select('host_code,total_live_seconds').eq('user_id', id).maybeSingle(),
       supabase.from('rooms').select('id,status,title,viewer_count').eq('host_id', id).maybeSingle(),
       supabase.from('follows').select('*', { count: 'exact', head: true }).eq('followee_id', id),
@@ -39,7 +40,7 @@ export default function UserProfileScreen() {
       supabase.from('pinned_profiles').select('user_id').eq('user_id', id).maybeSingle(),
     ]);
     if (profile.error) throw profile.error;
-    if (!profile.data) return null; // unknown or removed user
+    if (!profile.data || (profile.data as { deleted_at?: string | null }).deleted_at) return null; // unknown or removed user
     // Friends = people they follow who follow them back.
     const theirFollowees = (followingList.data ?? []).map((f) => f.followee_id);
     const friends = theirFollowees.length
@@ -100,8 +101,15 @@ export default function UserProfileScreen() {
         text: 'Block',
         style: 'destructive',
         onPress: async () => {
-          const { error } = await supabase.from('user_blocks').insert({ blocked_id: id });
-          Alert.alert(error ? 'Could not block' : 'Blocked', error ? friendlyError(error) : "They can no longer message you.");
+          // block_user also removes follows both ways, so neither of you sees the other's lives in Following.
+          try {
+            await rpc(supabase, 'block_user', { p_user: id });
+            setFollowing(false);
+            reload();
+            Alert.alert('Blocked', 'You no longer follow each other, and they can no longer message you.');
+          } catch (e) {
+            Alert.alert('Could not block', friendlyError(e));
+          }
         },
       },
       {
@@ -162,7 +170,8 @@ export default function UserProfileScreen() {
               <Row gap={20} style={{ paddingVertical: 4 }}>
                 {[
                   { label: 'Friends', value: data.friends },
-                  { label: 'Followers', value: data.followers },
+                  // Moves with the Follow button at once, before the refetch.
+                  { label: 'Followers', value: data.followers + (isFollowing === data.follows ? 0 : isFollowing ? 1 : -1) },
                   { label: 'Following', value: data.following },
                 ].map((s) => (
                   <View key={s.label} style={{ alignItems: 'center' }}>

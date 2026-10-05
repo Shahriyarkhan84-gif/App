@@ -41,7 +41,10 @@ Guarantees (all covered by `supabase/tests/10_must_pass.sql`):
 
 `request_withdrawal(coins, payout_method)` moves coins from
 `creator_earnings.balance` to `held`; owners approve (held → paid out) or reject
-(held → back to balance); `mark_withdrawal_paid` records the payout reference.
+(held → back to balance; also possible after approval if the payout failed);
+`mark_withdrawal_paid` records the payout reference and notifies the host.
+`my_withdrawable_coins()` shows hosts what they can withdraw now (gifts newer than
+`withdrawal.hold_days` stay on hold).
 
 **Open question (from the architecture):** the coin → PKR rate that bridges
 the gift tree and the PKR revenue tree is not defined. It is a setting

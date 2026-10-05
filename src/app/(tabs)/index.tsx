@@ -19,7 +19,7 @@ import { useI18n } from '@/lib/i18n';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { fonts, useTheme } from '@/lib/theme';
-import { CATEGORIES, categoryLabel, displayName, normalizeRooms, ROOM_SELECT, type Room } from '@/lib/types';
+import { CATEGORIES, categoryLabel, displayName, normalizeRooms, ROOM_SELECT, type Room, roomHref } from '@/lib/types';
 
 type Feed = 'following' | 'popular' | 'nearby' | 'new';
 const FEEDS: { id: Feed; label: string }[] = [
@@ -30,7 +30,9 @@ const FEEDS: { id: Feed; label: string }[] = [
 ];
 const CHIPS = ['all', ...CATEGORIES] as const;
 
-type HomeData = { live: Room[]; followed: Set<string>; recommended: Map<string, { reason: string | null; score: number }> };
+// live: top 60 by viewers (Popular). Following and New load their own lists, so smaller and newer
+// rooms still show once more than 60 rooms are live.
+type HomeData = { live: Room[]; followingLive: Room[]; newest: Room[]; followed: Set<string>; recommended: Map<string, { reason: string | null; score: number }> };
 
 export default function HomeScreen() {
   const tabSpace = useTabBarSpace();
@@ -55,8 +57,20 @@ export default function HomeScreen() {
       supabase.from('user_recommendations').select('room_id,reason,score').eq('user_id', userId!).order('score', { ascending: false }).limit(10),
     ]);
     if (live.error) throw live.error;
+    if (follows.error) throw follows.error;
+    const followedIds = (follows.data ?? []).map((f) => f.followee_id);
+    const [followingLive, newest] = await Promise.all([
+      followedIds.length
+        ? supabase.from('rooms').select(ROOM_SELECT).eq('status', 'live').in('host_id', followedIds.slice(0, 300)).order('viewer_count', { ascending: false }).limit(60)
+        : Promise.resolve({ data: [], error: null }),
+      supabase.from('rooms').select(ROOM_SELECT).eq('status', 'live').order('updated_at', { ascending: false }).limit(60),
+    ]);
+    if (followingLive.error) throw followingLive.error;
+    if (newest.error) throw newest.error;
     return {
       live: normalizeRooms(live.data),
+      followingLive: normalizeRooms(followingLive.data),
+      newest: normalizeRooms(newest.data),
       followed: new Set((follows.data ?? []).map((f) => f.followee_id)),
       recommended: new Map((recs.data ?? []).map((r) => [r.room_id, { reason: r.reason, score: r.score }])),
     };
@@ -85,6 +99,12 @@ export default function HomeScreen() {
   });
 
   const rooms = data ? pickFeed(data, feed, profile?.country ?? null).filter((r) => category === 'all' || r.category === category) : [];
+  // Featured and TOP 2–4 follow real viewer order (data.live is sorted by viewers), not AI picks.
+  const topRoom = data?.live[0] ?? null;
+  const topRank = (id: string) => {
+    const i = data ? data.live.findIndex((r) => r.id === id) : -1;
+    return i >= 1 && i <= 3 ? i + 1 : undefined;
+  };
   // Highest-viewed live room currently in a PK battle, if any — the Home screen's entry point into that fight.
   const battleRoom = data?.live.find((r) => r.current_battle_id) ?? null;
   const emptyCopy = {
@@ -118,7 +138,7 @@ export default function HomeScreen() {
           <Row gap={8}>
             <IconButton icon="wallet-outline" label="Wallet" color={c.gold} onPress={() => router.push('/wallet')} />
             <IconButton icon="search" label="Search" onPress={() => router.push('/party')} />
-            <LiveBell rooms={data ? data.live.filter((r) => data.followed.has(r.host_id)) : []} />
+            <LiveBell rooms={data ? data.followingLive : []} />
           </Row>
         </Row>
         <TextTabs options={FEEDS} value={feed} onChange={setFeed} />
@@ -135,12 +155,12 @@ export default function HomeScreen() {
         >
           <LoopStrip
             me={{ avatar_url: profile?.avatar_url, name: displayName(profile) }}
-            rooms={data ? data.live.filter((r) => data.followed.has(r.host_id)) : []}
+            rooms={data ? data.followingLive : []}
           />
           <PinnedProfiles refreshKey={data} />
-          {feed === 'popular' && category === 'all' && rooms[0] && (
+          {feed === 'popular' && category === 'all' && topRoom && (
             <FadeIn>
-              <FeaturedHost key={`${rooms[0].host_id}-${data!.followed.has(rooms[0].host_id)}`} room={rooms[0]} following={data!.followed.has(rooms[0].host_id)} />
+              <FeaturedHost key={`${topRoom.host_id}-${data!.followed.has(topRoom.host_id)}`} room={topRoom} following={data!.followed.has(topRoom.host_id)} />
             </FadeIn>
           )}
           {feed === 'popular' && category === 'all' && (
@@ -167,7 +187,7 @@ export default function HomeScreen() {
                     room={r}
                     width={cardWidth}
                     reason={feed === 'popular' ? data?.recommended.get(r.id)?.reason : null}
-                    rank={feed === 'popular' && category === 'all' && i > 0 && i <= 3 ? i + 1 : undefined}
+                    rank={feed === 'popular' && category === 'all' ? topRank(r.id) : undefined}
                   />
                 </FadeIn>
               ))}
@@ -185,7 +205,7 @@ function PkBattleBanner({ room }: { room: Room | null }) {
   const { c, radius } = useTheme();
   return (
     <PressScale
-      onPress={() => (room ? router.push({ pathname: '/live/[roomId]', params: { roomId: room.id } }) : router.push('/rankings'))}
+      onPress={() => (room ? router.push(roomHref(room)) : router.push('/rankings'))}
       accessibilityRole="button"
       accessibilityLabel={room ? 'Watch the live PK battle' : 'PK Battle Night. See the top hosts'}
       scaleTo={0.98}
@@ -207,11 +227,14 @@ function PkBattleBanner({ room }: { room: Room | null }) {
 function pickFeed(data: HomeData, feed: Feed, country: string | null): Room[] {
   switch (feed) {
     case 'following':
-      return data.live.filter((r) => data.followed.has(r.host_id));
-    case 'nearby':
-      return country ? data.live.filter((r) => r.host?.country === country) : [];
+      return data.followingLive;
+    case 'nearby': {
+      if (!country) return [];
+      const seen = new Set<string>();
+      return [...data.live, ...data.newest].filter((r) => r.host?.country === country && !seen.has(r.id) && !!seen.add(r.id));
+    }
     case 'new':
-      return [...data.live].sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''));
+      return data.newest;
     default: {
       // Recommended rooms (AI) first, then by viewers.
       const rec = (r: Room) => data.recommended.get(r.id)?.score ?? -1;

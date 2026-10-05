@@ -1,11 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { FadeIn, PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Button, compactNumber, Row, Screen, Sheet, Text } from '@/components/ui';
+import { Avatar, Button, Coin, compactNumber, Row, Screen, Sheet, Text } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline } from '@/lib/hooks';
@@ -68,7 +69,8 @@ export default function HostDashboardScreen() {
       supabase.from('moderation_actions').select('*', { count: 'exact', head: true }).eq('target_user_id', me).eq('action', 'warning'),
       supabase.from('follows').select('follower_id').eq('followee_id', me).order('created_at', { ascending: false }).limit(50),
     ]);
-    if (week.error) throw week.error;
+    // A failed query must not show as 0 diamonds / 0 followers / "good standing".
+    for (const r of [room, week, recent, giftsToday, followersToday, followersTotal, warnings, fans]) if (r.error) throw r.error;
 
     const adminIds = room.data ? ((await supabase.from('room_admins').select('user_id').eq('room_id', room.data.id)).data ?? []).map((a) => a.user_id) : [];
     const fanIds = (fans.data ?? []).map((f) => f.follower_id);
@@ -200,9 +202,10 @@ export default function HostDashboardScreen() {
                       <Text style={{ fontSize: 14, fontWeight: '500' }} numberOfLines={1}>{s.title || 'Live stream'}</Text>
                       <Text variant="caption" faint>{shortTime(s.started_at)} · {duration(s.secs)}</Text>
                     </View>
+                    {/* gift_coins is the gifts' full coin value (not the host's diamond share). */}
                     <Row gap={4}>
-                      <Ionicons name="diamond-outline" size={14} color={c.violetText} />
-                      <Text variant="label" color={c.violetText}>{(s.gift_coins ?? 0).toLocaleString()}</Text>
+                      <Coin size={14} />
+                      <Text variant="label" color={c.violetText} accessibilityLabel={`${(s.gift_coins ?? 0).toLocaleString()} coins in gifts`}>{(s.gift_coins ?? 0).toLocaleString()}</Text>
                     </Row>
                   </Row>
                 </PressScale>

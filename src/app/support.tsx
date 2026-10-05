@@ -1,10 +1,11 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
 import { Button, Card, Input, Row, Screen, Text } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';

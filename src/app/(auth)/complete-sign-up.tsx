@@ -31,7 +31,8 @@ export default function CompleteSignUpScreen() {
     username: missing.includes('username'),
     firstName: missing.includes('first_name'),
     lastName: missing.includes('last_name'),
-    phoneNumber: missing.includes('phone_number'),
+    // Also when a phone was saved but never verified: the user must be able to correct it.
+    phoneNumber: missing.includes('phone_number') || (signUp?.unverifiedFields ?? []).includes('phone_number'),
     password: missing.includes('password'),
   };
 
@@ -78,10 +79,18 @@ export default function CompleteSignUpScreen() {
   const onSave = () =>
     run(async () => {
       const params = Object.fromEntries(
-        (Object.keys(needs) as (keyof typeof needs)[]).filter((k) => needs[k]).map((k) => [k, values[k].trim()]),
+        (Object.keys(needs) as (keyof typeof needs)[]).filter((k) => needs[k]).map((k) => [k, k === 'phoneNumber' ? normalizePhone(values[k]) : values[k].trim()]),
       );
       await signUp!.update(params);
       await advance();
+    });
+
+  const [resent, setResent] = useState(false);
+  const onResend = () =>
+    run(async () => {
+      if (step === 'phone_code') await signUp!.preparePhoneNumberVerification({ strategy: 'phone_code' });
+      else await signUp!.prepareEmailAddressVerification({ strategy: 'email_code' });
+      setResent(true);
     });
 
   const onVerify = () =>
@@ -97,13 +106,14 @@ export default function CompleteSignUpScreen() {
   }
 
   if (step !== 'details') {
-    const target = step === 'phone_code' ? values.phoneNumber || 'your phone' : signUp.emailAddress ?? 'your email';
+    const target = step === 'phone_code' ? (values.phoneNumber && normalizePhone(values.phoneNumber)) || 'your phone' : signUp.emailAddress ?? 'your email';
     return (
       <AuthShell title={step === 'phone_code' ? 'Check your messages' : 'Check your email'} subtitle={`We sent a 6-digit code to ${target}.`}>
         <Field label="Verification code" value={code} onChangeText={setCode} keyboardType="number-pad" autoComplete="one-time-code" placeholder="123456" />
         <FormError message={error} />
         <Button title="Verify & continue" loading={loading} disabled={code.trim().length < 6} onPress={onVerify} />
-        <Button title="Change details" variant="ghost" onPress={() => setStep('details')} />
+        <Button title={resent ? 'Code sent again' : 'Resend code'} variant="ghost" disabled={loading || resent} onPress={onResend} />
+        <Button title="Change details" variant="ghost" onPress={() => { setResent(false); setStep('details'); }} />
       </AuthShell>
     );
   }
@@ -129,4 +139,14 @@ export default function CompleteSignUpScreen() {
       <Button title="Continue" loading={loading} disabled={!ready} onPress={onSave} />
     </AuthShell>
   );
+}
+
+/** Pakistani numbers are often typed locally (0300 1234567); Clerk needs E.164 (+923001234567). */
+function normalizePhone(raw: string): string {
+  const digits = raw.replace(/[^\d+]/g, '');
+  if (digits.startsWith('+')) return digits;
+  if (digits.startsWith('00')) return `+${digits.slice(2)}`;
+  if (digits.startsWith('0')) return `+92${digits.slice(1)}`;
+  if (digits.startsWith('92')) return `+${digits}`;
+  return digits;
 }

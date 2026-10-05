@@ -7,7 +7,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { useSupabase } from '@/lib/supabase';
 import { liveColors, useTheme } from '@/lib/theme';
-import { categoryLabel, displayName, type Room } from '@/lib/types';
+import { categoryLabel, displayName, type Room, roomHref } from '@/lib/types';
 
 import { PressScale } from './Motion';
 import { LiveBadge, Text } from './ui';
@@ -39,7 +39,7 @@ export function FeaturedHost({ room, following: initialFollowing }: { room: Room
   return (
     <PressScale
       scaleTo={0.98}
-      onPress={() => router.push({ pathname: '/live/[roomId]', params: { roomId: room.id } })}
+      onPress={() => router.push(roomHref(room))}
       accessibilityRole="button"
       accessibilityLabel={`Watch ${name} live: ${room.title}`}
       style={{ height: 96, borderRadius: radius[16] + 2, overflow: 'hidden' }}

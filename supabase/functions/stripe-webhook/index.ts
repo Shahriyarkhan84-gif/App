@@ -71,8 +71,11 @@ async function handle(event: Stripe.Event) {
       break;
     case 'charge.dispute.closed': {
       const dispute = event.data.object;
-      if (dispute.status !== 'won' && dispute.status !== 'lost') return;
-      await rpc('internal_dispute_payment', { p_payment_intent: intentId(dispute.payment_intent), p_stage: dispute.status });
+      // An inquiry that closes without a chargeback (warning_closed / prevented) releases the wallet like a win.
+      const stage = dispute.status === 'won' || dispute.status === 'lost' ? dispute.status
+        : dispute.status === 'warning_closed' || dispute.status === 'prevented' ? 'closed' : null;
+      if (!stage) return;
+      await rpc('internal_dispute_payment', { p_payment_intent: intentId(dispute.payment_intent), p_stage: stage });
       break;
     }
   }

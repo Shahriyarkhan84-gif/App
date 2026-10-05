@@ -6,7 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { router, useIsFocused } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTabBarSpace } from '@/components/Menus';
@@ -16,6 +16,7 @@ import { HostVerificationCard } from '@/components/HostVerificationCard';
 import { FadeIn, Pop } from '@/components/Motion';
 import { StateView, type ViewState } from '@/components/StateView';
 import { Button, Card, Chip, Input, Row, Screen, Text } from '@/components/ui';
+import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -34,8 +35,9 @@ export default function CreateScreen() {
   const { profile, host, isHost, error: profileError, reload: reloadProfile } = useProfile();
   const [camera, requestCamera] = useCameraPermissions();
   const [mic, requestMic] = useMicrophonePermissions();
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>('chat');
+  // Start from the room's last title and category until the host changes them.
+  const [titleEdit, setTitle] = useState<string | null>(null);
+  const [categoryEdit, setCategory] = useState<(typeof CATEGORIES)[number] | null>(null);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   // Only hold the camera while this tab is on screen, so the broadcast can take it.
@@ -43,15 +45,23 @@ export default function CreateScreen() {
 
   const room = useFocusedAsync(async () => {
     if (!profile) return null;
-    const [{ data }, { data: setting }, { data: modeRow }] = await Promise.all([
+    const [{ data, error }, { data: setting, error: settingError }, { data: modeRow }] = await Promise.all([
       supabase.from('rooms').select('id,status,title,category,cover_url').eq('host_id', profile.id).maybeSingle(),
       supabase.from('platform_settings').select('value').eq('key', 'host_verification').maybeSingle(),
       supabase.from('rooms').select('mode').eq('host_id', profile.id).maybeSingle(),
     ]);
+    // A failed load must not look like "no cover" or "not live".
+    if (error) throw error;
+    if (settingError) throw settingError;
     const mode = (modeRow?.mode ?? 'live') as 'live' | 'voice' | 'video';
     const verificationRequired = (setting?.value as { required_to_go_live?: boolean } | undefined)?.required_to_go_live !== false;
     return data ? { ...data, mode, verificationRequired } : { verificationRequired, mode, id: null as string | null, status: null, title: '', cover_url: null as string | null };
   }, [profile?.id, isHost]);
+
+  const title = titleEdit ?? room.data?.title ?? '';
+  const savedCategory = (room.data as { category?: string } | null | undefined)?.category;
+  const category: (typeof CATEGORIES)[number] = categoryEdit
+    ?? ((CATEGORIES as readonly string[]).includes(savedCategory ?? '') ? (savedCategory as (typeof CATEGORIES)[number]) : 'chat');
 
   // Didit results arrive as a notification; refresh the host's status when one lands.
   useRealtime('notifications', profile ? `user_id=eq.${profile.id}` : undefined, (p) => {
@@ -152,7 +162,8 @@ export default function CreateScreen() {
   }
   else if (profile.status !== 'active') state = { kind: 'disabled', title: 'Going live is paused', body: 'Your account is currently restricted. Check Messages for details.' };
   else if (host && host.status !== 'active') state = { kind: 'disabled', title: 'Hosting suspended', body: 'Contact support or your agency for details.' };
-  else if (isHost && !needsVerification && needsPermission && canAsk) {
+  // Permissions matter only for starting a live: a host who is already live always reaches End live.
+  else if (isHost && !needsVerification && room.data && room.data.status !== 'live' && needsPermission && canAsk) {
     state = {
       kind: 'permission',
       title: voiceOnly ? 'Microphone' : 'Camera & microphone',
@@ -162,7 +173,7 @@ export default function CreateScreen() {
         await requestMic();
       },
     };
-  } else if (isHost && !needsVerification && needsPermission) {
+  } else if (isHost && !needsVerification && room.data && room.data.status !== 'live' && needsPermission) {
     state = {
       kind: 'permission',
       title: 'Permissions blocked',
