@@ -473,4 +473,29 @@ select tests.ok(not exists (
   where n.nspname = 'public' and p.proname <> 'my_region' and has_function_privilege('anon', p.oid, 'execute')),
   'anon can execute no public function except my_region()');
 
+---------------------------------------------------------------------------------------
+-- Verified IDs pinned on Home: only the owner verifies and pins; everyone can read pins
+---------------------------------------------------------------------------------------
+select set_config('request.jwt.claims', '{"sub":"alice"}', false);
+set role authenticated;
+select tests.fails($$select public.set_profile_verified('alice', true)$$, '%forbidden%', 'users cannot verify themselves');
+select tests.fails($$select public.set_profile_pinned('alice', true)$$, '%forbidden%', 'users cannot pin themselves');
+select tests.fails($$insert into public.pinned_profiles (user_id) values ('alice')$$, '%permission denied%', 'users cannot write pins');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select public.set_profile_verified('frank', false);
+select tests.fails($$select public.set_profile_pinned('frank', true)$$, '%not_verified%', 'only verified accounts can be pinned');
+select public.set_profile_verified('frank', true);
+select public.set_profile_pinned('frank', true, 1);
+reset role;
+select tests.ok((select verified_at is not null from public.profiles where id = 'frank'), 'owner verified the account');
+select tests.ok(exists (select 1 from public.pinned_profiles where user_id = 'frank'), 'frank is pinned');
+select tests.ok(has_column_privilege('anon', 'public.pinned_profiles', 'user_id', 'select'), 'pins are public');
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select public.set_profile_verified('frank', false);
+reset role;
+select tests.ok(not exists (select 1 from public.pinned_profiles where user_id = 'frank'), 'removing verification unpins');
+
 drop schema tests cascade;

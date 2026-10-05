@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.7 — Verified IDs pinned on Home
+
+- Home shows a **Verified** row of accounts the owner pinned, whether or not they're live (tap: live room if live, otherwise their profile).
+- Owner tools on any profile (owner/super admin only): **Verify ID** / **Remove verified**, **Pin to Home** / **Unpin from Home**. Only verified accounts can be pinned (max 20); removing verification unpins.
+- Migration `20261005020000_pinned_profiles.sql` (copy-paste `docs/sql/apply_pinned_profiles.sql`); must-pass tests: users can't verify or pin themselves, can't write pins, only verified accounts pin, unverify unpins.
+
 ## 0.9.6 — Third AI review pass
 
 Hosted project: `media.covers_base` set (covers failed with "not configured", which blocked every first live); `livekit-token` redeployed (muted users can't take a party mic). Review fixes, avatars and party-rooms SQL are applied on the hosted project.

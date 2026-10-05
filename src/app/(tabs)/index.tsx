@@ -9,6 +9,7 @@ import { LiveEventBanner } from '@/components/EventRow';
 import { RoomCard } from '@/components/RoomCard';
 import { FeaturedHost } from '@/components/FeaturedHost';
 import { LiveBell, LoopStrip } from '@/components/FollowingLive';
+import { PinnedProfiles } from '@/components/PinnedProfiles';
 import { type MenuItem, SideMenuButton, useTabBarSpace } from '@/components/Menus';
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
@@ -136,6 +137,7 @@ export default function HomeScreen() {
             me={{ avatar_url: profile?.avatar_url, name: displayName(profile) }}
             rooms={data ? data.live.filter((r) => data.followed.has(r.host_id)) : []}
           />
+          <PinnedProfiles />
           {feed === 'popular' && category === 'all' && rooms[0] && (
             <FadeIn>
               <FeaturedHost key={`${rooms[0].host_id}-${data!.followed.has(rooms[0].host_id)}`} room={rooms[0]} following={data!.followed.has(rooms[0].host_id)} />

@@ -75,6 +75,8 @@ const MESSAGES: Record<string, string> = {
   upload_missing: 'The upload did not finish. Try again.',
   not_found: 'That could not be found.',
   room_not_found: 'This room no longer exists.',
+  not_verified: 'Verify this ID first, then pin it.',
+  pin_limit: 'Home can show up to 20 pinned IDs. Unpin one first.',
   invalid_request: 'Something was missing from that request. Please update the app and try again.',
   connection_lost: 'The connection to the stream was lost.',
   too_long: 'That video is longer than the limit.',

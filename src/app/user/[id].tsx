@@ -14,6 +14,7 @@ import { rpc } from '@/lib/api';
 import { countryName, flag } from '@/lib/country';
 import { friendlyError } from '@/lib/errors';
 import { useAsync, useOffline } from '@/lib/hooks';
+import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 import { displayName, type Profile } from '@/lib/types';
@@ -28,13 +29,14 @@ export default function UserProfileScreen() {
   const [following, setFollowing] = useState<boolean | null>(null);
 
   const { data, error, loading, reload } = useAsync(async () => {
-    const [profile, host, room, followers, follow, followingList] = await Promise.all([
+    const [profile, host, room, followers, follow, followingList, pin] = await Promise.all([
       supabase.from('profiles').select('id,user_number,verified_at,username,display_name,avatar_url,bio,country,signup_country,language,role,status,status_until').eq('id', id).maybeSingle(),
       supabase.from('hosts').select('host_code,total_live_seconds').eq('user_id', id).maybeSingle(),
       supabase.from('rooms').select('id,status,title,viewer_count').eq('host_id', id).maybeSingle(),
       supabase.from('follows').select('*', { count: 'exact', head: true }).eq('followee_id', id),
       supabase.from('follows').select('followee_id').eq('follower_id', userId!).eq('followee_id', id).maybeSingle(),
       supabase.from('follows').select('followee_id', { count: 'exact' }).eq('follower_id', id).limit(1000),
+      supabase.from('pinned_profiles').select('user_id').eq('user_id', id).maybeSingle(),
     ]);
     if (profile.error) throw profile.error;
     if (!profile.data) return null; // unknown or removed user
@@ -45,11 +47,26 @@ export default function UserProfileScreen() {
       : 0;
     return {
       profile: profile.data as Profile, host: host.data, room: room.data, followers: followers.count ?? 0, follows: !!follow.data,
-      following: followingList.count ?? 0, friends,
+      following: followingList.count ?? 0, friends, pinned: !!pin.data,
     };
   }, [id, userId]);
 
   const isMe = id === userId;
+  const { isPlatformAdmin } = useProfile();
+  const [ownerBusy, setOwnerBusy] = useState(false);
+  // Owner-only: the server checks the role too (set_profile_verified / set_profile_pinned).
+  const ownerAction = async (fn: string, args: Record<string, unknown>, done: string) => {
+    setOwnerBusy(true);
+    try {
+      await rpc(supabase, fn, { p_user: id, ...args });
+      reload();
+      Alert.alert(done);
+    } catch (e) {
+      Alert.alert('Could not update', friendlyError(e));
+    } finally {
+      setOwnerBusy(false);
+    }
+  };
   const isFollowing = following ?? data?.follows ?? false;
 
   const shareProfile = () => {
@@ -151,6 +168,31 @@ export default function UserProfileScreen() {
               </Row>
               {data.profile.bio && <Text style={{ textAlign: 'center' }}>{data.profile.bio}</Text>}
             </View>
+            {isPlatformAdmin && (
+              <View style={{ gap: 10, padding: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
+                <Text variant="label">Owner tools</Text>
+                <Row>
+                  <Button
+                    title={data.profile.verified_at ? 'Remove verified' : 'Verify ID'}
+                    variant={data.profile.verified_at ? 'secondary' : 'primary'}
+                    size="sm"
+                    loading={ownerBusy}
+                    onPress={() => ownerAction('set_profile_verified', { p_verified: !data.profile.verified_at }, data.profile.verified_at ? 'Verification removed' : 'Account verified')}
+                    style={{ flex: 1 }}
+                  />
+                  <Button
+                    title={data.pinned ? 'Unpin from Home' : 'Pin to Home'}
+                    variant="secondary"
+                    size="sm"
+                    loading={ownerBusy}
+                    disabled={!data.profile.verified_at && !data.pinned}
+                    onPress={() => ownerAction('set_profile_pinned', { p_pinned: !data.pinned }, data.pinned ? 'Removed from Home' : 'Pinned to Home')}
+                    style={{ flex: 1 }}
+                  />
+                </Row>
+                {!data.profile.verified_at && <Text variant="caption" muted>Verify the ID first to pin it to Home.</Text>}
+              </View>
+            )}
             {data.host && <ContributionsCard hostId={id} />}
           </ScrollView>
         )}
