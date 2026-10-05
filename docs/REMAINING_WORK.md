@@ -23,7 +23,7 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 
 ## Also pending
 
-- **Testing switch — must revert before real hosts join:** on the hosted project `host_verification.required_to_go_live` is `false` (set 2026-10-05 so the owner can test going live before Didit is deployed). Restore with `update public.platform_settings set value = jsonb_set(value, '{required_to_go_live}', 'true') where key = 'host_verification';`. Withdrawals still require verification.
+- Going live requires an approved ID check again (`host_verification.required_to_go_live` = `true`, restored 2026-10-05 after testing). The `host-application` (Didit) function isn't deployed yet, so new hosts can't verify until it is.
 - Hosted project settings set by hand: `media.covers_base` = `https://mdfjbhzriuwxafeagnwo.supabase.co/storage/v1/object/public/covers` (2026-10-05). Each new environment needs its own value (see `docs/ENVIRONMENT.md`), or `set_room_cover` raises `not_configured`.
 - Hosted project settings set by hand: `media.media_base` (2026-10-05), alongside `covers_base`.
 - Host auto-approval is now opt-in (`host_verification.auto_approve`, default off): every application waits for the owner in the command center until Didit liveness is wired in.
