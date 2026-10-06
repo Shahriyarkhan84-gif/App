@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.11 — Faster start-up and lives (speed audit)
+
+From an AI speed audit (DB queries measured at under 12 ms; waits come from the us-east-1 round trip):
+- Start-up: the 2.3 s minimum launch page is now 0.9 s and the app loads underneath it.
+- Watch live: one round trip instead of four; the LiveKit token is requested in parallel with the room; follow state loads alongside.
+- Party room: one round trip (names embedded with seats/requests; the duplicate `mode` query is gone); the viewer token is requested in parallel.
+- Edge functions run in us-east-1 next to the database (`invokeFn` region); `livekit-token` (deployed v12) does all its reads at once.
+- Home cards fade in faster (max 150 ms stagger); ID photos upload at 1200 px (about 40% smaller).
+
 ## 0.9.10 — Faster loading
 
 The database is in us-east-1, so every request from Pakistan costs ~0.5 s round trip; screens that made requests one after another felt slow.

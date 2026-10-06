@@ -181,7 +181,7 @@ export default function HomeScreen() {
           ) : (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {rooms.map((r, i) => (
-                <FadeIn key={`${feed}-${category}-${r.id}`} delay={stagger(i)} from={24}>
+                <FadeIn key={`${feed}-${category}-${r.id}`} delay={stagger(i, 30, 150)} duration={250} from={12}>
                   <RoomCard
                     room={r}
                     width={cardWidth}

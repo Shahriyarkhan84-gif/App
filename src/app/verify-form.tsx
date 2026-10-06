@@ -34,10 +34,10 @@ function formatCnic(v: string) {
   return d;
 }
 
-/** Resizes to ≤1600px wide JPEG so each upload stays well under Didit's 5 MB limit. */
+/** Resizes to ≤1200px wide JPEG: sharp enough for Didit to read the card, ~40% faster to upload on mobile data. */
 async function shrink(uri: string): Promise<Photo> {
-  const ref = await ImageManipulator.manipulate(uri).resize({ width: 1600 }).renderAsync();
-  const out = await ref.saveAsync({ compress: 0.8, format: SaveFormat.JPEG });
+  const ref = await ImageManipulator.manipulate(uri).resize({ width: 1200 }).renderAsync();
+  const out = await ref.saveAsync({ compress: 0.75, format: SaveFormat.JPEG });
   return { uri: out.uri, width: out.width, height: out.height };
 }
 

@@ -34,6 +34,8 @@ type Party = {
 };
 
 /** Voice / video party room (design canvas): host + guest seats, seat requests, chat and gifts. */
+const PERSON = 'id,display_name,username,avatar_url';
+
 export default function PartyRoomScreen() {
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
   const supabase = useSupabase();
@@ -46,24 +48,25 @@ export default function PartyRoomScreen() {
   const [giftOpen, setGiftOpen] = useState(false);
 
   const party = useAsync<Party>(async () => {
-    const [room, mode, seats, requests, admin] = await Promise.all([
+    // One round trip: names and avatars come embedded with the seats and requests.
+    const [room, seats, requests, admin] = await Promise.all([
       supabase.from('rooms').select(ROOM_SELECT).eq('id', roomId).single(),
-      supabase.from('rooms').select('mode').eq('id', roomId).single(),
-      supabase.from('room_seats').select('seat,user_id,muted').eq('room_id', roomId).order('seat'),
+      supabase.from('room_seats').select(`seat,user_id,muted,profile:profiles(${PERSON})`).eq('room_id', roomId).order('seat'),
       // RLS returns the whole queue to the host/admins and only your own request to everyone else.
-      supabase.from('seat_requests').select('user_id,created_at').eq('room_id', roomId).order('created_at'),
+      supabase.from('seat_requests').select(`user_id,created_at,profile:profiles(${PERSON})`).eq('room_id', roomId).order('created_at'),
       supabase.from('room_admins').select('user_id').eq('room_id', roomId).eq('user_id', userId!).maybeSingle(),
     ]);
     if (room.error) throw room.error;
-    if (mode.error) throw mode.error;
-    const ids = [...new Set([...(seats.data ?? []).map((s) => s.user_id), ...(requests.data ?? []).map((r) => r.user_id)])];
-    const { data: people } = ids.length ? await supabase.from('profiles').select('id,display_name,username,avatar_url').in('id', ids) : { data: [] as Person[] };
+    if (seats.error) throw seats.error;
+    const r = normalizeRoom(room.data as never);
+    const embedded = [...(seats.data ?? []), ...(requests.data ?? [])] as unknown as { profile: Person | Person[] | null }[];
+    const people = embedded.flatMap((x) => (Array.isArray(x.profile) ? x.profile : x.profile ? [x.profile] : []));
     return {
-      room: normalizeRoom(room.data as never),
-      mode: (mode.data.mode === 'video' ? 'video' : 'voice') as PartyMode,
-      seats: (seats.data ?? []) as SeatRow[],
+      room: r,
+      mode: (r.mode === 'video' ? 'video' : 'voice') as PartyMode,
+      seats: (seats.data ?? []).map(({ seat, user_id, muted }) => ({ seat, user_id, muted })) as SeatRow[],
       requests: (requests.data ?? []).map((r) => r.user_id),
-      people: new Map((people ?? []).map((p) => [p.id, p as Person])),
+      people: new Map(people.map((p) => [p.id, p])),
       isAdmin: !!admin.data,
     };
   }, [roomId, userId]);
@@ -98,10 +101,12 @@ export default function PartyRoomScreen() {
   // A new token whenever your role changes (taking or leaving a seat changes what you may publish).
   // The token remembers the role it was issued for: the stage only connects with a token that
   // matches your current role (a just-approved guest must not join with their old viewer token).
+  // Requested at once as a viewer (in parallel with the party), so most people connect a round trip sooner.
+  const mayBeLive = !p || p.room.status === 'live';
   const token = useAsync(async () => {
-    if (p?.room.status !== 'live') return null;
+    if (!mayBeLive) return null;
     return { ...(await getLiveKitToken(supabase, roomId, role)), role };
-  }, [roomId, p?.room.status, role]);
+  }, [roomId, mayBeLive, role]);
   const [dropped, setDropped] = useState(false);
   const tokenErrorCode = token.error ? errorCode(token.error) : null;
   const reloadParty = party.reload;

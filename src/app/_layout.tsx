@@ -12,7 +12,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { PostHogProvider, usePostHog } from 'posthog-react-native';
 import { useEffect, useState, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { LaunchScreen } from '@/components/LaunchScreen';
 import { Text } from '@/components/ui';
@@ -28,10 +28,14 @@ initSentry();
 void SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({ fade: true, duration: 300 });
 
-// Long enough for LaunchScreen to finish writing the logo and name (~2.1s).
-const MIN_LAUNCH_MS = 2300;
+// Short minimum so the logo doesn't flash; the app loads underneath meanwhile.
+const MIN_LAUNCH_MS = 900;
 
-/** Shows the branded loading page until Clerk has restored the session (and for a short minimum). */
+/**
+ * Shows the branded loading page until Clerk has restored the session (and for a short minimum).
+ * Once Clerk is ready the app mounts underneath the launch page, so the profile and Home start
+ * loading during the animation instead of after it.
+ */
 function LaunchGate({ children }: { children: ReactNode }) {
   const { isLoaded } = useAuth();
   const [minElapsed, setMinElapsed] = useState(false);
@@ -39,8 +43,17 @@ function LaunchGate({ children }: { children: ReactNode }) {
     const t = setTimeout(() => setMinElapsed(true), MIN_LAUNCH_MS);
     return () => clearTimeout(t);
   }, []);
-  if (!isLoaded || !minElapsed) return <LaunchScreen />;
-  return <>{children}</>;
+  if (!isLoaded) return <LaunchScreen />;
+  return (
+    <View style={{ flex: 1 }}>
+      {children}
+      {!minElapsed && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <LaunchScreen />
+        </View>
+      )}
+    </View>
+  );
 }
 
 function Analytics({ children }: { children: ReactNode }) {

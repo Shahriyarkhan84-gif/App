@@ -1,12 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { FunctionsHttpError } from '@supabase/supabase-js';
+import { FunctionRegion, FunctionsHttpError } from '@supabase/supabase-js';
 import { randomUUID } from 'expo-crypto';
 
 type ErrorBody = { error?: { code?: string; message?: string } };
 
 /** Calls a Supabase Edge Function and surfaces its `{ error: { code } }` shape as Error(code). */
 export async function invokeFn<T>(supabase: SupabaseClient, name: string, body: Record<string, unknown> | FormData): Promise<T> {
-  const { data, error } = await supabase.functions.invoke<T>(name, { body });
+  // Run the function next to the database (us-east-1): otherwise it runs near the caller and each of
+  // its database reads crosses the ocean again.
+  const { data, error } = await supabase.functions.invoke<T>(name, { body, region: FunctionRegion.UsEast1 });
   if (error) {
     if (error instanceof FunctionsHttpError) {
       const payload = (await error.context.json().catch(() => ({}))) as ErrorBody;

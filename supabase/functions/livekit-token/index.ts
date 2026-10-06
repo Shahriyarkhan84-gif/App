@@ -23,10 +23,15 @@ Deno.serve(
     }
 
     const db = adminClient();
-    const [{ data: room }, { data: status }, { data: profile }] = await Promise.all([
+    // Every read at once (one database round trip instead of three).
+    const [{ data: room }, { data: status }, { data: profile }, { data: bans }, { data: seat }] = await Promise.all([
       db.from('rooms').select('id,host_id,status,livekit_room,mode').eq('id', roomId).maybeSingle(),
       db.rpc('user_status', { p_user: userId }),
       db.from('profiles').select('display_name,username').eq('id', userId).maybeSingle(),
+      db.from('room_bans').select('kind,expires_at').eq('room_id', roomId).eq('user_id', userId).in('kind', ['kick', 'block', 'mute']),
+      as === 'guest'
+        ? db.from('room_seats').select('seat').eq('room_id', roomId).eq('user_id', userId).maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
     if (!room) throw new HttpError(404, 'room_not_found');
     if (status === 'banned') throw new HttpError(403, 'account_restricted');
@@ -37,12 +42,6 @@ Deno.serve(
     const isHost = room.host_id === userId;
     if (as === 'host' && !isHost) throw new HttpError(403, 'forbidden');
     if (!isHost) {
-      const { data: bans } = await db
-        .from('room_bans')
-        .select('kind,expires_at')
-        .eq('room_id', roomId)
-        .eq('user_id', userId)
-        .in('kind', ['kick', 'block', 'mute']);
       const activeKinds = (bans ?? []).filter((b) => !b.expires_at || new Date(b.expires_at) > new Date()).map((b) => b.kind);
       if (activeKinds.includes('kick') || activeKinds.includes('block')) throw new HttpError(403, 'banned_from_room');
       // A muted person may still watch, but never gets a microphone as a party guest.
@@ -53,7 +52,6 @@ Deno.serve(
     if (as === 'guest') {
       if (isHost) throw new HttpError(400, 'host_has_seat');
       if (room.mode !== 'voice' && room.mode !== 'video') throw new HttpError(409, 'not_a_party');
-      const { data: seat } = await db.from('room_seats').select('seat').eq('room_id', roomId).eq('user_id', userId).maybeSingle();
       if (!seat) throw new HttpError(403, 'not_seated');
       guestSources = room.mode === 'video' ? [TrackSource.CAMERA, TrackSource.MICROPHONE] : [TrackSource.MICROPHONE];
     }

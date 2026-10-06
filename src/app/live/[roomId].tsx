@@ -32,19 +32,25 @@ export default function LiveRoomScreen() {
   const [following, setFollowing] = useState<boolean | null>(null);
   const [live, setLive] = useState<Partial<Room>>({});
 
+  // One round trip for what the screen needs; the follow state and the LiveKit token load alongside
+  // (each extra sequential request costs ~0.5 s from Pakistan to the us-east-1 server).
   const room = useAsync(async () => {
-    const { data, error } = await supabase.from('rooms').select(ROOM_SELECT).eq('id', roomId).single();
-    if (error) throw error;
-    const r = normalizeRoom(data as never);
-    // Party rooms have their own screen (seats); the mode column may not exist yet, so ignore errors.
-    const { data: modeRow } = await supabase.from('rooms').select('mode').eq('id', roomId).maybeSingle();
-    if (modeRow?.mode === 'voice' || modeRow?.mode === 'video') router.replace({ pathname: '/party/[roomId]', params: { roomId } });
-    const [admin, follow] = await Promise.all([
+    const [res, admin] = await Promise.all([
+      supabase.from('rooms').select(ROOM_SELECT).eq('id', roomId).single(),
       supabase.from('room_admins').select('user_id').eq('room_id', roomId).eq('user_id', userId!).maybeSingle(),
-      supabase.from('follows').select('followee_id').eq('follower_id', userId!).eq('followee_id', r.host_id).maybeSingle(),
     ]);
-    return { room: r, isRoomAdmin: !!admin.data, follows: !!follow.data };
+    if (res.error) throw res.error;
+    const r = normalizeRoom(res.data as never);
+    // Party rooms have their own screen (seats).
+    if (r.mode === 'voice' || r.mode === 'video') router.replace({ pathname: '/party/[roomId]', params: { roomId } });
+    return { room: r, isRoomAdmin: !!admin.data };
   }, [roomId, userId]);
+  const hostId = room.data?.room.host_id;
+  const followRow = useAsync(async () => {
+    if (!hostId) return false;
+    const { data } = await supabase.from('follows').select('followee_id').eq('follower_id', userId!).eq('followee_id', hostId).maybeSingle();
+    return !!data;
+  }, [hostId, userId]);
 
   // Your own room opens the host screen: a viewer connection with your identity would kick your broadcast.
   const ownRoom = !!room.data && room.data.room.host_id === userId;
@@ -53,11 +59,14 @@ export default function LiveRoomScreen() {
   }, [ownRoom]);
 
   // Status from realtime wins over the first fetch, so a host going live again reconnects viewers.
+  // The token is requested at once (in parallel with the room); the server refuses it if the room
+  // isn't live, and it's only used once the room is loaded and isn't your own.
   const liveStatus = live.status ?? room.data?.room.status;
+  const mayBeLive = liveStatus === undefined || liveStatus === 'live';
   const token = useAsync(async () => {
-    if (liveStatus !== 'live' || !room.data || room.data.room.host_id === userId) return null;
+    if (!mayBeLive) return null;
     return getLiveKitToken(supabase, roomId, 'viewer');
-  }, [roomId, liveStatus, !!room.data]);
+  }, [roomId, mayBeLive]);
   // The token says the room isn't live (we missed the end event): refresh the room → "ended" screen.
   const tokenCode = token.error ? errorCode(token.error) : null;
   const reloadRoom = room.reload;
@@ -88,7 +97,7 @@ export default function LiveRoomScreen() {
   useRealtime('rooms', `id=eq.${roomId}`, (p) => setLive(p.new as Partial<Room>));
 
   const r = room.data ? { ...room.data.room, ...live } : null;
-  const isFollowing = following ?? room.data?.follows ?? false;
+  const isFollowing = following ?? followRow.data ?? false;
   const { battle, opponentRoom, mySide, secondsLeft } = usePkBattleState(r?.id, r?.current_battle_id);
   const battleLive = battle?.status === 'live' && !!opponentRoom;
 
@@ -130,6 +139,7 @@ export default function LiveRoomScreen() {
 
   let state: ViewState = { kind: 'success' };
   if (!r) state = offline ? { kind: 'offline', onRetry: room.reload } : room.error ? { kind: 'error', error: room.error, onRetry: room.reload } : { kind: 'loading' };
+  else if (ownRoom) state = { kind: 'loading' };
   else if (removed) state = { kind: 'disabled', title: "You can't join this room", body: 'The host removed you from this live.' };
   else if (r.status !== 'live') state = { kind: 'empty', title: 'This stream has ended', body: `Follow ${displayName(r.host)} to know when they're live next.`, action: { title: 'View profile', onPress: () => router.replace({ pathname: '/user/[id]', params: { id: r.host_id } }) } };
   else if (token.error) state = errorCode(token.error) === 'banned_from_room' || errorCode(token.error) === 'account_restricted'
