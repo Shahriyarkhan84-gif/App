@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.14 — Faster reopen, sign-in icons
+
+- Reopening the app while signed in no longer waits on the logo: Clerk's resource cache (`__experimental_resourceCache`, native only) restores the session from the phone, and the logo shows only while Clerk is actually loading (the 0.9 s minimum is gone).
+- Google and Apple sign-in buttons show their logos.
+
 ## 0.9.13 — Pages remember their data
 
 - Opening a page you saw in the last 30 seconds shows it instantly without asking the server again; older pages show their last data at once and refresh quietly. Returning to a tab no longer reloads it unless its data is over 30 seconds old.

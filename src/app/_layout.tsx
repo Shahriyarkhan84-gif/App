@@ -5,14 +5,15 @@ import { DMSans_400Regular } from '@expo-google-fonts/dm-sans/400Regular';
 import { DMSans_500Medium } from '@expo-google-fonts/dm-sans/500Medium';
 import { DMSans_700Bold } from '@expo-google-fonts/dm-sans/700Bold';
 import { ClerkProvider, useAuth, useUser } from '@clerk/clerk-expo';
+import { resourceCache } from '@clerk/clerk-expo/resource-cache';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import { useFonts } from 'expo-font';
 import { Stack, useGlobalSearchParams, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { PostHogProvider, usePostHog } from 'posthog-react-native';
-import { useEffect, useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, type ReactNode } from 'react';
+import { Platform, View } from 'react-native';
 
 import { LaunchScreen } from '@/components/LaunchScreen';
 import { Text } from '@/components/ui';
@@ -28,32 +29,15 @@ initSentry();
 void SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({ fade: true, duration: 300 });
 
-// Short minimum so the logo doesn't flash; the app loads underneath meanwhile.
-const MIN_LAUNCH_MS = 900;
-
 /**
- * Shows the branded loading page until Clerk has restored the session (and for a short minimum).
- * Once Clerk is ready the app mounts underneath the launch page, so the profile and Home start
- * loading during the animation instead of after it.
+ * Shows the branded loading page only while Clerk restores the session. Clerk's resource cache
+ * (ClerkProvider below) lets a returning user's session load from the phone instead of the
+ * network, so reopening the app goes straight to Home instead of waiting on the logo.
  */
 function LaunchGate({ children }: { children: ReactNode }) {
   const { isLoaded } = useAuth();
-  const [minElapsed, setMinElapsed] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setMinElapsed(true), MIN_LAUNCH_MS);
-    return () => clearTimeout(t);
-  }, []);
   if (!isLoaded) return <LaunchScreen />;
-  return (
-    <View style={{ flex: 1 }}>
-      {children}
-      {!minElapsed && (
-        <View style={StyleSheet.absoluteFill} pointerEvents="none">
-          <LaunchScreen />
-        </View>
-      )}
-    </View>
-  );
+  return <>{children}</>;
 }
 
 function Analytics({ children }: { children: ReactNode }) {
@@ -172,7 +156,7 @@ function RootLayout() {
   if (!fontsReady) return <View style={{ flex: 1, backgroundColor: c.background }} />;
   if (missingRequiredEnv.length > 0) return <MissingConfig />;
   return (
-    <ClerkProvider publishableKey={env.clerkPublishableKey} tokenCache={tokenCache}>
+    <ClerkProvider publishableKey={env.clerkPublishableKey} tokenCache={tokenCache} __experimental_resourceCache={Platform.OS === 'web' ? undefined : resourceCache}>
       <LaunchGate>
         <SupabaseProvider>
           <ProfileProvider>

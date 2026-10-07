@@ -133,6 +133,7 @@ export function FormError({ message }: { message: string | null }) {
 
 /** Google / Apple sign-in through Clerk's SSO flow. */
 export function SocialButtons({ onError, divider = true }: { onError: (message: string) => void; divider?: boolean }) {
+  const { c } = useTheme();
   useWarmUpBrowser();
   useRedirectWhenSignedIn();
   const { startSSOFlow } = useSSO();
@@ -180,9 +181,11 @@ export function SocialButtons({ onError, divider = true }: { onError: (message: 
 
   return (
     <View style={{ gap: 12 }}>
-      <Button title="Continue with Google" variant="secondary" loading={pending === 'oauth_google'} onPress={() => start('oauth_google')} />
+      <Button title="Continue with Google" variant="secondary" loading={pending === 'oauth_google'} onPress={() => start('oauth_google')}
+        icon={<Ionicons name="logo-google" size={18} color="#4285F4" />} />
       {Platform.OS !== 'android' && (
-        <Button title="Continue with Apple" variant="secondary" loading={pending === 'oauth_apple'} onPress={() => start('oauth_apple')} />
+        <Button title="Continue with Apple" variant="secondary" loading={pending === 'oauth_apple'} onPress={() => start('oauth_apple')}
+          icon={<Ionicons name="logo-apple" size={19} color={c.text} />} />
       )}
       {divider && <OrDivider />}
     </View>
