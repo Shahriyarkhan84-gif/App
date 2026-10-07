@@ -33,7 +33,7 @@ export default function AgencyPortalScreen() {
   const { c } = useTheme();
   const offline = useOffline();
   const [tab, setTab] = useState<(typeof TABS)[number]>('Hosts');
-  const { data, error, loading, reload } = useFocusedAsync(() => rpc<Portal>(supabase, 'agency_portal', {}), []);
+  const { data, error, loading, reload } = useFocusedAsync(() => rpc<Portal>(supabase, 'agency_portal', {}), [], 'agency');
 
   if (error && errorCode(error) === 'not_agency_member') {
     return <Screen edges={[]}><StateView state={{ kind: 'disabled', title: 'No agency yet', body: 'The agency portal is for agency owners and staff. Ask Zynalive to set up your agency.' }} /></Screen>;

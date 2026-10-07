@@ -36,7 +36,7 @@ export default function EventScreen() {
     ]);
     if (board.error) throw board.error;
     return { role, event: ev, board: (board.data ?? []) as LeaderRow[], gifts: (gifts.data ?? []) as GiftItem[] };
-  }, [id, role]);
+  }, [id, role], `event:${id}`);
 
   // Scores move with every qualifying gift / battle.
   useRealtime('event_scores', `event_id=eq.${id}`, () => reload(), !!data?.event && eventPhase(data.event) === 'live');

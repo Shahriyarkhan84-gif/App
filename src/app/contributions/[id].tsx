@@ -21,7 +21,7 @@ export default function ContributionsScreen() {
   const { c } = useTheme();
   const offline = useOffline();
   const [period, setPeriod] = useState<Period>(initial ?? 'day');
-  const { data, error, loading, reload } = useAsync(() => rpc<Contributor[]>(supabase, 'host_contributions', { p_host: id, p_period: period }), [id, period]);
+  const { data, error, loading, reload } = useAsync(() => rpc<Contributor[]>(supabase, 'host_contributions', { p_host: id, p_period: period }), [id, period], `contrib:${id}:${period}`);
   const rows = data ?? [];
   const podium = [rows[1], rows[0], rows[2]].filter(Boolean) as Contributor[];
   const open = (r: Contributor) => router.push({ pathname: '/user/[id]', params: { id: r.user_id } });

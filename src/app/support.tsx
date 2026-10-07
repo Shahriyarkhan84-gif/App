@@ -35,7 +35,7 @@ export default function SupportScreen() {
     const { data, error } = await supabase.from('support_tickets').select('*').eq('user_id', userId!).order('created_at', { ascending: false });
     if (error) throw error;
     return data as Ticket[];
-  }, [userId]);
+  }, [userId], 'support');
   useRealtime('notifications', `user_id=eq.${userId}`, (p) => {
     if ((p.new as { type?: string }).type === 'support') reload();
   });

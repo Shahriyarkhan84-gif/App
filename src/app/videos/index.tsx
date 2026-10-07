@@ -30,7 +30,7 @@ export default function VideosScreen() {
     ]);
     if (list.error) throw list.error;
     return { base, videos: (list.data ?? []) as MediaAsset[] };
-  }, []);
+  }, [], 'videos');
 
   const state = resolveState({
     offline, loading, error, data, onRetry: reload,

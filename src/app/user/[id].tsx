@@ -50,7 +50,7 @@ export default function UserProfileScreen() {
       profile: profile.data as Profile, host: host.data, room: room.data, followers: followers.count ?? 0, follows: !!follow.data,
       following: followingList.count ?? 0, friends, pinned: !!pin.data,
     };
-  }, [id, userId]);
+  }, [id, userId], `user:${id}`);
 
   const isMe = id === userId;
   const { isPlatformAdmin } = useProfile();

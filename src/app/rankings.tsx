@@ -35,7 +35,7 @@ export default function RankingsScreen() {
   const [period, setPeriod] = useState<Period>('week');
 
   // Rows remember which tab they belong to, so switching tabs never shows (or opens) the previous tab's rows.
-  const rankings = useAsync(async () => ({ kind, period, rows: await rpc<Ranking[]>(supabase, 'get_rankings', { p_kind: kind, p_period: period }) }), [kind, period]);
+  const rankings = useAsync(async () => ({ kind, period, rows: await rpc<Ranking[]>(supabase, 'get_rankings', { p_kind: kind, p_period: period }) }), [kind, period], `rank:${kind}:${period}`);
   const current = rankings.data && rankings.data.kind === kind && rankings.data.period === period ? rankings.data.rows : undefined;
 
   const open = (r: Ranking) => {

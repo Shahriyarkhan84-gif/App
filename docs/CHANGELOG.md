@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.13 — Pages remember their data
+
+- Opening a page you saw in the last 30 seconds shows it instantly without asking the server again; older pages show their last data at once and refresh quietly. Returning to a tab no longer reloads it unless its data is over 30 seconds old.
+- Remembered: Home, Me, Party tab, Messages (chats, notifications, fans, gifts), Wallet, Earnings, profiles, Rankings (per tab), Events, Videos, Host dashboard, Agency, Support, Contributions, Verified row, gift catalogue.
+- Pull-to-refresh and live changes (realtime) always fetch fresh data; the memory is cleared when the signed-in account changes (`clearAsyncCache`). Tests in `src/lib/__tests__/hooks.test.tsx`.
+
 ## 0.9.12 — UI/UX review quick fixes
 
 From a senior UI/UX review (score 5.5/10; full report kept outside the repo):

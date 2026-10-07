@@ -101,7 +101,7 @@ function Chats() {
       for (const p of profiles ?? []) threads.get(p.id)!.other = p;
     }
     return [...threads.values()];
-  }, [userId]);
+  }, [userId], 'msg-threads');
 
   useRealtime('direct_messages', `recipient_id=eq.${userId}`, () => reload());
 
@@ -148,7 +148,7 @@ function Notifications() {
     const { data, error } = await supabase.from('notifications').select('*').eq('user_id', userId!).order('created_at', { ascending: false }).limit(100);
     if (error) throw error;
     return data as Notification[];
-  }, [userId]);
+  }, [userId], 'msg-notifications');
   useRealtime('notifications', `user_id=eq.${userId}`, () => reload());
 
   const unread = (data ?? []).filter((n) => !n.read_at).length;
@@ -217,7 +217,7 @@ function NewFans() {
     const { data: profiles } = ids.length ? await supabase.from('profiles').select('id,display_name,username,avatar_url').in('id', ids) : { data: [] };
     const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
     return (data ?? []).map((f) => ({ ...f, profile: byId.get(f.follower_id) ?? null }));
-  }, [userId]);
+  }, [userId], 'msg-fans');
   return (
     <StateView state={resolveState({ offline, loading, error, data, onRetry: reload, isEmpty: (d) => d.length === 0, empty: { title: 'No fans yet', body: 'Go live — people who follow you show up here.' } })}>
       <FlatList
@@ -258,7 +258,7 @@ function GiftsReceived() {
     const { data: profiles } = ids.length ? await supabase.from('profiles').select('id,display_name,username,avatar_url').in('id', ids) : { data: [] };
     const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
     return (data ?? []).map((g) => ({ ...g, sender: byId.get(g.sender_id) ?? null }));
-  }, [userId]);
+  }, [userId], 'msg-gifts');
   return (
     <StateView state={resolveState({ offline, loading, error, data, onRetry: reload, isEmpty: (d) => d.length === 0, empty: { title: 'No gifts yet', body: 'Gifts viewers send in your lives show up here.' } })}>
       <FlatList

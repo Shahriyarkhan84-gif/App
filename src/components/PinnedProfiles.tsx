@@ -47,7 +47,7 @@ export function PinnedProfiles({ refreshKey }: { refreshKey?: unknown }) {
       const r = live.get(id);
       return [{ ...p, room: r ? { id: r.id, mode: r.mode } : null }];
     });
-  }, [refreshKey]);
+  }, [refreshKey], 'pinned');
 
   if (!data?.length) return null;
   return <PinnedRow items={data} />;

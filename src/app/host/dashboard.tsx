@@ -100,7 +100,7 @@ export default function HostDashboardScreen() {
       warnings: warnings.count ?? 0,
       recent: ((recent.data ?? []) as StreamRow[]).map((s) => ({ ...s, secs: seconds(s, now) })),
     };
-  }, [profile?.id]);
+  }, [profile?.id], 'host-dashboard');
 
   // Admin changes go through the set_room_admin RPC; the server checks you own the room.
   const setAdmin = async (user: Person, enabled: boolean) => {

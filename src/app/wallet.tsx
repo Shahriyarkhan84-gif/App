@@ -55,7 +55,7 @@ export default function WalletScreen() {
     if (wallet.error) throw wallet.error;
     if (txs.error) throw txs.error;
     return { wallet: wallet.data ?? { coin_balance: 0, frozen: false }, packages: packages.data as CoinPackage[], txs: (txs.data ?? []) as Tx[] };
-  }, [userId]);
+  }, [userId], 'wallet');
   // Coins are credited by the Stripe webhook; the balance updates live.
   useRealtime('wallets', `user_id=eq.${userId}`, () => reload());
 

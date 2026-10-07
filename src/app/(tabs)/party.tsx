@@ -42,7 +42,7 @@ export default function PartyScreen() {
     const list = normalizeRooms(data);
     // Parties first, then the rest by viewers.
     return [...list].sort((a, b) => Number((byId.get(b.id) ?? 'live') !== 'live') - Number((byId.get(a.id) ?? 'live') !== 'live'));
-  }, []);
+  }, [], 'party-tab');
 
   // Pick the party type, then finish the usual Go live steps (title, cover, verification).
   const startParty = async (mode: Mode) => {

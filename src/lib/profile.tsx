@@ -1,4 +1,5 @@
 import { useAuth, useUser } from '@clerk/clerk-expo';
+import { clearAsyncCache } from './hooks';
 import { getLocales } from 'expo-localization';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
@@ -40,6 +41,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [seenUser, setSeenUser] = useState(userId);
   if (seenUser !== userId) {
     setSeenUser(userId);
+    // Another account (or signed out): forget every cached screen so nothing from the old one shows.
+    clearAsyncCache();
     setProfile(null);
     setHost(null);
     setError(null);

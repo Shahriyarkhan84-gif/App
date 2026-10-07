@@ -60,7 +60,7 @@ export default function EarningsScreen() {
       withdrawable: withdrawable.error ? null : Number(withdrawable.data ?? 0),
       split: (split.data?.value as { host_pct: number; stream_pct: number; owner_pct: number } | undefined) ?? null,
     };
-  }, [userId]);
+  }, [userId], 'earnings');
 
   const amount = Number.parseInt(coins, 10);
   const max = data ? data.withdrawable ?? data.earnings.balance : 0;

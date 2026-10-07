@@ -28,7 +28,7 @@ export default function EventsScreen() {
   const { data, error, loading, reload } = useFocusedAsync(async () => {
     const region = await fetchMyRegion(supabase);
     return { region, events: await fetchEvents(supabase, region?.code ?? null) };
-  }, []);
+  }, [], 'events');
 
   const state = resolveState({
     offline, loading, error, data, onRetry: reload,

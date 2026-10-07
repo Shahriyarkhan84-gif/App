@@ -34,7 +34,7 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
     const { data, error } = await supabase.from('gift_catalog').select('id,name,icon,coin_price').eq('active', true).order('sort');
     if (error) throw error;
     return data as GiftItem[];
-  }, []);
+  }, [], 'gift-catalog');
   const wallet = useAsync(async () => {
     const [{ data, error }, split] = await Promise.all([
       supabase.from('wallets').select('coin_balance,frozen').eq('user_id', userId!).maybeSingle(),
