@@ -1,12 +1,12 @@
 import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
 import { Avatar, Button, Input, Row, Screen, Text } from '@/components/ui';
-import { Alert } from '@/lib/alert';
+import { Alert, confirmAction } from '@/lib/alert';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useAsync, useOffline, useRealtime } from '@/lib/hooks';
@@ -65,20 +65,45 @@ export default function ChatScreen() {
     }
   };
 
+  const moreActions = () =>
+    Alert.alert(displayName(data?.other), undefined, [
+      {
+        text: 'Report',
+        onPress: async () => {
+          try {
+            await rpc(supabase, 'report_content', { p_target_type: 'user', p_target_id: otherId, p_reason: 'Reported from direct messages' });
+            Alert.alert('Reported', 'Thanks — our moderators will review it.');
+          } catch (e) {
+            Alert.alert('Report failed', friendlyError(e));
+          }
+        },
+      },
+      {
+        text: 'Block',
+        style: 'destructive',
+        onPress: () => confirmAction('Block this person?', "You'll stop following each other and they can't message you.", 'Block', async () => {
+          try {
+            await rpc(supabase, 'block_user', { p_user: otherId });
+            router.back();
+          } catch (e) {
+            Alert.alert('Could not block', friendlyError(e));
+          }
+        }),
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+
   return (
     <Screen edges={['bottom']}>
       <Stack.Screen
         options={{
           title: displayName(data?.other),
           headerRight: () => (
-            <Row gap={16}>
-              <Pressable onPress={() => Alert.alert('Voice calls', 'Coming soon.')} accessibilityRole="button" accessibilityLabel="Voice call">
-                <Ionicons name="call-outline" size={21} color={c.text} />
-              </Pressable>
-              <Pressable onPress={() => Alert.alert('Video calls', 'Coming soon.')} accessibilityRole="button" accessibilityLabel="Video call">
-                <Ionicons name="videocam-outline" size={22} color={c.text} />
-              </Pressable>
-            </Row>
+            // Block / report from the conversation itself (calls aren't built yet, so no call buttons).
+            <Pressable onPress={moreActions} accessibilityRole="button" accessibilityLabel="More options" hitSlop={10}
+              style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="ellipsis-horizontal" size={22} color={c.text} />
+            </Pressable>
           ),
         }}
       />

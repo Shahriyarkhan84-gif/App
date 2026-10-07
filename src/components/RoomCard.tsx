@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { View } from 'react-native';
@@ -32,13 +33,14 @@ export function RoomCard({ room, width, reason, rank }: { room: Room; width: num
             <LiveBadge />
             <ViewerCount count={room.viewer_count} />
           </View>
-          <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 12, paddingTop: 28, paddingBottom: 12, experimental_backgroundImage: 'linear-gradient(transparent, rgba(0,0,0,0.72))' }}>
+          {/* LinearGradient renders on every platform (CSS background images don't on web). */}
+          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.75)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 12, paddingTop: 28, paddingBottom: 12 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Text variant="label" color="#fff" style={{ fontSize: 15, flexShrink: 1 }} numberOfLines={1}>{name}</Text>
               <RoleBadges profile={room.host} small />
             </View>
             <Text variant="caption" color="#E4DFEC" numberOfLines={1}>{room.title} · {categoryLabel(room.category)}</Text>
-          </View>
+          </LinearGradient>
         </View>
         {reason && <Text variant="caption" faint numberOfLines={1} style={{ marginTop: 4 }}>{reason}</Text>}
       </PressScale>

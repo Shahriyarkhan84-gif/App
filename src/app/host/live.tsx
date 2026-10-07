@@ -210,29 +210,37 @@ export default function HostLiveScreen() {
             ) : (
               <LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" onError={onStageError} onDisconnected={onStageDisconnected} />
             )}
-            <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12 }}>
-              <Row>
+            {/* Two rows so every control fits on small phones (End stays on screen at 360 dp). */}
+            <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, gap: 8 }}>
+              <Row gap={8}>
                 <LiveBadge viewers={viewers ?? session.data.room.viewer_count} />
-                <Text variant="label" color={c.text} style={{ flex: 1 }} numberOfLines={1}>{session.data.room.title}</Text>
-                <Text variant="label" color={c.text}>💎 {coins.toLocaleString()}</Text>
-                <IconButton icon="share-social-outline" label="Share this stream" onPress={shareRoom} />
+                <Text variant="label" color={c.text} style={{ flex: 1, minWidth: 0 }} numberOfLines={1}>{session.data.room.title}</Text>
+                <Button title="End" variant="danger" size="sm" onPress={end} loading={ending} />
+              </Row>
+              <Row gap={8}>
+                <View accessible accessibilityLabel={`${coins.toLocaleString()} diamonds this live`}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.45)' }}>
+                  <Ionicons name="diamond" size={14} color="#CFC8FF" />
+                  <Text variant="label" color={c.text}>{coins.toLocaleString()}</Text>
+                </View>
+                <View style={{ flex: 1 }} />
+                <IconButton icon="share-social-outline" label="Share this stream" onPress={shareRoom} bg="rgba(0,0,0,0.45)" color="#fff" />
                 {!battle && (
                   <Button title="Battle" size="sm" variant="gold" onPress={() => setInviteOpen(true)}
                     icon={<Ionicons name="flash" size={14} color={c.onGold} />} />
                 )}
                 {battleLive && <Button title="End battle" size="sm" variant="secondary" onPress={endBattle} />}
-                <Button title="End" variant="danger" size="sm" onPress={end} loading={ending} />
               </Row>
             </View>
 
             {iAmChallenger && (
-              <View style={{ position: 'absolute', top: insets.top + 60, left: 12, right: 12, backgroundColor: 'rgba(0,0,0,0.75)', borderRadius: 16, padding: 14, gap: 8 }}>
+              <View style={{ position: 'absolute', top: insets.top + 104, left: 12, right: 12, backgroundColor: 'rgba(0,0,0,0.75)', borderRadius: 16, padding: 14, gap: 8 }}>
                 <Text variant="label" color={c.text}>Waiting for {displayName(opponentRoom?.host)} to respond…</Text>
                 <Button title="Cancel invite" variant="secondary" size="sm" onPress={() => respond(false)} />
               </View>
             )}
             {iAmChallenged && (
-              <View style={{ position: 'absolute', top: insets.top + 60, left: 12, right: 12, backgroundColor: 'rgba(0,0,0,0.75)', borderRadius: 16, padding: 14, gap: 10 }}>
+              <View style={{ position: 'absolute', top: insets.top + 104, left: 12, right: 12, backgroundColor: 'rgba(0,0,0,0.75)', borderRadius: 16, padding: 14, gap: 10 }}>
                 <Row gap={10}>
                   <Avatar uri={opponentRoom?.host?.avatar_url} name={displayName(opponentRoom?.host)} size={36} />
                   <Text variant="label" color={c.text} style={{ flex: 1 }}>{displayName(opponentRoom?.host)} wants to PK battle</Text>

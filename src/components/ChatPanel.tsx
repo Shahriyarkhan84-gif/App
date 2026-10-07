@@ -3,7 +3,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable, TextInput, View } from 'react-native';
 
-import { Alert } from '@/lib/alert';
+import { Alert, confirmAction } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -190,8 +190,8 @@ export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress, ac
             {canActOn(selected) && (
               <>
                 <Button title="Mute 10 minutes" variant="secondary" onPress={() => moderate(selected, 'mute', 10)} />
-                <Button title="Remove from room" variant="secondary" onPress={() => moderate(selected, 'kick', 60)} />
-                <Button title="Block from room" variant="danger" onPress={() => moderate(selected, 'block')} />
+                <Button title="Remove from room" variant="secondary" onPress={() => confirmAction('Remove from room?', `${displayName(selected.sender)} is removed for 1 hour.`, 'Remove', () => moderate(selected, 'kick', 60))} />
+                <Button title="Block from room" variant="danger" onPress={() => confirmAction('Block from room?', `${displayName(selected.sender)} can't come back to your room.`, 'Block', () => moderate(selected, 'block'))} />
               </>
             )}
             {isHost && selected.sender_id !== hostId && <Button title="Make room admin" variant="secondary" onPress={() => makeAdmin(selected)} />}

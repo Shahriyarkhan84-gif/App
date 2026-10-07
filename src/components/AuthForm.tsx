@@ -45,7 +45,7 @@ export function useRedirectWhenSignedIn() {
 
 /** Shown when Clerk created the session but holds it on a task (e.g. "choose an organization"). */
 export const PENDING_TASK_MESSAGE =
-  'Your account is ready, but Clerk is asking for an extra step (choose an organization). The app owner needs to turn off Organizations in the Clerk dashboard.';
+  'Your account is ready, but one more sign-in step is needed that the app can\'t show yet. Please try again in a few minutes or contact support.';
 
 export function clerkErrorMessage(err: unknown) {
   if (isClerkAPIResponseError(err)) return err.errors[0]?.longMessage ?? err.errors[0]?.message ?? 'Request failed';
@@ -81,7 +81,9 @@ export function AuthTerms() {
   const { c } = useTheme();
   return (
     <Text variant="caption" faint style={{ textAlign: 'center', marginTop: 28, lineHeight: 18 }}>
-      By continuing you agree to the Terms and{' '}
+      By continuing you agree to the{' '}
+      <Text variant="caption" color={c.primary} accessibilityRole="link" onPress={() => router.push('/terms')}>Terms</Text>
+      {' '}and{' '}
       <Text variant="caption" color={c.primary} accessibilityRole="link" onPress={() => router.push('/privacy')}>Privacy Policy</Text>
       . You must be 18+ to go live.
     </Text>

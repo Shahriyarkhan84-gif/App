@@ -5,7 +5,7 @@ export default function AccountDeletionPage() {
   return (
     <LegalPage title="Delete your Zynalive account" updated="26 September 2026">
       <H>In the app</H>
-      <Bullets items={['Open Zynalive and sign in.', 'Go to Me → Delete account.', 'Type DELETE and confirm. Deletion happens immediately.']} />
+      <Bullets items={['Open Zynalive and sign in.', 'Go to Me → Settings (gear icon) → Delete account.', 'Type DELETE and confirm. Deletion happens immediately.']} />
       <H>Without the app</H>
       <P>Email support@zynalive.com from the address on your account with the subject “Delete my account” and your 8-digit Zynalive ID. We delete the account within 30 days and confirm by email.</P>
       <H>What we delete</H>

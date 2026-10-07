@@ -117,6 +117,22 @@ export default function HomeScreen() {
   const emptyState: { title: string; body?: string } = category === 'all' ? emptyCopy : { title: `No ${categoryLabel(category)} lives`, body: 'Try another category.' };
   const state = resolveState({ offline, loading, error, data, onRetry: reload });
 
+  const showBanners = feed === 'popular' && category === 'all';
+  const grid = (list: Room[], offset: number) => (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+      {list.map((r, j) => (
+        <FadeIn key={`${feed}-${category}-${r.id}`} delay={stagger(offset + j, 30, 150)} duration={250} from={12}>
+          <RoomCard
+            room={r}
+            width={cardWidth}
+            reason={feed === 'popular' ? data?.recommended.get(r.id)?.reason : null}
+            rank={feed === 'popular' && category === 'all' ? topRank(r.id) : undefined}
+          />
+        </FadeIn>
+      ))}
+    </View>
+  );
+
   const sideMenu: MenuItem[] = [
     { key: 'videos', icon: 'play-circle-outline', label: t('menu.videos'), onPress: () => router.push('/videos') },
     { key: 'events', icon: 'calendar-outline', label: t('menu.events'), onPress: () => router.push('/events') },
@@ -162,16 +178,6 @@ export default function HomeScreen() {
               <FeaturedHost key={`${topRoom.host_id}-${data!.followed.has(topRoom.host_id)}`} room={topRoom} following={data!.followed.has(topRoom.host_id)} />
             </FadeIn>
           )}
-          {feed === 'popular' && category === 'all' && (
-            <FadeIn>
-              <LiveEventBanner />
-            </FadeIn>
-          )}
-          {feed === 'popular' && category === 'all' && (
-            <FadeIn>
-              <PkBattleBanner room={battleRoom} />
-            </FadeIn>
-          )}
           {rooms.length === 0 ? (
             <View style={{ paddingVertical: 32, paddingHorizontal: 16, alignItems: 'center', gap: 6, borderRadius: 18, backgroundColor: c.surface }}>
               <Ionicons name="videocam-outline" size={28} color={c.textFaint} />
@@ -179,20 +185,24 @@ export default function HomeScreen() {
               {emptyState.body && <Text variant="bodySmall" muted style={{ textAlign: 'center' }}>{emptyState.body}</Text>}
             </View>
           ) : (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              {rooms.map((r, i) => (
-                <FadeIn key={`${feed}-${category}-${r.id}`} delay={stagger(i, 30, 150)} duration={250} from={12}>
-                  <RoomCard
-                    room={r}
-                    width={cardWidth}
-                    reason={feed === 'popular' ? data?.recommended.get(r.id)?.reason : null}
-                    rank={feed === 'popular' && category === 'all' ? topRank(r.id) : undefined}
-                  />
-                </FadeIn>
-              ))}
-            </View>
+            <>
+              {/* Lives first; the event and PK banners sit after the first two rows instead of above them. */}
+              {grid(rooms.slice(0, columns * 2), 0)}
+              {showBanners && (
+                <>
+                  <FadeIn><LiveEventBanner /></FadeIn>
+                  <FadeIn><PkBattleBanner room={battleRoom} /></FadeIn>
+                </>
+              )}
+              {rooms.length > columns * 2 && grid(rooms.slice(columns * 2), columns * 2)}
+            </>
           )}
-          {feed === 'popular' && rooms.length > 0 && <Text variant="caption" faint style={{ textAlign: 'center' }}>Picks for you come first.</Text>}
+          {rooms.length === 0 && showBanners && (
+            <>
+              <FadeIn><LiveEventBanner /></FadeIn>
+              <FadeIn><PkBattleBanner room={battleRoom} /></FadeIn>
+            </>
+          )}
         </ScrollView>
       </StateView>
     </Screen>

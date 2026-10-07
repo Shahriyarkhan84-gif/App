@@ -158,7 +158,7 @@ function ProposalsSection() {
             <Text>{p.rationale}</Text>
             <Row>
               <Button title="Approve" size="sm" onPress={() => confirmThen('Approve AI proposal?', `${p.action_type.replace(/_/g, ' ')} for ${names?.[p.target_user_id ?? ''] ?? 'this user'} will be applied now.`, 'Approve', () => act('review_ai_action', { p_action_id: p.id, p_approve: true }, reload))} />
-              <Button title="Reject" size="sm" variant="secondary" onPress={() => act('review_ai_action', { p_action_id: p.id, p_approve: false }, reload)} />
+              <Button title="Reject" size="sm" variant="secondary" onPress={() => confirmThen('Reject AI proposal?', 'Nothing will be applied.', 'Reject', () => act('review_ai_action', { p_action_id: p.id, p_approve: false }, reload))} />
             </Row>
           </Card>
         ))}
@@ -192,7 +192,7 @@ function ReportsSection() {
             )}
             <Row style={{ flexWrap: 'wrap' }}>
               <Button title="Warn" size="sm" onPress={() => act('apply_moderation_action', { p_user: r.target_user_id, p_action: 'warning', p_reason: r.ai_assessment?.summary ?? r.reason, p_report: r.id }, reload)} />
-              <Button title="Restrict 24h" size="sm" variant="secondary" onPress={() => act('apply_moderation_action', { p_user: r.target_user_id, p_action: 'temp_restriction', p_reason: r.ai_assessment?.summary ?? r.reason, p_hours: 24, p_report: r.id }, reload)} />
+              <Button title="Restrict 24h" size="sm" variant="secondary" onPress={() => confirmThen('Restrict for 24 hours?', 'They can watch but not chat, gift or go live for a day.', 'Restrict', () => act('apply_moderation_action', { p_user: r.target_user_id, p_action: 'temp_restriction', p_reason: r.ai_assessment?.summary ?? r.reason, p_hours: 24, p_report: r.id }, reload))} />
               <Button title="Ban 7d" size="sm" variant="danger" onPress={() => confirmThen('Ban for 7 days?', 'They are signed out of lives, chat and gifts for a week.', 'Ban', () => act('apply_moderation_action', { p_user: r.target_user_id, p_action: 'temp_ban', p_reason: r.ai_assessment?.summary ?? r.reason, p_hours: 168, p_report: r.id }, reload))} />
               <Button title="Dismiss" size="sm" variant="ghost" onPress={() => act('dismiss_report', { p_report: r.id }, reload)} />
             </Row>
@@ -238,8 +238,8 @@ function HostApplicationsSection() {
             {a.reasons.map((r) => <Text key={r} variant="bodySmall" color={c.warning}>⚠ {REASON_LABELS[r] ?? r}</Text>)}
             {a.didit_id_request && <Text variant="caption" faint selectable>Didit request {a.didit_id_request}</Text>}
             <Row>
-              <Button title="Approve" size="sm" onPress={() => act('review_host_application', { p_id: a.id, p_approve: true }, reload)} />
-              <Button title="Decline" size="sm" variant="secondary" onPress={() => act('review_host_application', { p_id: a.id, p_approve: false, p_note: 'Declined by owner' }, reload)} />
+              <Button title="Approve" size="sm" onPress={() => confirmThen('Approve this host?', `${a.full_name} becomes a verified host and can go live.`, 'Approve', () => act('review_host_application', { p_id: a.id, p_approve: true }, reload))} />
+              <Button title="Decline" size="sm" variant="secondary" onPress={() => confirmThen('Decline this application?', `${a.full_name} will be told verification was declined.`, 'Decline', () => act('review_host_application', { p_id: a.id, p_approve: false, p_note: 'Declined by owner' }, reload))} />
             </Row>
           </Card>
         ))}
@@ -312,7 +312,7 @@ function WithdrawalsSection() {
             {w.status === 'requested' ? (
               <Row>
                 <Button title="Approve" size="sm" onPress={() => confirmThen('Approve withdrawal?', `${formatMoney(w.amount_minor, w.currency)} to ${w.payout_method.type} ${w.payout_method.account ?? ''}. Send the payout, then mark it paid.`, 'Approve', () => act('review_withdrawal', { p_withdrawal_id: w.id, p_approve: true }, reload))} />
-                <Button title="Reject" size="sm" variant="secondary" onPress={() => act('review_withdrawal', { p_withdrawal_id: w.id, p_approve: false, p_note: 'Rejected by owner' }, reload)} />
+                <Button title="Reject" size="sm" variant="secondary" onPress={() => confirmThen('Reject withdrawal?', 'The coins go back to the host\'s balance.', 'Reject', () => act('review_withdrawal', { p_withdrawal_id: w.id, p_approve: false, p_note: 'Rejected by owner' }, reload))} />
               </Row>
             ) : (
               <Row>
@@ -473,7 +473,7 @@ function EventsSection() {
                 )}
                 {e.status === 'scheduled' && phase === 'ended' && <Button title="Finalize" size="sm" onPress={() => act('finalize_event', { p_id: e.id }, reload)} />}
                 {(e.status === 'draft' || (e.status === 'scheduled' && phase !== 'ended')) && (
-                  <Button title="Cancel" size="sm" variant="danger" onPress={() => act('cancel_event', { p_id: e.id }, reload)} />
+                  <Button title="Cancel" size="sm" variant="danger" onPress={() => confirmThen('Cancel this event?', 'It disappears for everyone and no rewards are given.', 'Cancel event', () => act('cancel_event', { p_id: e.id }, reload))} />
                 )}
               </Row>
             </Card>

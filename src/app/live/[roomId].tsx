@@ -186,6 +186,7 @@ export default function LiveRoomScreen() {
                       onPress={toggleFollow}
                       accessibilityRole="button"
                       accessibilityState={{ selected: isFollowing }}
+                      hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
                       style={{ height: 36, paddingHorizontal: 14, borderRadius: 18, justifyContent: 'center', backgroundColor: isFollowing ? 'rgba(255,255,255,0.18)' : c.primary }}
                     >
                       <Text variant="label" color="#fff" style={{ fontSize: 13 }}>{isFollowing ? 'Following' : 'Follow'}</Text>

@@ -31,7 +31,7 @@ export default function PrivacyPage() {
       <P>Your name, username, photo, bio, Zynalive ID, host badge, follower counts, live streams and live-chat messages are visible to other users. Direct messages are visible only to you and the recipient, and to moderators when reported.</P>
 
       <H>Retention and deletion</H>
-      <P>We keep your data while your account is open. You can delete your account at any time in Me → Delete account, or see /account-deletion. Payment and payout records are kept as required by Pakistani law.</P>
+      <P>We keep your data while your account is open. You can delete your account at any time in Me → Settings (gear icon) → Delete account, or see /account-deletion. Payment and payout records are kept as required by Pakistani law.</P>
 
       <H>Your rights</H>
       <P>You can access, correct or delete your data, and object to or restrict some processing, by contacting support@zynalive.com. You can edit most profile details in the app.</P>

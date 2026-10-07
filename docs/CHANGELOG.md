@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.12 — UI/UX review quick fixes
+
+From a senior UI/UX review (score 5.5/10; full report kept outside the repo):
+- Host live: the top bar is two rows so End, Share and Battle fit on 360 dp phones; diamonds use the app's icon; dark share button over video.
+- "Are you sure?" before sign-out, ending a live from Go live, removing/blocking someone from a room, removing a room admin, and owner actions (reject proposal, restrict, approve/decline host, reject withdrawal, cancel event). Shared `confirmAction()` in `src/lib/alert`.
+- Removed developer leftovers: "Menu styles" in Settings, the feedback setup alert (row hidden unless configured), the Clerk "Organizations" message, "Playback not configured", and the "Coming soon" call buttons (chat header now has Report / Block).
+- New Terms of Service page (`/terms`, public) linked from sign-up and Settings; privacy and account-deletion pages give the right path (Me → Settings → Delete account).
+- Home: live rooms come first; the event and PK banners sit after the first two rows; dev caption removed.
+- PK battle: the split video fills ~58% of the screen instead of a fixed 300 px.
+- Readability: gift prices, room-card name scrim, wallet and earnings cards use `LinearGradient` (CSS gradients didn't render on web); Earnings shows "90 coins (90%)"; Verify identity opens Hosting; larger Follow tap areas.
+
 ## 0.9.11 — Faster start-up and lives (speed audit)
 
 From an AI speed audit (DB queries measured at under 12 ms; waits come from the us-east-1 round trip):

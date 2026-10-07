@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { useEffect, useState, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 
 import { getLiveKitToken, rpc } from '@/lib/api';
 import { errorCode } from '@/lib/errors';
@@ -12,8 +12,14 @@ import { displayName, normalizeRoom, ROOM_SELECT, type PkBattle, type Room } fro
 import { OpponentStage } from './LiveStage';
 import { Avatar, Row, Text } from './ui';
 
-/** Height of the split-video block, matching the design canvas's ~44% of screen. */
+/** Minimum height of the split-video block (small phones). */
 export const PK_SPLIT_HEIGHT = 300;
+
+/** The split takes ~58% of the screen so the two videos fill it instead of leaving it half black. */
+export function usePkSplitHeight() {
+  const { height } = useWindowDimensions();
+  return Math.round(Math.min(Math.max(height * 0.58, PK_SPLIT_HEIGHT), 620));
+}
 
 /**
  * Live state of a battle a room is currently in (`rooms.current_battle_id`).
@@ -92,8 +98,9 @@ export function PkBattleStage({ mySide, myStage, opponentRoom, mySideLabel, oppo
   opponentSideLabel: string;
 }) {
   const leftIsMe = mySide !== 'b';
+  const splitHeight = usePkSplitHeight();
   return (
-    <View style={{ height: PK_SPLIT_HEIGHT, flexDirection: 'row', backgroundColor: '#000' }}>
+    <View style={{ height: splitHeight, flexDirection: 'row', backgroundColor: '#000' }}>
       <View style={{ flex: 1, overflow: 'hidden' }}>{leftIsMe ? myStage : <OpponentPane opponentRoom={opponentRoom} />}</View>
       <View style={{ flex: 1, overflow: 'hidden' }}>{leftIsMe ? <OpponentPane opponentRoom={opponentRoom} /> : myStage}</View>
       <Row gap={0} style={{ position: 'absolute', left: 0, right: 0, bottom: 6, justifyContent: 'space-between', paddingHorizontal: 10 }}>
@@ -106,7 +113,7 @@ export function PkBattleStage({ mySide, myStage, opponentRoom, mySideLabel, oppo
       </Row>
       <View
         style={{
-          position: 'absolute', top: PK_SPLIT_HEIGHT / 2 - 26, left: '50%', marginLeft: -26,
+          position: 'absolute', top: splitHeight / 2 - 26, left: '50%', marginLeft: -26,
           width: 52, height: 52, borderRadius: 26, backgroundColor: c.background, borderWidth: 3, borderColor: c.gold,
           alignItems: 'center', justifyContent: 'center',
         }}

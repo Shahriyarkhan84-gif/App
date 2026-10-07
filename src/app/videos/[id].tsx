@@ -82,7 +82,7 @@ export default function VideoScreen() {
   if (state.kind === 'success' && (!asset || asset.status === 'removed')) state = { kind: 'empty', title: t('videos.unavailable') };
   else if (state.kind === 'success' && asset?.status === 'failed') state = { kind: 'error', error: new Error('This video could not be processed. Upload it again from Your videos.') };
   else if (state.kind === 'success' && asset && asset.status !== 'ready') state = { kind: 'disabled', title: t('videos.processing'), body: t('videos.processing.body') };
-  else if (state.kind === 'success' && !data?.base) state = { kind: 'disabled', title: 'Playback not configured', body: 'Video playback is not set up yet.' };
+  else if (state.kind === 'success' && !data?.base) state = { kind: 'disabled', title: 'Video unavailable', body: 'Videos can\'t be played right now. Please try again later.' };
 
   const canRemove = !!asset && (asset.owner_id === profile?.id || isPlatformAdmin);
   const badge = asset ? qualityBadge(asset, data?.renditions) : null;

@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -91,14 +92,14 @@ export default function EarningsScreen() {
         {data && (
           <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
             <FadeIn>
-              <View style={{ padding: 20, borderRadius: 22, gap: 10, backgroundColor: c.violetSurface, experimental_backgroundImage: 'linear-gradient(135deg, #4B32B8, #1B1830)' }}>
-                <Text variant="bodySmall" color={c.violetText}>Available diamonds</Text>
+              <LinearGradient colors={['#4B32B8', '#1B1830']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, borderRadius: 22, gap: 10 }}>
+                <Text variant="bodySmall" color="#E7DBFF">Available diamonds</Text>
                 <Row gap={10}><Ionicons name="diamond" size={24} color="#CFC8FF" /><Text variant="display" color="#fff" accessibilityLiveRegion="polite">{data.earnings.balance.toLocaleString()}</Text></Row>
                 <Row gap={24}>
-                  <View><Text variant="label" color="#fff">{data.earnings.held.toLocaleString()}</Text><Text variant="caption" color={c.violetText}>In review</Text></View>
-                  <View><Text variant="label" color="#fff">{data.earnings.lifetime.toLocaleString()}</Text><Text variant="caption" color={c.violetText}>Lifetime</Text></View>
+                  <View><Text variant="label" color="#fff">{data.earnings.held.toLocaleString()}</Text><Text variant="caption" color="#E7DBFF">In review</Text></View>
+                  <View><Text variant="label" color="#fff">{data.earnings.lifetime.toLocaleString()}</Text><Text variant="caption" color="#E7DBFF">Lifetime</Text></View>
                 </Row>
-              </View>
+              </LinearGradient>
             </FadeIn>
 
             {data.split && (
@@ -113,7 +114,7 @@ export default function EarningsScreen() {
                   <View key={r.label} style={{ gap: 4 }}>
                     <Row style={{ justifyContent: 'space-between' }}>
                       <Text>{r.label}</Text>
-                      <Text variant="label">{r.pct} · {r.pct}%</Text>
+                      <Text variant="label">{r.pct} coins ({r.pct}%)</Text>
                     </Row>
                     <View style={{ height: 6, borderRadius: 3, backgroundColor: c.surfaceRaised, overflow: 'hidden' }}>
                       <View style={{ width: `${r.pct}%`, height: '100%', backgroundColor: r.color }} />
@@ -128,7 +129,7 @@ export default function EarningsScreen() {
               {!verified ? (
                 <>
                   <Text muted>Verify your identity before withdrawing — it takes about 2 minutes.</Text>
-                  <Button title="Verify identity" variant="secondary" onPress={() => router.push('/create')} />
+                  <Button title="Verify identity" variant="secondary" onPress={() => router.push('/hosting')} />
                 </>
               ) : data.rate === null ? (
                 <Text muted>Withdrawals open soon — the coin payout rate is being finalised.</Text>

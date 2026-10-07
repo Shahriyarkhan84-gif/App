@@ -1,4 +1,5 @@
 import { useAuth } from '@clerk/clerk-expo';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -84,7 +85,8 @@ export default function WalletScreen() {
           const pick = data.packages.find((p) => p.id === selected) ?? data.packages[1] ?? data.packages[0];
           return (
             <ScrollView contentContainerStyle={{ padding: 16, gap: 18, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
-              <Row style={{ padding: 20, borderRadius: 22, backgroundColor: c.goldSurface, borderWidth: 1, borderColor: c.goldBorder, justifyContent: 'space-between', experimental_backgroundImage: 'linear-gradient(135deg, #7A5A12, #2A2110)' }}>
+              <LinearGradient colors={[c.goldSurface, c.goldBorder]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={{ padding: 20, borderRadius: 22, borderWidth: 1, borderColor: c.goldBorder, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <View style={{ gap: 4 }}>
                   <Row gap={6}><Coin /><Text variant="bodySmall" color={c.goldText}>Coin balance</Text></Row>
                   <Text variant="display" accessibilityLiveRegion="polite">{data.wallet.coin_balance.toLocaleString()}</Text>
@@ -92,7 +94,7 @@ export default function WalletScreen() {
                 <Text variant="caption" color={c.goldText} style={{ maxWidth: 130, textAlign: 'right' }}>
                   {data.wallet.frozen ? 'On hold while a payment dispute is reviewed' : 'Used to send gifts in live rooms'}
                 </Text>
-              </Row>
+              </LinearGradient>
 
               <View style={{ gap: 10 }}>
                 <Text variant="h3">Buy coins</Text>

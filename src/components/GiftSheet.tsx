@@ -120,7 +120,7 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
             >
               <Text style={{ fontSize: 28, lineHeight: 34 }}>{g.icon}</Text>
               <Text variant="caption">{g.name}</Text>
-              <Text variant="caption" color={c.gold} style={{ fontSize: 11 }}>{g.coin_price.toLocaleString()}</Text>
+              <Text variant="caption" color={c.goldText} style={{ fontSize: 12, fontWeight: '700' }}>{g.coin_price.toLocaleString()}</Text>
             </PressScale>
             </Pop>
           );

@@ -6,7 +6,7 @@ import { ScrollView, View } from 'react-native';
 import { FadeIn, PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Avatar, Button, Coin, compactNumber, Row, Screen, Sheet, Text } from '@/components/ui';
-import { Alert } from '@/lib/alert';
+import { Alert, confirmAction } from '@/lib/alert';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline } from '@/lib/hooks';
@@ -175,7 +175,7 @@ export default function HostDashboardScreen() {
                 <Row key={a.id} gap={10}>
                   <Avatar uri={a.avatar_url} name={displayName(a)} size={34} />
                   <Text style={{ flex: 1 }} numberOfLines={1}>{displayName(a)}</Text>
-                  <Button title="Remove" variant="outline" size="sm" loading={busy === a.id} onPress={() => setAdmin(a, false)} />
+                  <Button title="Remove" variant="outline" size="sm" loading={busy === a.id} onPress={() => confirmAction('Remove room admin?', `${displayName(a)} can no longer moderate your room.`, 'Remove', () => void setAdmin(a, false))} />
                 </Row>
               ))}
               {data.admins.length < MAX_ADMINS && (

@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 
 import { Button, Chip, ListRow, Row, Screen, Text } from '@/components/ui';
-import { Alert } from '@/lib/alert';
+import { Alert, confirmAction } from '@/lib/alert';
 import { LANGUAGES, useI18n, type Language } from '@/lib/i18n';
 import { useTheme } from '@/lib/theme';
 
@@ -32,11 +32,11 @@ export default function SettingsScreen() {
         </View>
 
         <View>
-          <ListRow icon="apps-outline" label={t('menu.styles')} onPress={() => router.push('/menus')} />
+          <ListRow icon="document-text-outline" label="Terms of Service" onPress={() => router.push('/terms')} />
           <ListRow icon="lock-closed-outline" label={t('settings.privacy')} onPress={() => router.push('/privacy')} last />
         </View>
 
-        <Button title={t('settings.signOut')} variant="ghost" onPress={async () => { await signOut(); router.replace('/'); }} />
+        <Button title={t('settings.signOut')} variant="ghost" onPress={() => confirmAction(t('settings.signOut'), 'You can sign back in any time.', t('settings.signOut'), () => void signOut().then(() => router.replace('/')))} />
         <Button title={t('settings.delete')} variant="ghost" onPress={() => router.push('/delete-account')} style={{ marginTop: -8 }} icon={<Ionicons name="trash-outline" size={16} color={c.danger} />} />
       </ScrollView>
     </Screen>

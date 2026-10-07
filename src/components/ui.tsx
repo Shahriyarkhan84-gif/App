@@ -114,7 +114,8 @@ export function Button({ title, variant = 'primary', size = 'md', loading, icon,
 }
 
 /** Round 44pt icon-only button (header actions). */
-export function IconButton({ icon, label, onPress, color, badge }: { icon: IconName; label: string; onPress?: () => void; color?: string; badge?: boolean }) {
+/** `bg` overrides the surface (e.g. a translucent dark circle over live video). */
+export function IconButton({ icon, label, onPress, color, badge, bg }: { icon: IconName; label: string; onPress?: () => void; color?: string; badge?: boolean; bg?: string }) {
   const { c } = useTheme();
   return (
     <PressScale
@@ -123,7 +124,7 @@ export function IconButton({ icon, label, onPress, color, badge }: { icon: IconN
       accessibilityLabel={label}
       scaleTo={0.9}
       haptic
-      style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}
+      style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: bg ?? c.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}
     >
       <Ionicons name={icon} size={20} color={color ?? c.text} />
       {badge && <View style={{ position: 'absolute', top: 10, right: 11, width: 8, height: 8, borderRadius: 4, backgroundColor: c.primary }} />}

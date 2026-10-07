@@ -16,7 +16,7 @@ import { HostVerificationCard } from '@/components/HostVerificationCard';
 import { FadeIn, Pop } from '@/components/Motion';
 import { StateView, type ViewState } from '@/components/StateView';
 import { Button, Card, Chip, Input, Row, Screen, Text } from '@/components/ui';
-import { Alert } from '@/lib/alert';
+import { Alert, confirmAction } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -304,7 +304,7 @@ export default function CreateScreen() {
                   : router.push('/host/live'))}
               />
               {/* Always reachable, even when the live screen can't connect. */}
-              <Button title="End live" variant="ghost" loading={busy} onPress={endLive} />
+              <Button title="End live" variant="ghost" loading={busy} onPress={() => confirmAction('End your live?', 'Everyone watching will be disconnected.', 'End live', () => void endLive())} />
             </Card>
             </FadeIn>
           )}

@@ -72,9 +72,10 @@ export function FeaturedHost({ room, following: initialFollowing }: { room: Room
             onPress={toggleFollow}
             accessibilityRole="button"
             accessibilityState={{ selected: following }}
-            style={{ height: 32, paddingHorizontal: 14, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: following ? 'rgba(255,255,255,0.22)' : '#fff' }}
+            hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+            style={{ height: 36, paddingHorizontal: 14, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: following ? 'rgba(255,255,255,0.22)' : '#fff' }}
           >
-            <Text variant="label" color={following ? '#fff' : c.primary} style={{ fontSize: 12, fontWeight: '800' }}>{following ? 'Following' : 'Follow'}</Text>
+            <Text variant="label" color={following ? '#fff' : c.primary} style={{ fontSize: 13, fontWeight: '800' }}>{following ? 'Following' : 'Follow'}</Text>
           </PressScale>
         )}
       </View>

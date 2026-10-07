@@ -122,7 +122,8 @@ export default function ProfileScreen() {
           <ListRow icon="trophy-outline" label={t('menu.rankings')} onPress={() => router.push('/rankings')} />
           <ListRow icon="calendar-outline" label={t('menu.events')} onPress={() => router.push('/events')} />
           <ListRow icon="help-buoy-outline" label={t('menu.support')} onPress={() => router.push('/support')} />
-          <ListRow icon="megaphone-outline" label={t('menu.feedback')} onPress={openFeedback} last={!isAgencyStaff && !isPlatformAdmin} />
+          {/* Only when a feedback board is configured; otherwise the row would just show a setup message. */}
+          {!!env.productBridgeUrl && <ListRow icon="megaphone-outline" label={t('menu.feedback')} onPress={openFeedback} last={!isAgencyStaff && !isPlatformAdmin} />}
           {isAgencyStaff && <ListRow icon="business-outline" label={t('menu.agency')} color={c.gold} onPress={() => router.push('/agency')} last={!isPlatformAdmin} />}
           {isPlatformAdmin && <ListRow icon="analytics-outline" label={t('menu.admin')} onPress={() => router.push('/admin')} last />}
         </FadeIn>

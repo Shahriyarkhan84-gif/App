@@ -144,6 +144,7 @@ function RootNavigator() {
       <Stack.Screen name="sso-callback" options={{ headerShown: false }} />
       {/* Public pages linked from the store listings; readable signed out. */}
       <Stack.Screen name="privacy" options={{ headerShown: false }} />
+      <Stack.Screen name="terms" options={{ headerShown: false }} />
       <Stack.Screen name="account-deletion" options={{ headerShown: false }} />
     </Stack>
   );
