@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, Share, useWindowDimensions, View } from 'react-native';
+import { Pressable, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChatPanel } from '@/components/ChatPanel';
@@ -22,6 +22,7 @@ import { useAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
 import { liveColors as c } from '@/lib/theme';
 import { displayName, normalizeRoom, ROOM_SELECT, type Room } from '@/lib/types';
+import { shareMessage } from '@/lib/share';
 
 type Gifter = { user_id: string; display_name: string | null; username: string | null; avatar_url: string | null; coins: number };
 
@@ -152,7 +153,7 @@ export default function LiveRoomScreen() {
   };
 
   const shareRoom = () => {
-    void Share.share({ message: `Watch ${displayName(r?.host)} live on Zynalive: zynalive://live/${roomId}` });
+    void shareMessage(`Watch ${displayName(r?.host)} live on Zynalive: zynalive://live/${roomId}`);
     track('room_shared', { room_id: roomId });
   };
 

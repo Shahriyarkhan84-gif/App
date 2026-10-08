@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, Share, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { ContributionsCard } from '@/components/Contributions';
 import { LiveAvatar } from '@/components/FollowingLive';
@@ -20,6 +20,7 @@ import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 import { displayName, type Profile } from '@/lib/types';
+import { shareMessage } from '@/lib/share';
 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -78,7 +79,7 @@ export default function UserProfileScreen() {
 
   const shareProfile = () => {
     if (!data) return;
-    void Share.share({ message: `${displayName(data.profile)} on Zynalive — ID ${data.profile.user_number}: zynalive://user/${id}` });
+    void shareMessage(`${displayName(data.profile)} on Zynalive — ID ${data.profile.user_number}: zynalive://user/${id}`);
     track('profile_shared', { user_id: id! });
   };
 
@@ -134,7 +135,7 @@ export default function UserProfileScreen() {
         options={{
           title: data ? displayName(data.profile) : '',
           headerRight: data ? () => (
-            <PressScale onPress={shareProfile} accessibilityRole="button" accessibilityLabel="Share this profile">
+            <PressScale onPress={shareProfile} accessibilityRole="button" accessibilityLabel="Share this profile" hitSlop={12}>
               <Ionicons name="share-social-outline" size={21} color={c.text} />
             </PressScale>
           ) : undefined,

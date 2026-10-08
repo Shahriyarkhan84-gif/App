@@ -215,7 +215,7 @@ export default function PartyRoomScreen() {
 
   let state: ViewState = { kind: 'success' };
   if (!p) state = offline ? { kind: 'offline', onRetry: party.reload } : party.error ? { kind: 'error', error: party.error, onRetry: party.reload } : { kind: 'loading' };
-  else if (p.room.status !== 'live') state = { kind: 'empty', title: 'This party has ended', body: `Follow ${displayName(p.room.host)} to know when they're live next.`, action: { title: 'Back to Party', onPress: () => router.replace('/party') } };
+  else if (p.room.status !== 'live') state = { kind: 'empty', title: 'This party has ended', body: `Follow ${displayName(p.room.host)} to know when they're live next.`, action: { title: 'Back to Party', onPress: () => router.dismissTo('/party') } };
   // Muted or no longer seated: the seat is gone, so reload and rejoin as a viewer (no error).
   else if (token.error && (errorCode(token.error) === 'muted_in_room' || errorCode(token.error) === 'not_seated')) state = { kind: 'loading' };
   else if (token.error) state = errorCode(token.error) === 'banned_from_room' || errorCode(token.error) === 'account_restricted'
@@ -238,7 +238,7 @@ export default function PartyRoomScreen() {
               </View>
               <ViewerCount count={viewers ?? p.room.viewer_count ?? 0} />
               {/* The host's X ends the party (leaving would silently drop the broadcast). */}
-              <Pressable onPress={isHost ? endParty : () => router.back()} accessibilityRole="button" accessibilityLabel={isHost ? 'End party' : 'Leave party'} style={round('rgba(255,255,255,0.1)')}>
+              <Pressable onPress={isHost ? endParty : () => (router.canGoBack() ? router.back() : router.replace('/party'))} accessibilityRole="button" accessibilityLabel={isHost ? 'End party' : 'Leave party'} style={round('rgba(255,255,255,0.1)')}>
                 <Ionicons name="close" size={22} color={c.text} />
               </Pressable>
             </Row>

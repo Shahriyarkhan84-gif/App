@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, Share, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { FadeIn } from '@/components/Motion';
 import { StateView } from '@/components/StateView';
@@ -10,6 +10,7 @@ import { Button, Card, Row, Screen, Text, type IconName } from '@/components/ui'
 import { useAsync, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
+import { shareMessage } from '@/lib/share';
 
 type Summary = { headline: string; summary: string; tips: string[] };
 
@@ -87,7 +88,7 @@ export default function StreamSummaryScreen() {
           <Button
             title="Share highlights"
             variant="secondary"
-            onPress={() => Share.share({ message: `I just went live on Zynalive — ${s?.peak_viewers ?? 0} peak viewers and ${(s?.gift_coins ?? 0).toLocaleString()} gift coins!` })}
+            onPress={() => shareMessage(`I just went live on Zynalive — ${s?.peak_viewers ?? 0} peak viewers and ${(s?.gift_coins ?? 0).toLocaleString()} gift coins!`)}
           />
         </ScrollView>
       </StateView>

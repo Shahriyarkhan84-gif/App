@@ -82,7 +82,8 @@ function EditProfileForm() {
       return;
     }
     await reload();
-    router.back();
+    if (router.canGoBack()) router.back();
+    else router.replace('/profile');
   };
 
   return (

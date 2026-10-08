@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.26 — QA fixes from a full button audit
+
+- Share buttons (agency code, profile, live room, host live, stream summary, video) did nothing in browsers without the Web Share API and threw an uncaught error; they now go through `shareMessage()` (`src/lib/share.ts`), which copies the text and says so when sharing isn't available.
+- Buttons that only called `router.back()` did nothing when the screen was opened directly (cold deep link or a web refresh): Leave party, the host screen's "You're not live → Back", Edit profile → Save and Verify → Done now fall back to a sensible screen.
+- An ended party's **Back to Party** dismisses to the Party tab instead of pushing a second tab navigator on top of the first.
+- Stack back buttons were announced as "(tabs), back"; they now read "Go back" (`headerBackTitle` + minimal display mode in the root stack).
+- The share icon on a profile header got a larger tap area.
+
 ## 0.9.25 — Bigo-style live room for viewers
 
 - Top bar: host pill with photo, name and coins received this live, a sky-blue **+** to follow (hidden once you follow), today's top 3 gifters in their profile frames (gold/silver/bronze rings; tap → Contributions), viewer count circle and a close **X**. Coins and top gifters refresh as gifts arrive (at most every 2 s).

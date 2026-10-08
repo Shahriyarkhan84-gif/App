@@ -275,7 +275,7 @@ function ResultView({ result, firstName, cnicLast, onRetry }: { result: HostAppl
         <FadeIn delay={320} style={{ alignSelf: 'stretch', maxWidth: 420, width: '100%', gap: 10 }}>
           {result.status === 'approved' && <Button title="Go live" onPress={() => router.dismissTo('/create')} />}
           {result.status === 'declined' && <Button title="Try again" onPress={onRetry} />}
-          <Button title="Done" variant={result.status === 'approved' ? 'ghost' : 'secondary'} onPress={() => router.back()} />
+          <Button title="Done" variant={result.status === 'approved' ? 'ghost' : 'secondary'} onPress={() => (router.canGoBack() ? router.back() : router.replace('/hosting'))} />
         </FadeIn>
       </View>
     </Screen>

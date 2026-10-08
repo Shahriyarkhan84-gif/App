@@ -2,7 +2,7 @@ import { useEvent, useEventListener } from 'expo';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useVideoPlayer, VideoView, type SubtitleTrack, type VideoPlayer } from 'expo-video';
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, Share, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { OverflowMenu, type MenuItem } from '@/components/Menus';
 import { resolveState, StateView, type ViewState } from '@/components/StateView';
@@ -18,6 +18,7 @@ import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 import { displayName } from '@/lib/types';
+import { shareMessage } from '@/lib/share';
 
 // The player is a native object configured imperatively (expo-video's API).
 function selectSubtitleTrack(player: VideoPlayer, track: SubtitleTrack | null) {
@@ -103,7 +104,7 @@ export default function VideoScreen() {
       },
     ]);
 
-  const share = () => void Share.share({ message: `${asset?.title} ${env.siteUrl ? `${env.siteUrl}/videos/${id}` : ''}`.trim() });
+  const share = () => void shareMessage(`${asset?.title} ${env.siteUrl ? `${env.siteUrl}/videos/${id}` : ''}`.trim());
   const actions: MenuItem[] = [
     { key: 'share', icon: 'share-social-outline', label: t('videos.share'), onPress: share },
     ...(canRemove ? [{ key: 'remove', icon: 'trash-outline' as const, label: t('videos.remove'), onPress: remove, destructive: true }] : []),

@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, Share, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { FadeIn, Pop, PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
@@ -11,6 +11,7 @@ import { errorCode } from '@/lib/errors';
 import { useFocusedAsync, useOffline } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
+import { shareMessage } from '@/lib/share';
 
 type PortalHost = {
   user_id: string; display_name: string | null; username: string | null; avatar_url: string | null; user_number: number | null;
@@ -40,7 +41,7 @@ export default function AgencyPortalScreen() {
   }
 
   const shareCode = (p: Portal) =>
-    Share.share({ message: `Join ${p.agency.name} on Zynalive! When you verify for hosting, enter agency code ${p.agency.code}.` });
+    shareMessage(`Join ${p.agency.name} on Zynalive! When you verify for hosting, enter agency code ${p.agency.code}.`);
 
   return (
     <Screen edges={['bottom']}>

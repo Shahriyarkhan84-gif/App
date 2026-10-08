@@ -3,7 +3,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FlatList, Share, View } from 'react-native';
+import { FlatList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChatPanel } from '@/components/ChatPanel';
@@ -20,6 +20,7 @@ import { useAsync, useFocusedAsync, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
 import { liveColors as c } from '@/lib/theme';
 import { displayName, normalizeRooms, ROOM_SELECT, type Room } from '@/lib/types';
+import { shareMessage } from '@/lib/share';
 
 export default function HostLiveScreen() {
   const supabase = useSupabase();
@@ -141,7 +142,7 @@ export default function HostLiveScreen() {
 
   const shareRoom = () => {
     if (!roomId) return;
-    void Share.share({ message: `I'm live on Zynalive: zynalive://live/${roomId}` });
+    void shareMessage(`I'm live on Zynalive: zynalive://live/${roomId}`);
     track('room_shared', { room_id: roomId });
   };
 
@@ -186,7 +187,7 @@ export default function HostLiveScreen() {
   if (session.error) state = { kind: 'error', error: session.error, onRetry: session.reload };
   else if (dropped && dropped === stageToken) state = { kind: 'error', error: new Error('connection_lost'), onRetry: () => { setDropped(null); session.reload(); } };
   else if (!session.data) state = { kind: 'loading' };
-  else if (!session.data.token) state = { kind: 'empty', title: "You're not live", action: { title: 'Back', onPress: () => router.back() } };
+  else if (!session.data.token) state = { kind: 'empty', title: "You're not live", action: { title: 'Back', onPress: () => (router.canGoBack() ? router.back() : router.dismissTo('/create')) } };
 
   const iAmChallenger = battle?.status === 'invited' && mySide === 'a';
   const iAmChallenged = battle?.status === 'invited' && mySide === 'b';

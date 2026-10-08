@@ -91,6 +91,9 @@ function RootNavigator() {
         headerTitleStyle: { fontFamily: fonts.bold },
         contentStyle: { backgroundColor: c.background },
         headerShadowVisible: false,
+        // Otherwise the back button is titled (and read out) after the previous route, e.g. "(tabs)".
+        headerBackTitle: 'Back',
+        headerBackButtonDisplayMode: 'minimal',
       }}
     >
       <Stack.Protected guard={!!isSignedIn}>
