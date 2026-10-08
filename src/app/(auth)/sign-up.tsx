@@ -3,6 +3,7 @@ import { Link, router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 
 import { AuthShell, clerkErrorMessage, Field, FormError, PENDING_TASK_MESSAGE, SocialButtons, useRedirectWhenSignedIn } from '@/components/AuthForm';
+import { OtpInput } from '@/components/OtpInput';
 import { Button, Text } from '@/components/ui';
 import { fonts, useTheme } from '@/lib/theme';
 
@@ -38,9 +39,10 @@ export default function SignUpScreen() {
       setAwaitingCode(true);
     });
 
-  const onVerify = () =>
+  // `entered` comes from the code boxes' auto-submit, before the `code` state has updated.
+  const onVerify = (entered?: string) =>
     run(async () => {
-      const attempt = await signUp!.attemptEmailAddressVerification({ code: code.trim() });
+      const attempt = await signUp!.attemptEmailAddressVerification({ code: (entered ?? code).trim() });
       if (attempt.status === 'complete') {
         await setActive!({ session: attempt.createdSessionId });
         if (clerk.session?.currentTask) return setError(PENDING_TASK_MESSAGE);
@@ -70,9 +72,9 @@ export default function SignUpScreen() {
   if (awaitingCode) {
     return (
       <AuthShell title="Check your email" subtitle={`We sent a 6-digit code to ${email}.`}>
-        <Field label="Verification code" value={code} onChangeText={setCode} keyboardType="number-pad" autoComplete="one-time-code" placeholder="123456" />
+        <OtpInput value={code} onChange={(v) => { setCode(v); setError(null); }} onComplete={(v) => void onVerify(v)} error={!!error} disabled={loading} />
         <FormError message={error} />
-        <Button title="Verify & continue" loading={loading} disabled={code.length < 6} onPress={onVerify} />
+        <Button title="Verify & continue" loading={loading} disabled={code.length < 6} onPress={() => void onVerify()} />
         {/* A slow or spam-filtered email must not strand the user on this screen. */}
         <Button title={resent ? 'Code sent again' : 'Resend code'} variant="ghost" disabled={loading || resent} onPress={onResend} />
         <Button title="Change email" variant="ghost" disabled={loading} onPress={() => { setAwaitingCode(false); setCode(''); setError(null); setResent(false); clearTimeout(resendTimer.current); }} />

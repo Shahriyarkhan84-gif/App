@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { AuthShell, clerkErrorMessage, Field, FormError, PENDING_TASK_MESSAGE, useRedirectWhenSignedIn } from '@/components/AuthForm';
 import { StateView } from '@/components/StateView';
+import { OtpInput } from '@/components/OtpInput';
 import { Button, Text } from '@/components/ui';
 import { useTheme } from '@/lib/theme';
 
@@ -93,10 +94,12 @@ export default function CompleteSignUpScreen() {
       setResent(true);
     });
 
-  const onVerify = () =>
+  // `entered` comes from the code boxes' auto-submit, before the `code` state has updated.
+  const onVerify = (entered?: string) =>
     run(async () => {
-      if (step === 'phone_code') await signUp!.attemptPhoneNumberVerification({ code: code.trim() });
-      else await signUp!.attemptEmailAddressVerification({ code: code.trim() });
+      const value = (entered ?? code).trim();
+      if (step === 'phone_code') await signUp!.attemptPhoneNumberVerification({ code: value });
+      else await signUp!.attemptEmailAddressVerification({ code: value });
       await advance();
     });
 
@@ -109,9 +112,9 @@ export default function CompleteSignUpScreen() {
     const target = step === 'phone_code' ? (values.phoneNumber && normalizePhone(values.phoneNumber)) || 'your phone' : signUp.emailAddress ?? 'your email';
     return (
       <AuthShell title={step === 'phone_code' ? 'Check your messages' : 'Check your email'} subtitle={`We sent a 6-digit code to ${target}.`}>
-        <Field label="Verification code" value={code} onChangeText={setCode} keyboardType="number-pad" autoComplete="one-time-code" placeholder="123456" />
+        <OtpInput value={code} onChange={(v) => { setCode(v); setError(null); }} onComplete={(v) => void onVerify(v)} error={!!error} disabled={loading} />
         <FormError message={error} />
-        <Button title="Verify & continue" loading={loading} disabled={code.trim().length < 6} onPress={onVerify} />
+        <Button title="Verify & continue" loading={loading} disabled={code.trim().length < 6} onPress={() => void onVerify()} />
         <Button title={resent ? 'Code sent again' : 'Resend code'} variant="ghost" disabled={loading || resent} onPress={onResend} />
         <Button title="Change details" variant="ghost" onPress={() => { setResent(false); setStep('details'); }} />
       </AuthShell>

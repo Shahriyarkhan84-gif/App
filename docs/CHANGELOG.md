@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.15 — Six-box code entry (OTP)
+
+- Verification codes (email sign-up, phone/email when finishing sign-up, password reset) use six animated boxes (`src/components/OtpInput.tsx`): digits only, paste and SMS/email autofill fill all boxes, a wrong code shakes the row, and sign-up codes submit by themselves at the sixth digit.
+
 ## 0.9.14 — Faster reopen, sign-in icons
 
 - Reopening the app while signed in no longer waits on the logo: Clerk's resource cache (`__experimental_resourceCache`, native only) restores the session from the phone, and the logo shows only while Clerk is actually loading (the 0.9 s minimum is gone).

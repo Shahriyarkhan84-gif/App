@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
 import { AuthShell, clerkErrorMessage, Field, FormError, PENDING_TASK_MESSAGE, useRedirectWhenSignedIn } from '@/components/AuthForm';
+import { OtpInput } from '@/components/OtpInput';
 import { Button } from '@/components/ui';
 
 export default function ForgotPasswordScreen() {
@@ -52,7 +53,7 @@ export default function ForgotPasswordScreen() {
   if (codeSent) {
     return (
       <AuthShell title="Set a new password" subtitle={`Enter the code we sent to ${email.trim()}.`}>
-        <Field label="Reset code" value={code} onChangeText={setCode} keyboardType="number-pad" autoComplete="one-time-code" placeholder="123456" />
+        <OtpInput label="Reset code" value={code} onChange={(v) => { setCode(v); setError(null); }} error={!!error} disabled={loading} />
         <Field label="New password" value={password} onChangeText={setPassword} secureTextEntry autoComplete="new-password" placeholder="At least 8 characters" />
         <FormError message={error} />
         <Button title="Reset password" loading={loading} disabled={code.trim().length < 6 || password.length < 8} onPress={onReset} />

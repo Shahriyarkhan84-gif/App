@@ -73,8 +73,8 @@ it('signs in once the code completes the sign-up', async () => {
   await fireEvent.changeText(screen.getByPlaceholderText('8–20 characters'), 'zyna_fan');
   await fireEvent.changeText(screen.getByPlaceholderText('+92 300 1234567'), '+923001234567');
   await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
-  await fireEvent.changeText(await screen.findByPlaceholderText('123456'), '424242');
-  await fireEvent.press(screen.getByRole('button', { name: 'Verify & continue' }));
+  // The six code boxes submit by themselves once the last digit is entered.
+  await fireEvent.changeText(await screen.findByLabelText('Verification code, 6 digits'), '424242');
 
   expect(mockSignUp.attemptPhoneNumberVerification).toHaveBeenCalledWith({ code: '424242' });
   expect(mockSetActive).toHaveBeenCalledWith({ session: 'sess_1' });
