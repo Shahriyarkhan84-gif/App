@@ -151,7 +151,7 @@ export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress, ac
           <Pressable onLongPress={() => setSelected(item)} onPress={() => onUserPress?.(item.sender_id)} accessibilityHint="Long press for options">
             <View style={{ alignSelf: 'flex-start', backgroundColor: 'rgba(0,0,0,0.42)', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6, marginVertical: 3, maxWidth: '85%' }}>
               <Text color={c.text} style={{ fontSize: 14, lineHeight: 19 }}>
-                <Text variant="label" color={item.sender_id === hostId ? c.gold : '#FFB3C1'}>{displayName(item.sender)} </Text>
+                <Text variant="label" color={item.sender_id === hostId ? c.gold : c.accent}>{displayName(item.sender)} </Text>
                 {translations[item.id] ?? item.body}
               </Text>
               {translations[item.id] && <Text variant="caption" color={c.textMuted}>Translated · {item.body}</Text>}
