@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { useEffect, useState, type ReactNode } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useWindowDimensions, View } from 'react-native';
 
 import { getLiveKitToken, rpc } from '@/lib/api';
@@ -90,15 +91,18 @@ function OpponentPane({ opponentRoom }: { opponentRoom: Room }) {
  * Neither host's video changes — each keeps publishing to their own room;
  * this only composes two existing viewer-safe streams side by side.
  */
-export function PkBattleStage({ mySide, myStage, opponentRoom, mySideLabel, opponentSideLabel }: {
+export function PkBattleStage({ mySide, myStage, opponentRoom, mySideLabel, opponentSideLabel, height }: {
   mySide: 'a' | 'b' | null;
   myStage: ReactNode;
   opponentRoom: Room;
   mySideLabel: string;
   opponentSideLabel: string;
+  /** Override the split height (the viewer room keeps room for chat under the videos). */
+  height?: number;
 }) {
   const leftIsMe = mySide !== 'b';
-  const splitHeight = usePkSplitHeight();
+  const defaultHeight = usePkSplitHeight();
+  const splitHeight = height ?? defaultHeight;
   return (
     <View style={{ height: splitHeight, flexDirection: 'row', backgroundColor: '#000' }}>
       <View style={{ flex: 1, overflow: 'hidden' }}>{leftIsMe ? myStage : <OpponentPane opponentRoom={opponentRoom} />}</View>
@@ -111,44 +115,45 @@ export function PkBattleStage({ mySide, myStage, opponentRoom, mySideLabel, oppo
           {leftIsMe ? opponentSideLabel : mySideLabel}
         </Text>
       </Row>
-      <View
-        style={{
-          position: 'absolute', top: splitHeight / 2 - 26, left: '50%', marginLeft: -26,
-          width: 52, height: 52, borderRadius: 26, backgroundColor: c.background, borderWidth: 3, borderColor: c.gold,
-          alignItems: 'center', justifyContent: 'center',
-        }}
-      >
-        <Text variant="label" color={c.gold} style={{ fontSize: 15, fontWeight: '800' }}>VS</Text>
-      </View>
+      <View style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1, backgroundColor: 'rgba(0,0,0,0.6)' }} />
     </View>
   );
 }
 
-/** Score bar + timer, sits directly under `PkBattleStage`. */
-export function PkBattleBar({ battle, mySide, secondsLeft }: { battle: PkBattle; mySide: 'a' | 'b' | null; secondsLeft: number | null }) {
+/**
+ * Battle score bar: a thick two-colour bar across the screen (my side sky blue, the opponent gold,
+ * split by score) with both scores, a glowing seam where they meet and a "PK 4:36" timer tab.
+ * `timerBelow` hangs the tab under the bar so it overlaps the top of the videos.
+ */
+export function PkBattleBar({ battle, mySide, secondsLeft, timerBelow = true }: { battle: PkBattle; mySide: 'a' | 'b' | null; secondsLeft: number | null; timerBelow?: boolean }) {
   const scoreLeft = mySide === 'b' ? battle.score_b : battle.score_a;
   const scoreRight = mySide === 'b' ? battle.score_a : battle.score_b;
   const total = scoreLeft + scoreRight;
-  const pctLeft = total === 0 ? 50 : Math.round((scoreLeft / total) * 100);
+  // Keep a sliver of both colours visible even at 100–0.
+  const pctLeft = total === 0 ? 50 : Math.min(92, Math.max(8, Math.round((scoreLeft / total) * 100)));
   const mins = secondsLeft !== null ? Math.floor(secondsLeft / 60) : 0;
   const secs = secondsLeft !== null ? secondsLeft % 60 : 0;
+  const timer = secondsLeft !== null && (
+    <View style={{ alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.7)', borderRadius: 14, paddingHorizontal: 12, height: 28, flexDirection: 'row', alignItems: 'center', gap: 6 }}
+      accessibilityLabel={`PK battle, ${mins} minutes ${secs} seconds left`}>
+      <Text variant="label" color={c.gold} style={{ fontStyle: 'italic', fontWeight: '800' }}>PK</Text>
+      <Text variant="label" color="#fff" style={{ fontVariant: ['tabular-nums'] }}>{mins}:{String(secs).padStart(2, '0')}</Text>
+    </View>
+  );
 
   return (
-    <View style={{ paddingHorizontal: 12, paddingTop: 8, gap: 8 }}>
-      <View style={{ height: 8, borderRadius: 4, overflow: 'hidden', flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.15)' }}>
-        <View style={{ width: `${pctLeft}%`, backgroundColor: c.primary, alignItems: 'flex-start', justifyContent: 'center', paddingLeft: 6 }} />
-        <View style={{ width: `${100 - pctLeft}%`, backgroundColor: c.accent }} />
+    <View style={{ zIndex: 2 }}>
+      <View style={{ height: 26, flexDirection: 'row' }} accessibilityLabel={`Score ${scoreLeft} to ${scoreRight}`}>
+        <LinearGradient colors={['#1D6FE0', '#5AC8FA']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ width: `${pctLeft}%`, justifyContent: 'center', paddingLeft: 10 }}>
+          <Text variant="label" color="#fff" style={{ fontVariant: ['tabular-nums'] }}>{scoreLeft.toLocaleString()}</Text>
+        </LinearGradient>
+        <LinearGradient colors={['#FFD666', '#F5B301']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-end', paddingRight: 10 }}>
+          <Text variant="label" color="#2A1A00" style={{ fontVariant: ['tabular-nums'] }}>{scoreRight.toLocaleString()}</Text>
+        </LinearGradient>
+        <View style={{ position: 'absolute', left: `${pctLeft}%`, top: -3, width: 6, height: 32, marginLeft: -3, borderRadius: 3, backgroundColor: '#fff',
+          shadowColor: '#fff', shadowOpacity: 0.9, shadowRadius: 8, shadowOffset: { width: 0, height: 0 }, elevation: 4 }} />
       </View>
-      <Row style={{ justifyContent: 'space-between' }}>
-        <Text variant="caption" color={c.text} style={{ fontWeight: '700', fontVariant: ['tabular-nums'] }}>{scoreLeft.toLocaleString()}</Text>
-        {secondsLeft !== null && (
-          <View style={{ backgroundColor: c.surfaceRaised, borderRadius: 14, paddingHorizontal: 12, height: 28, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text variant="caption" color={c.gold} style={{ fontWeight: '700' }}>PK</Text>
-            <Text variant="caption" color={c.text} style={{ fontWeight: '700', fontVariant: ['tabular-nums'] }}>{mins}:{String(secs).padStart(2, '0')}</Text>
-          </View>
-        )}
-        <Text variant="caption" color={c.text} style={{ fontWeight: '700', fontVariant: ['tabular-nums'] }}>{scoreRight.toLocaleString()}</Text>
-      </Row>
+      {timer && (timerBelow ? <View style={{ position: 'absolute', top: 30, left: 0, right: 0 }}>{timer}</View> : <View style={{ paddingTop: 6 }}>{timer}</View>)}
     </View>
   );
 }

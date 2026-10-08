@@ -3,7 +3,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, Share, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Pressable, Share, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChatPanel } from '@/components/ChatPanel';
@@ -11,7 +12,8 @@ import { GiftSheet, GiftToasts } from '@/components/GiftSheet';
 import { LiveStage } from '@/components/LiveStage';
 import { PkBattleBar, PkBattleStage, usePkBattleState } from '@/components/PkBattle';
 import { StateView, type ViewState } from '@/components/StateView';
-import { Avatar, LiveBadge, RoleBadges, Row, Text, ViewerCount } from '@/components/ui';
+import { FramedAvatar } from '@/components/FramedAvatar';
+import { Avatar, Button, Coin, compactNumber, LiveBadge, Row, Sheet, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { getLiveKitToken, rpc } from '@/lib/api';
@@ -20,6 +22,8 @@ import { useAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
 import { liveColors as c } from '@/lib/theme';
 import { displayName, normalizeRoom, ROOM_SELECT, type Room } from '@/lib/types';
+
+type Gifter = { user_id: string; display_name: string | null; username: string | null; avatar_url: string | null; coins: number };
 
 export default function LiveRoomScreen() {
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
@@ -100,6 +104,38 @@ export default function LiveRoomScreen() {
   const isFollowing = following ?? followRow.data ?? false;
   const { battle, opponentRoom, mySide, secondsLeft } = usePkBattleState(r?.id, r?.current_battle_id);
   const battleLive = battle?.status === 'live' && !!opponentRoom;
+  const { height: windowHeight } = useWindowDimensions();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Coins the host has received this live and today's top 3 gifters (with their frames). Gifts
+  // refresh them, at most once every 2 s however fast gifts arrive.
+  const [giftTick, setGiftTick] = useState(0);
+  const giftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useRealtime('gifts', `room_id=eq.${roomId}`, () => {
+    if (giftTimer.current) return;
+    giftTimer.current = setTimeout(() => { giftTimer.current = null; setGiftTick((t) => t + 1); }, 2000);
+  });
+  useEffect(() => () => { if (giftTimer.current) clearTimeout(giftTimer.current); }, []);
+  const hostIdForExtras = r?.host_id;
+  const streamId = r?.current_stream_id ?? null;
+  const extras = useAsync(async () => {
+    if (!hostIdForExtras) return null;
+    const [stream, top] = await Promise.all([
+      streamId ? supabase.from('streams').select('gift_coins').eq('id', streamId).maybeSingle() : Promise.resolve({ data: null }),
+      supabase.rpc('host_contributions', { p_host: hostIdForExtras, p_period: 'day' }),
+    ]);
+    const list = ((top.data ?? []) as Gifter[]).slice(0, 3);
+    let frames: Record<string, string | null> = {};
+    if (list.length) {
+      // Frames are optional decoration: a failed lookup just shows plain photos.
+      const { data, error } = await supabase.from('profiles').select('id,active_frame_id').in('id', list.map((g) => g.user_id));
+      if (!error) frames = Object.fromEntries(((data ?? []) as { id: string; active_frame_id: string | null }[]).map((p) => [p.id, p.active_frame_id]));
+    }
+    return {
+      coins: Number((stream.data as { gift_coins?: number } | null)?.gift_coins ?? 0),
+      gifters: list.map((g) => ({ ...g, frame: frames[g.user_id] ?? null })),
+    };
+  }, [hostIdForExtras, streamId, giftTick]);
 
   const followBusy = useRef(false);
   const toggleFollow = async () => {
@@ -148,101 +184,130 @@ export default function LiveRoomScreen() {
   else if (!token.data) state = { kind: 'loading' };
   else if (dropped && dropped === stageToken) state = { kind: 'error', error: new Error('connection_lost'), onRetry: reconnect };
 
+  const viewers = r?.viewer_count ?? 0;
+  const coins = extras.data?.coins ?? 0;
+  const gifters = extras.data?.gifters ?? [];
+
+  // Bigo-style top bar: host pill (photo, name, coins this stream, + to follow), today's top 3
+  // gifters in their frames, viewer count, close.
+  const topBar = r && (
+    <Row gap={8} style={{ paddingHorizontal: 12 }}>
+      <Row gap={8} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 26, padding: 4, paddingRight: isFollowing || r.host_id === userId ? 14 : 4, flexShrink: 1 }}>
+        <Pressable onPress={() => router.push({ pathname: '/user/[id]', params: { id: r.host_id } })} accessibilityRole="button" accessibilityLabel={`${displayName(r.host)} profile, ${coins} coins this live`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
+          <Avatar uri={r.host?.avatar_url} name={displayName(r.host)} size={40} />
+          <View style={{ flexShrink: 1 }}>
+            <Text variant="label" color={c.text} numberOfLines={1} style={{ maxWidth: 120 }}>{displayName(r.host)}</Text>
+            <Row gap={4}>
+              <Coin size={12} />
+              <Text variant="caption" color={c.goldText} style={{ fontWeight: '700', fontVariant: ['tabular-nums'] }}>{coins.toLocaleString()}</Text>
+            </Row>
+          </View>
+        </Pressable>
+        {r.host_id !== userId && !isFollowing && (
+          <Pressable onPress={toggleFollow} accessibilityRole="button" accessibilityLabel={`Follow ${displayName(r.host)}`} hitSlop={6}
+            style={{ width: 40, height: 34, borderRadius: 17, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="add" size={24} color={c.primaryText} />
+          </Pressable>
+        )}
+      </Row>
+      <View style={{ flex: 1 }} />
+      <Row gap={2}>
+        {gifters.map((g, i) => (
+          <Pressable key={g.user_id} onPress={() => router.push({ pathname: '/contributions/[id]', params: { id: r.host_id } })} accessibilityRole="button" accessibilityLabel={`Top gifter ${i + 1}: ${g.display_name ?? g.username ?? ''}`}>
+            <FramedAvatar uri={g.avatar_url} name={g.display_name ?? g.username} size={30} frameId={g.frame} ring={RANK_RINGS[i]} />
+          </Pressable>
+        ))}
+      </Row>
+      <View accessibilityLabel={`${viewers} watching`} style={{ minWidth: 38, height: 38, paddingHorizontal: 6, borderRadius: 19, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}>
+        <Text variant="label" color={c.text} style={{ fontSize: 13, fontVariant: ['tabular-nums'] }}>{compactNumber(viewers)}</Text>
+      </View>
+      <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="Leave live room" hitSlop={8} style={{ width: 38, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+        <Ionicons name="close" size={30} color={c.text} />
+      </Pressable>
+    </Row>
+  );
+
+  const chat = r && (
+    <ChatPanel
+      roomId={roomId}
+      hostId={r.host_id}
+      isHost={false}
+      canModerate={!!room.data?.isRoomAdmin}
+      placeholder="Say Hi…"
+      fill={battleLive}
+      onUserPress={(id) => router.push({ pathname: '/user/[id]', params: { id } })}
+      actions={
+        <>
+          <Pressable onPress={() => setMenuOpen(true)} accessibilityRole="button" accessibilityLabel="More: message, share, report" style={roundButton('rgba(20,24,30,0.78)')}>
+            <Ionicons name="menu" size={24} color={c.text} />
+          </Pressable>
+          <Pressable onPress={() => setGiftOpen(true)} accessibilityRole="button" accessibilityLabel="Send a gift" style={{ width: 46, height: 46, borderRadius: 23, overflow: 'hidden' }}>
+            <LinearGradient colors={['#FFD666', '#F59E0B']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="gift" size={24} color={c.onGold} />
+            </LinearGradient>
+          </Pressable>
+        </>
+      }
+    />
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <StatusBar style="light" />
       <StateView state={state}>
         {r && token.data && (
-          <>
-            {battleLive ? (
-              <>
-                <PkBattleStage
-                  mySide={mySide}
-                  myStage={<LiveStage token={token.data.token} url={token.data.url} role="viewer" onError={onStageError} onDisconnected={onStageDisconnected} />}
-                  opponentRoom={opponentRoom!}
-                  mySideLabel={displayName(r.host)}
-                  opponentSideLabel={displayName(opponentRoom!.host)}
-                />
+          battleLive ? (
+            // PK: top bar, score bar, the two videos side by side, chat underneath on black.
+            <View style={{ flex: 1, paddingTop: insets.top + 6 }}>
+              {topBar}
+              <View style={{ marginTop: 14, zIndex: 2 }}>
                 <PkBattleBar battle={battle!} mySide={mySide} secondsLeft={secondsLeft} />
-              </>
-            ) : (
-              <LiveStage token={token.data.token} url={token.data.url} role="viewer" onError={onStageError} onDisconnected={onStageDisconnected} />
-            )}
-            <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, gap: 10 }}>
-              <Row gap={8}>
-                <Row gap={8} style={{ backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 24, padding: 4, flexShrink: 1 }}>
-                  <Pressable onPress={() => router.push({ pathname: '/user/[id]', params: { id: r.host_id } })} accessibilityRole="button" accessibilityLabel={`${displayName(r.host)} profile`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
-                    <Avatar uri={r.host?.avatar_url} name={displayName(r.host)} size={36} />
-                    <View style={{ flexShrink: 1, paddingRight: 4 }}>
-                      <Row gap={6}>
-                        <Text variant="label" color={c.text} numberOfLines={1} style={{ flexShrink: 1 }}>{displayName(r.host)}</Text>
-                        <RoleBadges profile={r.host} small />
-                      </Row>
-                      <Text variant="caption" color="#E4DFEC" numberOfLines={1}>{r.title}</Text>
-                    </View>
-                  </Pressable>
-                  {r.host_id !== userId && (
-                    <Pressable
-                      onPress={toggleFollow}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: isFollowing }}
-                      hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-                      style={{ height: 36, paddingHorizontal: 14, borderRadius: 18, justifyContent: 'center', backgroundColor: isFollowing ? 'rgba(255,255,255,0.18)' : c.primary }}
-                    >
-                      <Text variant="label" color="#fff" style={{ fontSize: 13 }}>{isFollowing ? 'Following' : 'Follow'}</Text>
-                    </Pressable>
-                  )}
-                </Row>
-                <View style={{ flex: 1 }} />
-                <ViewerCount count={r.viewer_count ?? 0} />
-                <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="Leave live room" style={roundButton('rgba(0,0,0,0.45)')}>
-                  <Ionicons name="close" size={22} color={c.text} />
-                </Pressable>
-              </Row>
-              <Row gap={6}>
-                <LiveBadge />
-              </Row>
-            </View>
-            <View style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 12, gap: 10 }}>
-              <GiftToasts roomId={roomId} />
-              <ChatPanel
-                roomId={roomId}
-                hostId={r.host_id}
-                isHost={false}
-                canModerate={!!room.data?.isRoomAdmin}
-                onUserPress={(id) => router.push({ pathname: '/user/[id]', params: { id } })}
-                actions={
-                  <>
-                    <Pressable onPress={() => setGiftOpen(true)} accessibilityRole="button" accessibilityLabel="Send a gift" style={roundButton(c.gold)}>
-                      <Ionicons name="gift" size={20} color={c.onGold} />
-                    </Pressable>
-                    <Pressable onPress={shareRoom} accessibilityRole="button" accessibilityLabel="Share this stream" style={roundButton('rgba(0,0,0,0.5)')}>
-                      <Ionicons name="share-social-outline" size={18} color={c.text} />
-                    </Pressable>
-                    <Pressable onPress={reportRoom} accessibilityRole="button" accessibilityLabel="Report this stream" style={roundButton('rgba(0,0,0,0.5)')}>
-                      <Ionicons name="flag-outline" size={18} color={c.text} />
-                    </Pressable>
-                  </>
-                }
+              </View>
+              <PkBattleStage
+                height={Math.round(windowHeight * 0.42)}
+                mySide={mySide}
+                myStage={<LiveStage token={token.data.token} url={token.data.url} role="viewer" onError={onStageError} onDisconnected={onStageDisconnected} />}
+                opponentRoom={opponentRoom!}
+                mySideLabel={displayName(r.host)}
+                opponentSideLabel={displayName(opponentRoom!.host)}
               />
-              <Pressable
-                onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: r.host_id } })}
-                accessibilityRole="button"
-                accessibilityLabel={`Message ${displayName(r.host)}`}
-                style={{ height: 46, borderRadius: 23, backgroundColor: 'rgba(0,0,0,0.5)', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)' }}
-              >
-                <Ionicons name="chatbubble-outline" size={17} color={c.text} />
-                <Text variant="label" color={c.text} style={{ fontSize: 14 }}>Message</Text>
-              </Pressable>
+              <View style={{ flex: 1, paddingHorizontal: 12, paddingTop: 10, paddingBottom: insets.bottom + 10, gap: 8 }}>
+                <GiftToasts roomId={roomId} />
+                {chat}
+              </View>
             </View>
-            <GiftSheet roomId={roomId} visible={giftOpen} onClose={() => setGiftOpen(false)} />
-          </>
+          ) : (
+            <>
+              <LiveStage token={token.data.token} url={token.data.url} role="viewer" onError={onStageError} onDisconnected={onStageDisconnected} />
+              <View style={{ position: 'absolute', top: insets.top + 6, left: 0, right: 0, gap: 10 }}>
+                {topBar}
+                <Row gap={6} style={{ paddingHorizontal: 12 }}><LiveBadge /></Row>
+              </View>
+              <View style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 10, gap: 10 }}>
+                <GiftToasts roomId={roomId} />
+                {chat}
+              </View>
+            </>
+          )
         )}
+        <GiftSheet roomId={roomId} visible={giftOpen} onClose={() => setGiftOpen(false)} />
+        <Sheet visible={menuOpen} onClose={() => setMenuOpen(false)} title="More">
+          {r && (
+            <View style={{ gap: 8 }}>
+              <Button title={`Message ${displayName(r.host)}`} variant="secondary" onPress={() => { setMenuOpen(false); router.push({ pathname: '/chat/[userId]', params: { userId: r.host_id } }); }} />
+              <Button title="Share this live" variant="secondary" onPress={() => { setMenuOpen(false); shareRoom(); }} />
+              {r.host_id !== userId && isFollowing && <Button title={`Unfollow ${displayName(r.host)}`} variant="ghost" onPress={() => { setMenuOpen(false); void toggleFollow(); }} />}
+              <Button title="Report this live" variant="ghost" onPress={() => { setMenuOpen(false); reportRoom(); }} />
+            </View>
+          )}
+        </Sheet>
       </StateView>
     </View>
   );
 }
 
+const RANK_RINGS = ['#FFC24B', '#C9D3DE', '#D99A5B'];
+
 function roundButton(backgroundColor: string) {
-  return { width: 44, height: 44, borderRadius: 22, backgroundColor, alignItems: 'center', justifyContent: 'center' } as const;
+  return { width: 46, height: 46, borderRadius: 23, backgroundColor, alignItems: 'center', justifyContent: 'center' } as const;
 }

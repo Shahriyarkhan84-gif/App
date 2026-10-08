@@ -207,7 +207,7 @@ export default function HostLiveScreen() {
                   mySideLabel="You"
                   opponentSideLabel={displayName(opponentRoom!.host)}
                 />
-                <PkBattleBar battle={battle!} mySide={mySide} secondsLeft={secondsLeft} />
+                <PkBattleBar battle={battle!} mySide={mySide} secondsLeft={secondsLeft} timerBelow={false} />
               </>
             ) : (
               <LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" facing={facing} onError={onStageError} onDisconnected={onStageDisconnected} />

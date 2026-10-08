@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.25 — Bigo-style live room for viewers
+
+- Top bar: host pill with photo, name and coins received this live, a sky-blue **+** to follow (hidden once you follow), today's top 3 gifters in their profile frames (gold/silver/bronze rings; tap → Contributions), viewer count circle and a close **X**. Coins and top gifters refresh as gifts arrive (at most every 2 s).
+- PK battles: a thick score bar across the screen (my side sky blue, opponent gold, glowing seam, both scores), a **PK m:ss** timer tab, the two videos side by side (42% of the screen) and the chat underneath on black. The host screen uses the same bar with the timer under it.
+- Bottom: **Say Hi…** box, a menu button (message the host, share, unfollow, report) and a gold gift button; the send button appears only while typing. Chat bubbles are dark rounded pills with sky-blue names.
+
 ## 0.9.24 — Black and light sky blue
 
 - New app colours: black background with light sky blue (`#87CEFA`) for buttons, links, highlights, the LIVE badge and the active tab; one dark theme for every screen (`src/lib/theme.ts`). Filled sky-blue surfaces (buttons, badges, header cards) use near-black text for contrast. Gold stays the coin colour.

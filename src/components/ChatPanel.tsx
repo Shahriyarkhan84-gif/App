@@ -22,9 +22,15 @@ type Props = {
   canModerate: boolean;
   isHost: boolean;
   onUserPress?: (userId: string) => void;
+  /** Input hint ("Say Hi…" in the viewer room). */
+  placeholder?: string;
+  /** How tall the message list may grow; ignored when `fill` is set. */
+  listMaxHeight?: number;
+  /** Let the message list take all the space the parent gives (PK layout, chat under the videos). */
+  fill?: boolean;
 };
 
-export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress, actions }: Props & { actions?: ReactNode }) {
+export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress, actions, placeholder = 'Say something…', listMaxHeight = 260, fill = false }: Props & { actions?: ReactNode }) {
   const supabase = useSupabase();
   const track = useAnalytics();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -140,16 +146,16 @@ export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress, ac
   const canActOn = (m: ChatMessage) => canModerate && m.sender_id !== hostId;
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ gap: 8 }}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ gap: 8, flex: fill ? 1 : undefined }}>
       <FlatList
         ref={listRef}
         data={messages}
         keyExtractor={(m) => String(m.id)}
-        style={{ maxHeight: 260 }}
+        style={fill ? { flex: 1 } : { maxHeight: listMaxHeight }}
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
         renderItem={({ item }) => (
           <Pressable onLongPress={() => setSelected(item)} onPress={() => onUserPress?.(item.sender_id)} accessibilityHint="Long press for options">
-            <View style={{ alignSelf: 'flex-start', backgroundColor: 'rgba(0,0,0,0.42)', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6, marginVertical: 3, maxWidth: '85%' }}>
+            <View style={{ alignSelf: 'flex-start', backgroundColor: 'rgba(20,24,30,0.72)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 7, marginVertical: 3, maxWidth: '88%' }}>
               <Text color={c.text} style={{ fontSize: 14, lineHeight: 19 }}>
                 <Text variant="label" color={item.sender_id === hostId ? c.gold : c.accent}>{displayName(item.sender)} </Text>
                 {translations[item.id] ?? item.body}
@@ -163,23 +169,24 @@ export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress, ac
         <TextInput
           value={draft}
           onChangeText={setDraft}
-          placeholder="Say something…"
+          placeholder={placeholder}
           placeholderTextColor={c.textMuted}
           maxLength={300}
           onSubmitEditing={send}
           returnKeyType="send"
           accessibilityLabel="Chat message"
-          style={{ flex: 1, minWidth: 0, height: 44, borderRadius: 22, paddingHorizontal: 16, backgroundColor: 'rgba(0,0,0,0.5)', color: c.text, fontFamily: fonts.regular, fontSize: 14 }}
+          style={{ flex: 1, minWidth: 0, height: 46, borderRadius: 23, paddingHorizontal: 18, backgroundColor: 'rgba(20,24,30,0.78)', color: c.text, fontFamily: fonts.regular, fontSize: 14 }}
         />
-        <Pressable
+        {/* The send button appears once there's something to send; the keyboard's send key works too. */}
+        {(draft.trim() || sending) && <Pressable
           onPress={send}
           disabled={sending || !draft.trim()}
           accessibilityRole="button"
           accessibilityLabel="Send message"
-          style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', opacity: draft.trim() ? 1 : 0.6 }}
+          style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}
         >
-          {sending ? <ActivityIndicator color={c.text} /> : <Ionicons name="send" size={18} color={c.text} />}
-        </Pressable>
+          {sending ? <ActivityIndicator color={c.primaryText} /> : <Ionicons name="send" size={18} color={c.primaryText} />}
+        </Pressable>}
         {actions}
       </View>
 
