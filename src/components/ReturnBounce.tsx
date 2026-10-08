@@ -22,8 +22,8 @@ export function ReturnBounce({ fallback }: { fallback: Href }) {
       window.location.replace(safeStatus ? `${to}${to.includes('?') ? '&' : '?'}status=${safeStatus}` : to);
       return;
     }
-    if (safeStatus && typeof fallback === 'string') router.replace(`${fallback}?status=${safeStatus}` as Href);
-    else router.replace(fallback);
+    if (safeStatus && typeof fallback === 'string') router.dismissTo(`${fallback}?status=${safeStatus}` as Href);
+    else router.dismissTo(fallback);
   }, [to, status, fallback]);
 
   return <StateView state={{ kind: 'loading' }} />;

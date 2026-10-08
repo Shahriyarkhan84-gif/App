@@ -272,7 +272,10 @@ export default function CreateScreen() {
             </LinearGradient>
           </FadeIn>
 
-          {!isHost ? (
+          {!isHost && room.data?.verificationRequired ? (
+            // Going live needs an approved ID check, and approval makes the user a host, so skip "Become a host".
+            <FadeIn delay={80}><HostVerificationCard status="unverified" onChanged={() => void reloadProfile()} /></FadeIn>
+          ) : !isHost ? (
             <FadeIn delay={80}>
             <Card style={{ gap: 12 }}>
               <Row gap={10}>

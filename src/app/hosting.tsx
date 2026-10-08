@@ -51,7 +51,7 @@ export default function HostingScreen() {
     ? { title: 'Continue verification', onPress: openDidit, loading: false }
     : approved
       ? host.status === 'active'
-        ? { title: 'Go live', onPress: () => router.push('/create'), loading: false }
+        ? { title: 'Go live', onPress: () => router.dismissTo('/create'), loading: false }
         : { title: 'Contact support', onPress: () => router.push('/support'), loading: false }
       : status === 'in_review'
         ? { title: 'Refresh status', onPress: () => void reload(), loading: false }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.16 — Navigation flow fixes
+
+- "Go live" buttons on screens opened over the tabs (Hosting, Host dashboard, Videos, the ID check result) and the end of a live without a summary now return to the existing Go-live tab (`router.dismissTo`). Before, they pushed a second copy of the tab bar on top, so Back led to old screens.
+- Stripe and Didit return pages go back to an open Wallet or Go-live screen instead of stacking a new one.
+- Go-live tab: people who aren't hosts yet go straight to the ID check when it's required to go live (approval makes them a host), instead of tapping "Become a host" first. The ID-check result's last button reads "Done", since it isn't always opened from Hosting.
+
 ## 0.9.15 — Six-box code entry (OTP)
 
 - Verification codes (email sign-up, phone/email when finishing sign-up, password reset) use six animated boxes (`src/components/OtpInput.tsx`): digits only, paste and SMS/email autofill fill all boxes, a wrong code shakes the row, and sign-up codes submit by themselves at the sixth digit.

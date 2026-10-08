@@ -71,7 +71,7 @@ export default function VideosScreen() {
           bottom={insets.bottom + 24}
           actions={[
             { key: 'upload', icon: 'cloud-upload-outline', label: t('videos.upload'), onPress: () => router.push('/videos/upload') },
-            { key: 'live', icon: 'videocam', label: t('tab.golive'), onPress: () => router.push('/create') },
+            { key: 'live', icon: 'videocam', label: t('tab.golive'), onPress: () => router.dismissTo('/create') },
             { key: 'events', icon: 'calendar-outline', label: t('menu.events'), onPress: () => router.push('/events') },
           ]}
         />

@@ -67,7 +67,7 @@ export default function HostLiveScreen() {
       leaving.current = true;
       const streamId = session.data?.room.current_stream_id;
       if (streamId) router.replace({ pathname: '/host/summary', params: { streamId } });
-      else router.replace('/create');
+      else router.dismissTo('/create');
       return;
     }
     setViewers(next.viewer_count);
@@ -151,7 +151,7 @@ export default function HostLiveScreen() {
       track('live_ended', { room_id: roomId! });
       const streamId = session.data?.room.current_stream_id;
       if (streamId) router.replace({ pathname: '/host/summary', params: { streamId } });
-      else router.replace('/create');
+      else router.dismissTo('/create');
     } catch (e) {
       leaving.current = false;
       Alert.alert('Could not end stream', friendlyError(e));

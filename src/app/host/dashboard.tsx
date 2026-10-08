@@ -137,7 +137,7 @@ export default function HostDashboardScreen() {
             </Row>
 
             <Button title={data.live ? 'Back to your live' : 'Go live now'} onPress={() => {
-              if (!data.live) router.push('/create');
+              if (!data.live) router.dismissTo('/create');
               else if (data.party && data.roomId) router.push({ pathname: '/party/[roomId]', params: { roomId: data.roomId } });
               else router.push('/host/live');
             }} />
