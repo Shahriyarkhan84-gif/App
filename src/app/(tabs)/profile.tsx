@@ -1,13 +1,17 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+import { router, useIsFocused } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { LinearGradient } from 'expo-linear-gradient';
+import type { ReactNode } from 'react';
 import * as WebBrowser from 'expo-web-browser';
-import { ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTabBarSpace } from '@/components/Menus';
 import { StateView } from '@/components/StateView';
-import { FadeIn } from '@/components/Motion';
+import { FadeIn, PressScale } from '@/components/Motion';
 import { FramedAvatar } from '@/components/FramedAvatar';
-import { AgencyOwnerBadge, Button, Card, Coin, compactNumber, HostBadge, IconButton, ListRow, Row, Screen, Text } from '@/components/ui';
+import { AgencyOwnerBadge, Coin, compactNumber, HostBadge, IconButton, Row, Screen, Text, type IconName } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { env } from '@/lib/env';
@@ -15,16 +19,16 @@ import { useFocusedAsync, useRealtime } from '@/lib/hooks';
 import { useI18n } from '@/lib/i18n';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
-import { useTheme } from '@/lib/theme';
+import { liveColors, useTheme } from '@/lib/theme';
 import { displayName } from '@/lib/types';
 
 export default function ProfileScreen() {
   const tabSpace = useTabBarSpace();
   const supabase = useSupabase();
-  const { c } = useTheme();
   const { t } = useI18n();
   const track = useAnalytics();
   const { profile, host, isHost, isPlatformAdmin, error, reload } = useProfile();
+  const focused = useIsFocused();
 
   const stats = useFocusedAsync(async () => {
     if (!profile) return null;
@@ -62,92 +66,141 @@ export default function ProfileScreen() {
   const verified = host?.verification_status === 'approved';
   const isAgencyOwner = profile?.role === 'AGENCY_ADMIN';
   const isAgencyStaff = isAgencyOwner || profile?.role === 'AGENCY_MEMBER';
+  const d = liveColors;
 
+  // Dark "Me" page in the style of other live apps: centred framed photo, stats, four tiles, grouped rows.
   return (
-    <Screen>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingTop: 8, paddingBottom: tabSpace + 16, gap: 18, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
-        <Row style={{ justifyContent: 'space-between' }}>
-          <IconButton icon="create-outline" label="Edit profile" onPress={() => router.push('/profile-edit')} />
-          <Text variant="h2">Me</Text>
-          <IconButton icon="settings-outline" label="Settings" onPress={() => router.push('/settings')} />
-        </Row>
+    <View style={{ flex: 1, backgroundColor: d.background }}>
+      {focused && <StatusBar style="light" />}
+      <LinearGradient colors={['#2B1550', d.background]} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 360 }} />
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16, gap: 18, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
+          <Row gap={8} style={{ justifyContent: 'flex-end' }}>
+            <IconButton icon="settings-outline" label="Settings" color={d.text} bg="rgba(255,255,255,0.08)" onPress={() => router.push('/settings')} />
+            <IconButton icon="create-outline" label="Edit profile" color={d.text} bg="rgba(255,255,255,0.08)" onPress={() => router.push('/profile-edit')} />
+          </Row>
 
-        <Row gap={14}>
-          <FramedAvatar uri={profile.avatar_url} name={displayName(profile)} size={76} ring={c.primary} frameId={profile.active_frame_id} />
-          <View style={{ flex: 1, gap: 4 }}>
-            <Text variant="h3" style={{ fontSize: 20, lineHeight: 26 }} numberOfLines={1}>{displayName(profile)}</Text>
-            <Text variant="bodySmall" muted selectable accessibilityLabel={`Your ID ${String(profile.user_number).split('').join(' ')}`}>ID {profile.user_number}</Text>
+          <FadeIn style={{ alignItems: 'center', gap: 8 }}>
+            <Pressable onPress={() => router.push('/frames')} accessibilityRole="button" accessibilityLabel="Profile frames">
+              <FramedAvatar uri={profile.avatar_url} name={displayName(profile)} size={116} ring={d.primary} frameId={profile.active_frame_id} />
+            </Pressable>
+            <Text variant="h1" color={d.text} style={{ textAlign: 'center', marginTop: 6 }} numberOfLines={1}>{displayName(profile)}</Text>
+            <Text variant="bodySmall" color={d.textMuted} selectable accessibilityLabel={`Your ID ${String(profile.user_number).split('').join(' ')}`}>ID {profile.user_number}</Text>
             {(host || isAgencyOwner) && (
-              <Row gap={6} style={{ flexWrap: 'wrap' }}>
+              <Row gap={6} style={{ flexWrap: 'wrap', justifyContent: 'center' }}>
                 {host && (verified ? <HostBadge /> : <Badge label={host.verification_status === 'declined' ? 'Verification declined' : host.verification_status === 'unverified' ? 'Not verified' : 'Verification pending'} />)}
                 {isAgencyOwner && <AgencyOwnerBadge />}
               </Row>
             )}
-          </View>
-        </Row>
-        {profile.bio && <Text muted>{profile.bio}</Text>}
-        {profile.status !== 'active' && (
-          <Card style={{ borderColor: c.warning }}>
-            <Text variant="label" color={c.warning}>Account {profile.status}</Text>
-            <Text muted>{profile.status_until ? `Until ${new Date(profile.status_until).toLocaleString()}` : 'Contact support for details.'}</Text>
-          </Card>
-        )}
+            {profile.bio && <Text color={d.textMuted} style={{ textAlign: 'center' }}>{profile.bio}</Text>}
+          </FadeIn>
 
-        <FadeIn delay={80} style={{ flexDirection: 'row', gap: 8 }}>
-          <Stat label="Following" value={stats.data?.following} />
-          <Stat label="Fans" value={stats.data?.followers} />
-          <Stat label="Friends" value={stats.data?.friends} />
-        </FadeIn>
+          {profile.status !== 'active' && (
+            <View style={{ padding: 14, borderRadius: 16, borderWidth: 1, borderColor: d.warning, gap: 4 }}>
+              <Text variant="label" color={d.warning}>Account {profile.status}</Text>
+              <Text color={d.textMuted}>{profile.status_until ? `Until ${new Date(profile.status_until).toLocaleString()}` : 'Contact support for details.'}</Text>
+            </View>
+          )}
 
-        <FadeIn delay={160} style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={{ flex: 1, padding: 16, borderRadius: 18, backgroundColor: c.goldSurface, borderWidth: 1, borderColor: c.goldBorder, gap: 10 }}>
-            <Row gap={6}><Coin /><Text variant="bodySmall" color={c.goldText}>Coins</Text></Row>
-            <Text variant="h1">{stats.data ? stats.data.coins.toLocaleString() : '–'}</Text>
-            <Button title="Recharge" variant="gold" size="sm" onPress={() => router.push('/wallet')} />
-          </View>
-          <View style={{ flex: 1, padding: 16, borderRadius: 18, backgroundColor: c.violetSurface, borderWidth: 1, borderColor: c.violetBorder, gap: 10 }}>
-            <Row gap={6}><Ionicons name="diamond-outline" size={16} color={c.violetText} /><Text variant="bodySmall" color={c.violetText}>Diamonds earned</Text></Row>
-            <Text variant="h1">{host ? (stats.data ? stats.data.earnings.toLocaleString() : '–') : '0'}</Text>
-            {host
-              ? <Button title="Withdraw" variant="outline" size="sm" onPress={() => router.push('/earnings')} />
-              : <Button title="Become a host" variant="outline" size="sm" onPress={() => router.push('/hosting')} />}
-          </View>
-        </FadeIn>
+          <FadeIn delay={80} style={{ flexDirection: 'row' }}>
+            <Stat label="Friends" value={stats.data?.friends} />
+            <Stat label="Following" value={stats.data?.following} />
+            <Stat label="Fans" value={stats.data?.followers} />
+          </FadeIn>
 
-        <FadeIn delay={240} style={{ borderRadius: 18, backgroundColor: c.surface, overflow: 'hidden' }}>
-          {isHost && <ListRow icon="grid-outline" label="Host dashboard" onPress={() => router.push('/host/dashboard')} />}
-          {!verified && <ListRow icon="shield-checkmark-outline" label={t('menu.hostingVerification')} color={c.gold} onPress={() => router.push('/hosting')} />}
-          <ListRow icon="wallet-outline" label="Wallet & transactions" onPress={() => router.push('/wallet')} />
-          <ListRow icon="sparkles-outline" label="Profile frames" color={c.gold} onPress={() => router.push('/frames')} />
-          <ListRow icon="play-circle-outline" label={t('menu.videos')} onPress={() => router.push('/videos')} />
-          <ListRow icon="trophy-outline" label={t('menu.rankings')} onPress={() => router.push('/rankings')} />
-          <ListRow icon="calendar-outline" label={t('menu.events')} onPress={() => router.push('/events')} />
-          <ListRow icon="help-buoy-outline" label={t('menu.support')} onPress={() => router.push('/support')} />
-          {/* Only when a feedback board is configured; otherwise the row would just show a setup message. */}
-          {!!env.productBridgeUrl && <ListRow icon="megaphone-outline" label={t('menu.feedback')} onPress={openFeedback} last={!isAgencyStaff && !isPlatformAdmin} />}
-          {isAgencyStaff && <ListRow icon="business-outline" label={t('menu.agency')} color={c.gold} onPress={() => router.push('/agency')} last={!isPlatformAdmin} />}
-          {isPlatformAdmin && <ListRow icon="analytics-outline" label={t('menu.admin')} onPress={() => router.push('/admin')} last />}
-        </FadeIn>
-      </ScrollView>
-    </Screen>
+          <FadeIn delay={140} style={{ flexDirection: 'row', gap: 8 }}>
+            <Tile coin iconColor="#FFC24B" label={stats.data ? compactNumber(stats.data.coins) : '–'} sub="Coins" tint={['#3A2A0E', '#241708']} labelColor="#FFE3A3" onPress={() => router.push('/wallet')} />
+            <Tile icon="sparkles" iconColor="#F0ABFC" label="Frames" sub="Shop" tint={['#3B1D5E', '#24133D']} labelColor="#F5D0FE" onPress={() => router.push('/frames')} />
+            <Tile icon="business" iconColor="#FDBA74" label="Agency" sub={isAgencyStaff ? 'Portal' : 'Join'} tint={['#3A2412', '#24160B']} labelColor="#FED7AA" onPress={() => router.push(isAgencyStaff ? '/agency' : '/hosting')} />
+            <Tile icon="diamond" iconColor="#93C5FD" label={host && stats.data ? compactNumber(stats.data.earnings) : 'Earn'} sub={host ? 'Diamonds' : 'Money'} tint={['#16264A', '#0E1830']} labelColor="#BFDBFE" onPress={() => router.push(host ? '/earnings' : '/hosting')} />
+          </FadeIn>
+
+          <FadeIn delay={200}>
+            <Group>
+              {isHost && <DarkRow icon="trending-up" tint="#2DD4BF" label="Creator Center" onPress={() => router.push('/host/dashboard')} />}
+              <DarkRow icon="megaphone" tint="#22D3EE" label={t('menu.events')} onPress={() => router.push('/events')} />
+              <DarkRow icon="trophy" tint="#FBBF24" label={t('menu.rankings')} onPress={() => router.push('/rankings')} last />
+            </Group>
+          </FadeIn>
+
+          <FadeIn delay={240}>
+            <Group>
+              <DarkRow icon="wallet" tint="#F472B6" label="Wallet" detail={stats.data ? `${stats.data.coins.toLocaleString()} coins` : undefined} onPress={() => router.push('/wallet')} />
+              <DarkRow icon="sparkles" tint="#C084FC" label="Profile frames" onPress={() => router.push('/frames')} />
+              <DarkRow icon="play-circle" tint="#FB923C" label={t('menu.videos')} onPress={() => router.push('/videos')} last={verified} />
+              {!verified && <DarkRow icon="shield-checkmark" tint="#FACC15" label={t('menu.hostingVerification')} onPress={() => router.push('/hosting')} last />}
+            </Group>
+          </FadeIn>
+
+          <FadeIn delay={280}>
+            <Group>
+              <DarkRow icon="help-buoy" tint="#60A5FA" label={t('menu.support')} onPress={() => router.push('/support')} last={!env.productBridgeUrl && !isAgencyStaff && !isPlatformAdmin} />
+              {/* Only when a feedback board is configured; otherwise the row would just show a setup message. */}
+              {!!env.productBridgeUrl && <DarkRow icon="chatbubble-ellipses" tint="#34D399" label={t('menu.feedback')} onPress={openFeedback} last={!isAgencyStaff && !isPlatformAdmin} />}
+              {isAgencyStaff && <DarkRow icon="business" tint="#FDBA74" label={t('menu.agency')} onPress={() => router.push('/agency')} last={!isPlatformAdmin} />}
+              {isPlatformAdmin && <DarkRow icon="analytics" tint="#A78BFA" label={t('menu.admin')} onPress={() => router.push('/admin')} last />}
+            </Group>
+          </FadeIn>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
+  );
+}
+
+/** One of the four coloured tiles under the stats. */
+function Tile({ icon, coin, iconColor, label, sub, tint, labelColor, onPress }: {
+  icon?: IconName; coin?: boolean; iconColor: string; label: string; sub: string; tint: [string, string]; labelColor: string; onPress: () => void;
+}) {
+  return (
+    <PressScale onPress={onPress} scaleTo={0.95} accessibilityRole="button" accessibilityLabel={`${label} ${sub}`} style={{ flex: 1 }}>
+      <LinearGradient colors={tint} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        style={{ minHeight: 104, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 4 }}>
+        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' }}>
+          {coin ? <Coin size={26} /> : icon && <Ionicons name={icon} size={24} color={iconColor} />}
+        </View>
+        <Text variant="label" color={labelColor} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
+        <Text variant="caption" color="rgba(255,255,255,0.55)" numberOfLines={1}>{sub}</Text>
+      </LinearGradient>
+    </PressScale>
+  );
+}
+
+function Group({ children }: { children: ReactNode }) {
+  return <View style={{ borderRadius: 18, backgroundColor: liveColors.surface, overflow: 'hidden' }}>{children}</View>;
+}
+
+/** Menu row: coloured round icon, label, optional detail, chevron. */
+function DarkRow({ icon, tint, label, detail, onPress, last }: { icon: IconName; tint: string; label: string; detail?: string; onPress: () => void; last?: boolean }) {
+  const d = liveColors;
+  return (
+    <PressScale onPress={onPress} scaleTo={0.98} accessibilityRole="button" accessibilityLabel={detail ? `${label}, ${detail}` : label}>
+      <Row gap={14} style={{ paddingHorizontal: 14, minHeight: 60, borderBottomWidth: last ? 0 : 1, borderBottomColor: d.divider }}>
+        <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: tint, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name={icon} size={20} color="#fff" />
+        </View>
+        <Text style={{ flex: 1, fontSize: 16 }} color={d.text}>{label}</Text>
+        {detail && <Text variant="bodySmall" color={d.textMuted}>{detail}</Text>}
+        <Ionicons name="chevron-forward" size={18} color={d.textFaint} />
+      </Row>
+    </PressScale>
   );
 }
 
 function Badge({ label, gold }: { label: string; gold?: boolean }) {
   const { c } = useTheme();
   return (
-    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, backgroundColor: gold ? c.gold : c.surfaceRaised }}>
-      <Text variant="caption" color={gold ? c.onGold : c.textMuted} style={{ fontSize: 11, fontWeight: gold ? '700' : '500' }}>{label}</Text>
+    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, backgroundColor: gold ? c.gold : liveColors.surfaceRaised }}>
+      <Text variant="caption" color={gold ? c.onGold : liveColors.textMuted} style={{ fontSize: 11, fontWeight: gold ? '700' : '500' }}>{label}</Text>
     </View>
   );
 }
 
 function Stat({ label, value }: { label: string; value?: number }) {
-  const { c } = useTheme();
+  const d = liveColors;
   return (
-    <View style={{ flex: 1, alignItems: 'center', gap: 2, paddingVertical: 12, borderRadius: 14, backgroundColor: c.surface }}>
-      <Text variant="display" style={{ fontSize: 18, lineHeight: 24 }}>{value === undefined ? '–' : compactNumber(value)}</Text>
-      <Text variant="caption" muted>{label}</Text>
+    <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
+      <Text variant="display" color={d.text} style={{ fontSize: 24, lineHeight: 30 }}>{value === undefined ? '–' : compactNumber(value)}</Text>
+      <Text variant="bodySmall" color={d.textMuted}>{label}</Text>
     </View>
   );
 }

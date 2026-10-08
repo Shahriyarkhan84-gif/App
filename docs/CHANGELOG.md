@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.23 — Me tab redesign
+
+- Me is a dark page in the style of other live apps: settings and edit icons top right, a large centred photo wearing your profile frame (tap it to open the frame shop), name, ID, badges and bio, then Friends · Following · Fans, four coloured tiles (Coins → Wallet, Frames → shop, Agency → portal or how to join, Diamonds/Earn → Earnings or Hosting) and grouped rows with coloured round icons: Creator Center, Events, Rankings · Wallet, Profile frames, Videos, Hosting verification · Help & support, Feedback, Agency portal, Owner command center.
+
 ## 0.9.22 — Profile frames (coin shop)
 
 - New **Profile frames** shop (Me → Profile frames): six frames (Rose Gold, Neon Violet, Emerald, Fire for 30 days; Royal Crown and Diamond forever, 300–5,000 coins). Preview any frame on your own photo, buy it with coins (confirmation first), and it's worn at once; wear, renew or take it off later. A short balance shows "Need N more coins · Recharge".
