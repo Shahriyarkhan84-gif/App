@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.21 — Me tab
+
+- Removed "Start a live stream" from the Me menu; going live is the + button in the dock.
+
 ## 0.9.20 — Glass capsule dock
 
 - The bottom navigation is a floating glass capsule: a rounded, see-through pill above the bottom edge with a bright edge, a top-down sheen and a soft purple shadow; the Go live button sits inside it. Web gets a real backdrop blur; phones get the translucent frosted look (true blur on Android needs a native blur module in the next APK). `useTabBarSpace()` covers the dock, so screens keep their content clear of it.

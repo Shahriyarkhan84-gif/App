@@ -114,7 +114,6 @@ export default function ProfileScreen() {
         </FadeIn>
 
         <FadeIn delay={240} style={{ borderRadius: 18, backgroundColor: c.surface, overflow: 'hidden' }}>
-          <ListRow icon="videocam-outline" label="Start a live stream" color={c.primary} onPress={() => router.push('/create')} />
           {isHost && <ListRow icon="grid-outline" label="Host dashboard" onPress={() => router.push('/host/dashboard')} />}
           {!verified && <ListRow icon="shield-checkmark-outline" label={t('menu.hostingVerification')} color={c.gold} onPress={() => router.push('/hosting')} />}
           <ListRow icon="wallet-outline" label="Wallet & transactions" onPress={() => router.push('/wallet')} />
