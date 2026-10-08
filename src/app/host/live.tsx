@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, useNavigation } from 'expo-router';
+import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, Share, View } from 'react-native';
@@ -23,6 +23,8 @@ import { displayName, normalizeRooms, ROOM_SELECT, type Room } from '@/lib/types
 
 export default function HostLiveScreen() {
   const supabase = useSupabase();
+  // Camera picked with Flip on the Go-live screen.
+  const facing = useLocalSearchParams<{ facing?: string }>().facing === 'environment' ? 'environment' : 'user';
   const { userId } = useAuth();
   const track = useAnalytics();
   const insets = useSafeAreaInsets();
@@ -200,7 +202,7 @@ export default function HostLiveScreen() {
               <>
                 <PkBattleStage
                   mySide={mySide}
-                  myStage={<LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" onError={onStageError} onDisconnected={onStageDisconnected} />}
+                  myStage={<LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" facing={facing} onError={onStageError} onDisconnected={onStageDisconnected} />}
                   opponentRoom={opponentRoom!}
                   mySideLabel="You"
                   opponentSideLabel={displayName(opponentRoom!.host)}
@@ -208,7 +210,7 @@ export default function HostLiveScreen() {
                 <PkBattleBar battle={battle!} mySide={mySide} secondsLeft={secondsLeft} />
               </>
             ) : (
-              <LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" onError={onStageError} onDisconnected={onStageDisconnected} />
+              <LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" facing={facing} onError={onStageError} onDisconnected={onStageDisconnected} />
             )}
             {/* Two rows so every control fits on small phones (End stays on screen at 360 dp). */}
             <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, gap: 8 }}>

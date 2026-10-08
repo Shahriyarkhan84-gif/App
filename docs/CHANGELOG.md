@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.18 — Bigo-style Go-live screen
+
+- The Go-live tab is a full-screen camera (no tab bar) with a close button, a card holding the cover picture ("Edit") and an "Add a title to chat" field, swipeable `#category` chips, Flip / Cover / Creator Center tools, a large **Go LIVE** button and a mode switcher: **Multi-guest LIVE** (video party), **LIVE** (solo) and **Audio LIVE** (voice party), saved with `set_room_mode`.
+- Flip picks the front or back camera, and the live broadcast uses the same one (`LiveStage` `facing`).
+
 ## 0.9.17 — Go live without an ID check
 
 - Anyone can go live: the Go-live tab opens the camera with the cover, title and Go live button straight away. The first cover upload or go-live creates the user's room (`become_host`); there is no separate "Become a host" step.

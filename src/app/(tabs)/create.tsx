@@ -3,19 +3,19 @@ import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo
 import { Image } from 'expo-image';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
-import { router, useIsFocused } from 'expo-router';
+import { router, useIsFocused, useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useTabBarSpace } from '@/components/Menus';
+import { useTabBarSpace, useTabBarStyle } from '@/components/Menus';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { HostVerificationCard } from '@/components/HostVerificationCard';
 import { FadeIn, Pop } from '@/components/Motion';
 import { StateView, type ViewState } from '@/components/StateView';
-import { Button, Card, Chip, Input, Row, Screen, Text } from '@/components/ui';
+import { Button, Card, Row, Screen, Text, type IconName } from '@/components/ui';
 import { Alert, confirmAction } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
@@ -23,11 +23,30 @@ import { friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
-import { liveColors, useTheme } from '@/lib/theme';
+import { fonts, liveColors, useTheme } from '@/lib/theme';
 import { CATEGORIES, categoryLabel } from '@/lib/types';
+
+type LiveMode = 'live' | 'voice' | 'video';
+const LIVE_MODES: { key: LiveMode; label: string }[] = [
+  { key: 'video', label: 'Multi-guest LIVE' },
+  { key: 'live', label: 'LIVE' },
+  { key: 'voice', label: 'Audio LIVE' },
+];
+
+/** Icon + label button on the camera screen (Flip, Cover, Creator Center). */
+function Tool({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={{ alignItems: 'center', gap: 6, minWidth: 72, minHeight: 44 }}>
+      <Ionicons name={icon} size={30} color="#fff" />
+      <Text variant="caption" color="#fff" style={{ textAlign: 'center' }}>{label}</Text>
+    </Pressable>
+  );
+}
 
 export default function CreateScreen() {
   const tabSpace = useTabBarSpace();
+  const tabBarStyle = useTabBarStyle();
+  const navigation = useNavigation();
   const supabase = useSupabase();
   const { c } = useTheme();
   const track = useAnalytics();
@@ -40,6 +59,8 @@ export default function CreateScreen() {
   const [categoryEdit, setCategory] = useState<(typeof CATEGORIES)[number] | null>(null);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
+  // Front or back camera; Flip changes it and the live broadcast uses the same one.
+  const [facing, setFacing] = useState<'user' | 'environment'>('user');
   // Only hold the camera while this tab is on screen, so the broadcast can take it.
   const focused = useIsFocused();
 
@@ -89,7 +110,7 @@ export default function CreateScreen() {
       track('went_live', { category });
       // Voice/video parties (chosen on the Party tab) open the party room instead of the solo live screen.
       if (live?.mode === 'voice' || live?.mode === 'video') router.push({ pathname: '/party/[roomId]', params: { roomId: live.id } });
-      else router.push('/host/live');
+      else router.push({ pathname: '/host/live', params: { facing } });
     } catch (e) {
       Alert.alert('Could not go live', friendlyError(e));
     } finally {
@@ -109,10 +130,12 @@ export default function CreateScreen() {
     }
   };
 
-  const soloLive = async () => {
+  // LIVE (solo), Multi-guest LIVE (video party) or Audio LIVE (voice party); sticks to the room.
+  const changeMode = async (next: LiveMode) => {
     setBusy(true);
     try {
-      await rpc(supabase, 'set_room_mode', { p_mode: 'live' });
+      await ensureHost();
+      await rpc(supabase, 'set_room_mode', { p_mode: next });
       room.reload();
     } catch (e) {
       Alert.alert('Could not switch', friendlyError(e));
@@ -186,69 +209,102 @@ export default function CreateScreen() {
   const ready = !needsVerification && !!room.data && room.data.status !== 'live';
   const lc = liveColors;
 
+  // The camera screen is full screen like other live apps: no tab bar, a close button instead.
+  const fullScreen = state.kind === 'success' && ready;
+  const tabBarStyleRef = useRef(tabBarStyle);
+  useEffect(() => { tabBarStyleRef.current = tabBarStyle; });
+  useEffect(() => {
+    navigation.setOptions({ tabBarStyle: fullScreen ? { display: 'none' } : tabBarStyleRef.current });
+  }, [navigation, fullScreen]);
+
   if (state.kind === 'success' && ready) {
+    const mode = room.data?.mode ?? 'live';
     return (
-      <View style={{ flex: 1, backgroundColor: '#170B2E' }}>
+      <View style={{ flex: 1, backgroundColor: '#0B0612' }}>
         {focused && <StatusBar style="light" />}
-        {Platform.OS !== 'web' && focused && camera?.granted ? (
-          <CameraView facing="front" style={StyleSheet.absoluteFill} />
+        {Platform.OS !== 'web' && focused && !voiceOnly && camera?.granted ? (
+          <CameraView facing={facing === 'environment' ? 'back' : 'front'} style={StyleSheet.absoluteFill} />
         ) : (
-          <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
-            <Text variant="caption" color="rgba(255,255,255,0.35)" style={{ letterSpacing: 1 }}>CAMERA PREVIEW</Text>
-          </View>
+          <LinearGradient colors={['#1A0F2E', '#0B0612']} style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', gap: 10 }]}>
+            <Ionicons name={voiceOnly ? 'mic' : 'videocam-outline'} size={40} color="rgba(255,255,255,0.3)" />
+            <Text variant="caption" color="rgba(255,255,255,0.4)" style={{ letterSpacing: 1 }}>{voiceOnly ? 'AUDIO LIVE · VOICE ONLY' : 'CAMERA PREVIEW'}</Text>
+          </LinearGradient>
         )}
-        <SafeAreaView edges={['top']} style={{ padding: 12 }}>
-          <View style={{ padding: 14, borderRadius: 18, backgroundColor: 'rgba(14,13,18,0.78)', gap: 14 }}>
-            <Row style={{ justifyContent: 'space-between' }}>
-              <Text variant="h2" color={lc.text}>Go live</Text>
-              <Text variant="caption" color={lc.textMuted}>ID {profile?.user_number}{verification === 'approved' ? ' · Verified' : ''}</Text>
+        <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1, justifyContent: 'space-between' }}>
+          <View style={{ paddingHorizontal: 16, paddingTop: 4, gap: 12 }}>
+            <Row style={{ justifyContent: 'flex-end' }}>
+              <Pressable onPress={() => router.navigate('/')} accessibilityRole="button" accessibilityLabel="Close" hitSlop={12} style={{ padding: 4 }}>
+                <Ionicons name="close" size={32} color="#fff" />
+              </Pressable>
             </Row>
-            <Pressable onPress={pickCover} disabled={uploading || offline} accessibilityRole="button" accessibilityLabel={cover ? 'Change cover picture' : 'Add cover picture, required'} style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-              <View style={{ width: 72, height: 96, borderRadius: 12, overflow: 'hidden', borderWidth: cover ? 0 : 2, borderStyle: 'dashed', borderColor: lc.accent, backgroundColor: lc.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
-                {cover ? (
-                  <Pop key={cover} from={0.7}><Image source={cover} style={{ width: 72, height: 96 }} contentFit="cover" /></Pop>
-                ) : (
-                  <Ionicons name={uploading ? 'cloud-upload-outline' : 'image-outline'} size={26} color={lc.accent} />
-                )}
-              </View>
-              <View style={{ flex: 1, gap: 3 }}>
-                <Row gap={6}>
-                  <Text variant="label" color={lc.text}>Cover picture</Text>
-                  {!cover && <Text variant="caption" color={lc.accent} style={{ fontWeight: '700' }}>Required</Text>}
-                </Row>
-                <Text variant="caption" color={lc.textMuted}>{uploading ? 'Uploading…' : cover ? 'Shown on Home and in search. Tap to change.' : 'Add a cover to go live. It shows on Home and in search.'}</Text>
-              </View>
-              <Ionicons name={cover ? 'create-outline' : 'add-circle'} size={22} color={cover ? lc.textMuted : lc.accent} />
-            </Pressable>
-            <Input label="Stream title" value={title} onChangeText={setTitle} placeholder="What are you streaming?" maxLength={80} style={{ backgroundColor: lc.surfaceRaised, borderColor: '#3A3547', color: lc.text, minHeight: 44 }} />
-            {room.data && room.data.mode !== 'live' && (
-              // The party choice sticks to the room, so say so here and let the host switch back.
-              <Row gap={8} style={{ backgroundColor: lc.surfaceRaised, borderRadius: 12, padding: 12 }}>
-                <Ionicons name={room.data.mode === 'video' ? 'videocam' : 'mic'} size={18} color={lc.accent} />
-                <Text variant="bodySmall" color={lc.text} style={{ flex: 1 }}>{room.data.mode === 'video' ? 'Video party' : 'Voice party'}: guests can join you on seats.</Text>
-                <Pressable onPress={soloLive} disabled={busy} accessibilityRole="button" accessibilityLabel="Switch to a solo live">
-                  <Text variant="label" color={lc.accent}>Solo live</Text>
+            <View style={{ borderRadius: 22, borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)', backgroundColor: 'rgba(20,16,26,0.82)', padding: 12, gap: 12 }}>
+              <Row gap={12}>
+                <Pressable onPress={pickCover} disabled={uploading || offline} accessibilityRole="button" accessibilityLabel={cover ? 'Edit cover picture' : 'Add cover picture, required'}
+                  style={{ width: 76, height: 76, borderRadius: 14, overflow: 'hidden', backgroundColor: lc.surfaceRaised, alignItems: 'center', justifyContent: 'center', borderWidth: cover ? 0 : 2, borderStyle: 'dashed', borderColor: lc.accent }}>
+                  {cover ? (
+                    <Pop key={cover} from={0.7}><Image source={cover} style={{ width: 76, height: 76 }} contentFit="cover" /></Pop>
+                  ) : (
+                    <Ionicons name={uploading ? 'cloud-upload-outline' : 'image-outline'} size={26} color={lc.accent} />
+                  )}
+                  <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingVertical: 3, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center' }}>
+                    <Text variant="caption" color="#fff" style={{ fontWeight: '700' }}>{uploading ? '…' : cover ? 'Edit' : 'Add cover'}</Text>
+                  </View>
                 </Pressable>
+                <TextInput
+                  value={title}
+                  onChangeText={setTitle}
+                  placeholder="Add a title to chat"
+                  placeholderTextColor="rgba(255,255,255,0.45)"
+                  maxLength={80}
+                  accessibilityLabel="Stream title"
+                  style={{ flex: 1, color: '#fff', fontFamily: fonts.bold, fontSize: 20, minHeight: 48 }}
+                />
               </Row>
-            )}
-            <View style={{ gap: 8 }}>
-              <Text variant="bodySmall" color={lc.textMuted}>Category</Text>
-              <Row gap={8} style={{ flexWrap: 'wrap' }}>
-                {CATEGORIES.map((cat) => <Chip key={cat} label={categoryLabel(cat)} selected={category === cat} onPress={() => setCategory(cat)} />)}
-              </Row>
+              <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.12)' }} />
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                {CATEGORIES.map((cat) => {
+                  const on = category === cat;
+                  return (
+                    <Pressable key={cat} onPress={() => setCategory(cat)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`Category ${categoryLabel(cat)}`}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, minHeight: 40, borderRadius: 20, backgroundColor: on ? lc.accent : 'rgba(255,255,255,0.1)' }}>
+                      <Text color="#fff" style={{ fontWeight: '700' }}>#</Text>
+                      <Text color="#fff">{categoryLabel(cat)}</Text>
+                      <Ionicons name={on ? 'checkmark' : 'add'} size={16} color="#fff" />
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+              {!cover && <Text variant="caption" color={lc.accent}>Add a cover picture to go live. It shows on Home and in search.</Text>}
+            </View>
+          </View>
+
+          <View style={{ paddingHorizontal: 16, paddingBottom: 8, gap: 18 }}>
+            <Row style={{ justifyContent: 'space-evenly' }}>
+              {!voiceOnly && <Tool icon="camera-reverse-outline" label="Flip" onPress={() => setFacing((f) => (f === 'user' ? 'environment' : 'user'))} />}
+              <Tool icon="image-outline" label="Cover" onPress={pickCover} />
+              {isHost && <Tool icon="stats-chart-outline" label="Creator Center" onPress={() => router.push('/host/dashboard')} />}
+            </Row>
+            <Button
+              title={cover ? 'Go LIVE' : 'Add a cover to go live'}
+              onPress={goLive}
+              loading={busy}
+              disabled={offline || !cover || uploading}
+              style={{ minHeight: 60, borderRadius: 30 }}
+            />
+            {offline && <Text variant="bodySmall" color={lc.textMuted} style={{ textAlign: 'center', marginTop: -8 }}>You need a connection to go live.</Text>}
+            <View accessibilityRole="tablist" style={{ flexDirection: 'row', justifyContent: 'center', gap: 22 }}>
+              {LIVE_MODES.map((m) => {
+                const on = mode === m.key;
+                return (
+                  <Pressable key={m.key} onPress={() => void changeMode(m.key)} disabled={busy || on} accessibilityRole="tab" accessibilityState={{ selected: on }} hitSlop={8} style={{ alignItems: 'center', gap: 6, minHeight: 44, justifyContent: 'center' }}>
+                    <Text color={on ? '#fff' : 'rgba(255,255,255,0.55)'} style={{ fontWeight: '700', fontSize: on ? 17 : 15 }}>{m.label}</Text>
+                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: on ? '#fff' : 'transparent' }} />
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
         </SafeAreaView>
-        <View style={{ position: 'absolute', left: 0, right: 0, bottom: tabSpace, backgroundColor: lc.tabBar, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 16, paddingBottom: 20, gap: 10 }}>
-          <Button
-            title={cover ? 'Go live' : 'Add a cover to go live'}
-            onPress={goLive}
-            loading={busy}
-            disabled={offline || !cover || uploading}
-            icon={<View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#fff' }} />}
-          />
-          {offline && <Text variant="bodySmall" color={lc.textMuted} style={{ textAlign: 'center' }}>You need a connection to go live.</Text>}
-        </View>
       </View>
     );
   }

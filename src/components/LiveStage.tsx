@@ -13,7 +13,7 @@ import { Text } from './ui';
  * the simulcast layer that fits the viewer's bandwidth/screen); hosts publish
  * 1080p with simulcast so lower layers are available as fallbacks.
  */
-export function LiveStage({ token, url, role, onDisconnected, onError }: LiveStageProps) {
+export function LiveStage({ token, url, role, facing = 'user', onDisconnected, onError }: LiveStageProps) {
   useEffect(() => {
     void AudioSession.startAudioSession();
     return () => {
@@ -27,7 +27,7 @@ export function LiveStage({ token, url, role, onDisconnected, onError }: LiveSta
       token={token}
       connect
       audio={role === 'host'}
-      video={role === 'host' ? { resolution: VideoPresets.h1080.resolution, facingMode: 'user' } : false}
+      video={role === 'host' ? { resolution: VideoPresets.h1080.resolution, facingMode: facing } : false}
       options={{
         adaptiveStream: { pixelDensity: 'screen' },
         dynacast: true,
