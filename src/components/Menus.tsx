@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Animated, Modal, Pressable, ScrollView, View, useWindowDimensions, type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions, type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Pop, PressScale } from '@/components/Motion';
@@ -124,7 +124,7 @@ export function TabBarItem({ icon, activeIcon, label, focused, onPress }: { icon
   const narrow = useWindowDimensions().width < 360;
   return (
     <PressScale onPress={onPress} haptic scaleTo={0.9} accessibilityRole="tab" accessibilityState={{ selected: focused }} accessibilityLabel={label}
-      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingTop: 8, paddingHorizontal: 2 }}>
+      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 2 }}>
       <View style={{ width: 48, height: 28, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: focused ? `${c.primary}2E` : 'transparent' }}>
         <Ionicons name={focused ? activeIcon : icon} size={22} color={focused ? c.primary : c.textFaint} />
       </View>
@@ -145,15 +145,15 @@ export function tabButton(icon: IconName, activeIcon: IconName, label: string) {
   return TabButton;
 }
 
-/** Raised round Go live button in the middle of the tab bar. */
+/** Round Go live button in the middle of the dock. */
 export function TabBarCenterButton({ icon = 'add', label, onPress }: { icon?: IconName; label: string; onPress?: (e: GestureResponderEvent) => void }) {
   const { c } = useTheme();
   return (
-    <View style={{ flex: 1, alignItems: 'center' }}>
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       <PressScale onPress={onPress} haptic scaleTo={0.9} accessibilityRole="button" accessibilityLabel={label}
         style={{
-          width: 56, height: 56, marginTop: -18, borderRadius: 28, borderWidth: 4, borderColor: c.tabBar, overflow: 'hidden',
-          shadowColor: c.glow, shadowOpacity: 1, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 8,
+          width: 50, height: 50, borderRadius: 25, overflow: 'hidden',
+          shadowColor: c.glow, shadowOpacity: 1, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 6,
         }}>
         <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name={icon} size={28} color="#fff" />
@@ -163,21 +163,44 @@ export function TabBarCenterButton({ icon = 'add', label, onPress }: { icon?: Ic
   );
 }
 
-/** Container styling for the bottom tab bar (edge to edge, rounded top). */
+const DOCK_HEIGHT = 66;
+const DOCK_GAP = 10;
+
+/**
+ * Glass capsule dock: the tab bar floats above the bottom edge as a rounded, see-through pill.
+ * Frosted look from a translucent fill, a bright edge and a top-down sheen (real backdrop blur
+ * on web; on phones it needs a native blur module in the next APK).
+ */
 export function useTabBarStyle(): ViewStyle {
-  const { c } = useTheme();
   const insets = useSafeAreaInsets();
   return {
-    position: 'absolute', left: 0, right: 0, bottom: 0,
-    height: 62 + insets.bottom, paddingBottom: insets.bottom, paddingTop: 0,
-    backgroundColor: c.tabBar, borderTopWidth: 0, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    shadowColor: '#000', shadowOpacity: 0.14, shadowRadius: 16, shadowOffset: { width: 0, height: -4 }, elevation: 16,
+    position: 'absolute', left: 16, right: 16, bottom: insets.bottom + DOCK_GAP,
+    height: DOCK_HEIGHT, paddingBottom: 0, paddingTop: 0, paddingHorizontal: 6,
+    backgroundColor: 'transparent', borderTopWidth: 0, borderRadius: DOCK_HEIGHT / 2, elevation: 0,
   };
 }
 
-/** Height the floating tab bar covers at the bottom of a tab screen; add it to bottom padding. */
+/** `tabBarBackground` for the glass dock. */
+export function TabBarGlass() {
+  const { c } = useTheme();
+  return (
+    <View style={{
+      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: DOCK_HEIGHT / 2,
+      shadowColor: c.primary, shadowOpacity: 0.18, shadowRadius: 22, shadowOffset: { width: 0, height: 10 },
+    }}>
+      <View style={[
+        { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: DOCK_HEIGHT / 2, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', backgroundColor: 'rgba(255,255,255,0.68)' },
+        Platform.OS === 'web' ? ({ backdropFilter: 'blur(22px) saturate(170%)', WebkitBackdropFilter: 'blur(22px) saturate(170%)' } as object) : null,
+      ]}>
+        <LinearGradient colors={['rgba(255,255,255,0.75)', 'rgba(255,255,255,0.15)', 'rgba(236,222,250,0.35)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
+      </View>
+    </View>
+  );
+}
+
+/** Height the floating dock covers at the bottom of a tab screen; add it to bottom padding. */
 export function useTabBarSpace(): number {
-  return 62 + useSafeAreaInsets().bottom;
+  return DOCK_HEIGHT + DOCK_GAP + 8 + useSafeAreaInsets().bottom;
 }
 
 /** Static tab bar for previews and non-router screens. */

@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 
-import { TabBarCenterButton, tabButton, useTabBarStyle } from '@/components/Menus';
+import { TabBarCenterButton, TabBarGlass, tabButton, useTabBarStyle } from '@/components/Menus';
 import { useI18n } from '@/lib/i18n';
 import { useTheme } from '@/lib/theme';
 
@@ -10,7 +10,7 @@ export default function TabsLayout() {
   const { t } = useI18n();
   const tabBarStyle = useTabBarStyle();
   return (
-    <Tabs screenOptions={{ headerShown: false, tabBarShowLabel: false, tabBarStyle, sceneStyle: { backgroundColor: c.background } }}>
+    <Tabs screenOptions={{ headerShown: false, tabBarShowLabel: false, tabBarStyle, tabBarBackground: () => <TabBarGlass />, sceneStyle: { backgroundColor: c.background } }}>
       <Tabs.Screen name="index" options={{ title: t('tab.home'), tabBarButton: tabButton('home-outline', 'home', t('tab.home')) }} />
       <Tabs.Screen name="explore" options={{ title: t('tab.explore'), tabBarButton: tabButton('compass-outline', 'compass', t('tab.explore')) }} />
       {/* Party stays a route (Explore → Party rooms, Home → Search) but has no tab button. */}

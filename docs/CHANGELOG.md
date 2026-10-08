@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.20 — Glass capsule dock
+
+- The bottom navigation is a floating glass capsule: a rounded, see-through pill above the bottom edge with a bright edge, a top-down sheen and a soft purple shadow; the Go live button sits inside it. Web gets a real backdrop blur; phones get the translucent frosted look (true blur on Android needs a native blur module in the next APK). `useTabBarSpace()` covers the dock, so screens keep their content clear of it.
+
 ## 0.9.19 — Simpler Home
 
 - Home no longer shows the Loop strip (followed hosts who are live) or the Verified row (owner-pinned profiles); live rooms start right under the category chips. Followed hosts who are live are still under the bell icon at the top. Owner pins and blue ticks are unchanged in the command center; nothing on Home displays the pins now.
