@@ -69,7 +69,7 @@ export default function HostingScreen() {
               <Text variant="h1" color="#fff">Become a host</Text>
               {approved && <HostBadge />}
             </Row>
-            <Text color="rgba(255,255,255,0.85)">Every host on Zynalive is identity-verified. It keeps viewers safe and protects your earnings.</Text>
+            <Text color="rgba(255,255,255,0.85)">Anyone can go live. Verify your ID to become a host: withdraw your gift earnings, get the Host badge and join an agency.</Text>
             <Row gap={6} style={{ marginTop: 4 }}>
               {STEPS.map((s, i) => (
                 <View key={s} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= stepIndex ? '#fff' : 'rgba(255,255,255,0.3)' }} />

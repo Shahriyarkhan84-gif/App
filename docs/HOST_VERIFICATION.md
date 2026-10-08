@@ -7,6 +7,12 @@ with [Didit](https://didit.me) before they can **go live** or **withdraw
 earnings**. Both gates are settings (`platform_settings.host_verification`:
 `required_to_go_live`, `required_to_withdraw`, default `true`).
 
+**Hosted project (since 2026-10-08):** `required_to_go_live` is `false`, so anyone can go live:
+the Go-live tab opens the camera with a Go live button, and the first cover upload or go-live
+creates the user's room (`become_host`). The ID check is what makes someone a *host*:
+withdrawals (`required_to_withdraw` stays `true`), the Host badge and the agency link. Gifts
+to unverified streamers still build earnings; they just can't be withdrawn until approval.
+
 ## In-app application (primary)
 
 ```

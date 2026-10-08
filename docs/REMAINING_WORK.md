@@ -23,7 +23,7 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 
 ## Also pending
 
-- Going live requires an approved ID check again (`host_verification.required_to_go_live` = `true`, restored 2026-10-05 after testing). `host-application` (Didit ID + face match) is deployed (2026-10-05); it needs the `DIDIT_API_KEY` secret and at least one active agency (applicants must enter a 4-digit agency code).
+- Anyone can go live without an ID check (`host_verification.required_to_go_live` = `false` on the hosted project since 2026-10-08, owner's decision); the ID check is required to withdraw and for the Host badge/agency link. `host-application` (Didit ID + face match) is deployed (2026-10-05); it needs the `DIDIT_API_KEY` secret and at least one active agency (applicants must enter a 4-digit agency code).
 - Hosted project settings set by hand: `media.covers_base` = `https://mdfjbhzriuwxafeagnwo.supabase.co/storage/v1/object/public/covers` (2026-10-05). Each new environment needs its own value (see `docs/ENVIRONMENT.md`), or `set_room_cover` raises `not_configured`.
 - Hosted project settings set by hand: `media.media_base` (2026-10-05), alongside `covers_base`.
 - Host auto-approval is opt-in (`host_verification.auto_approve`, default off in code). On the hosted project the owner turned it **on** (2026-10-05): Didit's decision is final — Didit-approved applicants become hosts at once, Didit-declined ones are declined; only Didit "In Review" or an unreadable age waits for the owner.

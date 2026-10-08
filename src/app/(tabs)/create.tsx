@@ -70,25 +70,21 @@ export default function CreateScreen() {
 
   const verification = host?.verification_status ?? 'unverified';
   // Wait for the room/settings before deciding, so the verification card doesn't flash.
-  const needsVerification = isHost && !!room.data && room.data.verificationRequired !== false && verification !== 'approved';
+  // Off by default on the hosted project: anyone can stream; the ID check is for earning (withdrawals, Host badge, agency).
+  const needsVerification = !!room.data && room.data.verificationRequired !== false && verification !== 'approved';
 
-  const becomeHost = async () => {
-    setBusy(true);
-    try {
-      await rpc(supabase, 'become_host');
-      track('became_host', {});
-      await reloadProfile();
-      room.reload();
-    } catch (e) {
-      Alert.alert('Could not continue', friendlyError(e));
-    } finally {
-      setBusy(false);
-    }
+  // Streaming needs a room and Host ID (the user's own ID), created the first time someone adds a cover or goes live.
+  const ensureHost = async () => {
+    if (isHost) return;
+    await rpc(supabase, 'become_host');
+    track('became_host', {});
+    await reloadProfile();
   };
 
   const goLive = async () => {
     setBusy(true);
     try {
+      await ensureHost();
       const live = await rpc<{ id: string; mode?: string }>(supabase, 'go_live', { p_title: title.trim() || 'Live now', p_category: category });
       track('went_live', { category });
       // Voice/video parties (chosen on the Party tab) open the party room instead of the solo live screen.
@@ -132,6 +128,7 @@ export default function CreateScreen() {
     if (picked.canceled || !picked.assets[0]) return;
     setUploading(true);
     try {
+      await ensureHost();
       const ref = await ImageManipulator.manipulate(picked.assets[0].uri).resize({ width: 900 }).renderAsync();
       const out = await ref.saveAsync({ compress: 0.8, format: SaveFormat.JPEG });
       const body = await (await fetch(out.uri)).arrayBuffer();
@@ -163,7 +160,7 @@ export default function CreateScreen() {
   else if (profile.status !== 'active') state = { kind: 'disabled', title: 'Going live is paused', body: 'Your account is currently restricted. Check Messages for details.' };
   else if (host && host.status !== 'active') state = { kind: 'disabled', title: 'Hosting suspended', body: 'Contact support or your agency for details.' };
   // Permissions matter only for starting a live: a host who is already live always reaches End live.
-  else if (isHost && !needsVerification && room.data && room.data.status !== 'live' && needsPermission && canAsk) {
+  else if (!needsVerification && room.data && room.data.status !== 'live' && needsPermission && canAsk) {
     state = {
       kind: 'permission',
       title: voiceOnly ? 'Microphone' : 'Camera & microphone',
@@ -173,7 +170,7 @@ export default function CreateScreen() {
         await requestMic();
       },
     };
-  } else if (isHost && !needsVerification && room.data && room.data.status !== 'live' && needsPermission) {
+  } else if (!needsVerification && room.data && room.data.status !== 'live' && needsPermission) {
     state = {
       kind: 'permission',
       title: 'Permissions blocked',
@@ -183,10 +180,10 @@ export default function CreateScreen() {
     };
   }
 
-  if (state.kind === 'success' && isHost && !needsVerification && !room.data) {
+  if (state.kind === 'success' && !needsVerification && !room.data) {
     state = room.error ? { kind: 'error', error: room.error, onRetry: room.reload } : { kind: 'loading' };
   }
-  const ready = isHost && !needsVerification && !!room.data && room.data.status !== 'live';
+  const ready = !needsVerification && !!room.data && room.data.status !== 'live';
   const lc = liveColors;
 
   if (state.kind === 'success' && ready) {
@@ -267,28 +264,12 @@ export default function CreateScreen() {
                 <Text variant="h1" color="#fff">Go live</Text>
               </Row>
               <Text color="rgba(255,255,255,0.85)">
-                {!isHost ? 'Start streaming and earn coins from your fans.' : needsVerification ? 'Finish verification to unlock streaming.' : `You're live now.`}
+                {needsVerification ? 'Finish verification to unlock streaming.' : `You're live now.`}
               </Text>
             </LinearGradient>
           </FadeIn>
 
-          {!isHost && room.data?.verificationRequired ? (
-            // Going live needs an approved ID check, and approval makes the user a host, so skip "Become a host".
-            <FadeIn delay={80}><HostVerificationCard status="unverified" onChanged={() => void reloadProfile()} /></FadeIn>
-          ) : !isHost ? (
-            <FadeIn delay={80}>
-            <Card style={{ gap: 12 }}>
-              <Row gap={10}>
-                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: c.goldSurface, alignItems: 'center', justifyContent: 'center' }}>
-                  <Ionicons name="star" size={16} color={c.gold} />
-                </View>
-                <Text variant="h3">Become a host</Text>
-              </Row>
-              <Text muted>{`Stream to your followers, receive gifts, and earn 90% of every gift's coins. Your ID ${profile?.user_number ?? ''} stays the same — it's also your Host ID.`}</Text>
-              <Button title="Become a host" onPress={becomeHost} loading={busy} disabled={offline} />
-            </Card>
-            </FadeIn>
-          ) : needsVerification ? (
+          {needsVerification ? (
             <FadeIn delay={80}><HostVerificationCard status={verification} onChanged={() => void reloadProfile()} /></FadeIn>
           ) : (
             <FadeIn delay={80}>

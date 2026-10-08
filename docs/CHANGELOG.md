@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.17 — Go live without an ID check
+
+- Anyone can go live: the Go-live tab opens the camera with the cover, title and Go live button straight away. The first cover upload or go-live creates the user's room (`become_host`); there is no separate "Become a host" step.
+- The ID check (Didit) is what makes someone a host: withdrawing gift earnings, the Host badge and the agency link. Hosted setting `host_verification.required_to_go_live` set to `false`; `required_to_withdraw` stays `true`. The server gate is unchanged, so an owner can turn the requirement back on in the command center.
+
 ## 0.9.16 — Navigation flow fixes
 
 - "Go live" buttons on screens opened over the tabs (Hosting, Host dashboard, Videos, the ID check result) and the end of a live without a summary now return to the existing Go-live tab (`router.dismissTo`). Before, they pushed a second copy of the tab bar on top, so Back led to old screens.
