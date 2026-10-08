@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.19 — Simpler Home
+
+- Home no longer shows the Loop strip (followed hosts who are live) or the Verified row (owner-pinned profiles); live rooms start right under the category chips. Followed hosts who are live are still under the bell icon at the top. Owner pins and blue ticks are unchanged in the command center; nothing on Home displays the pins now.
+
 ## 0.9.18 — Bigo-style Go-live screen
 
 - The Go-live tab is a full-screen camera (no tab bar) with a close button, a card holding the cover picture ("Edit") and an "Add a title to chat" field, swipeable `#category` chips, Flip / Cover / Creator Center tools, a large **Go LIVE** button and a mode switcher: **Multi-guest LIVE** (video party), **LIVE** (solo) and **Audio LIVE** (voice party), saved with `set_room_mode`.

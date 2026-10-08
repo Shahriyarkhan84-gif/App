@@ -8,8 +8,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { LiveEventBanner } from '@/components/EventRow';
 import { RoomCard } from '@/components/RoomCard';
 import { FeaturedHost } from '@/components/FeaturedHost';
-import { LiveBell, LoopStrip } from '@/components/FollowingLive';
-import { PinnedProfiles } from '@/components/PinnedProfiles';
+import { LiveBell } from '@/components/FollowingLive';
 import { type MenuItem, SideMenuButton, useTabBarSpace } from '@/components/Menus';
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
@@ -19,7 +18,7 @@ import { useI18n } from '@/lib/i18n';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { fonts, useTheme } from '@/lib/theme';
-import { CATEGORIES, categoryLabel, displayName, normalizeRooms, ROOM_SELECT, type Room, roomHref } from '@/lib/types';
+import { CATEGORIES, categoryLabel, normalizeRooms, ROOM_SELECT, type Room, roomHref } from '@/lib/types';
 
 /** Live rooms fetched for Home; Popular, Following, Nearby and New are all cut from this list. */
 const LIVE_LIMIT = 200;
@@ -113,7 +112,7 @@ export default function HomeScreen() {
     new: { title: 'No new lives yet', body: 'Check back soon, or go live yourself.' },
   }[feed];
 
-  // Empty feeds stay inside the page (below the Loop strip and banners) rather than replacing it.
+  // Empty feeds stay inside the page (below the banners) rather than replacing it.
   const emptyState: { title: string; body?: string } = category === 'all' ? emptyCopy : { title: `No ${categoryLabel(category)} lives`, body: 'Try another category.' };
   const state = resolveState({ offline, loading, error, data, onRetry: reload });
 
@@ -168,11 +167,6 @@ export default function HomeScreen() {
           contentContainerStyle={{ paddingHorizontal: hPadding, paddingBottom: tabSpace + 32, gap: 12, maxWidth: 1100, width: '100%', alignSelf: 'center' }}
           refreshControl={<RefreshControl refreshing={loading && !!data} onRefresh={reload} tintColor={c.text} />}
         >
-          <LoopStrip
-            me={{ avatar_url: profile?.avatar_url, name: displayName(profile) }}
-            rooms={data ? data.followingLive : []}
-          />
-          <PinnedProfiles refreshKey={data} />
           {feed === 'popular' && category === 'all' && topRoom && (
             <FadeIn>
               <FeaturedHost key={`${topRoom.host_id}-${data!.followed.has(topRoom.host_id)}`} room={topRoom} following={data!.followed.has(topRoom.host_id)} />
