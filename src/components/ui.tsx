@@ -236,8 +236,8 @@ export function LiveBadge({ viewers }: { viewers?: number }) {
       <View style={{ borderRadius: 6, shadowColor: c.glow, shadowOpacity: 1, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 4 }}>
         <View style={{ borderRadius: 6, overflow: 'hidden' }}>
           <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 8, paddingVertical: 3, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <Pulse min={0.6} max={1.15} period={1100}><View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' }} /></Pulse>
-            <Text variant="caption" color="#fff" style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>LIVE</Text>
+            <Pulse min={0.6} max={1.15} period={1100}><View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: c.primaryText }} /></Pulse>
+            <Text variant="caption" color={c.primaryText} style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>LIVE</Text>
           </LinearGradient>
         </View>
       </View>
@@ -263,8 +263,8 @@ export function HostBadge({ small }: { small?: boolean }) {
       accessibilityLabel="Verified host"
       style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: c.primary, borderRadius: 6, paddingHorizontal: small ? 5 : 8, paddingVertical: small ? 1 : 3 }}
     >
-      <Ionicons name="shield-checkmark" size={small ? 10 : 12} color="#fff" />
-      <Text variant="caption" color="#fff" style={{ fontSize: small ? 10 : 11, fontWeight: '700' }}>Host</Text>
+      <Ionicons name="shield-checkmark" size={small ? 10 : 12} color={c.primaryText} />
+      <Text variant="caption" color={c.primaryText} style={{ fontSize: small ? 10 : 11, fontWeight: '700' }}>Host</Text>
     </View>
   );
 }

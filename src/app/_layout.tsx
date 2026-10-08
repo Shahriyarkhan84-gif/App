@@ -164,7 +164,7 @@ function RootLayout() {
             <AppI18n>
               <Analytics>
                 <IdentityAndScreens />
-                <StatusBar style="dark" />
+                <StatusBar style="light" />
                 <RootNavigator />
               </Analytics>
             </AppI18n>

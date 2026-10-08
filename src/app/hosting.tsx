@@ -65,17 +65,17 @@ export default function HostingScreen() {
         <FadeIn style={{ borderRadius: 22, overflow: 'hidden' }}>
           <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, gap: 10 }}>
             <Row gap={8}>
-              <Ionicons name="shield-checkmark" size={22} color="#fff" />
-              <Text variant="h1" color="#fff">Become a host</Text>
+              <Ionicons name="shield-checkmark" size={22} color={c.primaryText} />
+              <Text variant="h1" color={c.primaryText}>Become a host</Text>
               {approved && <HostBadge />}
             </Row>
-            <Text color="rgba(255,255,255,0.85)">Anyone can go live. Verify your ID to become a host: withdraw your gift earnings, get the Host badge and join an agency.</Text>
+            <Text color="rgba(0,19,31,0.78)">Anyone can go live. Verify your ID to become a host: withdraw your gift earnings, get the Host badge and join an agency.</Text>
             <Row gap={6} style={{ marginTop: 4 }}>
               {STEPS.map((s, i) => (
-                <View key={s} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= stepIndex ? '#fff' : 'rgba(255,255,255,0.3)' }} />
+                <View key={s} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= stepIndex ? c.primaryText : 'rgba(0,19,31,0.2)' }} />
               ))}
             </Row>
-            <Text variant="caption" color="rgba(255,255,255,0.75)">
+            <Text variant="caption" color="rgba(0,19,31,0.7)">
               {status === 'approved' ? 'Step 3 of 3 · Approved' : status === 'declined' ? 'Not approved · You can submit again' : status === 'unverified' ? 'Step 1 of 3 · Submit your ID' : 'Step 2 of 3 · Under review'}
             </Text>
           </LinearGradient>

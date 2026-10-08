@@ -92,7 +92,7 @@ function EditProfileForm() {
           <PressScale onPress={changePhoto} disabled={uploading} accessibilityRole="button" accessibilityLabel="Change photo" scaleTo={0.95}>
             <Avatar uri={avatar} name={nameOf(profile)} size={96} ring={c.primary} />
             <View style={{ position: 'absolute', right: 0, bottom: 0, width: 32, height: 32, borderRadius: 16, backgroundColor: c.primary, borderWidth: 2, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="camera" size={16} color="#fff" />
+              <Ionicons name="camera" size={16} color={c.primaryText} />
             </View>
           </PressScale>
           <Button title={uploading ? 'Uploading…' : 'Change photo'} variant="ghost" size="sm" loading={uploading} onPress={changePhoto} />

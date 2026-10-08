@@ -56,81 +56,52 @@ export function bodyFont(weight?: string | number | null) {
   return w >= 600 ? fonts.bold : w >= 500 ? fonts.medium : fonts.regular;
 }
 
-// Purple/pink rebrand (was white/blue). Gold stays as the coin/gift color only —
-// that's a semantic "currency" cue used industry-wide (BIGO, TikTok, etc.),
-// not the app's brand color, so it doesn't change with this rebrand.
+// Black + light sky blue brand. The whole app is dark (black), with light sky blue for actions,
+// highlights and the live badge. Filled sky surfaces carry near-black text (primaryText): white on
+// light sky is unreadable. Gold stays the coin/gift colour (an industry-wide "currency" cue).
 type Gradient = readonly [string, string, string];
 const dark = {
-  background: '#170B2E',
-  surface: '#241442',
-  surfaceRaised: '#2E1B54',
-  border: '#3A2569',
-  divider: '#2A1849',
-  tabBar: '#140A26',
-  text: '#F7F1FF',
-  textMuted: '#C9B8E8',
-  textFaint: '#8F7AB8',
-  primary: '#B341E0',
-  primaryText: '#FFFFFF',
-  accent: '#FF5FA2',
-  live: '#B341E0',
+  background: '#000000',
+  surface: '#111316',
+  surfaceRaised: '#1A1D22',
+  border: '#2A2F37',
+  divider: '#1C2026',
+  tabBar: '#0B0C0E',
+  text: '#FFFFFF',
+  textMuted: '#B3BDC9',
+  textFaint: '#7D8896',
+  primary: '#87CEFA',
+  primaryText: '#00131F',
+  accent: '#B5E4FC',
+  live: '#87CEFA',
   gold: '#FFC24B',
   onGold: '#2A1A00',
-  goldSurface: '#2A2110',
+  goldSurface: '#241C0C',
   goldBorder: '#4A3A18',
   goldText: '#FFE3A3',
-  violet: '#8B5CF6',
-  violetSurface: '#241542',
-  violetBorder: '#3D2A66',
-  violetText: '#E7DBFF',
+  violet: '#87CEFA',
+  violetSurface: '#0A1A23',
+  violetBorder: '#1C3A4A',
+  violetText: '#CDEEFE',
   success: '#34C789',
   warning: '#FFC24B',
   danger: '#FF5A61',
-  overlay: 'rgba(0,0,0,0.6)',
-  // HDR-style gradient + glow tokens for hero surfaces (buttons, live badge,
-  // balance cards, auth hero) — see GradientCard/GlowButton in ui.tsx.
-  gradient: ['#5B2A9E', '#B341E0', '#FF6FB0'] as Gradient,
-  glow: 'rgba(179,65,224,0.55)',
+  overlay: 'rgba(0,0,0,0.7)',
+  // Light sky gradient for hero surfaces (buttons, live badge, headers); text on it is primaryText.
+  gradient: ['#5AC8FA', '#87CEFA', '#B5E4FC'] as Gradient,
+  glow: 'rgba(135,206,250,0.45)',
 };
 
-const light: typeof dark = {
-  background: '#FFFFFF',
-  surface: '#F8F3FB',
-  surfaceRaised: '#F1E8F7',
-  border: '#E6D6F0',
-  divider: '#F0E6F5',
-  tabBar: '#FFFFFF',
-  text: '#241033',
-  textMuted: '#6B5285',
-  textFaint: '#75609A',
-  primary: '#9333EA',
-  primaryText: '#FFFFFF',
-  accent: '#EC4899',
-  live: '#9333EA',
-  gold: '#FFC24B',
-  onGold: '#2A1A00',
-  goldSurface: '#FFF4DA',
-  goldBorder: '#F1D38A',
-  goldText: '#6B4A00',
-  violet: '#8B5CF6',
-  violetSurface: '#F1EBFF',
-  violetBorder: '#DCCCFB',
-  violetText: '#5B2A9E',
-  success: '#1FA971',
-  warning: '#B7791F',
-  danger: '#D9363E',
-  overlay: 'rgba(0,0,0,0.45)',
-  gradient: ['#5B2A9E', '#B341E0', '#FF6FB0'] as Gradient,
-  glow: 'rgba(147,51,234,0.35)',
-};
+// The app has one look now; `light` is kept as an alias so older imports keep working.
+const light: typeof dark = dark;
 
 export type Palette = typeof dark;
 
-/** The app is always white; only live video screens stay dark (`liveColors`). */
+/** The app is always black with light sky blue accents, whatever the phone's setting. */
 export function useTheme() {
   const breakpoint = useBreakpoint();
-  return { c: light, scheme: 'light', spacing, radius, type, breakpoint, hPadding: H_PADDING[breakpoint] } as const;
+  return { c: light, scheme: 'dark', spacing, radius, type, breakpoint, hPadding: H_PADDING[breakpoint] } as const;
 }
 
-// Live video screens are always dark regardless of system theme.
+// Live video screens use the same black palette.
 export const liveColors = dark;

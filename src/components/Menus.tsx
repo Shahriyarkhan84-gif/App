@@ -156,7 +156,7 @@ export function TabBarCenterButton({ icon = 'add', label, onPress }: { icon?: Ic
           shadowColor: c.glow, shadowOpacity: 1, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 6,
         }}>
         <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Ionicons name={icon} size={28} color="#fff" />
+          <Ionicons name={icon} size={28} color={c.primaryText} />
         </LinearGradient>
       </PressScale>
     </View>
@@ -168,7 +168,7 @@ const DOCK_GAP = 10;
 
 /**
  * Glass capsule dock: the tab bar floats above the bottom edge as a rounded, see-through pill.
- * Frosted look from a translucent fill, a bright edge and a top-down sheen (real backdrop blur
+ * Dark frosted look from a translucent fill, a faint bright edge and a sky-tinted sheen (real backdrop blur
  * on web; on phones it needs a native blur module in the next APK).
  */
 export function useTabBarStyle(): ViewStyle {
@@ -182,17 +182,16 @@ export function useTabBarStyle(): ViewStyle {
 
 /** `tabBarBackground` for the glass dock. */
 export function TabBarGlass() {
-  const { c } = useTheme();
   return (
     <View style={{
       position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: DOCK_HEIGHT / 2,
-      shadowColor: c.primary, shadowOpacity: 0.18, shadowRadius: 22, shadowOffset: { width: 0, height: 10 },
+      shadowColor: '#000', shadowOpacity: 0.6, shadowRadius: 22, shadowOffset: { width: 0, height: 10 },
     }}>
       <View style={[
-        { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: DOCK_HEIGHT / 2, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', backgroundColor: 'rgba(255,255,255,0.68)' },
+        { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: DOCK_HEIGHT / 2, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)', backgroundColor: 'rgba(20,22,26,0.74)' },
         Platform.OS === 'web' ? ({ backdropFilter: 'blur(22px) saturate(170%)', WebkitBackdropFilter: 'blur(22px) saturate(170%)' } as object) : null,
       ]}>
-        <LinearGradient colors={['rgba(255,255,255,0.75)', 'rgba(255,255,255,0.15)', 'rgba(236,222,250,0.35)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.03)', 'rgba(135,206,250,0.08)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
       </View>
     </View>
   );
@@ -243,7 +242,7 @@ export function FabMenu({ actions, icon = 'add', label, bottom = 24, style }: { 
                 <Text variant="caption" style={{ fontWeight: '700' }}>{a.label}</Text>
               </View>
               <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: a.destructive ? c.danger : c.accent, alignItems: 'center', justifyContent: 'center', marginRight: 5 }}>
-                <Ionicons name={a.icon} size={21} color="#fff" />
+                <Ionicons name={a.icon} size={21} color={c.primaryText} />
               </View>
             </PressScale>
           </Pop>
@@ -254,7 +253,7 @@ export function FabMenu({ actions, icon = 'add', label, bottom = 24, style }: { 
             transform: [{ scale: pressed ? 0.94 : 1 }], shadowColor: c.accent, shadowOpacity: 0.5, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 10,
           })}>
           <Animated.View style={{ transform: [{ rotate }] }}>
-            <Ionicons name={icon} size={30} color="#fff" />
+            <Ionicons name={icon} size={30} color={c.primaryText} />
           </Animated.View>
         </Pressable>
       </View>
@@ -366,7 +365,7 @@ export function RudderBar({ left, center, right, style }: { left: MenuItem; cent
       <PressScale onPress={center.onPress} accessibilityRole="button" accessibilityLabel={center.label} scaleTo={0.92}
         style={{ width: 68, height: 68, borderRadius: 34, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center',
           shadowColor: c.accent, shadowOpacity: 0.5, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 10 }}>
-        <Ionicons name={center.icon} size={34} color="#fff" />
+        <Ionicons name={center.icon} size={34} color={c.primaryText} />
       </PressScale>
       {side(right)}
     </View>

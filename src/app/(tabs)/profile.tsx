@@ -72,7 +72,7 @@ export default function ProfileScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: d.background }}>
       {focused && <StatusBar style="light" />}
-      <LinearGradient colors={['#2B1550', d.background]} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 360 }} />
+      <LinearGradient colors={['#0A2433', d.background]} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 360 }} />
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16, gap: 18, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
           <Row gap={8} style={{ justifyContent: 'flex-end' }}>

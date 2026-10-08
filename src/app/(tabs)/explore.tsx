@@ -13,19 +13,19 @@ import { useTheme } from '@/lib/theme';
 type Shortcut = { key: string; icon: IconName; label: MessageKey; body: MessageKey; href: Href; colors: readonly [string, string] };
 
 const WATCH: Shortcut[] = [
-  { key: 'party', icon: 'people', label: 'explore.party', body: 'explore.party.body', href: '/party', colors: ['#5B2A9E', '#B341E0'] },
-  { key: 'videos', icon: 'play-circle', label: 'menu.videos', body: 'explore.videos.body', href: '/videos', colors: ['#B341E0', '#FF6FB0'] },
+  { key: 'party', icon: 'people', label: 'explore.party', body: 'explore.party.body', href: '/party', colors: ['#0369A1', '#0EA5E9'] },
+  { key: 'videos', icon: 'play-circle', label: 'menu.videos', body: 'explore.videos.body', href: '/videos', colors: ['#0E7490', '#22D3EE'] },
   { key: 'events', icon: 'calendar', label: 'menu.events', body: 'explore.events.body', href: '/events', colors: ['#0E8A7A', '#34C789'] },
   { key: 'rankings', icon: 'trophy', label: 'menu.rankings', body: 'explore.rankings.body', href: '/rankings', colors: ['#E0A83A', '#FFC24B'] },
 ];
 
 const YOU: Shortcut[] = [
   { key: 'wallet', icon: 'wallet', label: 'menu.wallet', body: 'explore.wallet.body', href: '/wallet', colors: ['#E0A83A', '#FFC24B'] },
-  { key: 'host', icon: 'videocam', label: 'explore.host', body: 'explore.host.body', href: '/hosting', colors: ['#B341E0', '#FF6FB0'] },
-  { key: 'agency', icon: 'business', label: 'menu.agency', body: 'explore.agency.body', href: '/agency', colors: ['#5B2A9E', '#8B5CF6'] },
+  { key: 'host', icon: 'videocam', label: 'explore.host', body: 'explore.host.body', href: '/hosting', colors: ['#0284C7', '#38BDF8'] },
+  { key: 'agency', icon: 'business', label: 'menu.agency', body: 'explore.agency.body', href: '/agency', colors: ['#1E3A8A', '#3B82F6'] },
   { key: 'support', icon: 'help-buoy', label: 'menu.support', body: 'explore.support.body', href: '/support', colors: ['#1F6FAE', '#4B7BE0'] },
-  { key: 'profile', icon: 'person-circle', label: 'explore.profile', body: 'explore.profile.body', href: '/profile-edit', colors: ['#FF5FA2', '#FF6FB0'] },
-  { key: 'settings', icon: 'settings', label: 'settings.title', body: 'explore.settings.body', href: '/settings', colors: ['#3A2569', '#6A45A0'] },
+  { key: 'profile', icon: 'person-circle', label: 'explore.profile', body: 'explore.profile.body', href: '/profile-edit', colors: ['#0369A1', '#38BDF8'] },
+  { key: 'settings', icon: 'settings', label: 'settings.title', body: 'explore.settings.body', href: '/settings', colors: ['#1F2937', '#4B5563'] },
 ];
 
 /** Discovery hub: one place for every destination that isn't a main tab. */

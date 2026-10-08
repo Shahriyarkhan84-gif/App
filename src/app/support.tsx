@@ -59,7 +59,7 @@ export default function SupportScreen() {
       <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
         <Row gap={12} style={{ padding: 16, borderRadius: 18, backgroundColor: c.violetSurface, borderWidth: 1, borderColor: c.violetBorder }}>
           <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name="sparkles" size={20} color="#fff" />
+            <Ionicons name="sparkles" size={20} color={c.primaryText} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Text variant="label">Ask AI support</Text>

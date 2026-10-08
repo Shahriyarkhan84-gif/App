@@ -21,7 +21,7 @@
     "android": {
       "package": "com.zynalive.app",
       "adaptiveIcon": {
-        "backgroundColor": "#B341E0",
+        "backgroundColor": "#000000",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -46,7 +46,7 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 140,
           "resizeMode": "contain",
-          "backgroundColor": "#FFFFFF"
+          "backgroundColor": "#000000"
         }
       ],
       "expo-secure-store",
@@ -99,6 +99,6 @@
         "projectId": "f451a41a-b7ae-4a50-821e-b6fb8ed9cdb7"
       }
     },
-    "backgroundColor": "#FFFFFF"
+    "backgroundColor": "#000000"
   }
 }

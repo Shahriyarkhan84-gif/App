@@ -167,7 +167,7 @@ export default function PartyScreen() {
           <PressScale key={o.mode} scaleTo={0.98} haptic onPress={() => startParty(o.mode)} accessibilityRole="button" accessibilityLabel={o.title}>
             <Row style={{ padding: 14, borderRadius: radius[16], backgroundColor: c.surface }}>
               <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name={o.icon} size={22} color="#fff" />
+                <Ionicons name={o.icon} size={22} color={c.primaryText} />
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <Text variant="label">{o.title}</Text>
@@ -199,7 +199,7 @@ function PartyRow({ room, mode, rank }: { room: Room; mode: Mode; rank?: number 
       <View style={{ width: 92, height: 92, borderRadius: radius[12] + 2, backgroundColor: c.surfaceRaised, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
         {cover ? <Image source={cover} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : <Text variant="display" color="rgba(255,255,255,0.2)" style={{ fontSize: 44, lineHeight: 50 }}>{host.slice(0, 1).toUpperCase()}</Text>}
         <View style={{ position: 'absolute', left: 6, top: 6, backgroundColor: c.live, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 }}>
-          <Text variant="caption" color="#fff" style={{ fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>{mode === 'voice' ? 'VOICE' : mode === 'video' ? 'VIDEO' : 'LIVE'}</Text>
+          <Text variant="caption" color={c.primaryText} style={{ fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>{mode === 'voice' ? 'VOICE' : mode === 'video' ? 'VIDEO' : 'LIVE'}</Text>
         </View>
         {rank !== undefined && (
           <View style={{ position: 'absolute', left: 6, bottom: 6, flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: c.gold, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>

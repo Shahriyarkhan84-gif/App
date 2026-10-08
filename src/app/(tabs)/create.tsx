@@ -220,12 +220,12 @@ export default function CreateScreen() {
   if (state.kind === 'success' && ready) {
     const mode = room.data?.mode ?? 'live';
     return (
-      <View style={{ flex: 1, backgroundColor: '#0B0612' }}>
+      <View style={{ flex: 1, backgroundColor: '#000000' }}>
         {focused && <StatusBar style="light" />}
         {Platform.OS !== 'web' && focused && !voiceOnly && camera?.granted ? (
           <CameraView facing={facing === 'environment' ? 'back' : 'front'} style={StyleSheet.absoluteFill} />
         ) : (
-          <LinearGradient colors={['#1A0F2E', '#0B0612']} style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', gap: 10 }]}>
+          <LinearGradient colors={['#0A1B24', '#000000']} style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', gap: 10 }]}>
             <Ionicons name={voiceOnly ? 'mic' : 'videocam-outline'} size={40} color="rgba(255,255,255,0.3)" />
             <Text variant="caption" color="rgba(255,255,255,0.4)" style={{ letterSpacing: 1 }}>{voiceOnly ? 'AUDIO LIVE · VOICE ONLY' : 'CAMERA PREVIEW'}</Text>
           </LinearGradient>
@@ -316,10 +316,10 @@ export default function CreateScreen() {
           <FadeIn style={{ borderRadius: 22, overflow: 'hidden' }}>
             <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, gap: 6 }}>
               <Row gap={8}>
-                <Ionicons name="videocam" size={22} color="#fff" />
-                <Text variant="h1" color="#fff">Go live</Text>
+                <Ionicons name="videocam" size={22} color={c.primaryText} />
+                <Text variant="h1" color={c.primaryText}>Go live</Text>
               </Row>
-              <Text color="rgba(255,255,255,0.85)">
+              <Text color="rgba(0,19,31,0.78)">
                 {needsVerification ? 'Finish verification to unlock streaming.' : `You're live now.`}
               </Text>
             </LinearGradient>

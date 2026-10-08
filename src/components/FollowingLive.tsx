@@ -24,7 +24,7 @@ export function LiveAvatar({ uri, name, size }: { uri?: string | null; name: str
       <View style={{ position: 'absolute', bottom: -8 }}>
         <Pulse min={1} max={1.1} period={1200}>
           <View style={{ paddingHorizontal: size > 80 ? 8 : 6, paddingVertical: 1, borderRadius: 5, backgroundColor: c.primary, borderWidth: 2, borderColor: c.background }}>
-            <Text variant="caption" color="#fff" style={{ fontSize: size > 80 ? 11 : 9, lineHeight: size > 80 ? 14 : 12, fontWeight: '800', letterSpacing: 0.6 }}>LIVE</Text>
+            <Text variant="caption" color={c.primaryText} style={{ fontSize: size > 80 ? 11 : 9, lineHeight: size > 80 ? 14 : 12, fontWeight: '800', letterSpacing: 0.6 }}>LIVE</Text>
           </View>
         </Pulse>
       </View>
@@ -91,7 +91,7 @@ export function LiveBell({ rooms }: { rooms: Room[] }) {
           <Pop key={count} from={0.3} style={{ position: 'absolute', top: 2, right: 0 }}>
             <Pulse min={1} max={1.15} period={1400}>
               <View style={{ minWidth: 18, height: 18, paddingHorizontal: 5, borderRadius: 9, backgroundColor: c.primary, borderWidth: 2, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
-                <Text variant="caption" color="#fff" style={{ fontSize: 10, lineHeight: 12, fontWeight: '800' }}>{count}</Text>
+                <Text variant="caption" color={c.primaryText} style={{ fontSize: 10, lineHeight: 12, fontWeight: '800' }}>{count}</Text>
               </View>
             </Pulse>
           </Pop>
@@ -130,7 +130,7 @@ export function LoopStrip({ me, rooms }: { me: { avatar_url?: string | null; nam
         <View>
           <Avatar uri={me.avatar_url} name={me.name} size={56} ring={c.border} />
           <View style={{ position: 'absolute', right: -2, bottom: -2, width: 20, height: 20, borderRadius: 10, backgroundColor: c.primary, borderWidth: 2, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name="add" size={13} color="#fff" />
+            <Ionicons name="add" size={13} color={c.primaryText} />
           </View>
         </View>
         <Text variant="caption" muted numberOfLines={1} style={{ fontSize: 11 }}>Your Loop</Text>

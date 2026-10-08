@@ -50,10 +50,10 @@ export default function StreamSummaryScreen() {
           <FadeIn style={{ borderRadius: 22, overflow: 'hidden' }}>
             <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, gap: 4 }}>
               <Row gap={8}>
-                <Ionicons name="checkmark-circle" size={22} color="#fff" />
-                <Text variant="h1" color="#fff">Stream ended</Text>
+                <Ionicons name="checkmark-circle" size={22} color={c.primaryText} />
+                <Text variant="h1" color={c.primaryText}>Stream ended</Text>
               </Row>
-              <Text color="rgba(255,255,255,0.85)">{s?.title ? `${s.title} · ` : ''}{minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes}m`}</Text>
+              <Text color="rgba(0,19,31,0.78)">{s?.title ? `${s.title} · ` : ''}{minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes}m`}</Text>
             </LinearGradient>
           </FadeIn>
 

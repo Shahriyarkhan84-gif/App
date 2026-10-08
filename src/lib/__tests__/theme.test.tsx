@@ -4,19 +4,21 @@ import * as RN from 'react-native';
 import { liveColors, useTheme } from '../theme';
 
 describe('useTheme', () => {
-  it('is always the white theme, even when the phone is in dark mode', async () => {
-    jest.spyOn(RN, 'useColorScheme').mockReturnValue('dark');
+  it('is always the black theme, whatever the phone setting', async () => {
+    jest.spyOn(RN, 'useColorScheme').mockReturnValue('light');
     const { result } = await renderHook(() => useTheme());
-    expect(result.current.scheme).toBe('light');
-    expect(result.current.c.background).toBe('#FFFFFF');
+    expect(result.current.scheme).toBe('dark');
+    expect(result.current.c.background).toBe('#000000');
+    expect(result.current.c.primary).toBe('#87CEFA');
   });
 
   it('keeps live video screens dark', () => {
-    expect(liveColors.background).toBe('#170B2E');
+    expect(liveColors.background).toBe('#000000');
   });
 
-  it('uses a button gradient dark enough for white text (no pale first stop)', async () => {
+  it('puts dark text on the light sky gradient', async () => {
     const { result } = await renderHook(() => useTheme());
-    expect(result.current.c.gradient[0]).toBe('#5B2A9E');
+    expect(result.current.c.gradient[0]).toBe('#5AC8FA');
+    expect(result.current.c.primaryText).toBe('#00131F');
   });
 });

@@ -17,7 +17,7 @@ const BOTTOM_BAR = { left: 131, top: 356, width: 218, height: 57 };
 const DIAG_CLIP = { left: 131, top: 129, width: 213, height: 284 };
 const DIAG = { x: 216.4, y: 21, length: 320, thickness: 61.4, angle: '131.45deg' };
 const DOT = { left: 374, top: 49, size: 86 };
-const LOGO_GRADIENT = ['#5B2A9E', '#B341E0', '#FF6FB0'] as const;
+const LOGO_GRADIENT = ['#0EA5E9', '#5AC8FA', '#B5E4FC'] as const;
 const FEATHER = 18;
 
 type Strokes = Record<'tile' | 'top' | 'diag' | 'bottom' | 'dot' | 'word', Animated.Value>;

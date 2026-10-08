@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.24 — Black and light sky blue
+
+- New app colours: black background with light sky blue (`#87CEFA`) for buttons, links, highlights, the LIVE badge and the active tab; one dark theme for every screen (`src/lib/theme.ts`). Filled sky-blue surfaces (buttons, badges, header cards) use near-black text for contrast. Gold stays the coin colour.
+- The glass dock is now dark glass; Welcome/launch logo tiles, Explore shortcut tiles, the Me header glow and the Go-live screen moved from purple/pink to black and sky blue.
+- `app.json`: splash, window and Android icon backgrounds are black too; those take effect with the next APK build (native settings can't change over the air).
+
 ## 0.9.23 — Me tab redesign
 
 - Me is a dark page in the style of other live apps: settings and edit icons top right, a large centred photo wearing your profile frame (tap it to open the frame shop), name, ID, badges and bio, then Friends · Following · Fans, four coloured tiles (Coins → Wallet, Frames → shop, Agency → portal or how to join, Diamonds/Earn → Earnings or Hosting) and grouped rows with coloured round icons: Creator Center, Events, Rankings · Wallet, Profile frames, Videos, Hosting verification · Help & support, Feedback, Agency portal, Owner command center.
