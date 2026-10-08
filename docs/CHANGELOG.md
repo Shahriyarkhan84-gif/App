@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.22 — Profile frames (coin shop)
+
+- New **Profile frames** shop (Me → Profile frames): six frames (Rose Gold, Neon Violet, Emerald, Fire for 30 days; Royal Crown and Diamond forever, 300–5,000 coins). Preview any frame on your own photo, buy it with coins (confirmation first), and it's worn at once; wear, renew or take it off later. A short balance shows "Need N more coins · Recharge".
+- Frames show around the photo on Me and on public profiles (`FramedAvatar`: gradient ring, glow, optional badge icon).
+- Server side: `supabase/migrations/20261008010000_profile_frames.sql` (`buy_frame`, `equip_frame`, read-only tables for clients); must-pass tests for single charge on retry, catalog prices, no direct grants/equips, frozen wallets, expired frames and ledger rows. See ECONOMY.md.
+
 ## 0.9.21 — Me tab
 
 - Removed "Start a live stream" from the Me menu; going live is the + button in the dock.

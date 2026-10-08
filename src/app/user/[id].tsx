@@ -8,7 +8,8 @@ import { ContributionsCard } from '@/components/Contributions';
 import { LiveAvatar } from '@/components/FollowingLive';
 import { PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Button, compactNumber, RoleBadges, Row, Screen, Text } from '@/components/ui';
+import { FramedAvatar } from '@/components/FramedAvatar';
+import { Button, compactNumber, RoleBadges, Row, Screen, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
@@ -31,7 +32,7 @@ export default function UserProfileScreen() {
 
   const { data, error, loading, reload } = useAsync(async () => {
     const [profile, host, room, followers, follow, followingList, pin] = await Promise.all([
-      supabase.from('profiles').select('id,user_number,verified_at,owner_verified_at,username,display_name,avatar_url,bio,country,signup_country,language,role,status,status_until,deleted_at').eq('id', id).maybeSingle(),
+      supabase.from('profiles').select('id,user_number,verified_at,owner_verified_at,username,display_name,avatar_url,bio,country,signup_country,language,role,status,status_until,deleted_at,active_frame_id').eq('id', id).maybeSingle(),
       supabase.from('hosts').select('host_code,total_live_seconds').eq('user_id', id).maybeSingle(),
       supabase.from('rooms').select('id,status,title,viewer_count').eq('host_id', id).maybeSingle(),
       supabase.from('follows').select('*', { count: 'exact', head: true }).eq('followee_id', id),
@@ -154,7 +155,7 @@ export default function UserProfileScreen() {
                   <LiveAvatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={108} />
                 </PressScale>
               ) : (
-                <Avatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={96} />
+                <FramedAvatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={96} frameId={data.profile.active_frame_id} />
               )}
               <Row gap={8}>
                 <Text variant="h2">{displayName(data.profile)}</Text>

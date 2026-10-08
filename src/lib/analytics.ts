@@ -22,7 +22,8 @@ type AnalyticsEvent =
   | { name: 'pk_battle_ended'; props: { battle_id: string } }
   | { name: 'room_shared'; props: { room_id: string } }
   | { name: 'profile_shared'; props: { user_id: string } }
-  | { name: 'video_uploaded'; props: { ext: string; visibility: string } };
+  | { name: 'video_uploaded'; props: { ext: string; visibility: string } }
+  | { name: 'frame_bought'; props: { frame: string; coins: number } };
 
 /** Typed PostHog capture; no-op when PostHog isn't configured. */
 export function useAnalytics() {

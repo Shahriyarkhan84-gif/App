@@ -103,6 +103,7 @@ function RootNavigator() {
         <Stack.Screen name="user/[id]" options={{ title: '' }} />
         <Stack.Screen name="chat/[userId]" options={{ title: 'Chat' }} />
         <Stack.Screen name="wallet" options={{ title: 'Wallet' }} />
+        <Stack.Screen name="frames" options={{ title: 'Profile frames' }} />
         <Stack.Screen name="rankings" options={{ title: 'Rankings' }} />
         <Stack.Screen name="delete-account" options={{ title: 'Delete account' }} />
         <Stack.Screen name="hosting" options={{ title: 'Hosting' }} />

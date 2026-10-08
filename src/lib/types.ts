@@ -18,6 +18,8 @@ export type Profile = {
   role: AppRole;
   status: 'active' | 'restricted' | 'banned';
   status_until: string | null;
+  /** Profile frame being worn (bought with coins; see frame_catalog). */
+  active_frame_id?: string | null;
 };
 
 export type Room = {

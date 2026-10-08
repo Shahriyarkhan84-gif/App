@@ -37,6 +37,25 @@ Guarantees (all covered by `supabase/tests/10_must_pass.sql`):
 - The client supplies only room, gift id, quantity (1–999) and the key; price
   comes from `gift_catalog`.
 
+## Profile frames (coin shop)
+
+Users buy profile frames with coins; the frame shows around their photo on Me and their public
+profile. `buy_frame(frame_id, idempotency_key)`:
+
+- price and duration come from `frame_catalog` (never from the app); `duration_days` null = permanent,
+  otherwise each purchase adds that many days to the time left (renew);
+- locks the buyer's wallet, dedupes on `(user_id, idempotency_key)` (a retry returns the first
+  purchase and charges nothing), refuses restricted accounts, frozen wallets, unknown/inactive frames,
+  re-buying a permanent frame and short balances;
+- one transaction: `frame_purchases` row, `coin_transactions` (`kind = 'frame_purchase'`),
+  `user_frames` ownership, and the coins booked to `platform_ledger` bucket `frame_sales` (100% owner
+  revenue; hosts get nothing from frame sales).
+
+`equip_frame(frame_id | null)` wears an owned, unexpired frame (or takes it off); `profiles.active_frame_id`
+has no client write grant. Clients can only read the catalog and ownership. Covered in `10_must_pass.sql`.
+Frames aren't refundable; if coins used for a frame are charged back, the normal chargeback path
+records the shortfall and flags the account.
+
 ## Withdrawals
 
 `request_withdrawal(coins, payout_method)` moves coins from

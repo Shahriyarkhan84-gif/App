@@ -540,4 +540,48 @@ select tests.ok((select frozen from public.wallets where user_id = 'alice'), 'di
 select public.internal_dispute_payment('pi_close', 'closed');
 select tests.ok(not (select frozen from public.wallets where user_id = 'alice'), 'an inquiry closed in our favour unfreezes the wallet');
 
+---------------------------------------------------------------------------------------
+-- Profile frames: priced by the server, charged once, owned and worn only through RPCs
+---------------------------------------------------------------------------------------
+insert into public.profiles (id, username) values ('framer', 'framer');
+select private.lock_wallet('framer');
+select private.apply_coin_delta('framer', 1000, 'adjustment', 'test', 'framer', 'test-framer-coins');
+select set_config('request.jwt.claims', '{"sub":"framer"}', false);
+set role authenticated;
+select tests.fails($$select public.equip_frame('rose_gold')$$, '%frame_not_owned%', 'cannot wear a frame you do not own');
+select tests.fails($$insert into public.user_frames (user_id, frame_id) values ('framer', 'diamond')$$, '%permission denied%', 'no direct frame grants');
+select tests.fails($$insert into public.frame_purchases (user_id, frame_id, coins, idempotency_key) values ('framer', 'diamond', 1, 'fake-purchase')$$, '%permission denied%', 'no fake purchases');
+select tests.fails($$update public.profiles set active_frame_id = 'diamond' where id = 'framer'$$, '%permission denied%', 'no wearing a frame by direct update');
+select tests.fails($$update public.frame_catalog set coin_price = 1 where id = 'diamond'$$, '%permission denied%', 'clients cannot change frame prices');
+select tests.fails($$select public.buy_frame('diamond', 'frame-key-0001')$$, '%insufficient_coins%', 'cannot buy a frame you cannot afford');
+select tests.fails($$select public.buy_frame('no_such_frame', 'frame-key-0009')$$, '%invalid_frame%', 'unknown frame');
+select public.buy_frame('rose_gold', 'frame-key-0002');
+select public.buy_frame('rose_gold', 'frame-key-0002');
+select tests.ok(tests.balance('framer') = 700, 'frame charged once, at the catalog price');
+select tests.ok((select count(*) from public.frame_purchases where user_id = 'framer') = 1, 'a retried purchase returns the first one');
+select public.buy_frame('rose_gold', 'frame-key-0003');
+select tests.ok(tests.balance('framer') = 400, 'buying a timed frame again charges again');
+select tests.ok((select expires_at > now() + interval '59 days' from public.user_frames where user_id = 'framer' and frame_id = 'rose_gold'), 'buying again adds the time');
+select public.equip_frame('rose_gold');
+select tests.ok((select active_frame_id from public.profiles where id = 'framer') = 'rose_gold', 'a bought frame can be worn');
+select public.equip_frame(null);
+select tests.ok((select active_frame_id from public.profiles where id = 'framer') is null, 'a frame can be taken off');
+reset role;
+select tests.ok((select sum(amount) from public.platform_ledger where bucket = 'frame_sales'
+  and ref_id in (select id::text from public.frame_purchases where user_id = 'framer')) = 600, 'frame coins booked to the platform ledger');
+select tests.ok((select count(*) from public.coin_transactions where user_id = 'framer' and kind = 'frame_purchase') = 2, 'each purchase is in the coin ledger');
+update public.wallets set frozen = true where user_id = 'framer';
+select set_config('request.jwt.claims', '{"sub":"framer"}', false);
+set role authenticated;
+select tests.fails($$select public.buy_frame('emerald', 'frame-key-0004')$$, '%wallet_frozen%', 'a frozen wallet cannot buy frames');
+reset role;
+update public.wallets set frozen = false where user_id = 'framer';
+update public.user_frames set expires_at = now() - interval '1 day' where user_id = 'framer';
+select set_config('request.jwt.claims', '{"sub":"framer"}', false);
+set role authenticated;
+select tests.fails($$select public.equip_frame('rose_gold')$$, '%frame_not_owned%', 'an expired frame cannot be worn');
+select tests.fails($$select public.buy_frame('royal_crown', 'frame-key-0005')$$, '%insufficient_coins%', 'permanent frame needs enough coins');
+reset role;
+select tests.ok(tests.balance('framer') = 400, 'a failed purchase charges nothing');
+
 drop schema tests cascade;

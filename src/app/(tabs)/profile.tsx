@@ -6,7 +6,8 @@ import { ScrollView, View } from 'react-native';
 import { useTabBarSpace } from '@/components/Menus';
 import { StateView } from '@/components/StateView';
 import { FadeIn } from '@/components/Motion';
-import { AgencyOwnerBadge, Avatar, Button, Card, Coin, compactNumber, HostBadge, IconButton, ListRow, Row, Screen, Text } from '@/components/ui';
+import { FramedAvatar } from '@/components/FramedAvatar';
+import { AgencyOwnerBadge, Button, Card, Coin, compactNumber, HostBadge, IconButton, ListRow, Row, Screen, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { env } from '@/lib/env';
@@ -72,7 +73,7 @@ export default function ProfileScreen() {
         </Row>
 
         <Row gap={14}>
-          <Avatar uri={profile.avatar_url} name={displayName(profile)} size={76} ring={c.primary} />
+          <FramedAvatar uri={profile.avatar_url} name={displayName(profile)} size={76} ring={c.primary} frameId={profile.active_frame_id} />
           <View style={{ flex: 1, gap: 4 }}>
             <Text variant="h3" style={{ fontSize: 20, lineHeight: 26 }} numberOfLines={1}>{displayName(profile)}</Text>
             <Text variant="bodySmall" muted selectable accessibilityLabel={`Your ID ${String(profile.user_number).split('').join(' ')}`}>ID {profile.user_number}</Text>
@@ -117,6 +118,7 @@ export default function ProfileScreen() {
           {isHost && <ListRow icon="grid-outline" label="Host dashboard" onPress={() => router.push('/host/dashboard')} />}
           {!verified && <ListRow icon="shield-checkmark-outline" label={t('menu.hostingVerification')} color={c.gold} onPress={() => router.push('/hosting')} />}
           <ListRow icon="wallet-outline" label="Wallet & transactions" onPress={() => router.push('/wallet')} />
+          <ListRow icon="sparkles-outline" label="Profile frames" color={c.gold} onPress={() => router.push('/frames')} />
           <ListRow icon="play-circle-outline" label={t('menu.videos')} onPress={() => router.push('/videos')} />
           <ListRow icon="trophy-outline" label={t('menu.rankings')} onPress={() => router.push('/rankings')} />
           <ListRow icon="calendar-outline" label={t('menu.events')} onPress={() => router.push('/events')} />
