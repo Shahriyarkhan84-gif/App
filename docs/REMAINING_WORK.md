@@ -23,6 +23,7 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 
 ## Also pending
 
+- EAS Observe: `expo-observe` is installed but not imported. With the next APK (bump `version` in `app.json` so older APKs stop receiving JS that needs it): wrap the root layout in `ObserveRoot` (with `errorBoundaryFallback`), call `Observe.configure({ integrations: { 'expo-router': true } })` at module scope in `src/app/_layout.tsx`, call `markInteractive()` from the entry screens (Home, sign-in), and set `uploadSourceMaps: true` on the production build profile. Docs: https://docs.expo.dev/eas/observe/get-started/
 - Anyone can go live without an ID check (`host_verification.required_to_go_live` = `false` on the hosted project since 2026-10-08, owner's decision); the ID check is required to withdraw and for the Host badge/agency link. `host-application` (Didit ID + face match) is deployed (2026-10-05); it needs the `DIDIT_API_KEY` secret and at least one active agency (applicants must enter a 4-digit agency code).
 - Hosted project settings set by hand: `media.covers_base` = `https://mdfjbhzriuwxafeagnwo.supabase.co/storage/v1/object/public/covers` (2026-10-05). Each new environment needs its own value (see `docs/ENVIRONMENT.md`), or `set_room_cover` raises `not_configured`.
 - Hosted project settings set by hand: `media.media_base` (2026-10-05), alongside `covers_base`.

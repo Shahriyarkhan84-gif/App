@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.27 — expo-observe installed (not wired up yet)
+
+- Added `expo-observe` (EAS Observe: startup, per-screen and error metrics). It has native code and loads its native module as soon as it is imported, so nothing imports it yet: installed preview APKs share this runtime version (`appVersion` policy) and would crash on an OTA that imports it. Wire it up together with the next APK (see `docs/REMAINING_WORK.md`).
+
 ## 0.9.26 — QA fixes from a full button audit
 
 - Share buttons (agency code, profile, live room, host live, stream summary, video) did nothing in browsers without the Web Share API and threw an uncaught error; they now go through `shareMessage()` (`src/lib/share.ts`), which copies the text and says so when sharing isn't available.
