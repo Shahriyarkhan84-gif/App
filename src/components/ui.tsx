@@ -32,7 +32,7 @@ export function Text({ variant = 'body', muted, faint, color, style, ...rest }: 
   // Custom fonts ship one file per weight: pick the face, and keep fontWeight
   // 'normal' so Android doesn't synthesise bold on top of it.
   const fontFamily = flat.fontFamily ?? base.fontFamily ?? bodyFont(flat.fontWeight ?? base.fontWeight);
-  const loaded = fontFamily === fonts.display || fontFamily.startsWith('DMSans');
+  const loaded = fontFamily === fonts.brand || fontFamily.startsWith('DMSans');
   return (
     <RNText
       style={[base, { color: color ?? (faint ? c.textFaint : muted ? c.textMuted : c.text) }, style, { fontFamily, fontWeight: loaded ? 'normal' : flat.fontWeight }]}
@@ -44,8 +44,8 @@ export function Text({ variant = 'body', muted, faint, color, style, ...rest }: 
 export function Wordmark({ size = 28 }: { size?: number }) {
   const { c } = useTheme();
   return (
-    <Text variant="display" accessibilityRole="header" accessibilityLabel="Zynalive" style={{ fontSize: size, lineHeight: size * 1.15 }}>
-      zyna<Text variant="display" color={c.primary} style={{ fontSize: size, lineHeight: size * 1.15 }}>live</Text>
+    <Text variant="display" accessibilityRole="header" accessibilityLabel="Zynalive" style={{ fontFamily: fonts.brand, fontSize: size, lineHeight: size * 1.15, letterSpacing: 0 }}>
+      zyna<Text variant="display" color={c.primary} style={{ fontFamily: fonts.brand, fontSize: size, lineHeight: size * 1.15, letterSpacing: 0 }}>live</Text>
     </Text>
   );
 }
@@ -135,7 +135,7 @@ export function IconButton({ icon, label, onPress, color, badge, bg }: { icon: I
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const { c, radius } = useTheme();
   return (
-    <View style={[{ backgroundColor: c.surface, borderRadius: radius[16] + 2, borderWidth: 1, borderColor: c.divider, padding: 16, gap: 8 }, style]}>
+    <View style={[{ backgroundColor: c.surface, borderRadius: radius[12], borderWidth: 1, borderColor: c.divider, padding: 16, gap: 8 }, style]}>
       {children}
     </View>
   );

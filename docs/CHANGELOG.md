@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.28 — Clean premium look
+
+- Flat design: the sky-blue "gradient" token is now solid sky blue and the glow token is transparent, so buttons, the LIVE badge, header cards and the Go-live button are flat everywhere and nothing glows.
+- Headings use DM Sans Bold (tighter letter spacing); Bricolage Grotesque is kept only for the Zynalive wordmark (`fonts.brand`).
+- Smaller corners: cards 12, live cover cards 8.
+- Home: live cards with a quiet TOP badge and softer captions; the featured host card, event and PK banners are flat dark rows; Follow is a sky pill.
+- Me: the four tiles are flat dark tiles with plain line icons; menu rows use plain grey line icons instead of coloured circles; no blue glow behind the header.
+- Live room: solid gold gift button; slimmer flat PK score bar (sky vs gold) with a thin seam instead of a glowing one.
+
 ## 0.9.27 — expo-observe installed (not wired up yet)
 
 - Added `expo-observe` (EAS Observe: startup, per-screen and error metrics). It has native code and loads its native module as soon as it is imported, so nothing imports it yet: installed preview APKs share this runtime version (`appVersion` policy) and would crash on an OTA that imports it. Wire it up together with the next APK (see `docs/REMAINING_WORK.md`).

@@ -17,16 +17,16 @@ export function RoomCard({ room, width, reason, rank }: { room: Room; width: num
   return (
     <Link href={roomHref(room)} asChild>
       <PressScale style={{ width }} scaleTo={0.97} accessibilityLabel={`Watch ${name} live: ${room.title}`}>
-        <View style={{ width, height: Math.round(width * 1.33), borderRadius: radius[16], overflow: 'hidden', backgroundColor: liveColors.surfaceRaised }}>
+        <View style={{ width, height: Math.round(width * 1.33), borderRadius: radius[8], overflow: 'hidden', backgroundColor: liveColors.surfaceRaised }}>
           {cover ? <Image source={cover} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
               <Text variant="display" color="rgba(255,255,255,0.14)" style={{ fontSize: 96, lineHeight: 110 }}>{name.replace('@', '').slice(0, 1).toUpperCase()}</Text>
             </View>
           )}
           {rank !== undefined && (
-            <View style={{ position: 'absolute', bottom: 44, left: 10, flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: c.gold, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999 }}>
-              <Ionicons name="trophy" size={9} color={c.onGold} />
-              <Text variant="caption" color={c.onGold} style={{ fontSize: 9, fontWeight: '800' }}>TOP {rank}</Text>
+            <View style={{ position: 'absolute', bottom: 44, left: 10, flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: 'rgba(0,0,0,0.55)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+              <Ionicons name="trophy" size={9} color={c.gold} />
+              <Text variant="caption" color={c.gold} style={{ fontSize: 9, fontWeight: '700' }}>TOP {rank}</Text>
             </View>
           )}
           <View style={{ position: 'absolute', top: 10, left: 10, right: 10, flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -34,12 +34,12 @@ export function RoomCard({ room, width, reason, rank }: { room: Room; width: num
             <ViewerCount count={room.viewer_count} />
           </View>
           {/* LinearGradient renders on every platform (CSS background images don't on web). */}
-          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.75)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 12, paddingTop: 28, paddingBottom: 12 }}>
+          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.75)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 10, paddingTop: 32, paddingBottom: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Text variant="label" color="#fff" style={{ fontSize: 15, flexShrink: 1 }} numberOfLines={1}>{name}</Text>
               <RoleBadges profile={room.host} small />
             </View>
-            <Text variant="caption" color="#E4DFEC" numberOfLines={1}>{room.title} · {categoryLabel(room.category)}</Text>
+            <Text variant="caption" color="rgba(255,255,255,0.72)" numberOfLines={1}>{room.title} · {categoryLabel(room.category)}</Text>
           </LinearGradient>
         </View>
         {reason && <Text variant="caption" faint numberOfLines={1} style={{ marginTop: 4 }}>{reason}</Text>}

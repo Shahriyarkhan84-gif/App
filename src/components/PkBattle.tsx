@@ -1,6 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { useEffect, useState, type ReactNode } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useWindowDimensions, View } from 'react-native';
 
 import { getLiveKitToken, rpc } from '@/lib/api';
@@ -143,15 +142,14 @@ export function PkBattleBar({ battle, mySide, secondsLeft, timerBelow = true }: 
 
   return (
     <View style={{ zIndex: 2 }}>
-      <View style={{ height: 26, flexDirection: 'row' }} accessibilityLabel={`Score ${scoreLeft} to ${scoreRight}`}>
-        <LinearGradient colors={['#1D6FE0', '#5AC8FA']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ width: `${pctLeft}%`, justifyContent: 'center', paddingLeft: 10 }}>
-          <Text variant="label" color="#fff" style={{ fontVariant: ['tabular-nums'] }}>{scoreLeft.toLocaleString()}</Text>
-        </LinearGradient>
-        <LinearGradient colors={['#FFD666', '#F5B301']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-end', paddingRight: 10 }}>
-          <Text variant="label" color="#2A1A00" style={{ fontVariant: ['tabular-nums'] }}>{scoreRight.toLocaleString()}</Text>
-        </LinearGradient>
-        <View style={{ position: 'absolute', left: `${pctLeft}%`, top: -3, width: 6, height: 32, marginLeft: -3, borderRadius: 3, backgroundColor: '#fff',
-          shadowColor: '#fff', shadowOpacity: 0.9, shadowRadius: 8, shadowOffset: { width: 0, height: 0 }, elevation: 4 }} />
+      <View style={{ height: 22, flexDirection: 'row' }} accessibilityLabel={`Score ${scoreLeft} to ${scoreRight}`}>
+        <View style={{ width: `${pctLeft}%`, justifyContent: 'center', paddingLeft: 10, backgroundColor: '#87CEFA' }}>
+          <Text variant="caption" color="#00131F" style={{ fontWeight: '700', fontVariant: ['tabular-nums'] }}>{scoreLeft.toLocaleString()}</Text>
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-end', paddingRight: 10, backgroundColor: '#FFC24B' }}>
+          <Text variant="caption" color="#2A1A00" style={{ fontWeight: '700', fontVariant: ['tabular-nums'] }}>{scoreRight.toLocaleString()}</Text>
+        </View>
+        <View style={{ position: 'absolute', left: `${pctLeft}%`, top: 0, width: 2, height: 22, marginLeft: -1, backgroundColor: '#000' }} />
       </View>
       {timer && (timerBelow ? <View style={{ position: 'absolute', top: 30, left: 0, right: 0 }}>{timer}</View> : <View style={{ paddingTop: 6 }}>{timer}</View>)}
     </View>

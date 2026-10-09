@@ -17,9 +17,9 @@ export function EventRow({ event, phase }: { event: AppEvent; phase: EventPhase 
     : phase === 'upcoming' ? t('events.startsIn', { time: timeLeft(event.starts_at) }) : t('events.ended');
   return (
     <PressScale onPress={() => router.push(`/events/${event.id}`)} accessibilityRole="button" accessibilityLabel={event.title} scaleTo={0.98}>
-      <Row style={{ padding: 16, borderRadius: radius[16] + 2, backgroundColor: phase === 'live' ? c.goldSurface : c.surface, borderWidth: 1, borderColor: phase === 'live' ? c.goldBorder : c.divider }}>
-        <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: phase === 'live' ? c.gold : c.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
-          <Ionicons name={event.kind === 'pk_battle' ? 'flash' : 'gift'} size={22} color={phase === 'live' ? c.onGold : c.textMuted} />
+      <Row style={{ padding: 14, borderRadius: radius[12], backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider }}>
+        <View style={{ width: 44, height: 44, borderRadius: 8, backgroundColor: phase === 'live' ? c.goldSurface : c.surfaceRaised, borderWidth: 1, borderColor: phase === 'live' ? c.goldBorder : c.border, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name={event.kind === 'pk_battle' ? 'flash' : 'gift'} size={22} color={phase === 'live' ? c.gold : c.textMuted} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <Text variant="h3" numberOfLines={1}>{event.title}</Text>

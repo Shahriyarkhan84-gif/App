@@ -1,7 +1,7 @@
 import { useWindowDimensions } from 'react-native';
 
-// Design tokens — Zynalive canvas (red live accent, gold coins, violet earnings;
-// Bricolage Grotesque display over DM Sans body).
+// Design tokens — clean premium look: black, flat sky blue for actions, gold for coins;
+// DM Sans everywhere (Bricolage Grotesque only for the wordmark).
 export const spacing = { 4: 4, 8: 8, 12: 12, 16: 16, 20: 20, 24: 24, 32: 32, 40: 40, 48: 48, 64: 64 } as const;
 export const radius = { 8: 8, 12: 12, 16: 16, 20: 20, 24: 24, 32: 32, pill: 999 } as const;
 
@@ -30,16 +30,18 @@ export function useHPadding(): number {
 
 /** Font family names registered in the root layout (`useFonts`). */
 export const fonts = {
-  display: 'BricolageGrotesque_800ExtraBold',
+  /** Only the Zynalive wordmark uses the brand face; headings use DM Sans Bold for a clean, product look. */
+  brand: 'BricolageGrotesque_800ExtraBold',
+  display: 'DMSans_700Bold',
   regular: 'DMSans_400Regular',
   medium: 'DMSans_500Medium',
   bold: 'DMSans_700Bold',
 } as const;
 
 export const type = {
-  display: { fontSize: 34, lineHeight: 40, fontWeight: '800', fontFamily: fonts.display, letterSpacing: -0.5 },
-  h1: { fontSize: 26, lineHeight: 32, fontWeight: '800', fontFamily: fonts.display },
-  h2: { fontSize: 22, lineHeight: 28, fontWeight: '800', fontFamily: fonts.display },
+  display: { fontSize: 32, lineHeight: 38, fontWeight: '700', fontFamily: fonts.display, letterSpacing: -0.6 },
+  h1: { fontSize: 24, lineHeight: 30, fontWeight: '700', fontFamily: fonts.display, letterSpacing: -0.4 },
+  h2: { fontSize: 20, lineHeight: 26, fontWeight: '700', fontFamily: fonts.display, letterSpacing: -0.3 },
   h3: { fontSize: 17, lineHeight: 23, fontWeight: '700' },
   bodyLarge: { fontSize: 17, lineHeight: 24, fontWeight: '400' },
   body: { fontSize: 15, lineHeight: 21, fontWeight: '400' },
@@ -87,9 +89,10 @@ const dark = {
   warning: '#FFC24B',
   danger: '#FF5A61',
   overlay: 'rgba(0,0,0,0.7)',
-  // Light sky gradient for hero surfaces (buttons, live badge, headers); text on it is primaryText.
-  gradient: ['#5AC8FA', '#87CEFA', '#B5E4FC'] as Gradient,
-  glow: 'rgba(135,206,250,0.45)',
+  // Clean, flat look: "gradient" surfaces (buttons, live badge, headers) are solid sky blue and
+  // nothing glows. Kept as tokens so every LinearGradient/shadow user follows the same rule.
+  gradient: ['#87CEFA', '#87CEFA', '#87CEFA'] as Gradient,
+  glow: 'transparent',
 };
 
 // The app has one look now; `light` is kept as an alias so older imports keep working.

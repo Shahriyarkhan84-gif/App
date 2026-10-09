@@ -173,7 +173,7 @@ export default function HomeScreen() {
             </FadeIn>
           )}
           {rooms.length === 0 ? (
-            <View style={{ paddingVertical: 32, paddingHorizontal: 16, alignItems: 'center', gap: 6, borderRadius: 18, backgroundColor: c.surface }}>
+            <View style={{ paddingVertical: 32, paddingHorizontal: 16, alignItems: 'center', gap: 6, borderRadius: 12, backgroundColor: c.surface }}>
               <Ionicons name="videocam-outline" size={28} color={c.textFaint} />
               <Text variant="label" style={{ textAlign: 'center' }}>{emptyState.title}</Text>
               {emptyState.body && <Text variant="bodySmall" muted style={{ textAlign: 'center' }}>{emptyState.body}</Text>}
@@ -213,9 +213,9 @@ function PkBattleBanner({ room }: { room: Room | null }) {
       accessibilityLabel={room ? 'Watch the live PK battle' : 'PK Battle Night. See the top hosts'}
       scaleTo={0.98}
     >
-      <Row style={{ padding: 16, borderRadius: radius[16] + 2, backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider }}>
-        <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: c.gold, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontFamily: fonts.display, fontSize: 20, color: c.onGold }}>PK</Text>
+      <Row style={{ padding: 14, borderRadius: radius[12], backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider }}>
+        <View style={{ width: 44, height: 44, borderRadius: 8, backgroundColor: c.goldSurface, borderWidth: 1, borderColor: c.goldBorder, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontFamily: fonts.bold, fontSize: 16, color: c.gold }}>PK</Text>
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <Text variant="h3">PK Battle Night</Text>

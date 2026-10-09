@@ -42,16 +42,14 @@ export function FeaturedHost({ room, following: initialFollowing }: { room: Room
       onPress={() => router.push(roomHref(room))}
       accessibilityRole="button"
       accessibilityLabel={`Watch ${name} live: ${room.title}`}
-      style={{ height: 96, borderRadius: radius[16] + 2, overflow: 'hidden' }}
+      style={{ height: 96, borderRadius: radius[12], overflow: 'hidden', backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider }}
     >
       {room.cover_url ? (
         <Image source={room.cover_url} style={StyleSheet.absoluteFill} contentFit="cover" blurRadius={4} />
-      ) : (
-        <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-      )}
-      <LinearGradient colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.65)']} style={StyleSheet.absoluteFill} />
+      ) : null}
+      {room.cover_url && <LinearGradient colors={['rgba(0,0,0,0.35)', 'rgba(0,0,0,0.7)']} style={StyleSheet.absoluteFill} />}
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', padding: 12, gap: 12 }}>
-        <View style={{ width: 60, height: 76, borderRadius: 12, overflow: 'hidden', backgroundColor: liveColors.surfaceRaised }}>
+        <View style={{ width: 60, height: 72, borderRadius: 8, overflow: 'hidden', backgroundColor: liveColors.surfaceRaised }}>
           {room.host?.avatar_url ? (
             <Image source={room.host.avatar_url} style={{ width: '100%', height: '100%' }} contentFit="cover" />
           ) : (
@@ -73,9 +71,9 @@ export function FeaturedHost({ room, following: initialFollowing }: { room: Room
             accessibilityRole="button"
             accessibilityState={{ selected: following }}
             hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
-            style={{ height: 36, paddingHorizontal: 14, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: following ? 'rgba(255,255,255,0.22)' : '#fff' }}
+            style={{ height: 36, paddingHorizontal: 14, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: following ? 'transparent' : c.primary, borderWidth: 1, borderColor: following ? c.border : c.primary }}
           >
-            <Text variant="label" color={following ? '#fff' : c.primary} style={{ fontSize: 13, fontWeight: '800' }}>{following ? 'Following' : 'Follow'}</Text>
+            <Text variant="label" color={following ? c.textMuted : c.primaryText} style={{ fontSize: 13, fontWeight: '700' }}>{following ? 'Following' : 'Follow'}</Text>
           </PressScale>
         )}
       </View>

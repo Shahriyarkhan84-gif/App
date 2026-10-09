@@ -16,9 +16,10 @@ describe('useTheme', () => {
     expect(liveColors.background).toBe('#000000');
   });
 
-  it('puts dark text on the light sky gradient', async () => {
+  it('puts dark text on flat sky surfaces', async () => {
     const { result } = await renderHook(() => useTheme());
-    expect(result.current.c.gradient[0]).toBe('#5AC8FA');
+    expect(result.current.c.gradient.every((x) => x === '#87CEFA')).toBe(true);
+    expect(result.current.c.glow).toBe('transparent');
     expect(result.current.c.primaryText).toBe('#00131F');
   });
 });

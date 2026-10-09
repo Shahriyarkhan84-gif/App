@@ -3,7 +3,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -242,10 +241,8 @@ export default function LiveRoomScreen() {
           <Pressable onPress={() => setMenuOpen(true)} accessibilityRole="button" accessibilityLabel="More: message, share, report" style={roundButton('rgba(20,24,30,0.78)')}>
             <Ionicons name="menu" size={24} color={c.text} />
           </Pressable>
-          <Pressable onPress={() => setGiftOpen(true)} accessibilityRole="button" accessibilityLabel="Send a gift" style={{ width: 46, height: 46, borderRadius: 23, overflow: 'hidden' }}>
-            <LinearGradient colors={['#FFD666', '#F59E0B']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="gift" size={24} color={c.onGold} />
-            </LinearGradient>
+          <Pressable onPress={() => setGiftOpen(true)} accessibilityRole="button" accessibilityLabel="Send a gift" style={roundButton(c.gold)}>
+            <Ionicons name="gift" size={22} color={c.onGold} />
           </Pressable>
         </>
       }

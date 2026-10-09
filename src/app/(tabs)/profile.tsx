@@ -1,7 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useIsFocused } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import { Pressable, ScrollView, View } from 'react-native';
@@ -72,7 +71,6 @@ export default function ProfileScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: d.background }}>
       {focused && <StatusBar style="light" />}
-      <LinearGradient colors={['#0A2433', d.background]} style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 360 }} />
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16, gap: 18, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
           <Row gap={8} style={{ justifyContent: 'flex-end' }}>
@@ -96,7 +94,7 @@ export default function ProfileScreen() {
           </FadeIn>
 
           {profile.status !== 'active' && (
-            <View style={{ padding: 14, borderRadius: 16, borderWidth: 1, borderColor: d.warning, gap: 4 }}>
+            <View style={{ padding: 14, borderRadius: 12, borderWidth: 1, borderColor: d.warning, gap: 4 }}>
               <Text variant="label" color={d.warning}>Account {profile.status}</Text>
               <Text color={d.textMuted}>{profile.status_until ? `Until ${new Date(profile.status_until).toLocaleString()}` : 'Contact support for details.'}</Text>
             </View>
@@ -109,36 +107,36 @@ export default function ProfileScreen() {
           </FadeIn>
 
           <FadeIn delay={140} style={{ flexDirection: 'row', gap: 8 }}>
-            <Tile coin iconColor="#FFC24B" label={stats.data ? compactNumber(stats.data.coins) : '–'} sub="Coins" tint={['#3A2A0E', '#241708']} labelColor="#FFE3A3" onPress={() => router.push('/wallet')} />
-            <Tile icon="sparkles" iconColor="#F0ABFC" label="Frames" sub="Shop" tint={['#3B1D5E', '#24133D']} labelColor="#F5D0FE" onPress={() => router.push('/frames')} />
-            <Tile icon="business" iconColor="#FDBA74" label="Agency" sub={isAgencyStaff ? 'Portal' : 'Join'} tint={['#3A2412', '#24160B']} labelColor="#FED7AA" onPress={() => router.push(isAgencyStaff ? '/agency' : '/hosting')} />
-            <Tile icon="diamond" iconColor="#93C5FD" label={host && stats.data ? compactNumber(stats.data.earnings) : 'Earn'} sub={host ? 'Diamonds' : 'Money'} tint={['#16264A', '#0E1830']} labelColor="#BFDBFE" onPress={() => router.push(host ? '/earnings' : '/hosting')} />
+            <Tile coin label={stats.data ? compactNumber(stats.data.coins) : '–'} sub="Coins" onPress={() => router.push('/wallet')} />
+            <Tile icon="sparkles-outline" label="Frames" sub="Shop" onPress={() => router.push('/frames')} />
+            <Tile icon="business-outline" label="Agency" sub={isAgencyStaff ? 'Portal' : 'Join'} onPress={() => router.push(isAgencyStaff ? '/agency' : '/hosting')} />
+            <Tile icon="diamond-outline" label={host && stats.data ? compactNumber(stats.data.earnings) : 'Earn'} sub={host ? 'Diamonds' : 'Money'} onPress={() => router.push(host ? '/earnings' : '/hosting')} />
           </FadeIn>
 
           <FadeIn delay={200}>
             <Group>
-              {isHost && <DarkRow icon="trending-up" tint="#2DD4BF" label="Creator Center" onPress={() => router.push('/host/dashboard')} />}
-              <DarkRow icon="megaphone" tint="#22D3EE" label={t('menu.events')} onPress={() => router.push('/events')} />
-              <DarkRow icon="trophy" tint="#FBBF24" label={t('menu.rankings')} onPress={() => router.push('/rankings')} last />
+              {isHost && <DarkRow icon="trending-up-outline" label="Creator Center" onPress={() => router.push('/host/dashboard')} />}
+              <DarkRow icon="megaphone-outline" label={t('menu.events')} onPress={() => router.push('/events')} />
+              <DarkRow icon="trophy-outline" label={t('menu.rankings')} onPress={() => router.push('/rankings')} last />
             </Group>
           </FadeIn>
 
           <FadeIn delay={240}>
             <Group>
-              <DarkRow icon="wallet" tint="#F472B6" label="Wallet" detail={stats.data ? `${stats.data.coins.toLocaleString()} coins` : undefined} onPress={() => router.push('/wallet')} />
-              <DarkRow icon="sparkles" tint="#C084FC" label="Profile frames" onPress={() => router.push('/frames')} />
-              <DarkRow icon="play-circle" tint="#FB923C" label={t('menu.videos')} onPress={() => router.push('/videos')} last={verified} />
-              {!verified && <DarkRow icon="shield-checkmark" tint="#FACC15" label={t('menu.hostingVerification')} onPress={() => router.push('/hosting')} last />}
+              <DarkRow icon="wallet-outline" label="Wallet" detail={stats.data ? `${stats.data.coins.toLocaleString()} coins` : undefined} onPress={() => router.push('/wallet')} />
+              <DarkRow icon="sparkles-outline" label="Profile frames" onPress={() => router.push('/frames')} />
+              <DarkRow icon="play-circle-outline" label={t('menu.videos')} onPress={() => router.push('/videos')} last={verified} />
+              {!verified && <DarkRow icon="shield-checkmark-outline" label={t('menu.hostingVerification')} onPress={() => router.push('/hosting')} last />}
             </Group>
           </FadeIn>
 
           <FadeIn delay={280}>
             <Group>
-              <DarkRow icon="help-buoy" tint="#60A5FA" label={t('menu.support')} onPress={() => router.push('/support')} last={!env.productBridgeUrl && !isAgencyStaff && !isPlatformAdmin} />
+              <DarkRow icon="help-buoy-outline" label={t('menu.support')} onPress={() => router.push('/support')} last={!env.productBridgeUrl && !isAgencyStaff && !isPlatformAdmin} />
               {/* Only when a feedback board is configured; otherwise the row would just show a setup message. */}
-              {!!env.productBridgeUrl && <DarkRow icon="chatbubble-ellipses" tint="#34D399" label={t('menu.feedback')} onPress={openFeedback} last={!isAgencyStaff && !isPlatformAdmin} />}
-              {isAgencyStaff && <DarkRow icon="business" tint="#FDBA74" label={t('menu.agency')} onPress={() => router.push('/agency')} last={!isPlatformAdmin} />}
-              {isPlatformAdmin && <DarkRow icon="analytics" tint="#A78BFA" label={t('menu.admin')} onPress={() => router.push('/admin')} last />}
+              {!!env.productBridgeUrl && <DarkRow icon="chatbubble-ellipses-outline" label={t('menu.feedback')} onPress={openFeedback} last={!isAgencyStaff && !isPlatformAdmin} />}
+              {isAgencyStaff && <DarkRow icon="business-outline" label={t('menu.agency')} onPress={() => router.push('/agency')} last={!isPlatformAdmin} />}
+              {isPlatformAdmin && <DarkRow icon="analytics-outline" label={t('menu.admin')} onPress={() => router.push('/admin')} last />}
             </Group>
           </FadeIn>
         </ScrollView>
@@ -147,38 +145,32 @@ export default function ProfileScreen() {
   );
 }
 
-/** One of the four coloured tiles under the stats. */
-function Tile({ icon, coin, iconColor, label, sub, tint, labelColor, onPress }: {
-  icon?: IconName; coin?: boolean; iconColor: string; label: string; sub: string; tint: [string, string]; labelColor: string; onPress: () => void;
-}) {
+/** One of the four flat tiles under the stats. */
+function Tile({ icon, coin, label, sub, onPress }: { icon?: IconName; coin?: boolean; label: string; sub: string; onPress: () => void }) {
+  const d = liveColors;
   return (
-    <PressScale onPress={onPress} scaleTo={0.95} accessibilityRole="button" accessibilityLabel={`${label} ${sub}`} style={{ flex: 1 }}>
-      <LinearGradient colors={tint} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        style={{ minHeight: 104, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 4 }}>
-        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' }}>
-          {coin ? <Coin size={26} /> : icon && <Ionicons name={icon} size={24} color={iconColor} />}
-        </View>
-        <Text variant="label" color={labelColor} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
-        <Text variant="caption" color="rgba(255,255,255,0.55)" numberOfLines={1}>{sub}</Text>
-      </LinearGradient>
+    <PressScale onPress={onPress} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={`${label} ${sub}`} style={{ flex: 1 }}>
+      <View style={{ minHeight: 92, borderRadius: 12, backgroundColor: d.surface, borderWidth: 1, borderColor: d.divider, alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 4 }}>
+        {coin ? <Coin size={22} /> : icon && <Ionicons name={icon} size={22} color={d.text} />}
+        <Text variant="label" color={d.text} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
+        <Text variant="caption" color={d.textFaint} numberOfLines={1}>{sub}</Text>
+      </View>
     </PressScale>
   );
 }
 
 function Group({ children }: { children: ReactNode }) {
-  return <View style={{ borderRadius: 18, backgroundColor: liveColors.surface, overflow: 'hidden' }}>{children}</View>;
+  return <View style={{ borderRadius: 12, backgroundColor: liveColors.surface, borderWidth: 1, borderColor: liveColors.divider, overflow: 'hidden' }}>{children}</View>;
 }
 
-/** Menu row: coloured round icon, label, optional detail, chevron. */
-function DarkRow({ icon, tint, label, detail, onPress, last }: { icon: IconName; tint: string; label: string; detail?: string; onPress: () => void; last?: boolean }) {
+/** Menu row: plain line icon, label, optional detail, chevron. */
+function DarkRow({ icon, label, detail, onPress, last }: { icon: IconName; label: string; detail?: string; onPress: () => void; last?: boolean }) {
   const d = liveColors;
   return (
     <PressScale onPress={onPress} scaleTo={0.98} accessibilityRole="button" accessibilityLabel={detail ? `${label}, ${detail}` : label}>
-      <Row gap={14} style={{ paddingHorizontal: 14, minHeight: 60, borderBottomWidth: last ? 0 : 1, borderBottomColor: d.divider }}>
-        <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: tint, alignItems: 'center', justifyContent: 'center' }}>
-          <Ionicons name={icon} size={20} color="#fff" />
-        </View>
-        <Text style={{ flex: 1, fontSize: 16 }} color={d.text}>{label}</Text>
+      <Row gap={14} style={{ paddingHorizontal: 16, minHeight: 54, borderBottomWidth: last ? 0 : 1, borderBottomColor: d.divider }}>
+        <Ionicons name={icon} size={21} color={d.textMuted} />
+        <Text style={{ flex: 1, fontSize: 15 }} color={d.text}>{label}</Text>
         {detail && <Text variant="bodySmall" color={d.textMuted}>{detail}</Text>}
         <Ionicons name="chevron-forward" size={18} color={d.textFaint} />
       </Row>
