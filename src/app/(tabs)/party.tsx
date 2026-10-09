@@ -120,7 +120,7 @@ export default function PartyScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             accessibilityLabel="Search rooms, people or ID"
-            style={{ height: 44, borderRadius: radius.pill, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, color: c.text, paddingLeft: 42, paddingRight: 16, fontSize: 15, fontFamily: fonts.regular }}
+            style={{ height: 44, borderRadius: radius[8], borderWidth: 0, borderColor: c.border, backgroundColor: c.surfaceRaised, color: c.text, paddingLeft: 42, paddingRight: 16, fontSize: 15, fontFamily: fonts.regular }}
           />
         </View>
       </View>
@@ -165,7 +165,7 @@ export default function PartyScreen() {
           { mode: 'live', icon: 'radio', title: 'Solo live', body: 'Just you on camera' },
         ] as const).map((o) => (
           <PressScale key={o.mode} scaleTo={0.98} haptic onPress={() => startParty(o.mode)} accessibilityRole="button" accessibilityLabel={o.title}>
-            <Row style={{ padding: 14, borderRadius: radius[16], backgroundColor: c.surface }}>
+            <Row style={{ padding: 14, borderRadius: radius[12], backgroundColor: c.surface }}>
               <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' }}>
                 <Ionicons name={o.icon} size={22} color={c.primaryText} />
               </View>
@@ -194,11 +194,11 @@ function PartyRow({ room, mode, rank }: { room: Room; mode: Mode; rank?: number 
         : router.push({ pathname: '/party/[roomId]', params: { roomId: room.id } }))}
       accessibilityRole="button"
       accessibilityLabel={`Join ${room.title}, hosted by ${host}, ${room.viewer_count} watching`}
-      style={{ flexDirection: 'row', gap: 12, padding: 10, borderRadius: radius[16] + 2, backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider }}
+      style={{ flexDirection: 'row', gap: 12, padding: 8, borderRadius: radius[12], backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider }}
     >
-      <View style={{ width: 92, height: 92, borderRadius: radius[12] + 2, backgroundColor: c.surfaceRaised, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 88, height: 88, borderRadius: radius[8], backgroundColor: c.surfaceRaised, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
         {cover ? <Image source={cover} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : <Text variant="display" color="rgba(255,255,255,0.2)" style={{ fontSize: 44, lineHeight: 50 }}>{host.slice(0, 1).toUpperCase()}</Text>}
-        <View style={{ position: 'absolute', left: 6, top: 6, backgroundColor: c.live, borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 }}>
+        <View style={{ position: 'absolute', left: 6, top: 6, backgroundColor: c.live, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 }}>
           <Text variant="caption" color={c.primaryText} style={{ fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>{mode === 'voice' ? 'VOICE' : mode === 'video' ? 'VIDEO' : 'LIVE'}</Text>
         </View>
         {rank !== undefined && (

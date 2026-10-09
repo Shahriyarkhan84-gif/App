@@ -6,44 +6,37 @@ import { ScrollView, View } from 'react-native';
 import { useTheme } from '@/lib/theme';
 import { displayName, type Room, roomHref } from '@/lib/types';
 
-import { Pop, PressScale, Pulse, Ripple, Spin, stagger } from './Motion';
+import { Pop, PressScale, stagger } from './Motion';
 import { Avatar, Button, Row, Sheet, Text } from './ui';
 
 const SIZE = 64;
 
-/** Avatar with a spinning ring, outward ripples and a pulsing LIVE tag — shown whenever someone is live. */
+/** Avatar with a solid sky ring and a LIVE tag — shown whenever someone is live. */
 export function LiveAvatar({ uri, name, size }: { uri?: string | null; name: string; size: number }) {
   const { c } = useTheme();
-  const ring = Math.max(3, Math.round(size / 24));
+  const ring = Math.max(2, Math.round(size / 28));
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Ripple size={size} color={c.primary} period={1600} ring />
-      <Ripple size={size} color={c.primary} period={1600} delay={800} ring />
-      <Spin style={{ position: 'absolute', width: size, height: size, borderRadius: size / 2, borderWidth: ring, borderTopColor: c.primary, borderRightColor: c.gold, borderBottomColor: c.accent, borderLeftColor: c.primary }} />
-      <Avatar uri={uri} name={name} size={size - ring * 2 - 6} />
-      <View style={{ position: 'absolute', bottom: -8 }}>
-        <Pulse min={1} max={1.1} period={1200}>
-          <View style={{ paddingHorizontal: size > 80 ? 8 : 6, paddingVertical: 1, borderRadius: 5, backgroundColor: c.primary, borderWidth: 2, borderColor: c.background }}>
-            <Text variant="caption" color={c.primaryText} style={{ fontSize: size > 80 ? 11 : 9, lineHeight: size > 80 ? 14 : 12, fontWeight: '800', letterSpacing: 0.6 }}>LIVE</Text>
-          </View>
-        </Pulse>
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center', borderRadius: size / 2, borderWidth: ring, borderColor: c.primary }}>
+      <Avatar uri={uri} name={name} size={size - ring * 2 - 4} />
+      <View style={{ position: 'absolute', bottom: -7, paddingHorizontal: size > 80 ? 8 : 5, paddingVertical: 1, borderRadius: 4, backgroundColor: c.primary, borderWidth: 2, borderColor: c.background }}>
+        <Text variant="caption" color={c.primaryText} style={{ fontSize: size > 80 ? 11 : 9, lineHeight: size > 80 ? 14 : 12, fontWeight: '700', letterSpacing: 0.5 }}>LIVE</Text>
       </View>
     </View>
   );
 }
 
-/** TikTok-style row: people you follow who are live now, with a spinning ring that ripples outward. */
-export function FollowingLive({ rooms, header = true, onOpen }: { rooms: Room[]; header?: boolean; onOpen?: () => void }) {
+/** Stories-style row: people you follow who are live now. */
+export function FollowingLive({ rooms, header = true, onOpen, inset = 20 }: { rooms: Room[]; header?: boolean; onOpen?: () => void; inset?: number }) {
   if (rooms.length === 0) return null;
   return (
     <View style={{ gap: 6 }}>
       {header && (
-        <Row style={{ justifyContent: 'space-between', paddingHorizontal: 20 }}>
+        <Row style={{ justifyContent: 'space-between', paddingHorizontal: inset }}>
           <Text variant="label">Following · live now</Text>
           <Text variant="caption" faint>{rooms.length} live</Text>
         </Row>
       )}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingHorizontal: header ? 20 : 4, paddingVertical: 10 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14, paddingHorizontal: header ? inset : 4, paddingVertical: 10 }}>
         {rooms.map((r, i) => {
           const name = displayName(r.host);
           return (
@@ -82,18 +75,15 @@ export function LiveBell({ rooms }: { rooms: Room[] }) {
         scaleTo={0.9}
         accessibilityRole="button"
         accessibilityLabel={count > 0 ? `Notifications. ${count} people you follow are live` : 'Notifications'}
-        style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}
+        style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
       >
-        {count > 0 && <Ripple size={44} color={c.primary} period={1800} ring />}
-        <Ionicons name="notifications-outline" size={20} color={c.text} />
+        <Ionicons name="notifications-outline" size={24} color={c.text} />
         {count > 0 && (
           // Re-keyed on count so the badge pops each time another host goes live.
           <Pop key={count} from={0.3} style={{ position: 'absolute', top: 2, right: 0 }}>
-            <Pulse min={1} max={1.15} period={1400}>
-              <View style={{ minWidth: 18, height: 18, paddingHorizontal: 5, borderRadius: 9, backgroundColor: c.primary, borderWidth: 2, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
-                <Text variant="caption" color={c.primaryText} style={{ fontSize: 10, lineHeight: 12, fontWeight: '800' }}>{count}</Text>
-              </View>
-            </Pulse>
+            <View style={{ minWidth: 18, height: 18, paddingHorizontal: 5, borderRadius: 9, backgroundColor: c.primary, borderWidth: 2, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
+              <Text variant="caption" color={c.primaryText} style={{ fontSize: 10, lineHeight: 12, fontWeight: '700' }}>{count}</Text>
+            </View>
           </Pop>
         )}
       </PressScale>

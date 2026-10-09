@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router, type Href } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 
@@ -10,22 +9,22 @@ import { useI18n } from '@/lib/i18n';
 import type { MessageKey } from '@/lib/i18n/en';
 import { useTheme } from '@/lib/theme';
 
-type Shortcut = { key: string; icon: IconName; label: MessageKey; body: MessageKey; href: Href; colors: readonly [string, string] };
+type Shortcut = { key: string; icon: IconName; label: MessageKey; body: MessageKey; href: Href };
 
 const WATCH: Shortcut[] = [
-  { key: 'party', icon: 'people', label: 'explore.party', body: 'explore.party.body', href: '/party', colors: ['#0369A1', '#0EA5E9'] },
-  { key: 'videos', icon: 'play-circle', label: 'menu.videos', body: 'explore.videos.body', href: '/videos', colors: ['#0E7490', '#22D3EE'] },
-  { key: 'events', icon: 'calendar', label: 'menu.events', body: 'explore.events.body', href: '/events', colors: ['#0E8A7A', '#34C789'] },
-  { key: 'rankings', icon: 'trophy', label: 'menu.rankings', body: 'explore.rankings.body', href: '/rankings', colors: ['#E0A83A', '#FFC24B'] },
+  { key: 'party', icon: 'people-outline', label: 'explore.party', body: 'explore.party.body', href: '/party' },
+  { key: 'videos', icon: 'play-circle-outline', label: 'menu.videos', body: 'explore.videos.body', href: '/videos' },
+  { key: 'events', icon: 'calendar-outline', label: 'menu.events', body: 'explore.events.body', href: '/events' },
+  { key: 'rankings', icon: 'trophy-outline', label: 'menu.rankings', body: 'explore.rankings.body', href: '/rankings' },
 ];
 
 const YOU: Shortcut[] = [
-  { key: 'wallet', icon: 'wallet', label: 'menu.wallet', body: 'explore.wallet.body', href: '/wallet', colors: ['#E0A83A', '#FFC24B'] },
-  { key: 'host', icon: 'videocam', label: 'explore.host', body: 'explore.host.body', href: '/hosting', colors: ['#0284C7', '#38BDF8'] },
-  { key: 'agency', icon: 'business', label: 'menu.agency', body: 'explore.agency.body', href: '/agency', colors: ['#1E3A8A', '#3B82F6'] },
-  { key: 'support', icon: 'help-buoy', label: 'menu.support', body: 'explore.support.body', href: '/support', colors: ['#1F6FAE', '#4B7BE0'] },
-  { key: 'profile', icon: 'person-circle', label: 'explore.profile', body: 'explore.profile.body', href: '/profile-edit', colors: ['#0369A1', '#38BDF8'] },
-  { key: 'settings', icon: 'settings', label: 'settings.title', body: 'explore.settings.body', href: '/settings', colors: ['#1F2937', '#4B5563'] },
+  { key: 'wallet', icon: 'wallet-outline', label: 'menu.wallet', body: 'explore.wallet.body', href: '/wallet' },
+  { key: 'host', icon: 'videocam-outline', label: 'explore.host', body: 'explore.host.body', href: '/hosting' },
+  { key: 'agency', icon: 'business-outline', label: 'menu.agency', body: 'explore.agency.body', href: '/agency' },
+  { key: 'support', icon: 'help-buoy-outline', label: 'menu.support', body: 'explore.support.body', href: '/support' },
+  { key: 'profile', icon: 'person-circle-outline', label: 'explore.profile', body: 'explore.profile.body', href: '/profile-edit' },
+  { key: 'settings', icon: 'settings-outline', label: 'settings.title', body: 'explore.settings.body', href: '/settings' },
 ];
 
 /** Discovery hub: one place for every destination that isn't a main tab. */
@@ -35,30 +34,35 @@ export default function ExploreScreen() {
   const { t } = useI18n();
   let i = 0;
 
+  // Bigo-style service grid: four per row, a flat icon square and a short label.
   const tile = (s: Shortcut) => (
-    <Pop key={s.key} delay={i++ * 40} style={{ width: '48%', flexGrow: 1 }}>
+    <Pop key={s.key} delay={i++ * 30} style={{ width: '25%', alignItems: 'center', paddingVertical: 8 }}>
       <PressScale
         haptic
-        scaleTo={0.95}
+        scaleTo={0.92}
         onPress={() => router.push(s.href)}
         accessibilityRole="button"
         accessibilityLabel={`${t(s.label)}. ${t(s.body)}`}
-        style={{ minHeight: 112, padding: 14, gap: 10, borderRadius: radius[20], backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider }}
+        style={{ alignItems: 'center', gap: 8, minWidth: 72 }}
       >
-        <LinearGradient colors={s.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}>
-          <Ionicons name={s.icon} size={22} color="#fff" />
-        </LinearGradient>
-        <View style={{ gap: 2 }}>
-          <Text variant="label" numberOfLines={1}>{t(s.label)}</Text>
-          <Text variant="caption" muted numberOfLines={2}>{t(s.body)}</Text>
+        <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: c.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name={s.icon} size={24} color={s.key === 'wallet' || s.key === 'rankings' ? c.gold : c.primary} />
         </View>
+        <Text variant="caption" numberOfLines={1} style={{ fontSize: 12 }}>{t(s.label)}</Text>
       </PressScale>
     </Pop>
   );
 
+  const section = (title: string, items: Shortcut[]) => (
+    <View style={{ borderRadius: radius[12], backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider, paddingVertical: 8, paddingHorizontal: 4 }}>
+      <Text variant="label" style={{ paddingHorizontal: 12, paddingTop: 4, paddingBottom: 2 }}>{title}</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>{items.map(tile)}</View>
+    </View>
+  );
+
   return (
     <Screen>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: hPadding, paddingTop: 8, paddingBottom: tabSpace + 24, gap: 16, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: hPadding, paddingTop: 8, paddingBottom: tabSpace + 24, gap: 12, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
         <View style={{ gap: 2 }}>
           <Text variant="h1">{t('explore.title')}</Text>
           <Text muted>{t('explore.subtitle')}</Text>
@@ -70,7 +74,7 @@ export default function ExploreScreen() {
           onPress={() => router.push('/party')}
           accessibilityRole="search"
           accessibilityLabel={t('explore.search')}
-          style={{ minHeight: 48, borderRadius: radius.pill, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, paddingHorizontal: 16 }}
+          style={{ minHeight: 44, borderRadius: radius[8], backgroundColor: c.surfaceRaised, paddingHorizontal: 14 }}
         >
           <Row gap={10} style={{ flex: 1 }}>
             <Ionicons name="search" size={18} color={c.textFaint} />
@@ -78,11 +82,8 @@ export default function ExploreScreen() {
           </Row>
         </PressScale>
 
-        <Text variant="label" muted style={{ marginTop: 4 }}>{t('explore.watch')}</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>{WATCH.map(tile)}</View>
-
-        <Text variant="label" muted style={{ marginTop: 4 }}>{t('explore.account')}</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>{YOU.map(tile)}</View>
+        {section(t('explore.watch'), WATCH)}
+        {section(t('explore.account'), YOU)}
       </ScrollView>
     </Screen>
   );

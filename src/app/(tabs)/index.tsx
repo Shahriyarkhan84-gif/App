@@ -7,14 +7,12 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { LiveEventBanner } from '@/components/EventRow';
 import { RoomCard } from '@/components/RoomCard';
-import { FeaturedHost } from '@/components/FeaturedHost';
-import { LiveBell } from '@/components/FollowingLive';
-import { type MenuItem, SideMenuButton, useTabBarSpace } from '@/components/Menus';
+import { FollowingLive, LiveBell } from '@/components/FollowingLive';
+import { useTabBarSpace } from '@/components/Menus';
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { Chip, IconButton, Row, Screen, Text, TextTabs, Wordmark } from '@/components/ui';
+import { IconButton, Row, Screen, Text } from '@/components/ui';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
-import { useI18n } from '@/lib/i18n';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { fonts, useTheme } from '@/lib/theme';
@@ -31,6 +29,9 @@ const FEEDS: { id: Feed; label: string }[] = [
   { id: 'new', label: 'New' },
 ];
 const CHIPS = ['all', ...CATEGORIES] as const;
+/** Bigo-style dense grid: thin outer padding and gaps. */
+const GRID_PAD = 8;
+const GRID_GAP = 6;
 
 // live: top 60 by viewers (Popular). Following and New load their own lists, so smaller and newer
 // rooms still show once more than 60 rooms are live.
@@ -41,15 +42,14 @@ export default function HomeScreen() {
   const supabase = useSupabase();
   const { userId } = useAuth();
   const { profile } = useProfile();
-  const { c, hPadding } = useTheme();
+  const { c } = useTheme();
   const offline = useOffline();
-  const { t } = useI18n();
   const { width } = useWindowDimensions();
   const [feed, setFeed] = useState<Feed>('popular');
   const [category, setCategory] = useState<(typeof CHIPS)[number]>('all');
   // 2 columns on every phone width (compact through xlarge) — only widens past that on tablet/web.
   const columns = width > 700 ? 4 : 2;
-  const cardWidth = (Math.min(width, 1100) - hPadding * 2 - 10 * (columns - 1)) / columns;
+  const cardWidth = (Math.min(width, 1100) - GRID_PAD * 2 - GRID_GAP * (columns - 1)) / columns;
 
   const { data, error, loading, reload } = useFocusedAsync<HomeData>(async () => {
     // One round trip: the server is far away (us-east-1), so every sequential request adds ~0.5 s.
@@ -97,11 +97,10 @@ export default function HomeScreen() {
   });
 
   const rooms = data ? pickFeed(data, feed, profile?.country ?? null).filter((r) => category === 'all' || r.category === category) : [];
-  // Featured and TOP 2–4 follow real viewer order (data.live is sorted by viewers), not AI picks.
-  const topRoom = data?.live[0] ?? null;
+  // TOP 1–4 follow real viewer order (data.live is sorted by viewers), not AI picks.
   const topRank = (id: string) => {
     const i = data ? data.live.findIndex((r) => r.id === id) : -1;
-    return i >= 1 && i <= 3 ? i + 1 : undefined;
+    return i >= 0 && i <= 3 ? i + 1 : undefined;
   };
   // Highest-viewed live room currently in a PK battle, if any — the Home screen's entry point into that fight.
   const battleRoom = data?.live.find((r) => r.current_battle_id) ?? null;
@@ -118,7 +117,7 @@ export default function HomeScreen() {
 
   const showBanners = feed === 'popular' && category === 'all';
   const grid = (list: Room[], offset: number) => (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP }}>
       {list.map((r, j) => (
         <FadeIn key={`${feed}-${category}-${r.id}`} delay={stagger(offset + j, 30, 150)} duration={250} from={12}>
           <RoomCard
@@ -132,44 +131,31 @@ export default function HomeScreen() {
     </View>
   );
 
-  const sideMenu: MenuItem[] = [
-    { key: 'videos', icon: 'play-circle-outline', label: t('menu.videos'), onPress: () => router.push('/videos') },
-    { key: 'events', icon: 'calendar-outline', label: t('menu.events'), onPress: () => router.push('/events') },
-    { key: 'rankings', icon: 'trophy-outline', label: t('menu.rankings'), onPress: () => router.push('/rankings') },
-    { key: 'wallet', icon: 'wallet-outline', label: t('menu.wallet'), onPress: () => router.push('/wallet') },
-    { key: 'settings', icon: 'settings-outline', label: t('settings.title'), onPress: () => router.push('/settings') },
-    { key: 'support', icon: 'help-circle-outline', label: t('menu.support'), onPress: () => router.push('/support') },
-  ];
 
   return (
     <Screen>
-      <View style={{ paddingHorizontal: hPadding, paddingTop: 4, gap: 4, maxWidth: 1100, width: '100%', alignSelf: 'center' }}>
+      <View style={{ paddingHorizontal: GRID_PAD + 4, paddingTop: 4, maxWidth: 1100, width: '100%', alignSelf: 'center' }}>
         <Row style={{ justifyContent: 'space-between' }}>
-          <Row gap={10}>
-            <SideMenuButton items={sideMenu} header={<Wordmark />} />
-            <Wordmark />
-          </Row>
-          <Row gap={8}>
-            <IconButton icon="wallet-outline" label="Wallet" color={c.gold} onPress={() => router.push('/wallet')} />
-            <IconButton icon="search" label="Search" onPress={() => router.push('/party')} />
+          <FeedTabs value={feed} onChange={setFeed} />
+          <Row gap={0}>
+            <IconButton icon="search" label="Search" bg="transparent" onPress={() => router.push('/party')} />
             <LiveBell rooms={data ? data.followingLive : []} />
           </Row>
         </Row>
-        <TextTabs options={FEEDS} value={feed} onChange={setFeed} />
       </View>
       <View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: hPadding, paddingVertical: 12 }}>
-          {CHIPS.map((k) => <Chip key={k} label={k === 'all' ? 'All' : categoryLabel(k)} selected={category === k} onPress={() => setCategory(k)} />)}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: GRID_PAD + 4, paddingTop: 6, paddingBottom: 8 }}>
+          {CHIPS.map((k) => <SmallChip key={k} label={k === 'all' ? 'All' : categoryLabel(k)} selected={category === k} onPress={() => setCategory(k)} />)}
         </ScrollView>
       </View>
       <StateView state={state}>
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: hPadding, paddingBottom: tabSpace + 32, gap: 12, maxWidth: 1100, width: '100%', alignSelf: 'center' }}
+          contentContainerStyle={{ paddingHorizontal: GRID_PAD, paddingBottom: tabSpace + 32, gap: GRID_GAP, maxWidth: 1100, width: '100%', alignSelf: 'center' }}
           refreshControl={<RefreshControl refreshing={loading && !!data} onRefresh={reload} tintColor={c.text} />}
         >
-          {feed === 'popular' && category === 'all' && topRoom && (
-            <FadeIn>
-              <FeaturedHost key={`${topRoom.host_id}-${data!.followed.has(topRoom.host_id)}`} room={topRoom} following={data!.followed.has(topRoom.host_id)} />
+          {showBanners && data && data.followingLive.length > 0 && (
+            <FadeIn style={{ marginHorizontal: -GRID_PAD }}>
+              <FollowingLive rooms={data.followingLive} inset={GRID_PAD + 4} />
             </FadeIn>
           )}
           {rooms.length === 0 ? (
@@ -244,4 +230,32 @@ function pickFeed(data: HomeData, feed: Feed, country: string | null): Room[] {
       return [...data.live].sort((a, b) => rec(b) - rec(a) || b.viewer_count - a.viewer_count);
     }
   }
+}
+
+/** Big left-aligned feed switcher (Bigo/Tango): the active feed is large and white, the rest smaller and grey. */
+function FeedTabs({ value, onChange }: { value: Feed; onChange: (f: Feed) => void }) {
+  const { c } = useTheme();
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="tablist" style={{ flexShrink: 1 }} contentContainerStyle={{ alignItems: 'flex-end', gap: 14, paddingRight: 8 }}>
+      {FEEDS.map((f) => {
+        const on = f.id === value;
+        return (
+          <PressScale key={f.id} onPress={() => onChange(f.id)} accessibilityRole="tab" accessibilityState={{ selected: on }} scaleTo={0.95} style={{ minHeight: 44, justifyContent: 'center' }}>
+            <Text style={{ fontFamily: on ? fonts.bold : fonts.medium, fontSize: on ? 21 : 15, lineHeight: on ? 27 : 21 }} color={on ? c.text : c.textFaint}>{f.label}</Text>
+          </PressScale>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+/** Compact category chip for the strip under the feed tabs. */
+function SmallChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  const { c } = useTheme();
+  return (
+    <PressScale onPress={onPress} accessibilityRole="button" accessibilityState={{ selected }} scaleTo={0.94} hitSlop={{ top: 7, bottom: 7 }}
+      style={{ height: 30, paddingHorizontal: 12, borderRadius: 6, justifyContent: 'center', backgroundColor: selected ? c.primary : c.surfaceRaised }}>
+      <Text variant="caption" color={selected ? c.primaryText : c.textMuted} style={{ fontSize: 13, fontWeight: selected ? '700' : '500' }}>{label}</Text>
+    </PressScale>
+  );
 }

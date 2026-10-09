@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.29 — New frontend, stage 1 (Bigo/Tango style)
+
+- Home: big left-aligned feed switcher (Following · Popular · Nearby · New) with search and notifications; compact square category chips; a "Following · live now" row of followed hosts who are live; dense 2-column grid (8 px edge, 6 px gaps). The side menu, wordmark, wallet button and featured-host card left Home (all reachable from Explore and Me); `FeaturedHost` was removed.
+- Live cards: LIVE (sound bars) / PK / Party tag, TOP 1–4 rank, name with badges, country flag, title and viewer count over a dark fade; 8 px corners.
+- Live avatars and the notifications bell are calm: a solid sky ring and LIVE tag, no spinning or rippling rings.
+- Explore: a service grid (four per row, flat icon squares in sky or gold) in two cards, Watch and You.
+- Party: tighter list cards with 8–12 px corners and a flat search box.
+
 ## 0.9.28 — Clean premium look
 
 - Flat design: the sky-blue "gradient" token is now solid sky blue and the glow token is transparent, so buttons, the LIVE badge, header cards and the Go-live button are flat everywhere and nothing glows.
