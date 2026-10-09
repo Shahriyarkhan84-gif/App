@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.30 — Party tab replaces Explore
+
+- The bottom bar is Home · Party · Go live · Messages · Me. The Party tab opens the voice and video party rooms (search, Start a party); Home's search icon opens it too.
+- The Explore screen and its shortcuts were removed; every one of those destinations is on Me (Events, Rankings, Wallet, Frames, Videos, Hosting, Support, Agency, Settings, Edit profile).
+
 ## 0.9.29 — New frontend, stage 1 (Bigo/Tango style)
 
 - Home: big left-aligned feed switcher (Following · Popular · Nearby · New) with search and notifications; compact square category chips; a "Following · live now" row of followed hosts who are live; dense 2-column grid (8 px edge, 6 px gaps). The side menu, wordmark, wallet button and featured-host card left Home (all reachable from Explore and Me); `FeaturedHost` was removed.

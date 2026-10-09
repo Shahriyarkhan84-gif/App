@@ -7,10 +7,6 @@ export const ur: Catalog = {
   'tab.golive': 'لائیو جائیں',
   'tab.messages': 'پیغامات',
   'tab.me': 'میں',
-  'tab.explore': 'ایکسپلور',
-
-  // Explore
-  'explore.title': 'ایکسپلور',
 
   'state.error.title': 'کچھ غلط ہو گیا',
   'state.retry': 'دوبارہ کوشش کریں',

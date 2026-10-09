@@ -19,23 +19,23 @@ describe('TabBarItem', () => {
 });
 
 describe('tabButton (router tab bar)', () => {
-  const Explore = tabButton('compass-outline', 'compass', 'Explore');
+  const Party = tabButton('people-outline', 'people', 'Party');
 
   // Regression: the navigator reports focus as `aria-selected`. Reading only
   // `accessibilityState.selected` left every tab looking inactive.
   it('reads focus from aria-selected', async () => {
-    await render(<Explore aria-selected />);
-    expect(screen.getByRole('tab', { name: 'Explore' })).toBeSelected();
-    expect(screen.getByText('icon:compass')).toBeOnTheScreen();
+    await render(<Party aria-selected />);
+    expect(screen.getByRole('tab', { name: 'Party' })).toBeSelected();
+    expect(screen.getByText('icon:people')).toBeOnTheScreen();
   });
 
   it('still accepts accessibilityState.selected', async () => {
-    await render(<Explore accessibilityState={{ selected: true }} />);
-    expect(screen.getByRole('tab', { name: 'Explore' })).toBeSelected();
+    await render(<Party accessibilityState={{ selected: true }} />);
+    expect(screen.getByRole('tab', { name: 'Party' })).toBeSelected();
   });
 
   it('is not selected when neither is set', async () => {
-    await render(<Explore />);
-    expect(screen.getByRole('tab', { name: 'Explore' })).not.toBeSelected();
+    await render(<Party />);
+    expect(screen.getByRole('tab', { name: 'Party' })).not.toBeSelected();
   });
 });

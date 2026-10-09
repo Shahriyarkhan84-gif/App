@@ -11,7 +11,7 @@ Zynalive is a React Native app (Expo), so the web steps become their app equival
 | Step | Roadmap says | In Zynalive | Where | Status | Build next |
 |---|---|---|---|---|---|
 | 01 | HTML: structure the web | Screens are routes, built from React Native views | `src/app/` (Expo Router: one file = one screen) | ✅ | Public web pages stay plain HTML (`/privacy`, `/account-deletion`) |
-| 02 | CSS: style and design | Theme tokens + shared components, no per-screen colors | `src/lib/theme.ts`, `src/components/ui.tsx` | ✅ | Move the remaining hardcoded colors (gradients on Explore tiles) into theme tokens |
+| 02 | CSS: style and design | Theme tokens + shared components, no per-screen colors | `src/lib/theme.ts`, `src/components/ui.tsx` | ✅ | Move the remaining hardcoded colors into theme tokens |
 | 03 | JavaScript: make it interactive | TypeScript everywhere (typecheck is part of "done") | `src/**/*.ts(x)` | ✅ | Keep strict mode on; no `any` in money or auth code |
 | 04 | React: build modern UI | Components + hooks; every screen handles 7 states | `src/components/StateView.tsx`, `src/lib/hooks.ts` | ✅ | Multi-guest party rooms, likes, host dashboard (the design canvas screens still missing) |
 | 05 | Tailwind: style faster (optional) | Not used. The theme file plays that role | `src/lib/theme.ts` | ➖ skip | Only worth it for the Next.js web dashboards (`apps/web`) |
