@@ -58,6 +58,12 @@ the AI coach's per-stream chat count over 72,813 messages took 5.9 ms with a ful
 with `messages_stream_idx` (it grows with the table). Load test afterwards: feed 1,978/s, gifts
 1,798/s (one host 1,787/s), chat 3,020/s — no slower than before the indexes.
 
+## Caching — 2026-10-10
+
+Rankings (weekly top gifters, ~117k gifts in the week): computed from the gifts every time, 22
+requests/s with a 2 s median; through the 60 s shared cache (`20261010030000_rankings_cache.sql`),
+13,244 requests/s at 2.7 ms (p99 9 ms). Other scenarios unchanged.
+
 ## Findings (before the fix)
 
 - **One popular host is the bottleneck.** Every gift to a host updates the same two rows (that host's

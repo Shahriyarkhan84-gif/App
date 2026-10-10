@@ -50,6 +50,9 @@ run "Send gift (random host)" gift.sql
 run "Send gift (all to one host)" hotgift.sql
 run "Live chat" chat.sql
 run "Mixed (70% feed/20% chat/10% gift)" feed.sql@70 chat.sql@20 gift.sql@10
+# Rankings run last, when the gift scenarios have filled the week with gifts.
+run "Rankings, no cache (before)" rank_nocache.sql
+run "Rankings, 60 s cache" rank.sql
 
 echo
 "${PSQL[@]}" -f "$HERE/check.sql"

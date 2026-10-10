@@ -64,6 +64,18 @@ analytics) are implemented as **modules of one Postgres schema + a handful of
 edge functions + one worker**. That keeps transactions (e.g. gift → earnings →
 ledger) atomic. Split out services only when load or team structure demands it.
 
+## Caching
+
+- **On the phone** (`src/lib/hooks.ts`): each screen's last result is kept per account in memory
+  and saved to AsyncStorage (`zl-cache:v1:<user id>`, newest first, ≤300 KB, entries under 12 h).
+  `LaunchGate` loads it before the first screen (≤0.5 s), so a cold start shows the last Home /
+  Party / Wallet / Messages at once and refreshes in the background. Results under 30 s old are
+  not refetched (10 min for the gift and frame catalogs); pull-to-refresh always fetches. A
+  different account starts empty; sign-out deletes that account's saved copy.
+- **In the database**: `get_rankings` serves a shared copy for 60 s (15 s for live viewers) from
+  `private.rankings_cache`; one caller recomputes when it expires while the rest get the previous
+  copy. Gift totals use tallies (see `docs/ECONOMY.md`).
+
 ## Request flows
 
 **Watch live** — app reads `rooms` (RLS) → calls `livekit-token` (verifies

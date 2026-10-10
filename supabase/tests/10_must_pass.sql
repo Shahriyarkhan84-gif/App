@@ -645,4 +645,26 @@ select tests.ok(not exists (select 1 from private.gift_tallies where kind in ('s
 delete from public.pk_battles where room_a_id = (select id from public.rooms where host_id = 'tl_host');
 update public.rooms set status = 'offline', current_stream_id = null where host_id = 'tl_rival';
 
+---------------------------------------------------------------------------------------
+-- Rankings cache: private, shared for a short time, refreshed once it expires
+---------------------------------------------------------------------------------------
+select set_config('request.jwt.claims', '{"sub":"tl_fan"}', false);
+set role authenticated;
+select tests.fails($$select * from private.rankings_cache$$, '%permission denied%', 'clients cannot read the rankings cache');
+select tests.fails($$select private.compute_rankings('creator', 'week')$$, '%permission denied%', 'clients cannot call the uncached rankings');
+select tests.fails($$select * from public.get_rankings('nonsense', 'week')$$, '%invalid_kind%', 'unknown ranking kind');
+select count(*) from public.get_rankings('gifter', 'week');
+reset role;
+select tests.ok(exists (select 1 from private.rankings_cache where kind = 'gifter' and period = 'week'), 'a ranking is cached after the first call');
+update private.rankings_cache set rows = '[{"rank":1,"subject_id":"cached_marker","label":"x","avatar_url":null,"score":1}]' where kind = 'gifter' and period = 'week';
+select set_config('request.jwt.claims', '{"sub":"tl_fan"}', false);
+set role authenticated;
+select tests.ok((select subject_id from public.get_rankings('gifter', 'week') where rank = 1) = 'cached_marker', 'within 60 s the cached ranking is served');
+reset role;
+update private.rankings_cache set computed_at = now() - interval '2 minutes' where kind = 'gifter' and period = 'week';
+select set_config('request.jwt.claims', '{"sub":"tl_fan"}', false);
+set role authenticated;
+select tests.ok((select subject_id from public.get_rankings('gifter', 'week') where rank = 1) <> 'cached_marker', 'an expired ranking is recomputed from the gifts');
+reset role;
+
 drop schema tests cascade;

@@ -12,12 +12,13 @@ import { Stack, useGlobalSearchParams, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { PostHogProvider, usePostHog } from 'posthog-react-native';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Platform, View } from 'react-native';
 
 import { LaunchScreen } from '@/components/LaunchScreen';
 import { Text } from '@/components/ui';
 import { env, missingRequiredEnv } from '@/lib/env';
+import { loadCacheFor } from '@/lib/hooks';
 import { AppI18n } from '@/lib/i18n/AppI18n';
 import { ProfileProvider } from '@/lib/profile';
 import { initSentry, Sentry } from '@/lib/sentry';
@@ -30,13 +31,27 @@ void SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({ fade: true, duration: 300 });
 
 /**
- * Shows the branded loading page only while Clerk restores the session. Clerk's resource cache
- * (ClerkProvider below) lets a returning user's session load from the phone instead of the
- * network, so reopening the app goes straight to Home instead of waiting on the logo.
+ * Shows the branded loading page only while Clerk restores the session and this account's saved
+ * screens load from the phone (capped at half a second). Clerk's resource cache (ClerkProvider
+ * below) lets a returning user's session load from the phone instead of the network, so reopening
+ * the app goes straight to Home, showing the last feed while the fresh one loads.
  */
 function LaunchGate({ children }: { children: ReactNode }) {
-  const { isLoaded } = useAuth();
-  if (!isLoaded) return <LaunchScreen />;
+  const { isLoaded, userId } = useAuth();
+  const want = userId ?? null;
+  const [cacheFor, setCacheFor] = useState<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (!isLoaded) return;
+    let cancelled = false;
+    void Promise.race([loadCacheFor(want), new Promise((r) => setTimeout(r, 500))]).finally(() => {
+      if (!cancelled) setCacheFor(want);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoaded, want]);
+  // A different account (or sign-out) unmounts the screens until its own cache is in place.
+  if (!isLoaded || cacheFor !== want) return <LaunchScreen />;
   return <>{children}</>;
 }
 

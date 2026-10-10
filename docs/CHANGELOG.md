@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.34 — Caching (step 2 of 4)
+
+- Phone: each account's last screens are saved on the phone (AsyncStorage, ≤300 KB, under 12 h old) and loaded before the first screen, so reopening the app shows the last Home, Party, Wallet and Messages at once while fresh data loads. Sets/Maps survive saving. Another account starts empty; sign-out deletes the saved copy. Gift and frame catalogs stay fresh for 10 minutes instead of 30 s.
+- Database: `get_rankings` serves a shared copy for 60 s (15 s for live viewers) from `private.rankings_cache` (`20261010030000_rankings_cache.sql`); load test 22 → 13,244 requests/s (2 s → 2.7 ms median).
+- Tests: three new hook tests (cold start, account isolation and sign-out, catalog freshness) and must-pass cases for the rankings cache (private, served while fresh, recomputed when expired).
+
 ## 0.9.33 — Database indexes (step 1 of 4)
 
 - `20261010020000_indexes.sql`: 21 indexes for foreign keys the app really looks up by (from Supabase's unindexed-foreign-key advisor, filtered to real query paths): seats, bans, seat requests, room admins, viewers and blocks by user; agency membership (used inside RLS); host applications per agency; streams per room; chat per stream; partial indexes on rooms' current stream/battle; "my" lists (event scores/results, reports, tickets, refunds, media views); report and AI-action lookups. Left out on purpose: tiny catalogs, admin-only reviewer columns and `gifts.room_id` (nothing reads it; gifts is the busiest write table). The 23 "unused index" advisor notes are kept: the hosted database is nearly empty, so nothing has used them yet.

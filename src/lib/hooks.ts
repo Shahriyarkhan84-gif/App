@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from 'expo-router';
 import { useNetworkState } from 'expo-network';
 import { useCallback, useEffect, useRef, useState, type DependencyList } from 'react';
@@ -6,16 +7,99 @@ import { useSupabase } from './supabase';
 
 type AsyncState<T> = { data: T | undefined; error: Error | null; loading: boolean; reload: () => void };
 
-// Last result per cacheKey, for this app session only (memory, cleared when the app closes or
-// the signed-in account changes — see clearAsyncCache).
+// Last result per cacheKey for the signed-in account. Kept in memory and saved on the phone
+// (per account) so a cold start shows the last screens at once while fresh data loads; cleared
+// when the account changes and deleted from the phone on sign-out.
 const cache = new Map<string, { data: unknown; at: number }>();
 
 /** Results younger than this are shown without asking the server again (realtime keeps them current). */
 export const FRESH_MS = 30_000;
+/** Catalogs that rarely change stay fresh longer. */
+const LONG_FRESH: Record<string, number> = { 'gift-catalog': 10 * 60_000, 'frame-catalog': 10 * 60_000 };
+export function freshMs(cacheKey?: string) {
+  return (cacheKey && LONG_FRESH[cacheKey]) || FRESH_MS;
+}
 
 /** Forget every cached screen (call when the signed-in account changes). */
 export function clearAsyncCache() {
   cache.clear();
+}
+
+// Saved copy on the phone -----------------------------------------------------------------------
+const STORE_PREFIX = 'zl-cache:v1:';
+/** Saved screens older than this are dropped on start (yesterday's live rooms aren't worth showing). */
+const MAX_SAVED_AGE_MS = 12 * 60 * 60_000;
+/** Upper bound on what is written to the phone. */
+const MAX_SAVED_CHARS = 300_000;
+let owner: string | null = null;
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+// Screens keep Sets and Maps (e.g. who you follow); JSON alone would turn them into {}.
+function replacer(_k: string, v: unknown) {
+  if (v instanceof Set) return { __zl: 'Set', v: [...v] };
+  if (v instanceof Map) return { __zl: 'Map', v: [...v] };
+  return v;
+}
+function reviver(_k: string, v: unknown) {
+  if (v && typeof v === 'object' && '__zl' in v) {
+    const t = v as { __zl: string; v: unknown[] };
+    if (t.__zl === 'Set') return new Set(t.v);
+    if (t.__zl === 'Map') return new Map(t.v as [unknown, unknown][]);
+  }
+  return v;
+}
+
+/**
+ * Makes the cache belong to `userId`: on a change, forgets the old account's screens (and on
+ * sign-out deletes them from the phone), then loads this account's saved screens. Resolves once
+ * they are in memory, so the first screen can open with them.
+ */
+export async function loadCacheFor(userId: string | null): Promise<void> {
+  if (owner === userId) return;
+  const previous = owner;
+  owner = userId;
+  cache.clear();
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = null;
+  try {
+    if (!userId) {
+      if (previous) await AsyncStorage.removeItem(STORE_PREFIX + previous);
+      return;
+    }
+    const raw = await AsyncStorage.getItem(STORE_PREFIX + userId);
+    if (!raw || owner !== userId) return;
+    const saved = JSON.parse(raw, reviver) as Record<string, { data: unknown; at: number }>;
+    const now = Date.now();
+    for (const [k, v] of Object.entries(saved)) {
+      if (v && typeof v.at === 'number' && now - v.at < MAX_SAVED_AGE_MS && !cache.has(k)) cache.set(k, v);
+    }
+  } catch {
+    // A broken or unreadable saved copy just means a normal (network) start.
+  }
+}
+
+/** Writes this account's screens to the phone shortly after they change (newest first, capped). */
+function scheduleSave() {
+  if (!owner || saveTimer) return;
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
+    const forUser = owner;
+    if (!forUser) return;
+    const out: Record<string, { data: unknown; at: number }> = {};
+    let size = 2;
+    for (const [k, v] of [...cache.entries()].sort((a, b) => b[1].at - a[1].at)) {
+      let json: string;
+      try {
+        json = JSON.stringify(v, replacer);
+      } catch {
+        continue;
+      }
+      if (size + json.length > MAX_SAVED_CHARS) continue;
+      size += json.length + k.length + 4;
+      out[k] = v;
+    }
+    void AsyncStorage.setItem(STORE_PREFIX + forUser, JSON.stringify(out, replacer)).catch(() => {});
+  }, 800);
 }
 
 /**
@@ -30,7 +114,7 @@ export function useAsync<T>(fn: () => Promise<T>, deps: DependencyList, cacheKey
   const key = JSON.stringify([...deps, nonce]);
   const [state, setState] = useState<{ key: string | null; data: T | undefined; error: Error | null; at: number }>(() => {
     const hit = cacheKey ? cache.get(cacheKey) : undefined;
-    const fresh = !!hit && Date.now() - hit.at < FRESH_MS;
+    const fresh = !!hit && Date.now() - hit.at < freshMs(cacheKey);
     // A fresh hit counts as already loaded for this request, so the effect below skips the fetch.
     return { key: fresh ? key : null, data: hit?.data as T | undefined, error: null, at: hit?.at ?? 0 };
   });
@@ -49,7 +133,7 @@ export function useAsync<T>(fn: () => Promise<T>, deps: DependencyList, cacheKey
     forceFetch.current = false;
     const hit = cacheKey && !forced ? cache.get(cacheKey) : undefined;
     if (hit) {
-      const fresh = Date.now() - hit.at < FRESH_MS;
+      const fresh = Date.now() - hit.at < freshMs(cacheKey);
       void Promise.resolve().then(() => {
         if (!cancelled) setState((prev) => ({ key: fresh ? key : prev.key, data: hit.data as T, error: null, at: hit.at }));
       });
@@ -59,7 +143,10 @@ export function useAsync<T>(fn: () => Promise<T>, deps: DependencyList, cacheKey
       (data) => {
         if (cancelled) return;
         const at = Date.now();
-        if (cacheKey) cache.set(cacheKey, { data, at });
+        if (cacheKey) {
+          cache.set(cacheKey, { data, at });
+          scheduleSave();
+        }
         setState({ key, data, error: null, at });
       },
       (e: unknown) =>
@@ -94,8 +181,8 @@ export function useFocusedAsync<T>(fn: () => Promise<T>, deps: DependencyList, c
   useFocusEffect(
     useCallback(() => {
       if (!focusedOnce) setFocusedOnce(true);
-      else if (Date.now() - lastLoaded.current >= FRESH_MS) reload();
-    }, [focusedOnce, reload]),
+      else if (Date.now() - lastLoaded.current >= freshMs(cacheKey)) reload();
+    }, [focusedOnce, reload, cacheKey]),
   );
   return state;
 }
