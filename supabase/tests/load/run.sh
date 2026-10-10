@@ -53,4 +53,5 @@ run "Mixed (70% feed/20% chat/10% gift)" feed.sql@70 chat.sql@20 gift.sql@10
 
 echo
 "${PSQL[@]}" -f "$HERE/check.sql"
+[ "${EXPLAIN:-}" = "1" ] && psql -X -d zynalive_load -f "$HERE/explain.sql"
 echo "Load test finished; money checks passed."

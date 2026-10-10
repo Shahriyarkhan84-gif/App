@@ -51,6 +51,13 @@ a little more per gift (one extra insert and delete), 2,046/s → 1,732/s. Money
 107,301 gifts: viewers' spent coins = coins in gifts, host earnings = host shares, stream totals =
 coins gifted, no negative wallets.
 
+## Indexes — 2026-10-10
+
+`20261010020000_indexes.sql` adds 21 indexes. `EXPLAIN=1 supabase/tests/load/run.sh` prints the check:
+the AI coach's per-stream chat count over 72,813 messages took 5.9 ms with a full scan and 0.06 ms
+with `messages_stream_idx` (it grows with the table). Load test afterwards: feed 1,978/s, gifts
+1,798/s (one host 1,787/s), chat 3,020/s — no slower than before the indexes.
+
 ## Findings (before the fix)
 
 - **One popular host is the bottleneck.** Every gift to a host updates the same two rows (that host's

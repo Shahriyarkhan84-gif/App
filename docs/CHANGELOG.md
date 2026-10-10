@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.33 — Database indexes (step 1 of 4)
+
+- `20261010020000_indexes.sql`: 21 indexes for foreign keys the app really looks up by (from Supabase's unindexed-foreign-key advisor, filtered to real query paths): seats, bans, seat requests, room admins, viewers and blocks by user; agency membership (used inside RLS); host applications per agency; streams per room; chat per stream; partial indexes on rooms' current stream/battle; "my" lists (event scores/results, reports, tickets, refunds, media views); report and AI-action lookups. Left out on purpose: tiny catalogs, admin-only reviewer columns and `gifts.room_id` (nothing reads it; gifts is the busiest write table). The 23 "unused index" advisor notes are kept: the hosted database is nearly empty, so nothing has used them yet.
+- Load test gained `EXPLAIN=1` (AI coach chat count: 5.9 ms → 0.06 ms at 73k messages); throughput unchanged.
+
 ## 0.9.32 — Gifts to one host no longer queue
 
 - `20261010010000_gift_hot_rows.sql`: a gift records the host's share, the stream totals and PK/event scores in `private.gift_tallies` and folds pending tallies in with `SKIP LOCKED`, so simultaneous gifts to one host (a viral PK battle) don't wait on each other. Withdrawals, clawbacks, ending a stream or PK battle and finalizing an event fold exactly first; `my_withdrawable_coins` counts unfolded tallies; `settle_my_earnings()` added and called by the Earnings screen.
