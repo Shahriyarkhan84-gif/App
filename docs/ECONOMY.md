@@ -27,6 +27,13 @@ User pays 3,000 PKR
 | Stream | 5 | `streams.pool_coins` (plus rounding remainder) |
 | Owner | 5 | `platform_ledger` bucket `gift_owner_share` |
 
+Hot rows: the host's share, the stream totals, PK scores and event scores are first written to
+`private.gift_tallies` (append-only, so simultaneous gifts to one host never wait on each other) and
+then folded into `creator_earnings` / `streams` / `pk_battles` / `event_scores` by whichever gift
+gets the row with `SKIP LOCKED`. Withdrawals, chargeback clawbacks, ending a stream or a PK battle,
+and finalizing an event fold the pending tallies exactly first; screens may trail by the gifts in
+flight (the Earnings screen calls `settle_my_earnings()` first). See `docs/LOAD_TEST.md`.
+
 Guarantees (all covered by `supabase/tests/10_must_pass.sql`):
 
 - The sender's wallet row is locked (`FOR UPDATE`) for the whole transaction.

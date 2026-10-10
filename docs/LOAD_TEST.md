@@ -34,13 +34,29 @@ refuses most chat: that is the rule working, and each refusal is still a full da
 
 Money check passed: 74,520 gifts; coins spent by viewers = coins in gifts; no negative wallets.
 
-## Findings
+## After the hot-row fix — 2026-10-10
+
+Same machine and settings, with `20261010010000_gift_hot_rows.sql`:
+
+| Scenario | Requests/s | p50 | p95 | p99 | Errors |
+|---|---:|---:|---:|---:|---:|
+| Home feed (200 live rooms) | 1,897 | 24 ms | 52 ms | 67 ms | 0 |
+| Send gift (random host) | 1,732 | 26 ms | 52 ms | 85 ms | 0 |
+| **Send gift (all to one host)** | **1,672** | **26 ms** | **54 ms** | **134 ms** | 0 |
+| Live chat | 2,914 | 16 ms | 32 ms | 43 ms | spam limit only* |
+| Mixed 70/20/10 | 1,703 | 26 ms | 58 ms | 78 ms | spam limit only* |
+
+Gifts to one host went from 234/s to 1,672/s (p95 561 ms → 54 ms). Gifts spread across hosts cost
+a little more per gift (one extra insert and delete), 2,046/s → 1,732/s. Money check passed after
+107,301 gifts: viewers' spent coins = coins in gifts, host earnings = host shares, stream totals =
+coins gifted, no negative wallets.
+
+## Findings (before the fix)
 
 - **One popular host is the bottleneck.** Every gift to a host updates the same two rows (that host's
   `creator_earnings` balance and the live `streams` coin total) inside the gift transaction, so
   simultaneous gifts to one host wait for each other: ~230 gifts/s and up to ~0.8 s per gift at 50
-  concurrent gifters. Gifts spread across hosts don't contend (2,000/s). Fix (not done, money path —
-  needs approval): record each gift as an insert only and roll host/stream totals up asynchronously
-  (or spread them across several counter rows), keeping `earning_entries` as the ledger of record.
+  concurrent gifters. Gifts spread across hosts don't contend (2,000/s). Fixed in
+  `20261010010000_gift_hot_rows.sql` (tallies folded with `SKIP LOCKED`; see `docs/ECONOMY.md`).
 - Feed, random gifts and chat are comfortably fast at this size on 4 cores; the hosted project's
   compute size decides the real ceiling. Run against a staging project before launch events.

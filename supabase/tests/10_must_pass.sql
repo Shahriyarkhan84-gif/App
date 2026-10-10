@@ -584,4 +584,65 @@ select tests.fails($$select public.buy_frame('royal_crown', 'frame-key-0005')$$,
 reset role;
 select tests.ok(tests.balance('framer') = 400, 'a failed purchase charges nothing');
 
+---------------------------------------------------------------------------------------
+-- Gift tallies (hot-row fix): pending amounts are private and land exactly where it counts
+---------------------------------------------------------------------------------------
+insert into public.profiles (id, username) values ('tl_host', 'tl_host'), ('tl_rival', 'tl_rival'), ('tl_fan', 'tl_fan');
+insert into public.hosts (user_id) values ('tl_host'), ('tl_rival');
+insert into public.rooms (host_id, status, cover_url) values ('tl_host', 'live', 'x'), ('tl_rival', 'live', 'x');
+insert into public.streams (room_id, host_id, title) select id, host_id, 'tally test' from public.rooms where host_id in ('tl_host', 'tl_rival');
+update public.rooms r set current_stream_id = s.id from public.streams s where s.room_id = r.id and r.host_id in ('tl_host', 'tl_rival');
+select private.lock_wallet('tl_fan');
+select private.apply_coin_delta('tl_fan', 1000, 'adjustment', 'test', 'tl_fan', 'test-tl-fan-coins');
+select set_config('request.jwt.claims', '{"sub":"tl_fan"}', false);
+set role authenticated;
+select tests.fails($$select * from private.gift_tallies$$, '%permission denied%', 'clients cannot read gift tallies');
+select tests.fails($$insert into private.gift_tallies (kind, target, a) values ('earnings', 'tl_fan', 999999)$$, '%permission denied%', 'clients cannot add gift tallies');
+select tests.fails($$select private.fold_tally('earnings', 'tl_host', true)$$, '%permission denied%', 'clients cannot fold tallies directly');
+select public.send_gift((select id from public.rooms where host_id = 'tl_host'), 1, 10, 'tally-gift-0001');
+reset role;
+select tests.ok((select balance from public.creator_earnings where host_id = 'tl_host')
+  = (select host_share from public.gifts where idempotency_key = 'tally-gift-0001'), 'an uncontended gift credits the host at once');
+select tests.ok((select gift_coins from public.streams where host_id = 'tl_host') = (select coins_total from public.gifts where idempotency_key = 'tally-gift-0001'),
+  'an uncontended gift updates the stream total at once');
+select tests.ok(not exists (select 1 from private.gift_tallies where target = 'tl_host'), 'folded tallies are removed');
+
+-- A tally another gift skipped (it was busy folding) is picked up by the host's own settle.
+insert into private.gift_tallies (kind, target, a) values ('earnings', 'tl_host', 40);
+select set_config('request.jwt.claims', '{"sub":"tl_host"}', false);
+set role authenticated;
+select public.settle_my_earnings();
+reset role;
+select tests.ok((select balance from public.creator_earnings where host_id = 'tl_host')
+  = (select host_share from public.gifts where idempotency_key = 'tally-gift-0001') + 40, 'settle folds a host''s pending tallies exactly once');
+select tests.ok((select lifetime from public.creator_earnings where host_id = 'tl_host')
+  = (select balance from public.creator_earnings where host_id = 'tl_host'), 'lifetime earnings include folded tallies');
+
+-- Ending a PK battle counts every pending tally before choosing the winner.
+insert into public.pk_battles (room_a_id, room_b_id, status, score_a, score_b, started_at, ends_at)
+  select a.id, b.id, 'live', 100, 0, now(), now() + interval '5 minutes'
+  from public.rooms a, public.rooms b where a.host_id = 'tl_host' and b.host_id = 'tl_rival';
+update public.rooms set current_battle_id = (select id from public.pk_battles where score_a = 100 and room_a_id = (select id from public.rooms where host_id = 'tl_host'))
+  where host_id in ('tl_host', 'tl_rival');
+insert into private.gift_tallies (kind, target, b) select 'pk', current_battle_id::text, 500 from public.rooms where host_id = 'tl_host';
+select set_config('request.jwt.claims', '{"sub":"tl_host"}', false);
+set role authenticated;
+select public.end_pk_battle((select current_battle_id from public.rooms where host_id = 'tl_host'));
+reset role;
+select tests.ok((select score_b = 500 and winner_room_id = room_b_id from public.pk_battles
+  where room_a_id = (select id from public.rooms where host_id = 'tl_host') and status = 'ended'), 'a pending PK tally counts and decides the winner');
+
+-- Ending a stream counts its pending tallies in the final total.
+insert into private.gift_tallies (kind, target, a, b) select 'stream', current_stream_id::text, 70, 7 from public.rooms where host_id = 'tl_host';
+select set_config('request.jwt.claims', '{"sub":"tl_host"}', false);
+set role authenticated;
+select public.end_live();
+reset role;
+select tests.ok((select gift_coins from public.streams where host_id = 'tl_host')
+  = (select coins_total from public.gifts where idempotency_key = 'tally-gift-0001') + 70, 'ending a stream folds its pending gift coins');
+select tests.ok(not exists (select 1 from private.gift_tallies where kind in ('stream', 'pk')), 'ending a stream or battle leaves no tallies behind');
+-- Leave no battle or live room behind for later test files.
+delete from public.pk_battles where room_a_id = (select id from public.rooms where host_id = 'tl_host');
+update public.rooms set status = 'offline', current_stream_id = null where host_id = 'tl_rival';
+
 drop schema tests cascade;

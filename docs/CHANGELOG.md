@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.32 — Gifts to one host no longer queue
+
+- `20261010010000_gift_hot_rows.sql`: a gift records the host's share, the stream totals and PK/event scores in `private.gift_tallies` and folds pending tallies in with `SKIP LOCKED`, so simultaneous gifts to one host (a viral PK battle) don't wait on each other. Withdrawals, clawbacks, ending a stream or PK battle and finalizing an event fold exactly first; `my_withdrawable_coins` counts unfolded tallies; `settle_my_earnings()` added and called by the Earnings screen.
+- Load test: one-host gifts 234/s → 1,672/s, p95 561 ms → 54 ms; money checks (including host earnings = host shares and stream totals = coins gifted) pass. Must-pass tests cover tally privacy, settle, PK winner and stream totals with pending tallies.
+
 ## 0.9.31 — Database load test
 
 - `supabase/tests/load/run.sh`: throwaway Postgres + real migrations, seeded viewers/hosts/follows, `pgbench` scenarios (feed, gifts, one-host gift storm, chat, mix) with RLS on, latency percentiles and a money check afterwards. Results and findings in `docs/LOAD_TEST.md`: gifts to a single host top out around 230/s (p95 0.56 s) because every gift updates that host's earnings row and the stream total.

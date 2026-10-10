@@ -38,6 +38,7 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 | `20261004020000_party_rooms.sql` | `rooms.mode` (`live`/`voice`/`video`), `room_seats` (voice 8 / video 6 guest seats), `seat_requests`; RPCs `set_room_mode`, `request_seat`, `approve_seat` (host or live room admin), `remove_from_seat`, `leave_seat`, `set_seat_muted`; seats/requests cleared when the room goes offline; no client write grants. Tests: `supabase/tests/97_party_rooms.sql` |
 
 | `…20261008010000_profile_frames.sql` | Coin shop for profile frames: `frame_catalog` (6 seeded frames, price + duration + drawing style), `user_frames` (ownership, expiry), `frame_purchases` (idempotent per user), `profiles.active_frame_id`; `buy_frame`, `equip_frame`; `coin_transactions.kind` gains `frame_purchase`; client writes revoked on all three tables |
+| `…20261010010000_gift_hot_rows.sql` | `private.gift_tallies` (clients have no access): gifts record the host share, stream totals, PK and event scores as tallies folded in with `SKIP LOCKED` (`private.fold_tally`), so gifts to one host don't queue; exact folds in `request_withdrawal`, `reverse_payment_coins`, `finalize_event` and BEFORE-UPDATE triggers when a stream or PK battle ends; `my_withdrawable_coins` counts unfolded tallies; new `settle_my_earnings()` |
 
 (Files `20260925…` sort after `20260924…`; the short names above drop the date prefix.)
 

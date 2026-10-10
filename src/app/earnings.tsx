@@ -40,6 +40,9 @@ export default function EarningsScreen() {
   const verified = host?.verification_status === 'approved';
 
   const { data, error, loading, reload } = useFocusedAsync(async () => {
+    // Gifts land as tallies first (so a busy host's gifts don't queue); fold ours in for an exact balance.
+    // Best-effort: an older server without this RPC still shows the stored balance.
+    await supabase.rpc('settle_my_earnings');
     const [earnings, withdrawals, settings, split, withdrawable] = await Promise.all([
       supabase.from('creator_earnings').select('balance,held,lifetime').eq('host_id', userId!).maybeSingle(),
       supabase.from('withdrawals').select('*').eq('host_id', userId!).order('created_at', { ascending: false }).limit(30),
