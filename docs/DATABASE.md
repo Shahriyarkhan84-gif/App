@@ -41,6 +41,7 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 | `…20261010010000_gift_hot_rows.sql` | `private.gift_tallies` (clients have no access): gifts record the host share, stream totals, PK and event scores as tallies folded in with `SKIP LOCKED` (`private.fold_tally`), so gifts to one host don't queue; exact folds in `request_withdrawal`, `reverse_payment_coins`, `finalize_event` and BEFORE-UPDATE triggers when a stream or PK battle ends; `my_withdrawable_coins` counts unfolded tallies; new `settle_my_earnings()` |
 | `…20261010020000_indexes.sql` | 21 indexes on foreign keys the app looks up by (seats, bans, viewers, blocks, agency membership used in RLS, host applications per agency, streams per room, chat per stream, partial indexes on rooms' current stream/battle, "my" lists, report/AI-action lookups). Not indexed on purpose: tiny catalogs, admin-only reviewer columns, `gifts.room_id` (never read, busiest write table) |
 | `…20261010030000_rankings_cache.sql` | `private.rankings_cache`; `get_rankings` serves a shared copy (60 s, 15 s for live) and recomputes via `private.compute_rankings` (the old body) under an advisory lock |
+| `…20261010040000_viewer_event_hot_rows.sql` | `internal_viewer_event`: viewer count written only when changed and skipped while another event holds the room row (SKIP LOCKED); stream peak written only when it rises |
 
 (Files `20260925…` sort after `20260924…`; the short names above drop the date prefix.)
 

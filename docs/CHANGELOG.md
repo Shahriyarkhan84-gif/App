@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.35 — Full-size load test (step 3 of 4)
+
+- Load test: new scenarios (join/leave lives, one viral live, gifts during a live PK battle, DMs, follows), a realistic mix and a step-up mode (`RAMP="25 50 100 200 400"`); the money check also verifies the PK battle score equals the gifts on each side. Results in `docs/LOAD_TEST.md`: ~1,800 requests/s peak on 4 cores, queueing beyond ~50 in flight.
+- Viral lives: `20261010040000_viewer_event_hot_rows.sql` — join/leave events write the viewer count only when it changes (skipping while another event holds the row) and the peak only when it rises: one viral live 459 → 7,185 events/s, p95 340 → 13 ms. Must-pass tests cover counts, peaks, viewers and non-live rooms.
+
 ## 0.9.34 — Caching (step 2 of 4)
 
 - Phone: each account's last screens are saved on the phone (AsyncStorage, ≤300 KB, under 12 h old) and loaded before the first screen, so reopening the app shows the last Home, Party, Wallet and Messages at once while fresh data loads. Sets/Maps survive saving. Another account starts empty; sign-out deletes the saved copy. Gift and frame catalogs stay fresh for 10 minutes instead of 30 s.

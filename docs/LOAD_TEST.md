@@ -64,6 +64,55 @@ Rankings (weekly top gifters, ~117k gifts in the week): computed from the gifts 
 requests/s with a 2 s median; through the 60 s shared cache (`20261010030000_rankings_cache.sql`),
 13,244 requests/s at 2.7 ms (p99 9 ms). Other scenarios unchanged.
 
+## Full-size run — 2026-10-10 (step 3)
+
+20,000 viewers, 500 live hosts, a live PK battle (h1 vs h2), 50 concurrent users, 20 s each, then
+the realistic mix (55% feed, 15% chat, 12% join/leave, 8% gifts, 4% DMs, 3% follows, 2% rankings,
+1% PK gifts) stepped up from 25 to 400 concurrent users. Same 4-core container.
+
+```bash
+su postgres -s /bin/bash -c "cd /tmp && USERS=20000 HOSTS=500 CLIENTS=50 DURATION=20 RAMP='25 50 100 200 400' bash supabase/tests/load/run.sh"
+```
+
+| Scenario | Requests/s | p50 | p95 | p99 |
+|---|---:|---:|---:|---:|
+| Home feed | 1,474 | 31 ms | 65 ms | 85 ms |
+| Gift, random host | 1,817 | 25 ms | 51 ms | 70 ms |
+| Gift, one host | 1,856 | 24 ms | 49 ms | 67 ms |
+| Gifts during a live PK battle | 1,769 | 26 ms | 53 ms | 71 ms |
+| Live chat | 2,625 | 18 ms | 33 ms | 44 ms |
+| Rankings (cached) | 12,577 | 3 ms | 7 ms | 10 ms |
+| Join/leave, random rooms | 5,706 | 8 ms | 15 ms | 21 ms |
+| **Join/leave, one viral live** | **7,185** (was 459) | **6 ms** (was 71) | **13 ms** (was 340) | **17 ms** (was 546) |
+| Direct messages | 4,133 | 11 ms | 21 ms | 27 ms |
+| Follow / unfollow | 7,365 | 6 ms | 14 ms | 20 ms |
+| Realistic mix | 1,681 | 27 ms | 59 ms | 82 ms |
+
+Step-up (realistic mix):
+
+| Concurrent users | Requests/s | p50 | p95 | p99 |
+|---:|---:|---:|---:|---:|
+| 25 | 1,649 | 14 ms | 31 ms | 42 ms |
+| 50 | 1,792 | 25 ms | 54 ms | 73 ms |
+| 100 | 1,634 | 53 ms | 125 ms | 169 ms |
+| 200 | 1,408 | 118 ms | 292 ms | 457 ms |
+| 400 | 1,205 | 281 ms | 622 ms | 1,090 ms |
+
+- **Capacity:** this 4-core database peaks at ~1,800 requests/s with ~25–50 requests in flight; past
+  that, requests queue (latency doubles with each doubling) and throughput slowly falls. Clients
+  must reach Postgres through pooling (PostgREST/Supavisor do this) so in-flight queries stay near
+  the core count. Real users pause between actions: at one request every ~5 s per active user,
+  1,800/s is roughly 9,000 people actively using the app at once on this size of machine; the
+  hosted compute size sets the real figure.
+- **Viral lives fixed** (`20261010040000_viewer_event_hot_rows.sql`): every LiveKit join/leave rewrote
+  the room's viewer count and the stream's peak. The count is now written only when it changes and
+  skipped while another event holds the row (LiveKit sends the full count every time); the peak only
+  when it rises.
+- Money checks after 125k+ gifts: viewers' coins = gifts, host earnings = host shares, stream totals
+  = coins gifted, PK score = gifts per side (59,351 : 22,902), no negative wallets.
+- Not covered here: network from Pakistan, PostgREST/Realtime fan-out (every viewer-count change is
+  broadcast to subscribed clients), LiveKit video. Next: run against a staging Supabase project.
+
 ## Findings (before the fix)
 
 - **One popular host is the bottleneck.** Every gift to a host updates the same two rows (that host's
