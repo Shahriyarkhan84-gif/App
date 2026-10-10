@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.31 — Database load test
+
+- `supabase/tests/load/run.sh`: throwaway Postgres + real migrations, seeded viewers/hosts/follows, `pgbench` scenarios (feed, gifts, one-host gift storm, chat, mix) with RLS on, latency percentiles and a money check afterwards. Results and findings in `docs/LOAD_TEST.md`: gifts to a single host top out around 230/s (p95 0.56 s) because every gift updates that host's earnings row and the stream total.
+
 ## 0.9.30 — Party tab replaces Explore
 
 - The bottom bar is Home · Party · Go live · Messages · Me. The Party tab opens the voice and video party rooms (search, Start a party); Home's search icon opens it too.
