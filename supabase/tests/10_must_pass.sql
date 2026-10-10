@@ -667,4 +667,24 @@ set role authenticated;
 select tests.ok((select subject_id from public.get_rankings('gifter', 'week') where rank = 1) <> 'cached_marker', 'an expired ranking is recomputed from the gifts');
 reset role;
 
+---------------------------------------------------------------------------------------
+-- Viewer events: counts follow LiveKit, the peak only goes up
+---------------------------------------------------------------------------------------
+insert into public.profiles (id, username) values ('ve_host', 've_host'), ('ve_fan', 've_fan');
+insert into public.hosts (user_id) values ('ve_host');
+insert into public.rooms (host_id, status, cover_url) values ('ve_host', 'live', 'x');
+insert into public.streams (room_id, host_id, title) select id, host_id, 've' from public.rooms where host_id = 've_host';
+update public.rooms r set current_stream_id = s.id from public.streams s where s.room_id = r.id and r.host_id = 've_host';
+select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 've_host'), 've_fan', true, 5);
+select tests.ok((select viewer_count from public.rooms where host_id = 've_host') = 5
+  and (select peak_viewers from public.streams where host_id = 've_host') = 5, 'a join sets the viewer count and peak');
+select tests.ok(exists (select 1 from public.viewers v join public.streams s on s.id = v.stream_id where s.host_id = 've_host' and v.user_id = 've_fan' and v.left_at is null), 'a join records the viewer');
+select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 've_host'), 've_fan', false, 3);
+select tests.ok((select viewer_count from public.rooms where host_id = 've_host') = 3
+  and (select peak_viewers from public.streams where host_id = 've_host') = 5, 'a leave lowers the count but never the peak');
+select tests.ok((select left_at is not null from public.viewers v join public.streams s on s.id = v.stream_id where s.host_id = 've_host' and v.user_id = 've_fan'), 'a leave records when the viewer left');
+update public.rooms set status = 'offline' where host_id = 've_host';
+select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 've_host'), 've_fan', true, 40);
+select tests.ok((select viewer_count from public.rooms where host_id = 've_host') = 3, 'events for a room that is not live are ignored');
+
 drop schema tests cascade;
