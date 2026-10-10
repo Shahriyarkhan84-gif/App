@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.36 — Easy hosting (step 4 of 4)
+
+- `docs/HOSTING.md`: one page, step by step, for every piece: Supabase (database updates + function secrets), Vercel (website: import, 4 public variables, domain), Render (workers), Expo (phone app), and post-launch checks.
+- `render.yaml`: Render Blueprint for the two always-on workers (AI agents, media), Docker, in Virginia next to the Supabase database; secrets are asked for once in the Render dashboard, none are stored in the repository; rebuilds only when `agents/` changes.
+- README and architecture point to the guide.
+
 ## 0.9.35 — Full-size load test (step 3 of 4)
 
 - Load test: new scenarios (join/leave lives, one viral live, gifts during a live PK battle, DMs, follows), a realistic mix and a step-up mode (`RAMP="25 50 100 200 400"`); the money check also verifies the PK battle score equals the gifts on each side. Results in `docs/LOAD_TEST.md`: ~1,800 requests/s peak on 4 cores, queueing beyond ~50 in flight.

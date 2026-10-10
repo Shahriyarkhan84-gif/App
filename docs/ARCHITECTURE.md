@@ -53,6 +53,7 @@ is tracked in [REMAINING_WORK.md](REMAINING_WORK.md).
 | Analytics / errors | PostHog, Sentry | `src/lib/analytics.ts`, `src/lib/sentry.ts` |
 | Feedback | ProductBridge board link | Profile → Share feedback |
 | Web hosting | Vercel (static Expo web export) | `vercel.json` |
+| Workers hosting | Render Blueprint: AI agents + media worker (Docker, us-east next to the database) | `render.yaml`, `docs/HOSTING.md` |
 | Media pipeline | Supabase Storage (`uploads` private, `media` public) + media worker (ffmpeg: libx264/libx265/zscale; Whisper) | `supabase/migrations/…25010000_media_pipeline.sql`, `agents/zynalive_agents/media/`, `src/app/videos/` |
 | Localization | typed catalogs + provider, expo-localization (RTL) | `src/lib/i18n/` |
 | Regions & events | `regions`, regional `coin_packages`, `events` + scoring triggers | `…25030000_regions_events.sql`, `src/app/events/` |

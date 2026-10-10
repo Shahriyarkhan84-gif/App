@@ -56,7 +56,7 @@ cd agents && cp .env.example .env          # DATABASE_URL, ANTHROPIC_API_KEY
 pip install -e . && python -m zynalive_agents
 ```
 
-Deploy `agents/Dockerfile` as an always-on service (Fly.io, Railway, Render…).
+Deploy `agents/Dockerfile` (and `Dockerfile.media`) as always-on workers: `render.yaml` sets both up on Render in a few clicks ([docs/HOSTING.md](docs/HOSTING.md)).
 Details, schedules and cost levers: [docs/AI.md](docs/AI.md).
 
 ## Tests
@@ -73,7 +73,10 @@ CI runs all of the above (`.github/workflows/ci.yml`).
 
 ## Deploy
 
+Step-by-step for every piece (Supabase, Vercel, Render, Expo): [docs/HOSTING.md](docs/HOSTING.md).
+
 - **Web → Vercel**: `vercel.json` is ready (static `expo export`). Set `EXPO_PUBLIC_*` vars.
+- **Workers → Render**: `render.yaml` Blueprint (AI agents + media), next to the database in us-east.
 - **Domain**: Namecheap → Cloudflare DNS → Vercel (`A @ 76.76.21.21`, `CNAME www cname.vercel-dns.com`, DNS-only).
 - **Android**: `npx eas-cli@latest build --platform android --profile preview` (APK) or `production` (AAB for Play Console).
 - **iOS**: `--platform ios --profile production`, then `eas submit`.

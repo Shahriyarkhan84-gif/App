@@ -1,0 +1,47 @@
+# Render Blueprint: the two always-on background workers (Render dashboard → New → Blueprint →
+# pick this repository). Render asks for the secret values marked `sync: false` once; nothing
+# secret is stored here. Both run next to the Supabase database (us-east-1 → Render "virginia").
+# The website is on Vercel and the database/functions on Supabase — see docs/HOSTING.md.
+services:
+  # AI agents: moderation, recommendations, creator coach, CEO briefing (LangGraph).
+  - type: worker
+    name: zynalive-ai-agents
+    runtime: docker
+    region: virginia
+    plan: starter
+    dockerfilePath: ./agents/Dockerfile
+    dockerContext: ./agents
+    buildFilter:
+      paths: [agents/**]
+    autoDeploy: true
+    envVars:
+      - key: WORKER_QUEUES
+        value: ai
+      - key: DATABASE_URL # Supabase → Connect → Session pooler connection string
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+  # Media: video upload / live-recording transcodes and subtitles (ffmpeg). Needs more CPU than the
+  # AI worker; raise the plan if uploads queue up.
+  - type: worker
+    name: zynalive-media
+    runtime: docker
+    region: virginia
+    plan: starter
+    dockerfilePath: ./agents/Dockerfile.media
+    dockerContext: ./agents
+    buildFilter:
+      paths: [agents/**]
+    autoDeploy: true
+    envVars:
+      - key: WORKER_QUEUES
+        value: media
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        value: https://mdfjbhzriuwxafeagnwo.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
