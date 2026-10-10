@@ -4,9 +4,9 @@
 -- tries to fold all pending tallies into the total with SKIP LOCKED: if another gift is folding, it skips
 -- instead of waiting, and that folder (or the next gift) picks its tally up. Wherever money or a result is
 -- decided the tallies are folded exactly first: withdrawals, clawbacks, ending a stream or a PK battle,
--- finalizing an event. Totals shown in the app can trail by the gifts still in flight.
+-- finalizing an event. Totals shown in the app can trail by the gifts still in flight. Safe to run more than once.
 
-create table private.gift_tallies (
+create table if not exists private.gift_tallies (
   id bigint generated always as identity primary key,
   kind text not null check (kind in ('earnings', 'stream', 'pk', 'event')),
   -- earnings: host id · stream: stream id · pk: battle id · event: event_id|role|user_id
@@ -15,7 +15,7 @@ create table private.gift_tallies (
   b bigint not null default 0, -- stream: pool_coins · pk: score_b
   created_at timestamptz not null default now()
 );
-create index gift_tallies_target_idx on private.gift_tallies (kind, target);
+create index if not exists gift_tallies_target_idx on private.gift_tallies (kind, target);
 revoke all on private.gift_tallies from public, anon, authenticated;
 
 -- Folds a target's pending tallies into its total. p_wait = false never waits: if the total is locked
@@ -95,6 +95,7 @@ begin
   end if;
   return new;
 end $$;
+drop trigger if exists pk_battle_fold_on_end on public.pk_battles;
 create trigger pk_battle_fold_on_end before update of status on public.pk_battles
   for each row when (old.status = 'live' and new.status <> 'live') execute function private.pk_battle_fold_on_end();
 
@@ -109,6 +110,7 @@ begin
   new.pool_coins := new.pool_coins + v_b;
   return new;
 end $$;
+drop trigger if exists stream_fold_on_end on public.streams;
 create trigger stream_fold_on_end before update of ended_at on public.streams
   for each row when (old.ended_at is null and new.ended_at is not null) execute function private.stream_fold_on_end();
 
