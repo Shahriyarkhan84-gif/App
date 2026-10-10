@@ -3,12 +3,15 @@
 # HOSTS live hosts, then pgbench drives CLIENTS concurrent users through each scenario for DURATION seconds.
 # Measures what the database can do; it does not include network latency, PostgREST or LiveKit.
 # Usage (non-root): supabase/tests/load/run.sh      Tune: USERS=20000 HOSTS=500 CLIENTS=100 DURATION=60
+# RAMP="25 50 100 200" re-runs the realistic mix at each number of concurrent users (RAMP_DURATION s each).
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
 PGBIN="${PGBIN:-$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)}"
 export PATH="$PGBIN:$PATH"
 USERS="${USERS:-5000}" HOSTS="${HOSTS:-300}" CLIENTS="${CLIENTS:-50}" SECONDS_EACH="${DURATION:-30}"
+RAMP="${RAMP:-}" RAMP_SECONDS="${RAMP_DURATION:-20}"
+MAXC="$CLIENTS"; for n in $RAMP; do [ "$n" -gt "$MAXC" ] && MAXC="$n"; done
 PORT="${PGPORT_LOAD:-54330}"
 DATA="$(mktemp -d)"
 OUT="$(mktemp -d)"
@@ -17,7 +20,7 @@ trap 'pg_ctl -D "$DATA" -m immediate stop >/dev/null 2>&1 || true; rm -rf "$DATA
 if [ "$(id -u)" = "0" ]; then echo "Run as a non-root user (postgres refuses to run as root)." >&2; exit 1; fi
 
 initdb -D "$DATA" -U postgres --auth=trust >/dev/null
-pg_ctl -D "$DATA" -o "-p $PORT -k $DATA -c listen_addresses='' -c max_connections=$((CLIENTS + 20)) -c shared_buffers=256MB" -l "$DATA/log" start >/dev/null
+pg_ctl -D "$DATA" -o "-p $PORT -k $DATA -c listen_addresses='' -c max_connections=$((MAXC + 20)) -c shared_buffers=256MB" -l "$DATA/log" start >/dev/null
 export PGHOST="$DATA" PGPORT="$PORT" PGUSER=postgres
 createdb zynalive_load
 PSQL=(psql -X -q -v ON_ERROR_STOP=1 -d zynalive_load)
@@ -28,14 +31,15 @@ echo "Seeded $USERS viewers, $HOSTS live hosts. $CLIENTS concurrent users, ${SEC
 echo
 printf '%-34s %8s %9s %9s %9s %8s\n' "scenario" "req/s" "p50 ms" "p95 ms" "p99 ms" "errors"
 
-run() { # name, script(s)...
+run() { # name, script(s)...   (CLIENTS_NOW / SECONDS_NOW override the defaults)
   local name="$1"; shift
+  local clients="${CLIENTS_NOW:-$CLIENTS}" secs="${SECONDS_NOW:-$SECONDS_EACH}"
   local args=() s
   for s in "$@"; do args+=(-f "$HERE/$s"); done
   "${PSQL[@]}" -c "truncate loadtest.errors" >/dev/null
   rm -f "$OUT"/log*
   local res
-  res="$(cd "$OUT" && pgbench -n -c "$CLIENTS" -j 4 -T "$SECONDS_EACH" -D users="$USERS" -D hosts="$HOSTS" -l --log-prefix=log "${args[@]}" zynalive_load 2>&1)" || { echo "$res" >&2; exit 1; }
+  res="$(cd "$OUT" && pgbench -n -c "$clients" -j 4 -T "$secs" -D users="$USERS" -D hosts="$HOSTS" -l --log-prefix=log "${args[@]}" zynalive_load 2>&1)" || { echo "$res" >&2; exit 1; }
   local tps errs
   tps="$(echo "$res" | sed -n 's/^tps = \([0-9.]*\).*/\1/p' | head -1)"
   errs="$("${PSQL[@]}" -tAc "select count(*) from loadtest.errors")"
@@ -53,6 +57,19 @@ run "Mixed (70% feed/20% chat/10% gift)" feed.sql@70 chat.sql@20 gift.sql@10
 # Rankings run last, when the gift scenarios have filled the week with gifts.
 run "Rankings, no cache (before)" rank_nocache.sql
 run "Rankings, 60 s cache" rank.sql
+run "Join/leave lives (random room)" join.sql
+run "Join/leave one viral live" hotjoin.sql
+run "Gifts during a live PK battle" pkgift.sql
+run "Direct messages" dm.sql
+run "Follow / unfollow" follow.sql
+REALISTIC=(feed.sql@55 chat.sql@15 join.sql@12 gift.sql@8 dm.sql@4 follow.sql@3 rank.sql@2 pkgift.sql@1)
+run "Realistic mix" "${REALISTIC[@]}"
+if [ -n "$RAMP" ]; then
+  echo
+  echo "Step-up: realistic mix, ${RAMP_SECONDS}s at each level of concurrent users"
+  printf '%-34s %8s %9s %9s %9s %8s\n' "concurrent users" "req/s" "p50 ms" "p95 ms" "p99 ms" "errors"
+  for n in $RAMP; do CLIENTS_NOW="$n" SECONDS_NOW="$RAMP_SECONDS" run "$n users at once" "${REALISTIC[@]}"; done
+fi
 
 echo
 "${PSQL[@]}" -f "$HERE/check.sql"

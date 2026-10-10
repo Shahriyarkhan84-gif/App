@@ -26,4 +26,15 @@ begin
   if earned <> shares then raise exception 'LOAD CHECK FAILED: hosts hold % but their shares total %', earned, shares; end if;
   if stream_total <> gifted then raise exception 'LOAD CHECK FAILED: streams show % coins but gifts total %', stream_total, gifted; end if;
 end $$;
+-- The PK battle (h1 vs h2, live since the seed) scored every gift either side received.
+do $$
+declare v public.pk_battles; ga bigint; gb bigint;
+begin
+  select * into v from public.pk_battles where status = 'live' limit 1;
+  if v.id is null then return; end if;
+  select coalesce(sum(coins_total), 0) into ga from public.gifts where room_id = v.room_a_id;
+  select coalesce(sum(coins_total), 0) into gb from public.gifts where room_id = v.room_b_id;
+  raise notice 'PK battle: score % : %, gifts % : %', v.score_a, v.score_b, ga, gb;
+  if v.score_a <> ga or v.score_b <> gb then raise exception 'LOAD CHECK FAILED: PK score %:% but gifts %:%', v.score_a, v.score_b, ga, gb; end if;
+end $$;
 select count(*) as gifts, (select count(*) from public.messages) as chat_messages from public.gifts;

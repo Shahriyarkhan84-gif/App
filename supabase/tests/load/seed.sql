@@ -49,3 +49,25 @@ begin
 exception when others then insert into loadtest.errors (scenario, error) values ('chat', sqlerrm);
 end $$;
 grant execute on all functions in schema loadtest to authenticated;
+
+-- A live PK battle between the two most-watched hosts (h1 vs h2), running for the whole test.
+insert into public.pk_battles (room_a_id, room_b_id, status, started_at, ends_at)
+select a.id, b.id, 'live', now(), now() + interval '2 hours'
+from public.rooms a, public.rooms b where a.host_id = 'h1' and b.host_id = 'h2';
+update public.rooms set current_battle_id = (select id from public.pk_battles limit 1) where host_id in ('h1', 'h2');
+
+create function loadtest.dm(p_to text) returns void language plpgsql as $$
+begin
+  perform public.send_direct_message(p_to, 'hi ' || md5(random()::text));
+exception when others then insert into loadtest.errors (scenario, error) values ('dm', sqlerrm);
+end $$;
+create function loadtest.follow(p_host text) returns void language plpgsql as $$
+begin
+  if random() < 0.5 then
+    insert into public.follows (follower_id, followee_id) values (public.requesting_user_id(), p_host) on conflict do nothing;
+  else
+    delete from public.follows where follower_id = public.requesting_user_id() and followee_id = p_host;
+  end if;
+exception when others then insert into loadtest.errors (scenario, error) values ('follow', sqlerrm);
+end $$;
+grant execute on all functions in schema loadtest to authenticated;
