@@ -7,7 +7,7 @@ Everything runs on managed services: no servers to look after.
 | Database, login checks, server functions, file storage, realtime | Supabase (`mdfjbhzriuwxafeagnwo`, us-east-1) | Running. 5 database updates waiting (step 1). |
 | Sign-in | Clerk | Running on a development key (`pk_test_…`). |
 | Live video | LiveKit Cloud | Needs its secrets in Supabase (step 2). |
-| Website (zynalive.com) | Vercel, static Expo web export (`vercel.json`) | Not created yet (step 3). |
+| Website (zynalive.com) | Vercel (`vercel.json`) or Cloudflare Pages (`public/_headers`), static Expo web export | Not created yet (step 3 or 3b). |
 | AI agents + media worker | Render, two always-on workers (`render.yaml`) | Not created yet (step 4). |
 | Phone app | Expo EAS (builds + over-the-air updates) | Running; blocked on build minutes / network (step 5). |
 
@@ -47,7 +47,21 @@ Never paste these into chat or the repository.
 6. Clerk → **Domains / allowed origins**: add the site URL.
 
 Vercel's free Hobby plan is for non-commercial use. It is fine for testing; switch to Pro before the
-site sells coins (or host the same `dist` folder on Cloudflare Pages, whose free plan allows it).
+site sells coins, or use Cloudflare Pages instead (step 3b).
+
+### 3b. Website on Cloudflare Pages instead (free, commercial use allowed)
+
+1. dash.cloudflare.com → **Workers & Pages → Create → Pages → Connect to Git** → pick
+   `shahriyarkhan84-gif/app`.
+2. Build settings: framework preset **None**, build command `npx expo export -p web`, output
+   directory `dist`. Node 22 comes from `.node-version`.
+3. **Environment variables**: the same four `EXPO_PUBLIC_*` values as in step 3.
+4. **Save and Deploy**. Every push updates the site. Cloudflare serves the app for every address
+   (single-page app) and `public/_headers` keeps app files cached, like `vercel.json` does on Vercel.
+5. Domain: project → **Custom domains** → add `zynalive.com` (if the domain's DNS is already on
+   Cloudflare, it sets the records itself). Add the site URL to Clerk's allowed origins.
+
+Use one of Vercel or Cloudflare for the live domain, not both.
 
 ## 4. AI agents + media worker (Render) — about 5 minutes
 

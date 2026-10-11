@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.37 — Cloudflare Pages option for the website
+
+- `public/_headers` (copied into `dist/` on export) gives Cloudflare Pages the same long-term caching of app files as `vercel.json`; `.node-version` pins Node 22 for hosted builds. `docs/HOSTING.md` step 3b: free, commercial-use hosting on Cloudflare Pages as an alternative to Vercel Pro.
+
 ## 0.9.36 — Easy hosting (step 4 of 4)
 
 - `docs/HOSTING.md`: one page, step by step, for every piece: Supabase (database updates + function secrets), Vercel (website: import, 4 public variables, domain), Render (workers), Expo (phone app), and post-launch checks.
