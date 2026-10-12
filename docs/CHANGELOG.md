@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.47 — Wallet accessibility
+
+- Coin package buttons set `aria-checked` (required for a radio on the web) and their spoken label starts with the text shown on the card ("2,000 coins, $26.99 · Big"), fixing the two issues the accessibility audit reported.
+
 ## 0.9.46 — Server functions work from the website
 
 - `_shared/cors.ts` now allows every header the Supabase SDK sends plus `x-region` (added by `functions.invoke({ region })`). Without it browsers rejected the preflight, so every server function failed on the web with "Failed to send a request to the Edge Function" (phones don't preflight). `coins-checkout` redeployed; the other browser-called functions (`smart-search`, `delete-account`, `host-application`, `livekit-token`) need the same redeploy.
