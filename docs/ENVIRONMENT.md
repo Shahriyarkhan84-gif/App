@@ -29,6 +29,7 @@ token plus `LIVEKIT_URL`.
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | `coins-checkout`, `stripe-webhook` |
 | `SITE_URL` | Stripe return URLs |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | rate limiting (optional; limits off without it) |
+| `PINECONE_API_KEY` | `smart-search` (optional; the app falls back to word search and same-category lives without it). `PINECONE_INDEX` (default `zynalive-live`) or `PINECONE_INDEX_HOST` to skip the index lookup |
 | `RESEND_API_KEY`, `EMAIL_FROM` | welcome email (optional) |
 | `DIDIT_API_KEY`, `DIDIT_WORKFLOW_ID`, `DIDIT_WEBHOOK_SECRET` | `didit-session`, `didit-webhook` (host identity verification) |
 | `STORAGE_S3_ENDPOINT`, `STORAGE_S3_REGION`, `STORAGE_S3_ACCESS_KEY`, `STORAGE_S3_SECRET` | `livekit-webhook` live recordings: LiveKit egress writes into the `uploads` bucket through Supabase Storage's S3 endpoint (Project settings → Storage → S3 access keys). Only needed when `platform_settings.media.record_live` is on. |
@@ -49,6 +50,8 @@ token plus `LIVEKIT_URL`.
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | — | Media worker only: downloads sources from `uploads`, writes HLS to `media`. Server-side only. |
 | `MEDIA_PRESET` | `medium` | x264/x265 preset (`faster` to save CPU, `slow` for quality) |
 | `SUBTITLES_MODEL` | `small` | Whisper model size for subtitles (needs `pip install '.[subtitles]'`) |
+| `PINECONE_API_KEY` | — | Smart search: the AI worker syncs live rooms to Pinecone every minute (off when empty). Server-side only. |
+| `PINECONE_INDEX` / `PINECONE_MODEL` | `zynalive-live` / `multilingual-e5-large` | Index (created on first sync, aws us-east-1) and Pinecone-hosted embedding model |
 
 ## Platform settings (owner-editable, `platform_settings.media`)
 

@@ -9,9 +9,10 @@ import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Avatar, Button, compactNumber, RoleBadges, Row, Screen, Sheet, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
-import { rpc } from '@/lib/api';
+import { rpc, smartSearch } from '@/lib/api';
 import { errorCode, friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline } from '@/lib/hooks';
+import { liveRoomsByIds } from '@/lib/smartSearch';
 import { useSupabase } from '@/lib/supabase';
 import { fonts, useTheme } from '@/lib/theme';
 import { categoryLabel, displayName, normalizeRooms, ROOM_SELECT, type Profile, type Room } from '@/lib/types';
@@ -28,6 +29,8 @@ export default function PartyScreen() {
   const offline = useOffline();
   const [query, setQuery] = useState('');
   const [people, setPeople] = useState<{ q: string; rows: Person[]; failed?: boolean } | null>(null);
+  // Smart search (by meaning, en/ur/hi): live rooms ranked by Pinecone; null when it isn't available.
+  const [smart, setSmart] = useState<{ q: string; rooms: Room[] } | null>(null);
   const [starting, setStarting] = useState(false);
   const [modes, setModes] = useState<Map<string, Mode>>(new Map());
 
@@ -82,17 +85,32 @@ export default function PartyScreen() {
       }
       if (!cancelled) setPeople({ q, rows, failed });
     }, 300);
+    // Rooms by meaning, alongside the exact-word matches below; quietly skipped if it fails.
+    const ts = setTimeout(async () => {
+      try {
+        const { results } = await smartSearch(supabase, { q, limit: 20 });
+        const found = await liveRoomsByIds(supabase, results.map((h) => h.id));
+        if (!cancelled) setSmart({ q, rooms: found });
+      } catch {
+        if (!cancelled) setSmart(null);
+      }
+    }, 350);
     return () => {
       cancelled = true;
       clearTimeout(t);
+      clearTimeout(ts);
     };
   }, [q, supabase]);
 
   const searching = q.length >= 2;
   const needle = q.toLowerCase();
-  const matchingRooms = (rooms.data ?? []).filter((r) =>
+  const wordMatches = (rooms.data ?? []).filter((r) =>
     !searching || [r.title, r.category, displayName(r.host)].some((s) => s.toLowerCase().includes(needle)),
   );
+  // Smart matches first (best meaning first), then exact-word matches it didn't already find.
+  const smartRooms = searching && smart?.q === q ? smart.rooms : [];
+  const smartIds = new Set(smartRooms.map((r) => r.id));
+  const matchingRooms = [...smartRooms, ...wordMatches.filter((r) => !smartIds.has(r.id))];
   const matchingPeople = searching && people?.q === q ? people.rows : [];
 
   const state = resolveState({

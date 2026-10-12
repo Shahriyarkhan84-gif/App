@@ -79,7 +79,7 @@ CNIC photos and the full CNIC number are sent to Didit and never stored by Zynal
 
 ## Secrets
 
-- `LIVEKIT_API_SECRET`, `STRIPE_SECRET_KEY`, webhook secrets, Upstash, Resend
+- `LIVEKIT_API_SECRET`, `STRIPE_SECRET_KEY`, webhook secrets, Upstash, Resend, Pinecone
   and `ANTHROPIC_API_KEY` live only in Supabase function secrets / the worker
   environment. The app bundles only `EXPO_PUBLIC_*` values (see ENVIRONMENT.md).
 - `.env` files are git-ignored; `.env.example` files document names only.

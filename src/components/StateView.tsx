@@ -16,7 +16,7 @@ export type ViewState =
   | { kind: 'loading' }
   | { kind: 'success' }
   | { kind: 'error'; error: unknown; onRetry?: () => void }
-  | { kind: 'empty'; title: string; body?: string; action?: { title: string; onPress: () => void } }
+  | { kind: 'empty'; title: string; body?: string; action?: { title: string; onPress: () => void }; footer?: ReactNode }
   | { kind: 'offline'; onRetry?: () => void }
   | { kind: 'permission'; title: string; body: string; onGrant: () => void; grantTitle?: string }
   | { kind: 'disabled'; title: string; body?: string };
@@ -66,6 +66,7 @@ export function StateView({ state, children }: { state: ViewState; children?: Re
       return (
         <Message icon="sparkles-outline" title={state.title} body={state.body}>
           {state.action && <Button title={state.action.title} onPress={state.action.onPress} />}
+          {state.footer}
         </Message>
       );
     case 'offline':

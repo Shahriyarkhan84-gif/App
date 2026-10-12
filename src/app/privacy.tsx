@@ -25,7 +25,7 @@ export default function PrivacyPage() {
       ]} />
 
       <H>Service providers</H>
-      <P>We share data only with providers that process it for us: Clerk (sign-in), Supabase (database and hosting), LiveKit (live video), Stripe (payments), Didit (identity verification), Anthropic (AI moderation, translation and support replies), PostHog (analytics), Sentry (crash reports), Resend (email) and Upstash (rate limiting). Some are outside your country; we use their standard contractual protections.</P>
+      <P>We share data only with providers that process it for us: Clerk (sign-in), Supabase (database and hosting), LiveKit (live video), Stripe (payments), Didit (identity verification), Anthropic (AI moderation, translation and support replies), PostHog (analytics), Sentry (crash reports), Resend (email), Upstash (rate limiting) and Pinecone (search of live room titles and host names). Some are outside your country; we use their standard contractual protections.</P>
 
       <H>What others can see</H>
       <P>Your name, username, photo, bio, Zynalive ID, host badge, follower counts, live streams and live-chat messages are visible to other users. Direct messages are visible only to you and the recipient, and to moderators when reported.</P>

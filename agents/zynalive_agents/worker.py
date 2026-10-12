@@ -33,6 +33,7 @@ from .llm import LLM, ClaudeLLM, LLMRefusal
 from .media.pipeline import FFmpegTools, MediaTools, process_media
 from .media.storage import Storage, SupabaseStorage
 from .media.subtitles import Transcriber, generate_subtitles
+from .search_sync import PineconeIndex, SearchIndex, sync_live_rooms
 
 log = logging.getLogger("zynalive.worker")
 
@@ -96,9 +97,11 @@ def queue_kinds(dispatch: dict, queues: str) -> list[str]:
 
 
 class Worker:
-    def __init__(self, settings: Settings, db: Database, llm: LLM, media: MediaContext | None = None):
+    def __init__(self, settings: Settings, db: Database, llm: LLM, media: MediaContext | None = None,
+                 search: SearchIndex | None = None):
         self.settings = settings
         self.db = db
+        self.search = search
         self.dispatch = build_dispatch(db, llm, media)
         self.kinds = queue_kinds(self.dispatch, settings.queues)
         self.stop = threading.Event()
@@ -172,13 +175,26 @@ class Worker:
         if row and row["n"]:
             log.info("finalized %s events", row["n"])
 
+    def sync_search(self) -> None:
+        """Smart search: live rooms → Pinecone (only when PINECONE_API_KEY is set)."""
+        if self.search is None:
+            return
+        try:
+            sync_live_rooms(self.db, self.search)
+        except Exception:  # noqa: BLE001 - search is a nice-to-have; never stop the worker
+            log.exception("search sync failed")
+
     # Main loop ------------------------------------------------------------------
 
     def run(self) -> None:
         log.info("worker started (queues=%s, concurrency=%s)", self.settings.queues, self.settings.concurrency)
         last_housekeeping = 0.0
+        last_search_sync = 0.0
         while not self.stop.is_set():
             try:
+                if self.settings.queues != "media" and time.monotonic() - last_search_sync > 60:
+                    self.sync_search()
+                    last_search_sync = time.monotonic()
                 if time.monotonic() - last_housekeeping > 30:
                     requeued = self.db.requeue_stale()
                     if requeued:
@@ -216,7 +232,8 @@ def main() -> None:
                              load_transcriber(settings.subtitles_model))
     elif settings.queues == "media":
         raise SystemExit("WORKER_QUEUES=media needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY")
-    worker = Worker(settings, db, ClaudeLLM(settings.model_for), media)
+    search = PineconeIndex(settings.pinecone_api_key, settings.pinecone_index, settings.pinecone_model) if settings.pinecone_api_key else None
+    worker = Worker(settings, db, ClaudeLLM(settings.model_for), media, search)
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda *_: worker.stop.set())
     try:

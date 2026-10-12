@@ -22,7 +22,8 @@ these migrations in order: `20261005040000`, `20261010010000`, `20261010020000`,
 
 Supabase → **Edge Functions → Secrets**: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`,
 `CLERK_ISSUER`, `CLERK_SECRET_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SITE_URL`,
-`DIDIT_API_KEY` (see `docs/ENVIRONMENT.md`). Point the LiveKit webhook at
+`DIDIT_API_KEY`, and optionally `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (rate limits),
+`RESEND_API_KEY` (emails), `PINECONE_API_KEY` (smart search) (see `docs/ENVIRONMENT.md`). Point the LiveKit webhook at
 `/functions/v1/livekit-webhook` and the Stripe webhook at `/functions/v1/stripe-webhook`.
 Never paste these into chat or the repository.
 
@@ -71,6 +72,9 @@ Use one of Vercel or Cloudflare for the live domain, not both.
    - `DATABASE_URL`: Supabase → **Connect** → *Session pooler* connection string (with the database password).
    - `ANTHROPIC_API_KEY`: from console.anthropic.com.
    - `SUPABASE_SERVICE_ROLE_KEY` (media only): Supabase → Settings → API keys → service role / secret key.
+   - `PINECONE_API_KEY` (AI worker, optional): smart search. app.pinecone.io → API keys. Add the same
+     key in Supabase → Edge Functions → Secrets and deploy `smart-search`
+     (`npx supabase functions deploy smart-search`). The index is created on the worker's first sync.
 3. **Apply**. Both redeploy on every push. Logs: Render → service → **Logs**.
 
 The media worker transcodes video; if uploads wait long, raise its plan. Without it, video uploads

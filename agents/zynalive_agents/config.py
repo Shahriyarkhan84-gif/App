@@ -26,6 +26,10 @@ class Settings:
     supabase_url: str | None = field(default_factory=lambda: os.environ.get("SUPABASE_URL"))
     supabase_service_key: str | None = field(default_factory=lambda: os.environ.get("SUPABASE_SERVICE_ROLE_KEY"))
     media_preset: str = field(default_factory=lambda: os.environ.get("MEDIA_PRESET", "medium"))
+    # Smart search (Pinecone): the AI worker keeps an index of live rooms in sync every minute.
+    pinecone_api_key: str | None = field(default_factory=lambda: os.environ.get("PINECONE_API_KEY"))
+    pinecone_index: str = field(default_factory=lambda: os.environ.get("PINECONE_INDEX", "zynalive-live"))
+    pinecone_model: str = field(default_factory=lambda: os.environ.get("PINECONE_MODEL", "multilingual-e5-large"))
     # Whisper model size for subtitles (tiny/base/small/medium/large-v3).
     subtitles_model: str = field(default_factory=lambda: os.environ.get("SUBTITLES_MODEL", "small"))
 

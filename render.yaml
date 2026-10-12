@@ -21,6 +21,8 @@ services:
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: PINECONE_API_KEY # smart search; leave empty to switch it off
+        sync: false
 
   # Media: video upload / live-recording transcodes and subtitles (ffmpeg). Needs more CPU than the
   # AI worker; raise the plan if uploads queue up.

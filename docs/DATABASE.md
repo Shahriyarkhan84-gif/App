@@ -42,6 +42,7 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 | `…20261010020000_indexes.sql` | 21 indexes on foreign keys the app looks up by (seats, bans, viewers, blocks, agency membership used in RLS, host applications per agency, streams per room, chat per stream, partial indexes on rooms' current stream/battle, "my" lists, report/AI-action lookups). Not indexed on purpose: tiny catalogs, admin-only reviewer columns, `gifts.room_id` (never read, busiest write table) |
 | `…20261010030000_rankings_cache.sql` | `private.rankings_cache`; `get_rankings` serves a shared copy (60 s, 15 s for live) and recomputes via `private.compute_rankings` (the old body) under an advisory lock |
 | `…20261010040000_viewer_event_hot_rows.sql` | `internal_viewer_event`: viewer count written only when changed and skipped while another event holds the room row (SKIP LOCKED); stream peak written only when it rises |
+| `…20261012010000_smart_search.sql` | `private.search_index_state` (room id, text hash, synced at): what the AI worker last sent to the Pinecone search index |
 
 (Files `20260925…` sort after `20260924…`; the short names above drop the date prefix.)
 

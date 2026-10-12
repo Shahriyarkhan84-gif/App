@@ -28,6 +28,14 @@ export async function rpc<T = unknown>(supabase: SupabaseClient, fn: string, arg
   return data as T;
 }
 
+/**
+ * Smart search (Pinecone, by meaning, any of en/ur/hi): ranked ids of live rooms. `similarTo` finds
+ * lives like a live room. Throws Error('not_configured') until the Pinecone key is set.
+ */
+export function smartSearch(supabase: SupabaseClient, args: { q?: string; similarTo?: string; limit?: number }) {
+  return invokeFn<{ results: { id: string; score: number }[] }>(supabase, 'smart-search', args);
+}
+
 export function getLiveKitToken(supabase: SupabaseClient, roomId: string, as: 'viewer' | 'host' | 'guest') {
   return invokeFn<{ token: string; url: string }>(supabase, 'livekit-token', { roomId, as });
 }

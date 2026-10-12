@@ -1,0 +1,35 @@
+{
+  "version": "5",
+  "specifiers": {
+    "npm:@upstash/ratelimit@2": "2.2.0_@upstash+redis@1.39.0",
+    "npm:@upstash/redis@1": "1.39.0",
+    "npm:jose@5": "5.10.0"
+  },
+  "npm": {
+    "@upstash/core-analytics@0.0.10": {
+      "integrity": "sha512-7qJHGxpQgQr9/vmeS1PktEwvNAF7TI4iJDi8Pu2CFZ9YUGHZH4fOP5TfYlZ4aVxfopnELiE4BS4FBjyK7V1/xQ==",
+      "dependencies": [
+        "@upstash/redis"
+      ]
+    },
+    "@upstash/ratelimit@2.2.0_@upstash+redis@1.39.0": {
+      "integrity": "sha512-gSydXspG6TJKTh71/gGGv4IGDjD9rXglQfm2jAue2kh4bcfWtEAsG1NW4OqzZd/hubJPojsbOU6AMdS6Xqh0tQ==",
+      "dependencies": [
+        "@upstash/core-analytics",
+        "@upstash/redis"
+      ]
+    },
+    "@upstash/redis@1.39.0": {
+      "integrity": "sha512-VwkpYTdxSfjSulQS5h16NHtg/1UEheBfvez2AeGKinAujOoGXhXCcohQRzsQ/d2g/XzbjzTVGhG8Ds8uOI0Mxg==",
+      "dependencies": [
+        "uncrypto"
+      ]
+    },
+    "jose@5.10.0": {
+      "integrity": "sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg=="
+    },
+    "uncrypto@0.1.3": {
+      "integrity": "sha512-Ql87qFHB3s/De2ClA9e0gsnS6zXG27SkTiSJwjCc9MebbfapQfuPzumMIUMi38ezPZVNFcHI9sUIepeQfw8J8Q=="
+    }
+  }
+}

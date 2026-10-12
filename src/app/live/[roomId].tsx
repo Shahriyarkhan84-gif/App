@@ -10,6 +10,7 @@ import { ChatPanel } from '@/components/ChatPanel';
 import { GiftSheet, GiftToasts } from '@/components/GiftSheet';
 import { LiveStage } from '@/components/LiveStage';
 import { PkBattleBar, PkBattleStage, usePkBattleState } from '@/components/PkBattle';
+import { SimilarLives } from '@/components/SimilarLives';
 import { StateView, type ViewState } from '@/components/StateView';
 import { FramedAvatar } from '@/components/FramedAvatar';
 import { Avatar, Button, Coin, compactNumber, LiveBadge, Row, Sheet, Text } from '@/components/ui';
@@ -177,7 +178,11 @@ export default function LiveRoomScreen() {
   if (!r) state = offline ? { kind: 'offline', onRetry: room.reload } : room.error ? { kind: 'error', error: room.error, onRetry: room.reload } : { kind: 'loading' };
   else if (ownRoom) state = { kind: 'loading' };
   else if (removed) state = { kind: 'disabled', title: "You can't join this room", body: 'The host removed you from this live.' };
-  else if (r.status !== 'live') state = { kind: 'empty', title: 'This stream has ended', body: `Follow ${displayName(r.host)} to know when they're live next.`, action: { title: 'View profile', onPress: () => router.replace({ pathname: '/user/[id]', params: { id: r.host_id } }) } };
+  else if (r.status !== 'live') state = {
+    kind: 'empty', title: 'This stream has ended', body: `Follow ${displayName(r.host)} to know when they're live next.`,
+    action: { title: 'View profile', onPress: () => router.replace({ pathname: '/user/[id]', params: { id: r.host_id } }) },
+    footer: <SimilarLives roomId={r.id} title={r.title} category={r.category} heading="Watch something similar" />,
+  };
   else if (token.error) state = errorCode(token.error) === 'banned_from_room' || errorCode(token.error) === 'account_restricted'
     ? { kind: 'disabled', title: "You can't join this room", body: friendlyError(token.error) }
     : { kind: 'error', error: token.error, onRetry: token.reload };

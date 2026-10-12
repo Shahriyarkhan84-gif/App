@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.38 — Smart search (Pinecone)
+
+- Party search finds live rooms by meaning in English, Urdu, Hindi or Roman Urdu ("cricket talk" → "Pakistan vs India match chat"): smart matches first, then the existing exact-word matches; plain word search if smart search is unavailable.
+- When a live ends, viewers see "Watch something similar" (smart search on the room's title and category; falls back to the most-watched lives in the same category).
+- AI worker (`search_sync.py`): every minute upserts changed live rooms into a Pinecone index with integrated embedding (`multilingual-e5-large`, created on first sync) and removes ended or banned/deleted hosts' rooms; `private.search_index_state` (`20261012010000_smart_search.sql`) tracks what was sent.
+- New Edge Function `smart-search` (`{ q }` or `{ similarTo }`, 30/min via Upstash); the Pinecone key stays server-side. Privacy page lists Pinecone. Render Blueprint asks for `PINECONE_API_KEY`.
+- Tests: Pinecone request shapes (create-for-model, NDJSON upsert, delete) with a stand-in server; the sync diff on real Postgres (add, unchanged, title change, ended, banned); Deno tests for request validation and hit parsing; app tests for ranking order and the fallback. Agent tests now also run here against a temporary Postgres (37 passed).
+
 ## 0.9.37 — Cloudflare Pages option for the website
 
 - `public/_headers` (copied into `dist/` on export) gives Cloudflare Pages the same long-term caching of app files as `vercel.json`; `.node-version` pins Node 22 for hosted builds. `docs/HOSTING.md` step 3b: free, commercial-use hosting on Cloudflare Pages as an alternative to Vercel Pro.

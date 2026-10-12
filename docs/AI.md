@@ -30,6 +30,15 @@ the media worker simply doesn't claim `media_subtitles` jobs. Translation uses
 `AI_MODEL_SUBTITLES` if set. Live captions (during the stream) are not built;
 replays get captions once the recording is processed.
 
+## Smart search (Pinecone)
+
+Every minute the AI worker (`search_sync.py`) upserts live rooms whose searchable text changed (title,
+category, party type, host name, @username, country) into a Pinecone index with integrated embedding
+(`multilingual-e5-large`: English, Urdu, Hindi, Roman Urdu) and deletes rooms that ended or whose host
+was banned/deleted; `private.search_index_state` remembers what was sent. The `smart-search` Edge
+Function queries it for the Party search box and the "Watch something similar" row when a live ends.
+Only public room/host text is indexed. Off when `PINECONE_API_KEY` is empty.
+
 ## Media worker (not AI, same queue)
 
 `media_process` jobs: download the source from `uploads` → ffprobe →
