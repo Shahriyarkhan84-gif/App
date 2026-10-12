@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.40 — Live on Supabase
+
+- Applied to the hosted database: indexes (`20261010020000`) and the smart search table (`20261012010000`). Four updates wait for the owner to run `zynalive-database-updates.sql` (round 5, gift hot-row fix, rankings cache, viral-live fix — Supabase holds function replacements for a confirmation).
+- Deployed Edge Functions `smart-search` and `clerk-webhook`. `didit-session` / `didit-webhook` stay undeployed: no screen uses them since host sign-up moved to `host-application`.
+
 ## 0.9.39 — Packages installed twice removed
 
 - `npm dedupe` plus the overrides below: 19 duplicate package copies removed (each now shares one copy).

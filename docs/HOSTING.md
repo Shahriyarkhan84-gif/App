@@ -4,7 +4,7 @@ Everything runs on managed services: no servers to look after.
 
 | Piece | Where | Status |
 |---|---|---|
-| Database, login checks, server functions, file storage, realtime | Supabase (`mdfjbhzriuwxafeagnwo`, us-east-1) | Running. 5 database updates waiting (step 1). |
+| Database, login checks, server functions, file storage, realtime | Supabase (`mdfjbhzriuwxafeagnwo`, us-east-1) | Running. Server functions deployed (incl. `smart-search`, `clerk-webhook`). 4 database updates waiting (step 1). |
 | Sign-in | Clerk | Running on a development key (`pk_test_…`). |
 | Live video | LiveKit Cloud | Needs its secrets in Supabase (step 2). |
 | Website (zynalive.com) | Vercel (`vercel.json`) or Cloudflare Pages (`public/_headers`), static Expo web export | Not created yet (step 3 or 3b). |
@@ -14,9 +14,12 @@ Everything runs on managed services: no servers to look after.
 ## 1. Database updates (Supabase)
 
 Supabase → **SQL Editor** → paste the file `zynalive-database-updates.sql` (round 5 fixes, gift
-hot-row fix, indexes, rankings cache, viral-live fix) → **Run** once. Safe to run twice. Or apply
-these migrations in order: `20261005040000`, `20261010010000`, `20261010020000`, `20261010030000`,
-`20261010040000`.
+hot-row fix, rankings cache, viral-live fix) → **Run** once. Safe to run twice. Or apply these
+migrations in this order: `20261005040000`, `20261010010000`, `20261010030000`, `20261010040000`
+(the rankings cache must come after round 5, which also rewrites `get_rankings`).
+Already live: the indexes (`20261010020000`) and the smart search table (`20261012010000`).
+Supabase asks for a confirmation before changes that replace functions or rewrite rows, which Claude
+can't answer from here, so these four are pasted by hand.
 
 ## 2. Server function secrets (Supabase)
 
@@ -24,7 +27,9 @@ Supabase → **Edge Functions → Secrets**: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `
 `CLERK_ISSUER`, `CLERK_SECRET_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SITE_URL`,
 `DIDIT_API_KEY`, and optionally `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (rate limits),
 `RESEND_API_KEY` (emails), `PINECONE_API_KEY` (smart search) (see `docs/ENVIRONMENT.md`). Point the LiveKit webhook at
-`/functions/v1/livekit-webhook` and the Stripe webhook at `/functions/v1/stripe-webhook`.
+`/functions/v1/livekit-webhook`, the Stripe webhook at `/functions/v1/stripe-webhook` and the Clerk
+webhook at `/functions/v1/clerk-webhook` (secret: `CLERK_WEBHOOK_SECRET`).
+`didit-session` / `didit-webhook` are not deployed: host sign-up uses `host-application` instead.
 Never paste these into chat or the repository.
 
 ## 3. Website (Vercel) — about 5 minutes
@@ -73,8 +78,8 @@ Use one of Vercel or Cloudflare for the live domain, not both.
    - `ANTHROPIC_API_KEY`: from console.anthropic.com.
    - `SUPABASE_SERVICE_ROLE_KEY` (media only): Supabase → Settings → API keys → service role / secret key.
    - `PINECONE_API_KEY` (AI worker, optional): smart search. app.pinecone.io → API keys. Add the same
-     key in Supabase → Edge Functions → Secrets and deploy `smart-search`
-     (`npx supabase functions deploy smart-search`). The index is created on the worker's first sync.
+     key in Supabase → Edge Functions → Secrets (`smart-search` is already deployed). The index is
+     created on the worker's first sync.
 3. **Apply**. Both redeploy on every push. Logs: Render → service → **Logs**.
 
 The media worker transcodes video; if uploads wait long, raise its plan. Without it, video uploads
@@ -95,14 +100,14 @@ right place. Paste keys into the dashboards named here, never into chat or the r
 
 | Website | Sign up | Copy | Paste into |
 |---|---|---|---|
-| Supabase | supabase.com (have it) | — | Run `zynalive-database-updates.sql` in SQL Editor |
+| Supabase | supabase.com (have it) | — | Run `zynalive-database-updates.sql` in SQL Editor (4 updates) |
 | Vercel *or* Cloudflare Pages | vercel.com / dash.cloudflare.com | — | Import the GitHub repo (step 3 / 3b) |
 | Namecheap | namecheap.com (have zynalive.com) | — | DNS → Cloudflare (step 3) |
 | Stripe | dashboard.stripe.com | Secret key, webhook signing secret | Supabase → Edge Functions → Secrets: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
-| Clerk | dashboard.clerk.com (have it) | Production publishable + secret key | Website/EAS: `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`; Supabase secrets: `CLERK_SECRET_KEY`, `CLERK_ISSUER` |
+| Clerk | dashboard.clerk.com (have it) | Production publishable + secret key; Webhooks → add endpoint `/functions/v1/clerk-webhook` (events user.created/updated/deleted) → signing secret | Website/EAS: `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`; Supabase secrets: `CLERK_SECRET_KEY`, `CLERK_ISSUER`, `CLERK_WEBHOOK_SECRET` |
 | Resend | resend.com → API keys; verify zynalive.com | API key | Supabase secrets: `RESEND_API_KEY` |
 | Upstash | console.upstash.com → Create Redis database | REST URL + REST token | Supabase secrets: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |
-| Pinecone | app.pinecone.io → API keys | API key | Render (AI worker) and Supabase secrets: `PINECONE_API_KEY`; then `npx supabase functions deploy smart-search` |
+| Pinecone | app.pinecone.io → API keys | API key | Render (AI worker) and Supabase secrets: `PINECONE_API_KEY` |
 | PostHog | posthog.com → Project settings | Project API key + host | Website/EAS: `EXPO_PUBLIC_POSTHOG_KEY`, `EXPO_PUBLIC_POSTHOG_HOST` |
 | Sentry | sentry.io → React Native project | DSN | Website/EAS: `EXPO_PUBLIC_SENTRY_DSN` |
 | ProductBridge | your ProductBridge feedback board | Public board URL | Website/EAS: `EXPO_PUBLIC_PRODUCTBRIDGE_URL` (shows "Feedback" on Me) |
