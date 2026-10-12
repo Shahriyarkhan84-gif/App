@@ -22,7 +22,10 @@ Supabase → **Edge Functions → Secrets**: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `
 `CLERK_ISSUER`, `CLERK_SECRET_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SITE_URL`,
 `DIDIT_API_KEY`, and optionally `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (rate limits),
 `RESEND_API_KEY` (emails), `PINECONE_API_KEY` (smart search) (see `docs/ENVIRONMENT.md`). Point the LiveKit webhook at
-`/functions/v1/livekit-webhook`, the Stripe webhook at `/functions/v1/stripe-webhook` and the Clerk
+`/functions/v1/livekit-webhook`, the Stripe webhook at `/functions/v1/stripe-webhook` (events:
+`checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+`checkout.session.async_payment_failed`, `checkout.session.expired`, `charge.refunded`,
+`charge.dispute.created`, `charge.dispute.closed`) and the Clerk
 webhook at `/functions/v1/clerk-webhook` (secret: `CLERK_WEBHOOK_SECRET`).
 `didit-session` / `didit-webhook` are not deployed: host sign-up uses `host-application` instead.
 Never paste these into chat or the repository.

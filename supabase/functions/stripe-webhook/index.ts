@@ -1,6 +1,7 @@
 // Stripe webhook: the only path that credits coins. Signature-verified,
 // replay-protected (processed_webhook_events) and backed by idempotent RPCs.
 // Subscribe to: checkout.session.completed, checkout.session.async_payment_succeeded,
+// checkout.session.async_payment_failed, checkout.session.expired,
 // charge.refunded, charge.dispute.created, charge.dispute.closed
 import type Stripe from 'npm:stripe@18';
 
@@ -60,6 +61,14 @@ async function handle(event: Stripe.Event) {
       });
       break;
     }
+    case 'checkout.session.expired':
+    case 'checkout.session.async_payment_failed': {
+      // Never paid: close the pending payment row (a paid one is left alone).
+      const session = event.data.object;
+      if (session.mode !== 'payment') return;
+      await rpc('internal_fail_payment', { p_provider_ref: session.id });
+      break;
+    }
     case 'charge.refunded': {
       const charge = event.data.object;
       if (!charge.refunded) return; // partial refunds are handled manually
@@ -73,7 +82,7 @@ async function handle(event: Stripe.Event) {
       const dispute = event.data.object;
       // An inquiry that closes without a chargeback (warning_closed / prevented) releases the wallet like a win.
       const stage = dispute.status === 'won' || dispute.status === 'lost' ? dispute.status
-        : dispute.status === 'warning_closed' || dispute.status === 'prevented' ? 'closed' : null;
+        : dispute.status === 'warning_closed' || (dispute.status as string) === 'prevented' ? 'closed' : null; // 'prevented' is newer than stripe@18's types
       if (!stage) return;
       await rpc('internal_dispute_payment', { p_payment_intent: intentId(dispute.payment_intent), p_stage: stage });
       break;

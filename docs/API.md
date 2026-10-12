@@ -10,7 +10,7 @@ All return `{ error: { code, message } }` on failure. User-facing functions requ
 | `livekit-token` | `{ roomId, as: 'viewer' \| 'host' }` | `{ token, url }` | 2h token; hosts publish camera+mic in their own live room only; viewers subscribe-only; bans enforced. 30/min. |
 | `smart-search` | `{ q }` (2–100 chars, any language) or `{ similarTo: roomId }`, optional `limit` (≤50) | `{ results: [{ id, score }] }` | Live rooms by meaning from Pinecone; the app loads the rooms through RLS. `503 not_configured` without `PINECONE_API_KEY`. 30/min. |
 | `coins-checkout` | `{ packageId, returnTo? }` | `{ url }` | Stripe Checkout; price from `coin_packages`. 5/min. |
-| `stripe-webhook` | Stripe event | — | Signature-verified; credits coins, refunds, disputes. |
+| `stripe-webhook` | Stripe event | — | Signature-verified; credits coins, closes expired/failed checkouts, refunds, disputes. |
 | `livekit-webhook` | LiveKit event | — | Viewer counts, viewer records, stream end; with `media.record_live` on, starts participant egress when the host joins and files `egress_ended` recordings into the media pipeline. |
 | `clerk-webhook` | Svix event | — | Profile sync + welcome email. Never sets roles. |
 | `delete-account` | `{}` | `{ deleted }` | Deletes the signed-in account: `internal_delete_account()` then the Clerk user. `withdrawal_pending` (409) if a payout is in progress. 3/hour. |

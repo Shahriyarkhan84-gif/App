@@ -18,8 +18,14 @@ Deno.serve(
     const { data: payment, error } = await db.rpc('internal_create_payment', { p_user: userId, p_package_id: packageId });
     if (error) rpcError(error);
 
+    // Card, Link and the other payment methods turned on in the Dashboard are offered automatically
+    // (no payment_method_types). Adaptive Pricing shows a local-currency price to buyers abroad; the
+    // session's amount_total/currency stay in the package currency, which the webhook checks.
     const session = await getStripe().checkout.sessions.create({
       mode: 'payment',
+      adaptive_pricing: { enabled: true },
+      // Unpaid sessions close after 30 minutes (Stripe's minimum); the webhook marks them failed.
+      expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
       client_reference_id: userId,
       line_items: [
         {
@@ -35,7 +41,7 @@ Deno.serve(
       payment_intent_data: { metadata: { payment_id: payment.id } },
       success_url: returnUrl('/checkout-return', returnTo, 'status=success'),
       cancel_url: returnUrl('/checkout-return', returnTo, 'status=cancelled'),
-    });
+    }, { idempotencyKey: `checkout:${payment.id}` }); // a retried request can't open a second session
 
     const { error: attachError } = await db.rpc('internal_attach_payment_ref', {
       p_payment_id: payment.id,

@@ -17,6 +17,30 @@ User pays 3,000 PKR
          └─ Owner revenue 240 (40%)     (rounding remainders land here)
 ```
 
+### Stripe Checkout settings (coins-checkout)
+
+- Stripe-hosted Checkout, payment methods chosen by Stripe from the Dashboard settings (cards, Link
+  and others; no hard-coded list), **Adaptive Pricing** on (buyers abroad see a local-currency
+  price; `amount_total`/`currency` on the session stay in the package currency, so the webhook's
+  amount check still holds — Stripe API 2025-03-31 and later).
+- Sessions expire after 30 minutes; `checkout.session.expired` and
+  `checkout.session.async_payment_failed` close the pending payment as `failed`
+  (`internal_fail_payment`, `20261013010000_payment_expired.sql`). A paid payment is never changed.
+- Each checkout is created with an idempotency key (`checkout:<payment id>`), so a retried request
+  can't open a second Stripe session for the same payment.
+
+### Stripe plan (from Stripe's implementation planner, 2026-10-12)
+
+Business: US company, Stripe only. Next steps, in order:
+1. **Coins** (done): hosted Checkout + Link + dynamic payment methods + Adaptive Pricing.
+2. **VIP membership** (Billing, to build): one flat monthly price paid up front through hosted
+   Checkout (`mode: subscription`), the Stripe Customer Portal for cancel / card changes, Smart
+   Retries and failed-payment emails on (Dashboard → Billing → Revenue recovery).
+3. **Host payouts** (to build): Zynalive is a marketplace and the platform owns pricing and losses.
+   Hosts in Pakistan can't be paid through Connect cross-border payouts (US/UK/EEA/CA/CH only); Stripe
+   **Global Payouts** reaches Pakistani bank accounts (`pk_bank_account`) from a US platform.
+4. **Tax**: free threshold monitoring (product tax category + head-office address in the Dashboard).
+
 ## Gift engine (coins)
 
 `send_gift()` splits `coins_total` using `platform_settings.gift_split`:

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.43 — Stripe: coin checkout hardening
+
+- Plan from Stripe's implementation planner recorded in `docs/ECONOMY.md` (coins → VIP membership → host payouts via Global Payouts → tax monitoring).
+- `coins-checkout`: Adaptive Pricing, 30-minute expiry, idempotency key per payment. Payment methods stay Dashboard-driven (Link included).
+- `stripe-webhook`: `checkout.session.expired` / `checkout.session.async_payment_failed` mark the pending payment failed via new `internal_fail_payment` (`20261013010000_payment_expired.sql`, service role only, must-pass tests: never touches a paid payment or its coins). Dispute `prevented` comparison typed for stripe@18.
+- Applied to the hosted database; `coins-checkout` and `stripe-webhook` redeployed.
+
 ## 0.9.42 — zynalive.com website
 
 - zynalive.com now opens on a website (`public/landing.html`) instead of the app: what Zynalive is, live streams, party rooms, PK battles, gifts, how to earn as a host, safety, FAQ, and links to privacy, terms and account deletion. Search-friendly: title, description, social preview, structured data, `robots.txt`, `sitemap.xml`.

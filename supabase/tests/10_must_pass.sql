@@ -167,6 +167,7 @@ select tests.fails($$update public.wallets set coin_balance = 999999 where user_
 select tests.fails($$insert into public.coin_transactions (user_id, delta, balance_after, kind, idempotency_key) values ('alice', 999999, 999999, 'purchase', 'x')$$, '%permission denied%', 'insert ledger row');
 select tests.fails($$select public.internal_create_payment('alice', 1)$$, '%permission denied%', 'create payment rpc');
 select tests.fails($$select public.internal_credit_payment('cs_fake', 'pi_fake', 10000, 'pkr')$$, '%permission denied%', 'credit rpc');
+select tests.fails($$select public.internal_fail_payment('cs_fake')$$, '%permission denied%', 'fail payment rpc');
 select tests.ok(tests.balance('alice') = 0, 'alice balance still 0');
 reset role;
 
@@ -178,6 +179,13 @@ select public.internal_attach_payment_ref((public.internal_create_payment('alice
 select tests.ok((public.internal_credit_payment('cs_test_1', 'pi_1', 50000, 'pkr') ->> 'credited')::boolean, 'first webhook credits');
 select tests.ok(not (public.internal_credit_payment('cs_test_1', 'pi_1', 50000, 'pkr') ->> 'credited')::boolean, 'replayed webhook ignored');
 select tests.ok(tests.balance('alice') = 350, 'credited exactly once');
+-- An expired / failed checkout closes only a pending payment; a credited one stays paid with its coins.
+select tests.ok(not (public.internal_fail_payment('cs_test_1') ->> 'changed')::boolean, 'expired event ignores paid payment');
+select tests.ok((select status from public.payments where provider_ref = 'cs_test_1') = 'paid' and tests.balance('alice') = 350, 'paid payment and coins untouched');
+select public.internal_attach_payment_ref((public.internal_create_payment('alice', 1)).id, 'cs_test_expired');
+select tests.ok((public.internal_fail_payment('cs_test_expired') ->> 'changed')::boolean, 'expired checkout closes pending payment');
+select tests.ok((select status from public.payments where provider_ref = 'cs_test_expired') = 'failed', 'pending payment marked failed');
+select tests.ok(not (public.internal_credit_payment('cs_test_expired', 'pi_x', 10000, 'pkr') ->> 'credited')::boolean, 'failed payment never credits');
 select tests.ok((select count(*) from public.coin_transactions where user_id = 'alice' and kind = 'purchase') = 1, 'one purchase ledger row');
 -- Money path allocations sum to the amount paid.
 select tests.ok((select sum(amount) from public.platform_ledger where ref_id = (select id::text from public.payments where provider_ref = 'cs_test_1')) = 50000, 'allocations sum to amount');
