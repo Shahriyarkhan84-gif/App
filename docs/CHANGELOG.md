@@ -2,7 +2,7 @@
 
 ## 0.9.40 — Live on Supabase
 
-- Applied to the hosted database: indexes (`20261010020000`) and the smart search table (`20261012010000`). Four updates wait for the owner to run `zynalive-database-updates.sql` (round 5, gift hot-row fix, rankings cache, viral-live fix — Supabase holds function replacements for a confirmation).
+- Hosted database now has every migration: indexes and the smart search table applied directly; round 5, the gift hot-row fix, the rankings cache and the viral-live fix run by the owner in the SQL Editor (Supabase holds function replacements for a confirmation). Security advisor: nothing new.
 - Deployed Edge Functions `smart-search` and `clerk-webhook`. `didit-session` / `didit-webhook` stay undeployed: no screen uses them since host sign-up moved to `host-application`.
 
 ## 0.9.39 — Packages installed twice removed

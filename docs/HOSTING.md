@@ -4,22 +4,17 @@ Everything runs on managed services: no servers to look after.
 
 | Piece | Where | Status |
 |---|---|---|
-| Database, login checks, server functions, file storage, realtime | Supabase (`mdfjbhzriuwxafeagnwo`, us-east-1) | Running. Server functions deployed (incl. `smart-search`, `clerk-webhook`). 4 database updates waiting (step 1). |
+| Database, login checks, server functions, file storage, realtime | Supabase (`mdfjbhzriuwxafeagnwo`, us-east-1) | Running. Server functions deployed (incl. `smart-search`, `clerk-webhook`). Database up to date (12 Oct 2026). |
 | Sign-in | Clerk | Running on a development key (`pk_test_…`). |
 | Live video | LiveKit Cloud | Needs its secrets in Supabase (step 2). |
 | Website (zynalive.com) | Vercel (`vercel.json`) or Cloudflare Pages (`public/_headers`), static Expo web export | Not created yet (step 3 or 3b). |
 | AI agents + media worker | Render, two always-on workers (`render.yaml`) | Not created yet (step 4). |
 | Phone app | Expo EAS (builds + over-the-air updates) | Running; blocked on build minutes / network (step 5). |
 
-## 1. Database updates (Supabase)
+## 1. Database updates (Supabase) — done
 
-Supabase → **SQL Editor** → paste the file `zynalive-database-updates.sql` (round 5 fixes, gift
-hot-row fix, rankings cache, viral-live fix) → **Run** once. Safe to run twice. Or apply these
-migrations in this order: `20261005040000`, `20261010010000`, `20261010030000`, `20261010040000`
-(the rankings cache must come after round 5, which also rewrites `get_rankings`).
-Already live: the indexes (`20261010020000`) and the smart search table (`20261012010000`).
-Supabase asks for a confirmation before changes that replace functions or rewrite rows, which Claude
-can't answer from here, so these four are pasted by hand.
+All migrations through `20261012010000_smart_search` are live (checked 12 Oct 2026). For future
+migrations: Supabase → **SQL Editor** → paste the new file(s) from `supabase/migrations/` in order → **Run**.
 
 ## 2. Server function secrets (Supabase)
 
@@ -100,7 +95,7 @@ right place. Paste keys into the dashboards named here, never into chat or the r
 
 | Website | Sign up | Copy | Paste into |
 |---|---|---|---|
-| Supabase | supabase.com (have it) | — | Run `zynalive-database-updates.sql` in SQL Editor (4 updates) |
+| Supabase | supabase.com (have it) | — | Done: database up to date |
 | Vercel *or* Cloudflare Pages | vercel.com / dash.cloudflare.com | — | Import the GitHub repo (step 3 / 3b) |
 | Namecheap | namecheap.com (have zynalive.com) | — | DNS → Cloudflare (step 3) |
 | Stripe | dashboard.stripe.com | Secret key, webhook signing secret | Supabase → Edge Functions → Secrets: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
