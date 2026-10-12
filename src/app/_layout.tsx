@@ -85,6 +85,15 @@ function IdentityAndScreens() {
       posthog?.reset();
       Sentry.setUser(null);
     }
+    // The website at zynalive.com/ (public/landing.html) sends signed-in people straight to the app.
+    if (Platform.OS === 'web' && isSignedIn !== undefined) {
+      try {
+        if (isSignedIn) globalThis.localStorage?.setItem('zl-signed-in', '1');
+        else globalThis.localStorage?.removeItem('zl-signed-in');
+      } catch {
+        // Storage blocked (private mode): the website just shows its page.
+      }
+    }
   }, [isSignedIn, user, posthog]);
 
   useEffect(() => {

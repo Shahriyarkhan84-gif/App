@@ -31,7 +31,7 @@ Never paste these into chat or the repository.
 
 1. vercel.com → **Add New → Project** → import GitHub repository `shahriyarkhan84-gif/app`
    (if it isn't listed: **Adjust GitHub App Permissions** and allow this repository).
-2. Leave the build settings alone: `vercel.json` sets them (build `npx expo export -p web`,
+2. Leave the build settings alone: `vercel.json` sets them (build `npm run build:web`,
    output `dist`, every path served by the app, long caching for app files).
 3. **Environment Variables** (all are public values, already in `eas.json`):
 
@@ -54,7 +54,7 @@ site sells coins, or use Cloudflare Pages instead (step 3b).
 
 1. dash.cloudflare.com → **Workers & Pages → Create → Pages → Connect to Git** → pick
    `shahriyarkhan84-gif/app`.
-2. Build settings: framework preset **None**, build command `npx expo export -p web`, output
+2. Build settings: framework preset **None**, build command `npm run build:web`, output
    directory `dist`. Node 22 comes from `.node-version`.
 3. **Environment variables**: the same four `EXPO_PUBLIC_*` values as in step 3.
 4. **Save and Deploy**. Every push updates the site. Cloudflare serves the app for every address
@@ -63,6 +63,18 @@ site sells coins, or use Cloudflare Pages instead (step 3b).
    Cloudflare, it sets the records itself). Add the site URL to Clerk's allowed origins.
 
 Use one of Vercel or Cloudflare for the live domain, not both.
+
+### What zynalive.com shows
+
+- `/` is the public website (`public/landing.html`: what Zynalive is, features, hosting, safety, FAQ),
+  so a search for "zynalive" lands on a real page instead of straight inside the app. Its buttons
+  open `/app`, which sends people into the app (Home when signed in, the welcome screen when not).
+- Every other address (`/privacy`, `/live/…`, `/sign-in`, …) is the app (`dist/app.html`).
+- People already signed in on that browser skip the website and go straight to the app
+  (`zl-signed-in` flag set by the app). `zynalive.com/?site` always shows the website.
+- `npm run build:web` = `expo export -p web` + `scripts/web-landing.mjs`, which puts the website at
+  `dist/index.html` and the app at `dist/app.html` (Vercel rewrites to it) and `dist/404.html`
+  (Cloudflare Pages). `robots.txt` and `sitemap.xml` are in `public/`.
 
 ## 4. AI agents + media worker (Render) — about 5 minutes
 

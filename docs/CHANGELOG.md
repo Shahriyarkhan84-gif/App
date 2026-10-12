@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.42 — zynalive.com website
+
+- zynalive.com now opens on a website (`public/landing.html`) instead of the app: what Zynalive is, live streams, party rooms, PK battles, gifts, how to earn as a host, safety, FAQ, and links to privacy, terms and account deletion. Search-friendly: title, description, social preview, structured data, `robots.txt`, `sitemap.xml`.
+- "Open Zynalive" goes to `/app`, a new route that sends people into the app. Signed-in visitors skip the website automatically.
+- `npm run build:web` now also runs `scripts/web-landing.mjs` (website at `/`, app at every other path); `vercel.json` builds with it and rewrites to `app.html`.
+
 ## 0.9.41 — Error screens say what failed
 
 - When an error has no friendly message, the error screen now also shows the technical reason in small print (e.g. "TypeError: Load failed"), so a screenshot tells us what went wrong. Added while diagnosing the first website deploy, where Home and Me showed only "Something went wrong" and no request reached Supabase.

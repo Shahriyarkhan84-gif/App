@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zynalive · Live streams, party rooms and PK battles</title>
+<meta name="description" content="Zynalive is a live streaming app built for Pakistan. Watch hosts live, join voice and video party rooms, send gifts and cheer in PK battles. Free to watch.">
+<link rel="canonical" href="https://zynalive.com/">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/logo.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Zynalive">
+<meta property="og:title" content="Zynalive · Live streams, party rooms and PK battles">
+<meta property="og:description" content="Watch hosts live, join party rooms, send gifts and cheer in PK battles. Free to watch.">
+<meta property="og:url" content="https://zynalive.com/">
+<meta property="og:image" content="https://zynalive.com/og-image.png">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+ {"@type":"Organization","name":"Zynalive","url":"https://zynalive.com/","logo":"https://zynalive.com/logo.png"},
+ {"@type":"WebSite","name":"Zynalive","url":"https://zynalive.com/"},
+ {"@type":"SoftwareApplication","name":"Zynalive","applicationCategory":"SocialNetworkingApplication","operatingSystem":"Android, Web","offers":{"@type":"Offer","price":"0","priceCurrency":"PKR"}}
+]}
+</script>
+<script>
+  // Signed-in people go straight into the app (the app sets this flag on sign-in, removes it on sign-out).
+  try { if (localStorage.getItem('zl-signed-in') === '1' && !/[?&]site\b/.test(location.search)) location.replace('/app'); } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<style>
+/* Same palette and type as the app (src/lib/theme.ts): black ground, sky-blue accent, DM Sans, Bricolage for the wordmark. */
+:root {
+  --bg: #000000; --surface: #111316; --raised: #1A1D22; --line: #23272e;
+  --text: #FFFFFF; --muted: #B3BDC9; --faint: #7D8896;
+  --sky: #87CEFA; --on-sky: #00131F; --live: #FF3B5C;
+  --brand: "Bricolage Grotesque", "DM Sans", system-ui, sans-serif;
+  --body: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 var(--body); }
+a { color: inherit; }
+img { max-width: 100%; display: block; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-inline: 20px; }
+:focus-visible { outline: 3px solid var(--sky); outline-offset: 3px; border-radius: 8px; }
+
+header { position: sticky; top: 0; z-index: 10; background: rgba(0,0,0,.82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); }
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 64px; }
+.wordmark { display: flex; align-items: center; gap: 10px; font: 800 24px/1 var(--brand); letter-spacing: -.02em; text-decoration: none; }
+nav { display: flex; align-items: center; gap: 20px; }
+nav a.link { color: var(--muted); text-decoration: none; font-weight: 500; font-size: 15px; }
+nav a.link:hover { color: var(--text); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 22px; border-radius: 12px; font: 700 16px/1 var(--body); text-decoration: none; transition: transform .15s ease; }
+.btn:active { transform: scale(.97); }
+.btn.primary { background: var(--sky); color: var(--on-sky); }
+.btn.ghost { background: var(--raised); color: var(--text); border: 1px solid var(--line); }
+.btn.small { min-height: 40px; padding: 0 16px; font-size: 15px; border-radius: 10px; }
+
+.hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; padding-block: 72px 56px; }
+.hero > * { min-width: 0; }
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; font-weight: 500; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 0 rgba(255,59,92,.6); animation: pulse 1.8s infinite; }
+@keyframes pulse { 70% { box-shadow: 0 0 0 8px rgba(255,59,92,0); } 100% { box-shadow: 0 0 0 0 rgba(255,59,92,0); } }
+h1 { font: 700 clamp(38px, 6vw, 60px)/1.05 var(--body); letter-spacing: -.03em; margin: 14px 0 18px; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--sky); }
+.lead { color: var(--muted); font-size: 18px; max-width: 34em; margin: 0 0 28px; }
+.ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+.fine { color: var(--faint); font-size: 14px; margin-top: 14px; }
+
+/* Phone: a still of the Home feed, drawn in CSS. */
+.phone { justify-self: center; width: min(320px, 100%); aspect-ratio: 9 / 18.5; border-radius: 40px; background: var(--surface); border: 1px solid var(--line); padding: 14px; box-shadow: 0 30px 80px rgba(135,206,250,.10); }
+.screen { height: 100%; border-radius: 28px; background: var(--bg); overflow: hidden; padding: 16px 12px; display: flex; flex-direction: column; gap: 12px; }
+.tabs { display: flex; gap: 12px; align-items: baseline; font-size: 12px; color: var(--faint); }
+.tabs b { color: var(--text); font-size: 17px; }
+.chips { display: flex; gap: 6px; }
+.chips span { font-size: 10px; padding: 4px 8px; border-radius: 5px; background: var(--raised); color: var(--muted); }
+.chips span:first-child { background: var(--sky); color: var(--on-sky); font-weight: 700; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; flex: 1; }
+.tile { border-radius: 8px; position: relative; overflow: hidden; }
+.tile::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.65), transparent 55%); }
+.tile .tag { position: absolute; top: 6px; left: 6px; z-index: 1; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--live); }
+.tile .tag.pk { background: #8B5CF6; } .tile .tag.party { background: var(--sky); color: var(--on-sky); }
+.tile .name { position: absolute; left: 7px; bottom: 6px; z-index: 1; font-size: 10px; font-weight: 700; }
+.tile .views { position: absolute; right: 7px; bottom: 6px; z-index: 1; font-size: 9px; color: var(--muted); }
+.t1 { background: linear-gradient(150deg, #2a4a63, #0f1c26); } .t2 { background: linear-gradient(150deg, #4a2f45, #1b1018); }
+.t3 { background: linear-gradient(150deg, #2f4a3b, #101b15); } .t4 { background: linear-gradient(150deg, #4b4227, #1a170d); }
+
+section { padding-block: 56px; border-top: 1px solid var(--line); }
+h2 { font: 700 clamp(28px, 4vw, 38px)/1.15 var(--body); letter-spacing: -.02em; margin: 0 0 10px; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0 0 32px; max-width: 40em; }
+.cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; min-width: 0; }
+.card svg { width: 28px; height: 28px; color: var(--sky); }
+.card h3 { font-size: 17px; margin: 14px 0 6px; }
+.card p { color: var(--muted); margin: 0; font-size: 15px; }
+
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.split > * { min-width: 0; }
+ol.steps { list-style: none; counter-reset: s; margin: 0; padding: 0; display: grid; gap: 16px; }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 36px 1fr; gap: 14px; align-items: start; }
+ol.steps li::before { content: counter(s); width: 36px; height: 36px; border-radius: 50%; background: var(--raised); border: 1px solid var(--line); display: grid; place-items: center; font-weight: 700; color: var(--sky); }
+ol.steps b { display: block; }
+ol.steps span { color: var(--muted); font-size: 15px; }
+ul.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+ul.checks li { padding-left: 30px; position: relative; color: var(--muted); }
+ul.checks li b { color: var(--text); }
+ul.checks li::before { content: ""; position: absolute; left: 0; top: 4px; width: 18px; height: 18px; border-radius: 50%; background: var(--sky); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.2 14.2-4-4 1.4-1.4 2.6 2.6 5-5 1.4 1.4-6.4 6.4z'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.2 14.2-4-4 1.4-1.4 2.6 2.6 5-5 1.4 1.4-6.4 6.4z'/%3E%3C/svg%3E") center / contain no-repeat; }
+
+details { border-bottom: 1px solid var(--line); padding: 16px 0; }
+details summary { cursor: pointer; font-weight: 700; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+details summary::after { content: "+"; color: var(--sky); font-size: 22px; line-height: 1; }
+details[open] summary::after { content: "−"; }
+details p { color: var(--muted); margin: 10px 0 0; max-width: 46em; }
+
+.cta-band { text-align: center; padding-block: 64px; }
+.cta-band .ctas { justify-content: center; }
+
+footer { border-top: 1px solid var(--line); padding-block: 28px calc(28px + env(safe-area-inset-bottom, 0px)); color: var(--faint); font-size: 14px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; align-items: center; }
+footer nav { gap: 18px; flex-wrap: wrap; }
+footer a { color: var(--muted); text-decoration: none; }
+footer a:hover { color: var(--text); }
+
+@media (max-width: 860px) {
+  .hero { grid-template-columns: 1fr; padding-block: 40px 40px; gap: 36px; }
+  .cards { grid-template-columns: 1fr 1fr; }
+  .split { grid-template-columns: 1fr; }
+  nav a.link { display: none; }
+}
+@media (max-width: 480px) {
+  .cards { grid-template-columns: 1fr; }
+  .ctas .btn { flex: 1 1 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .dot { animation: none; } .btn { transition: none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <a class="wordmark" href="/" aria-label="Zynalive home"><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#87CEFA"/><path d="M9 10h11v2.6L13.2 20H21v3H9v-2.6L15.8 13H9z" fill="#00131F"/><circle cx="24.5" cy="8" r="2.6" fill="#00131F"/></svg>zyna<span style="color:var(--sky)">live</span></a>
+    <nav aria-label="Main">
+      <a class="link" href="#features">Features</a>
+      <a class="link" href="#hosts">For hosts</a>
+      <a class="link" href="#safety">Safety</a>
+      <a class="btn primary small" href="/app">Open Zynalive</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <span class="eyebrow"><span class="dot" aria-hidden="true"></span>Live now on Zynalive</span>
+      <h1>Go live. Meet people. <em>Back your favourite hosts.</em></h1>
+      <p class="lead">Zynalive is a live streaming app made for Pakistan. Watch hosts live, take a seat in voice and video party rooms, send gifts and cheer your side in PK battles.</p>
+      <div class="ctas">
+        <a class="btn primary" href="/app">Open Zynalive</a>
+        <a class="btn ghost" href="/sign-up">Create free account</a>
+      </div>
+      <p class="fine">Free to watch. Works in your browser and on Android.</p>
+    </div>
+    <div class="phone" aria-hidden="true">
+      <div class="screen">
+        <div class="tabs"><span>Following</span><b>Popular</b><span>Nearby</span></div>
+        <div class="chips"><span>All</span><span>Chat</span><span>Music</span><span>Gaming</span></div>
+        <div class="grid">
+          <div class="tile t1"><span class="tag">LIVE</span><span class="name">Ayesha</span><span class="views">1.2K</span></div>
+          <div class="tile t2"><span class="tag pk">PK</span><span class="name">Hamza</span><span class="views">860</span></div>
+          <div class="tile t3"><span class="tag party">PARTY</span><span class="name">Chai Talk</span><span class="views">412</span></div>
+          <div class="tile t4"><span class="tag">LIVE</span><span class="name">Sana</span><span class="views">298</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section id="features">
+    <div class="wrap">
+      <h2>Everything happens live</h2>
+      <p class="sub">One app for watching, chatting and hanging out with people who share your interests.</p>
+      <div class="cards">
+        <article class="card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="5" width="15" height="14" rx="3"/><path d="m17 10 5-3v10l-5-3"/></svg>
+          <h3>Live streams</h3>
+          <p>Music, chat, gaming, talent and more, sorted by what's popular, who you follow and who's nearby.</p>
+        </article>
+        <article class="card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M2 20c0-3 3-5 6-5s6 2 6 5M14 15.5c.6-.3 1.3-.5 2-.5 3 0 6 2 6 5"/></svg>
+          <h3>Party rooms</h3>
+          <p>Voice and video rooms with seats. Ask for a seat, talk with the host and everyone listening.</p>
+        </article>
+        <article class="card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 20 14 10M14 4l6 6M10 4h4v4M20 20 10 10M4 4l6 6M20 4h-4v4"/></svg>
+          <h3>PK battles</h3>
+          <p>Two hosts go head to head. Every gift counts for your side until the timer runs out.</p>
+        </article>
+        <article class="card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="9" width="18" height="12" rx="2"/><path d="M12 9v12M3 13h18M12 9C10 5 6 5 7 8c.5 1.2 3 1 5 1M12 9c2-4 6-4 5-1-.5 1.2-3 1-5 1"/></svg>
+          <h3>Gifts and rankings</h3>
+          <p>Send animated gifts with coins, climb the weekly rankings and show off profile frames.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="hosts">
+    <div class="wrap split">
+      <div>
+        <h2>Earn as a host</h2>
+        <p class="sub">Hosts earn from the gifts viewers send and withdraw their earnings.</p>
+        <a class="btn primary" href="/app">Start hosting</a>
+      </div>
+      <ol class="steps">
+        <li><div><b>Create your account</b><span>Sign up free with email, Google or Apple.</span></div></li>
+        <li><div><b>Verify your identity</b><span>Hosts are 18+ and verify with their ID card and a selfie, using an agency code.</span></div></li>
+        <li><div><b>Go live</b><span>Pick a title, a category and a cover photo, then tap Go live.</span></div></li>
+        <li><div><b>Get paid</b><span>Track gifts on your earnings screen and request a withdrawal.</span></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="safety">
+    <div class="wrap split">
+      <div>
+        <h2>Safe by design</h2>
+        <p class="sub">A live app is only fun when people feel safe. Here is what we do about it.</p>
+      </div>
+      <ul class="checks">
+        <li><b>Verified hosts.</b> Every host passes an ID check before going live.</li>
+        <li><b>Moderation around the clock.</b> AI checks chat and reports as they come in, and a person decides on anything serious.</li>
+        <li><b>You're in control.</b> Block anyone, report a stream or message in two taps, and room admins can mute or remove people.</li>
+        <li><b>Secure payments.</b> Coins are bought through Stripe; your card details never touch our servers.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <h2>Questions</h2>
+      <details><summary>Is Zynalive free?</summary><p>Yes. Watching lives, chatting and joining party rooms is free. Coins for gifts are optional.</p></details>
+      <details><summary>Who can go live?</summary><p>Anyone 18 or older who verifies their identity as a host. Viewers can join without verifying.</p></details>
+      <details><summary>Where can I use it?</summary><p>In any modern browser at zynalive.com, and in the Zynalive Android app.</p></details>
+      <details><summary>How do I delete my account?</summary><p>In the app go to Me → Settings → Delete account, or follow the steps on our <a href="/account-deletion">account deletion page</a>.</p></details>
+    </div>
+  </section>
+
+  <section class="cta-band">
+    <div class="wrap">
+      <h2>Someone is live right now</h2>
+      <p class="sub" style="margin-inline:auto">Come say hello.</p>
+      <div class="ctas"><a class="btn primary" href="/app">Open Zynalive</a><a class="btn ghost" href="/sign-in">Sign in</a></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="y">2026</span> Zynalive</span>
+    <nav aria-label="Legal">
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
+      <a href="/account-deletion">Delete account</a>
+    </nav>
+  </div>
+</footer>
+<script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+</body>
+</html>
