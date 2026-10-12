@@ -88,6 +88,31 @@ coach stop (the app still works).
   and network access to `api.expo.dev`, or build minutes on the Expo plan.
 - New native code (e.g. `expo-observe`) needs a new build: `npx eas-cli build --profile preview`.
 
+## Accounts checklist (the $20/month stack)
+
+Every service is already wired into the code; each only needs an account and its key pasted in the
+right place. Paste keys into the dashboards named here, never into chat or the repository.
+
+| Website | Sign up | Copy | Paste into |
+|---|---|---|---|
+| Supabase | supabase.com (have it) | — | Run `zynalive-database-updates.sql` in SQL Editor |
+| Vercel *or* Cloudflare Pages | vercel.com / dash.cloudflare.com | — | Import the GitHub repo (step 3 / 3b) |
+| Namecheap | namecheap.com (have zynalive.com) | — | DNS → Cloudflare (step 3) |
+| Stripe | dashboard.stripe.com | Secret key, webhook signing secret | Supabase → Edge Functions → Secrets: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
+| Clerk | dashboard.clerk.com (have it) | Production publishable + secret key | Website/EAS: `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`; Supabase secrets: `CLERK_SECRET_KEY`, `CLERK_ISSUER` |
+| Resend | resend.com → API keys; verify zynalive.com | API key | Supabase secrets: `RESEND_API_KEY` |
+| Upstash | console.upstash.com → Create Redis database | REST URL + REST token | Supabase secrets: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |
+| Pinecone | app.pinecone.io → API keys | API key | Render (AI worker) and Supabase secrets: `PINECONE_API_KEY`; then `npx supabase functions deploy smart-search` |
+| PostHog | posthog.com → Project settings | Project API key + host | Website/EAS: `EXPO_PUBLIC_POSTHOG_KEY`, `EXPO_PUBLIC_POSTHOG_HOST` |
+| Sentry | sentry.io → React Native project | DSN | Website/EAS: `EXPO_PUBLIC_SENTRY_DSN` |
+| ProductBridge | your ProductBridge feedback board | Public board URL | Website/EAS: `EXPO_PUBLIC_PRODUCTBRIDGE_URL` (shows "Feedback" on Me) |
+| Render | render.com | — | New → Blueprint (step 4) |
+
+Linking these in claude.ai → Settings → Connectors lets Claude do the setup steps for you:
+Resend, Cloudflare, Sentry, PostHog, Clerk (Vercel and Supabase are already linked; Vercel needs
+permission to create projects, Supabase changes need approving when Claude asks). Pinecone,
+Upstash, Namecheap and ProductBridge have no connector: those are a few clicks on their sites.
+
 ## Checks after going live
 
 - Website: open the site, sign in, Home loads live rooms.
