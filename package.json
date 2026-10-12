@@ -89,5 +89,9 @@
     "setupFiles": [
       "<rootDir>/jest.setup.tsx"
     ]
+  },
+  "overrides": {
+    "react-native-url-polyfill": "$react-native-url-polyfill",
+    "@react-native-async-storage/async-storage": "$@react-native-async-storage/async-storage"
   }
 }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.39 — Packages installed twice removed
+
+- `npm dedupe` plus the overrides below: 19 duplicate package copies removed (each now shares one copy).
+- `package.json` `overrides`: every library now uses the app's single `react-native-url-polyfill` (4.x; Clerk and LiveKit each brought their own 2.x / 3.x, so the URL polyfill was installed and run three times) and single `@react-native-async-storage/async-storage` (2.2.0; Clerk's unused crypto-wallet sign-in code brought a second, older copy of this native module). JavaScript-only change, safe for an over-the-air update.
+- Remaining different versions are ones packages need on purpose (incompatible ranges) or belong to the separate `apps/` rewrite, which stays.
+
 ## 0.9.38 — Smart search (Pinecone)
 
 - Party search finds live rooms by meaning in English, Urdu, Hindi or Roman Urdu ("cricket talk" → "Pakistan vs India match chat"): smart matches first, then the existing exact-word matches; plain word search if smart search is unavailable.
