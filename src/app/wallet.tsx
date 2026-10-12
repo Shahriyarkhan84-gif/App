@@ -45,16 +45,20 @@ export default function WalletScreen() {
   const [tab, setTab] = useState<(typeof HISTORY_TABS)[number]['id']>('all');
 
   const { data, error, loading, reload } = useFocusedAsync(async () => {
-    const [wallet, packages, txs] = await Promise.all([
+    const [wallet, packages, txs, region] = await Promise.all([
       supabase.from('wallets').select('coin_balance,frozen').eq('user_id', userId!).maybeSingle(),
-      supabase.from('coin_packages').select('id,name,coins,price_minor,currency').eq('active', true).order('sort'),
+      supabase.from('coin_packages').select('id,name,coins,price_minor,currency,region').eq('active', true).order('sort'),
       supabase.from('coin_transactions').select('id,delta,kind,created_at').eq('user_id', userId!).order('created_at', { ascending: false }).limit(50),
+      // Prices follow the country the account was created in (locked); never show other countries'.
+      supabase.rpc('my_region'),
     ]);
     if (packages.error) throw packages.error;
     // A failed balance load must show an error, not a 0 balance.
     if (wallet.error) throw wallet.error;
     if (txs.error) throw txs.error;
-    return { wallet: wallet.data ?? { coin_balance: 0, frozen: false }, packages: packages.data as CoinPackage[], txs: (txs.data ?? []) as Tx[] };
+    const myRegion = (region.data as { code?: string } | null)?.code ?? 'GLOBAL';
+    const mine = (packages.data as (CoinPackage & { region: string })[]).filter((p) => p.region === myRegion);
+    return { wallet: wallet.data ?? { coin_balance: 0, frozen: false }, packages: mine as CoinPackage[], txs: (txs.data ?? []) as Tx[] };
   }, [userId], 'wallet');
   // Coins are credited by the Stripe webhook; the balance updates live.
   useRealtime('wallets', `user_id=eq.${userId}`, () => reload());

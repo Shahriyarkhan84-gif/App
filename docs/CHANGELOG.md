@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.45 — Wallet shows one currency
+
+- The Wallet shows only the packages for the buyer's price region (`my_region()`, from the locked sign-up country; Global/USD if unknown), even if a session token reaches the database without the `authenticated` role, which made the anonymous policy return every region's packages.
+
 ## 0.9.44 — Checkout errors say what failed
 
 - Server-function errors keep their HTTP status; error screens and the "Checkout unavailable" popup show it with the error code (e.g. "HTTP 500: internal") under the generic message, to diagnose the first web checkout.

@@ -130,7 +130,8 @@ Each region has its own coin packages (`coin_packages.region`): PKR for
 Pakistan, INR for India, BDT for Bangladesh and USD for Global (UK, the rest
 of the world, and markets not launched yet). A buyer's region is derived from
 `profiles.signup_country` — recorded server-side at sign-up and frozen — not
-from the editable `profiles.country`. `internal_create_payment()` (and
+from the editable `profiles.country`. The Wallet shows only the buyer's region (`my_region()`;
+Global if unknown). `internal_create_payment()` (and
 `PaymentsService.createPayment` in the NestJS API) refuses a package from
 another region, so nobody can buy a cheaper market's coins
 (`10_must_pass.sql` §4b). Buyers with no recorded sign-up country fall back
