@@ -1,6 +1,10 @@
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  // Every header the Supabase SDK sends (supabase-js/cors SUPABASE_HEADERS) plus x-region, which
+  // functions.invoke({ region }) adds and that list leaves out. A missing one makes the browser's
+  // preflight fail, so web calls die with "Failed to send a request to the Edge Function".
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type, x-retry-count, traceparent, tracestate, baggage, x-region',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 

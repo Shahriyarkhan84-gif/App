@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.46 — Server functions work from the website
+
+- `_shared/cors.ts` now allows every header the Supabase SDK sends plus `x-region` (added by `functions.invoke({ region })`). Without it browsers rejected the preflight, so every server function failed on the web with "Failed to send a request to the Edge Function" (phones don't preflight). `coins-checkout` redeployed; the other browser-called functions (`smart-search`, `delete-account`, `host-application`, `livekit-token`) need the same redeploy.
+
 ## 0.9.45 — Wallet shows one currency
 
 - The Wallet shows only the packages for the buyer's price region (`my_region()`, from the locked sign-up country; Global/USD if unknown), even if a session token reaches the database without the `authenticated` role, which made the anonymous policy return every region's packages.
