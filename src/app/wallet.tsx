@@ -114,9 +114,9 @@ export default function WalletScreen() {
                         onPress={() => setSelected(p.id)}
                         accessibilityRole="radio"
                         accessibilityState={{ checked: on }}
-                        // The web needs aria-checked on a radio; the label starts with the text shown on the card.
+                        // The web needs aria-checked on a radio. No custom label: screen readers read the card's
+                        // own text ("140", "$1.99 · Starter"), which is what the audit requires.
                         aria-checked={on}
-                        accessibilityLabel={`${p.coins.toLocaleString()} coins, ${formatMoney(p.price_minor, p.currency)} · ${p.name}`}
                         style={{ width: '100%', minHeight: 76, paddingHorizontal: 14, justifyContent: 'center', borderRadius: radius[16], backgroundColor: c.surface, borderWidth: 2, borderColor: on ? c.primary : c.divider, gap: 4 }}
                       >
                         <Row gap={6}><Coin size={14} /><Text variant="h3" style={{ fontSize: 18 }}>{p.coins.toLocaleString()}</Text></Row>
