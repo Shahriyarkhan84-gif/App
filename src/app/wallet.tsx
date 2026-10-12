@@ -12,7 +12,7 @@ import { Button, Coin, Row, Screen, Segmented, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { startCoinCheckout } from '@/lib/api';
-import { friendlyError } from '@/lib/errors';
+import { errorDetail, friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
@@ -72,7 +72,8 @@ export default function WalletScreen() {
       }
       reload();
     } catch (e) {
-      Alert.alert('Checkout unavailable', friendlyError(e));
+      const detail = errorDetail(e);
+      Alert.alert('Checkout unavailable', detail ? `${friendlyError(e)}\n\n${detail}` : friendlyError(e));
     } finally {
       setBuying(null);
     }

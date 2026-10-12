@@ -28,3 +28,8 @@ it('unknown errors show the technical reason under the generic message; known on
   expect(screen.queryByText('Error: connection_lost')).toBeNull();
   expect(screen.queryByText('connection_lost')).toBeNull();
 });
+
+it('server-function errors show their HTTP status and code', async () => {
+  await render(<StateView state={{ kind: 'error', error: Object.assign(new Error('internal'), { status: 500 }) }} />);
+  expect(screen.getByText('HTTP 500: internal')).toBeTruthy();
+});

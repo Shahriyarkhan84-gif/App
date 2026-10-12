@@ -110,8 +110,8 @@ export function errorCode(e: unknown): string {
  */
 export function errorDetail(e: unknown): string | null {
   if (errorCode(e) !== 'unknown' || !e) return null;
-  const anyE = e as { name?: string; code?: string; message?: string };
-  const parts = [anyE.code, anyE.name && anyE.name !== 'Error' ? anyE.name : undefined, anyE.message ?? (typeof e === 'string' ? e : undefined)];
+  const anyE = e as { name?: string; code?: string; message?: string; status?: number };
+  const parts = [anyE.status ? `HTTP ${anyE.status}` : undefined, anyE.code, anyE.name && anyE.name !== 'Error' ? anyE.name : undefined, anyE.message ?? (typeof e === 'string' ? e : undefined)];
   const text = parts.filter(Boolean).join(': ').replace(/\s+/g, ' ').trim();
   return text ? text.slice(0, 160) : null;
 }

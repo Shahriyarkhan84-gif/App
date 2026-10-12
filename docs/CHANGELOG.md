@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.44 — Checkout errors say what failed
+
+- Server-function errors keep their HTTP status; error screens and the "Checkout unavailable" popup show it with the error code (e.g. "HTTP 500: internal") under the generic message, to diagnose the first web checkout.
+
 ## 0.9.43 — Stripe: coin checkout hardening
 
 - Plan from Stripe's implementation planner recorded in `docs/ECONOMY.md` (coins → VIP membership → host payouts via Global Payouts → tax monitoring).

@@ -14,7 +14,8 @@ export async function invokeFn<T>(supabase: SupabaseClient, name: string, body: 
       const payload = (await error.context.json().catch(() => ({}))) as ErrorBody;
       // A function that isn't deployed answers 404 with no error code: say so instead of "try again".
       const status = (error.context as Response | undefined)?.status;
-      throw new Error(payload.error?.code ?? (status === 404 ? 'not_configured' : 'unknown'));
+      // Keep the HTTP status so error screens can show it (errorDetail) when the code is unknown.
+      throw Object.assign(new Error(payload.error?.code ?? (status === 404 ? 'not_configured' : 'unknown')), { status });
     }
     throw error;
   }
