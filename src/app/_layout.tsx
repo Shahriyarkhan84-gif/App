@@ -185,6 +185,8 @@ function RootLayout() {
   if (missingRequiredEnv.length > 0) return <MissingConfig />;
   return (
     <ClerkProvider publishableKey={env.clerkPublishableKey} tokenCache={tokenCache} __experimental_resourceCache={Platform.OS === 'web' ? undefined : resourceCache}>
+      {/* The page's main landmark on the web (<main>); no effect on phones. */}
+      <View role="main" style={{ flex: 1 }}>
       <LaunchGate>
         <SupabaseProvider>
           <ProfileProvider>
@@ -198,6 +200,7 @@ function RootLayout() {
           </ProfileProvider>
         </SupabaseProvider>
       </LaunchGate>
+      </View>
     </ClerkProvider>
   );
 }

@@ -2,6 +2,7 @@
 
 ## 0.9.47 — Wallet accessibility
 
+- The app's content sits in one `<main>` landmark on the web (root layout `role="main"`).
 - Coin package buttons set `aria-checked` (required for a radio on the web) and their spoken label starts with the text shown on the card ("2,000 coins, $26.99 · Big"), fixing the two issues the accessibility audit reported.
 
 ## 0.9.46 — Server functions work from the website
