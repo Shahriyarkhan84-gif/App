@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.41 — Error screens say what failed
+
+- When an error has no friendly message, the error screen now also shows the technical reason in small print (e.g. "TypeError: Load failed"), so a screenshot tells us what went wrong. Added while diagnosing the first website deploy, where Home and Me showed only "Something went wrong" and no request reached Supabase.
+
 ## 0.9.40 — Live on Supabase
 
 - Hosted database now has every migration: indexes and the smart search table applied directly; round 5, the gift hot-row fix, the rankings cache and the viral-live fix run by the owner in the SQL Editor (Supabase holds function replacements for a confirmation). Security advisor: nothing new.

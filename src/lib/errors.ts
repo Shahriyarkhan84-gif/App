@@ -103,6 +103,19 @@ export function errorCode(e: unknown): string {
   return 'unknown';
 }
 
+/**
+ * Short technical reason for an error we have no friendly copy for (e.g. "TypeError: Load failed",
+ * "PGRST301"), shown in small print under the generic message so a screenshot says what failed.
+ * Null when the friendly message already explains it.
+ */
+export function errorDetail(e: unknown): string | null {
+  if (errorCode(e) !== 'unknown' || !e) return null;
+  const anyE = e as { name?: string; code?: string; message?: string };
+  const parts = [anyE.code, anyE.name && anyE.name !== 'Error' ? anyE.name : undefined, anyE.message ?? (typeof e === 'string' ? e : undefined)];
+  const text = parts.filter(Boolean).join(': ').replace(/\s+/g, ' ').trim();
+  return text ? text.slice(0, 160) : null;
+}
+
 /** User-facing copy in the current language (English where a code has no translation yet). */
 export function friendlyError(e: unknown): string {
   const code = errorCode(e);

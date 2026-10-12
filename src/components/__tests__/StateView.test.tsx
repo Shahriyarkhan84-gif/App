@@ -19,3 +19,12 @@ it('empty screens scroll but have nothing to refresh', async () => {
   expect(screen.getByText('Nothing here')).toBeTruthy();
   expect(screen.getByTestId('state-view-scroll').props.refreshControl).toBeUndefined();
 });
+
+it('unknown errors show the technical reason under the generic message; known ones do not', async () => {
+  await render(<StateView state={{ kind: 'error', error: new TypeError('Load failed') }} />);
+  expect(screen.getByText('Something went wrong. Please try again.')).toBeTruthy();
+  expect(screen.getByText('TypeError: Load failed')).toBeTruthy();
+  await render(<StateView state={{ kind: 'error', error: new Error('connection_lost') }} />);
+  expect(screen.queryByText('Error: connection_lost')).toBeNull();
+  expect(screen.queryByText('connection_lost')).toBeNull();
+});

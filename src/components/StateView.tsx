@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps, ReactNode } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, View } from 'react-native';
 
-import { friendlyError } from '@/lib/errors';
+import { errorDetail, friendlyError } from '@/lib/errors';
 import { useI18n } from '@/lib/i18n';
 import { useTheme } from '@/lib/theme';
 
@@ -60,6 +60,9 @@ export function StateView({ state, children }: { state: ViewState; children?: Re
       return (
         <Message icon="alert-circle-outline" title={t('state.error.title')} body={friendlyError(state.error)} onRefresh={state.onRetry}>
           {state.onRetry && <Button title={t('state.retry')} variant="secondary" onPress={state.onRetry} />}
+          {errorDetail(state.error) && (
+            <Text variant="caption" muted selectable style={{ textAlign: 'center', opacity: 0.7 }}>{errorDetail(state.error)}</Text>
+          )}
         </Message>
       );
     case 'empty':
