@@ -4,6 +4,7 @@
 
 - `npm dedupe` plus the overrides below: 19 duplicate package copies removed (each now shares one copy).
 - `package.json` `overrides`: every library now uses the app's single `react-native-url-polyfill` (4.x; Clerk and LiveKit each brought their own 2.x / 3.x, so the URL polyfill was installed and run three times) and single `@react-native-async-storage/async-storage` (2.2.0; Clerk's unused crypto-wallet sign-in code brought a second, older copy of this native module). JavaScript-only change, safe for an over-the-air update.
+- New check `npm run check:duplicates` (`scripts/check-duplicates.mjs`, runs first in CI): fails if React, React Native, an Expo module or another native/app-critical package gets a second installed copy, or a package is listed in both dependencies and devDependencies. Project rule in `AGENTS.md`: reuse what exists instead of adding a duplicate.
 - Remaining different versions are ones packages need on purpose (incompatible ranges) or belong to the separate `apps/` rewrite, which stays.
 
 ## 0.9.38 — Smart search (Pinecone)

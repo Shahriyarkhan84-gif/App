@@ -75,7 +75,8 @@
     "build:web": "expo export -p web",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
-    "test": "jest"
+    "test": "jest",
+    "check:duplicates": "node scripts/check-duplicates.mjs"
   },
   "private": true,
   "jest": {

@@ -44,6 +44,7 @@ Docs: https://docs.expo.dev/eas/index.md
 
 Read `docs/ARCHITECTURE.md` first. Status of every product: `docs/REMAINING_WORK.md`.
 
+- **Never duplicate what exists.** Before adding a package, component, hook, screen, table, RPC, Edge Function or doc, search for one that already does the job and reuse or extend it. Add packages only with `npx expo install` (never a second version of one already installed); if a library brings its own copy, point it at the app's copy with `overrides` in `package.json`. `npm run check:duplicates` (in CI) fails when React, an Expo or another native module is installed twice.
 - **Smallest safe change.** Don't rebuild for one feature: locate the relevant code, change it, keep existing behaviour.
 - **Never trust the client** for roles, balances, prices or payment success. Money, roles and moderation go through `security definer` RPCs; clients get no write grants on those tables. Coins are credited only by `internal_credit_payment()` from the verified Stripe webhook.
 - **Every schema change** gets RLS policies and, for money or authorization, a case in `supabase/tests/10_must_pass.sql`.
@@ -51,4 +52,4 @@ Read `docs/ARCHITECTURE.md` first. Status of every product: `docs/REMAINING_WORK
 - **AI proposes, owners approve.** Agents may hide content or warn automatically; anything heavier becomes an `ai_actions` proposal.
 - **Every screen handles 7 states**: loading · success · error · empty · offline · permission · disabled (`src/components/StateView.tsx`).
 - **Update `docs/` in the same change** (architecture, database, API, economy, security, environment, changelog).
-- **Definition of done:** `npm run typecheck`, `npm run lint`, `npm test`, `npm run build:web`, `bash supabase/tests/run.sh`, and the agent tests (`cd agents && pytest`) all pass.
+- **Definition of done:** `npm run check:duplicates`, `npm run typecheck`, `npm run lint`, `npm test`, `npm run build:web`, `bash supabase/tests/run.sh`, and the agent tests (`cd agents && pytest`) all pass.
