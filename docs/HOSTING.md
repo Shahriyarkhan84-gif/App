@@ -28,7 +28,8 @@ Supabase → **Edge Functions → Secrets**: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `
 `charge.dispute.created`, `charge.dispute.closed`) and the Clerk
 webhook at `/functions/v1/clerk-webhook` (secret: `CLERK_WEBHOOK_SECRET`).
 `didit-session` / `didit-webhook` are not deployed: host sign-up uses `host-application` instead.
-Never paste these into chat or the repository.
+Never paste these into chat or the repository. To see which are set (names only), open
+`https://mdfjbhzriuwxafeagnwo.supabase.co/functions/v1/config-status`.
 
 ## 3. Website (Vercel) — about 5 minutes
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.48 — Setup check
+
+- New Edge Function `config-status` (GET): which secrets each feature needs and which are missing, plus Stripe test/live mode and `SITE_URL` — never secret values. Deployed. Checkout, Stripe webhook, live video, account deletion and host application are configured; Clerk webhook, Pinecone, Upstash and Resend are not.
+
 ## 0.9.47 — Wallet accessibility
 
 - The app's content sits in one `<main>` landmark on the web (root layout `role="main"`).
