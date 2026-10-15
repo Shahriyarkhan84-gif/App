@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.50 — No ads or ad tracking in the Android app
+
+- The APK blocks the advertising-ID permissions (`com.google.android.gms.permission.AD_ID` and Android's Ad Services `ACCESS_ADSERVICES_AD_ID`/`_ATTRIBUTION`/`_TOPICS`) that Google libraries can add on their own, so no library inside the app can read the advertising ID or show personalised ads. The app has no ad SDK. In Play Console answer "Contains ads: No" and "Advertising ID: No". Takes effect from the next Android build.
+
 ## 0.9.49 — One payment per purchase
 
 - A retried purchase (dropped connection, double tap, app restart) reuses the buyer's pending payment and its Stripe page instead of opening a second one (`20261015010000_checkout_reuse.sql`, `coins-checkout`). A page that was paid but not yet credited answers "being confirmed" rather than offering another page. Must-pass tests cover reuse, per-package payments, paid and stale payments. Migration applied and function deployed.
