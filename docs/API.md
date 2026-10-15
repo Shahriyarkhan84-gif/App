@@ -9,7 +9,7 @@ All return `{ error: { code, message } }` on failure. User-facing functions requ
 |---|---|---|---|
 | `livekit-token` | `{ roomId, as: 'viewer' \| 'host' }` | `{ token, url }` | 2h token; hosts publish camera+mic in their own live room only; viewers subscribe-only; bans enforced. 30/min. |
 | `smart-search` | `{ q }` (2–100 chars, any language) or `{ similarTo: roomId }`, optional `limit` (≤50) | `{ results: [{ id, score }] }` | Live rooms by meaning from Pinecone; the app loads the rooms through RLS. `503 not_configured` without `PINECONE_API_KEY`. 30/min. |
-| `coins-checkout` | `{ packageId, returnTo? }` | `{ url }` | Stripe Checkout; price from `coin_packages`. 5/min. |
+| `coins-checkout` | `{ packageId, returnTo? }` | `{ url }` | Stripe Checkout; price from `coin_packages`. 5/min. A retry within 30 min returns the same Stripe page. 409 `payment_processing` (already paid, being credited), 409 `checkout_in_progress` (started elsewhere). |
 | `stripe-webhook` | Stripe event | — | Signature-verified; credits coins, closes expired/failed checkouts, refunds, disputes. |
 | `config-status` | GET | `{ features: { <name>: { ready, missing[] } }, stripe_mode, site_url }` | Setup check: which secrets are set (names and yes/no only, never values). Public. |
 | `livekit-webhook` | LiveKit event | — | Viewer counts, viewer records, stream end; with `media.record_live` on, starts participant egress when the host joins and files `egress_ended` recordings into the media pipeline. |

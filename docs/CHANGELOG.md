@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.49 — One payment per purchase
+
+- A retried purchase (dropped connection, double tap, app restart) reuses the buyer's pending payment and its Stripe page instead of opening a second one (`20261015010000_checkout_reuse.sql`, `coins-checkout`). A page that was paid but not yet credited answers "being confirmed" rather than offering another page. Must-pass tests cover reuse, per-package payments, paid and stale payments. Migration applied and function deployed.
+
 ## 0.9.48 — Setup check
 
 - New Edge Function `config-status` (GET): which secrets each feature needs and which are missing, plus Stripe test/live mode and `SITE_URL` — never secret values. Deployed. Checkout, Stripe webhook, live video, account deletion and host application are configured; Clerk webhook, Pinecone, Upstash and Resend are not.

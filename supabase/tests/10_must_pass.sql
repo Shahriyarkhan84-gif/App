@@ -186,6 +186,19 @@ select public.internal_attach_payment_ref((public.internal_create_payment('alice
 select tests.ok((public.internal_fail_payment('cs_test_expired') ->> 'changed')::boolean, 'expired checkout closes pending payment');
 select tests.ok((select status from public.payments where provider_ref = 'cs_test_expired') = 'failed', 'pending payment marked failed');
 select tests.ok(not (public.internal_credit_payment('cs_test_expired', 'pi_x', 10000, 'pkr') ->> 'credited')::boolean, 'failed payment never credits');
+-- A retry (dropped connection, double tap) reuses the open checkout instead of starting a second one.
+create temp table retry_ids as select (public.internal_create_payment('alice', 3)).id as first_id, (public.internal_create_payment('alice', 3)).id as second_id;
+select tests.ok((select first_id = second_id from retry_ids), 'retry returns the same pending payment');
+select tests.ok((select count(*) from public.payments where user_id = 'alice' and package_id = 3 and status = 'pending') = 1, 'only one pending payment per package');
+select tests.ok((public.internal_create_payment('alice', 4)).id <> (select first_id from retry_ids), 'another package gets its own payment');
+-- A paid package is never reused: buying it again is a new purchase.
+select tests.ok((public.internal_create_payment('alice', 2)).id <> (select id from public.payments where provider_ref = 'cs_test_1'), 'paid payment not reused');
+-- An old pending one (session expired) is not reused either.
+update public.payments set created_at = now() - interval '31 minutes' where id = (select first_id from retry_ids);
+select tests.ok((public.internal_create_payment('alice', 3)).id <> (select first_id from retry_ids), 'stale pending payment not reused');
+-- Leave no open checkouts behind for the tests below.
+update public.payments set status = 'failed' where user_id = 'alice' and status = 'pending';
+drop table retry_ids;
 select tests.ok((select count(*) from public.coin_transactions where user_id = 'alice' and kind = 'purchase') = 1, 'one purchase ledger row');
 -- Money path allocations sum to the amount paid.
 select tests.ok((select sum(amount) from public.platform_ledger where ref_id = (select id::text from public.payments where provider_ref = 'cs_test_1')) = 50000, 'allocations sum to amount');

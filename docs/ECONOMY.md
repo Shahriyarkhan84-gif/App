@@ -23,11 +23,18 @@ User pays 3,000 PKR
   and others; no hard-coded list), **Adaptive Pricing** on (buyers abroad see a local-currency
   price; `amount_total`/`currency` on the session stay in the package currency, so the webhook's
   amount check still holds — Stripe API 2025-03-31 and later).
-- Sessions expire after 30 minutes; `checkout.session.expired` and
+- Sessions expire 62 minutes after their payment row was created; `checkout.session.expired` and
   `checkout.session.async_payment_failed` close the pending payment as `failed`
   (`internal_fail_payment`, `20261013010000_payment_expired.sql`). A paid payment is never changed.
 - Each checkout is created with an idempotency key (`checkout:<payment id>`), so a retried request
   can't open a second Stripe session for the same payment.
+- **No double payments on retries** (`20261015010000_checkout_reuse.sql`): `internal_create_payment`
+  takes a per-buyer lock and returns the buyer's existing pending payment for the same package if
+  it is under 30 minutes old, instead of a new one. `coins-checkout` then hands back that payment's
+  open Stripe page. If that page was already paid but the webhook hasn't credited it yet, it
+  answers 409 `payment_processing` (never a second page); if it expired unpaid, the payment is
+  closed `failed` and a fresh one starts. A dropped connection, double tap or app restart therefore
+  always lands on the same Stripe page, and the webhook credits each payment once.
 
 ### Stripe plan (from Stripe's implementation planner, 2026-10-12)
 

@@ -82,6 +82,8 @@ const MESSAGES: Record<string, string> = {
   too_long: 'That video is longer than the limit.',
   file_too_large: 'That video is larger than the limit.',
   invalid_package: 'That coin package is not available in your region.',
+  payment_processing: 'Your payment went through and is being confirmed. Your coins will appear in a moment.',
+  checkout_in_progress: 'You already started this purchase. Finish it on the payment page you opened, or try again in 30 minutes.',
   invalid_region: 'Unknown region.',
   invalid_rewards: 'Check the rewards: each needs a rank range and a description.',
   invalid_gift: 'That gift is not available.',
