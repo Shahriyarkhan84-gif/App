@@ -152,6 +152,7 @@ function RootNavigator() {
       <Stack.Protected guard={!isSignedIn}>
         <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
       </Stack.Protected>
+      <Stack.Screen name="app" options={{ headerShown: false }} />
       <Stack.Screen name="checkout-return" options={{ headerShown: false }} />
       <Stack.Screen name="sso-callback" options={{ headerShown: false }} />
       {/* Public pages linked from the store listings; readable signed out. */}

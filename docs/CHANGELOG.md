@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.51 — "Open Zynalive" works when signed out
+
+- `/app` (the website's "Open Zynalive" buttons) sent everyone to Home, which is locked when signed out, so signed-out visitors were stuck on a black screen titled "app". It now opens the welcome screen when signed out and Home when signed in, with no header.
+
 ## 0.9.50 — No ads or ad tracking in the Android app
 
 - The APK blocks the advertising-ID permissions (`com.google.android.gms.permission.AD_ID` and Android's Ad Services `ACCESS_ADSERVICES_AD_ID`/`_ATTRIBUTION`/`_TOPICS`) that Google libraries can add on their own, so no library inside the app can read the advertising ID or show personalised ads. The app has no ad SDK. In Play Console answer "Contains ads: No" and "Advertising ID: No". Takes effect from the next Android build.
