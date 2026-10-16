@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.52 — Website buttons open the app for signed-out visitors
+
+- The website's "Open Zynalive" and "Start hosting" buttons go straight to the welcome screen (`/welcome`); for signed-in visitors a script points them at `/app` instead. The live site still showed an empty "app" page at `/app` for signed-out visitors after 0.9.51, so `/app` now also does a full-page jump to `/welcome` on the web when signed out.
+
 ## 0.9.51 — "Open Zynalive" works when signed out
 
 - `/app` (the website's "Open Zynalive" buttons) sent everyone to Home, which is locked when signed out, so signed-out visitors were stuck on a black screen titled "app". It now opens the welcome screen when signed out and Home when signed in, with no header.

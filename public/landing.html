@@ -25,7 +25,15 @@
 </script>
 <script>
   // Signed-in people go straight into the app (the app sets this flag on sign-in, removes it on sign-out).
-  try { if (localStorage.getItem('zl-signed-in') === '1' && !/[?&]site\b/.test(location.search)) location.replace('/app'); } catch (e) {}
+  // Buttons open the welcome screen; for signed-in people they open the app instead.
+  try {
+    if (localStorage.getItem('zl-signed-in') === '1') {
+      if (!/[?&]site\b/.test(location.search)) location.replace('/app');
+      document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('[data-app-link]').forEach(function (a) { a.setAttribute('href', '/app'); });
+      });
+    }
+  } catch (e) {}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -147,7 +155,7 @@ footer a:hover { color: var(--text); }
       <a class="link" href="#features">Features</a>
       <a class="link" href="#hosts">For hosts</a>
       <a class="link" href="#safety">Safety</a>
-      <a class="btn primary small" href="/app">Open Zynalive</a>
+      <a class="btn primary small" href="/welcome" data-app-link>Open Zynalive</a>
     </nav>
   </div>
 </header>
@@ -159,7 +167,7 @@ footer a:hover { color: var(--text); }
       <h1>Go live. Meet people. <em>Back your favourite hosts.</em></h1>
       <p class="lead">Zynalive is a live streaming app made for Pakistan. Watch hosts live, take a seat in voice and video party rooms, send gifts and cheer your side in PK battles.</p>
       <div class="ctas">
-        <a class="btn primary" href="/app">Open Zynalive</a>
+        <a class="btn primary" href="/welcome" data-app-link>Open Zynalive</a>
         <a class="btn ghost" href="/sign-up">Create free account</a>
       </div>
       <p class="fine">Free to watch. Works in your browser and on Android.</p>
@@ -212,7 +220,7 @@ footer a:hover { color: var(--text); }
       <div>
         <h2>Earn as a host</h2>
         <p class="sub">Hosts earn from the gifts viewers send and withdraw their earnings.</p>
-        <a class="btn primary" href="/app">Start hosting</a>
+        <a class="btn primary" href="/welcome" data-app-link>Start hosting</a>
       </div>
       <ol class="steps">
         <li><div><b>Create your account</b><span>Sign up free with email, Google or Apple.</span></div></li>
@@ -252,7 +260,7 @@ footer a:hover { color: var(--text); }
     <div class="wrap">
       <h2>Someone is live right now</h2>
       <p class="sub" style="margin-inline:auto">Come say hello.</p>
-      <div class="ctas"><a class="btn primary" href="/app">Open Zynalive</a><a class="btn ghost" href="/sign-in">Sign in</a></div>
+      <div class="ctas"><a class="btn primary" href="/welcome" data-app-link>Open Zynalive</a><a class="btn ghost" href="/sign-in">Sign in</a></div>
     </div>
   </section>
 </main>
