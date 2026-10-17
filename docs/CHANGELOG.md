@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.54 — Sign-in finishes on new devices
+
+- Signing in on a new device (Clerk's new-device check) or to an account with two-step verification used to stop at "Additional verification is required. Please use the web app" — on the web app itself, so those people could not sign in at all. Sign-in and password reset now show a code step (`src/components/SecondFactorStep.tsx`): an emailed code first, then SMS, authenticator app or backup code. Component test added.
+
 ## 0.9.53 — Payments stay consistent with Stripe
 
 - Consistency audit of the live database: wallets match the coin ledger, every paid payment has its coins, no negative balances, rooms/streams/seats/viewers agree. The one problem: payments stuck in `pending` because coins depended only on Stripe's webhook, which has not reached the server.

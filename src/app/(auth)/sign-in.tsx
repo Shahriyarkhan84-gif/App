@@ -3,6 +3,7 @@ import { Link, router } from 'expo-router';
 import { useState } from 'react';
 
 import { AuthShell, clerkErrorMessage, Field, FormError, PENDING_TASK_MESSAGE, SocialButtons, useRedirectWhenSignedIn } from '@/components/AuthForm';
+import { SecondFactorStep } from '@/components/SecondFactorStep';
 import { Button, Text } from '@/components/ui';
 import { fonts, useTheme } from '@/lib/theme';
 
@@ -15,6 +16,8 @@ export default function SignInScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Clerk's new-device check or the account's two-step verification after a correct password.
+  const [secondFactor, setSecondFactor] = useState(false);
 
   const onSubmit = async () => {
     if (!isLoaded) return;
@@ -29,8 +32,10 @@ export default function SignInScreen() {
         // See sign-up.tsx: push home explicitly rather than rely solely on
         // Stack.Protected's guard re-evaluation.
         router.replace('/');
+      } else if (attempt.status === 'needs_second_factor') {
+        setSecondFactor(true);
       } else {
-        setError('Additional verification is required. Please use the web app to finish signing in.');
+        setError('This account needs a sign-in step we can\'t show here. Please reset your password or contact support.');
       }
     } catch (err) {
       setError(clerkErrorMessage(err));
@@ -38,6 +43,8 @@ export default function SignInScreen() {
       setLoading(false);
     }
   };
+
+  if (secondFactor) return <SecondFactorStep onBack={() => setSecondFactor(false)} />;
 
   return (
     <AuthShell title="Welcome back" subtitle="Sign in to join the live rooms.">

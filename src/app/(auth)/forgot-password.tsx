@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { AuthShell, clerkErrorMessage, Field, FormError, PENDING_TASK_MESSAGE, useRedirectWhenSignedIn } from '@/components/AuthForm';
 import { OtpInput } from '@/components/OtpInput';
+import { SecondFactorStep } from '@/components/SecondFactorStep';
 import { Button } from '@/components/ui';
 
 export default function ForgotPasswordScreen() {
@@ -17,6 +18,7 @@ export default function ForgotPasswordScreen() {
   const [codeSent, setCodeSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [secondFactor, setSecondFactor] = useState(false);
 
   const run = async (fn: () => Promise<void>) => {
     if (!isLoaded) return;
@@ -44,11 +46,14 @@ export default function ForgotPasswordScreen() {
         await setActive!({ session: attempt.createdSessionId });
         if (clerk.session?.currentTask) return setError(PENDING_TASK_MESSAGE);
         router.replace('/');
+      } else if (attempt.status === 'needs_second_factor') {
+        setSecondFactor(true); // password is already changed; finish signing in with the code
       } else {
-        // needs_second_factor: sign-in.tsx doesn't support 2FA on mobile either.
-        setError('Password updated. Additional verification is required — please use the web app to finish signing in.');
+        setError('Password updated. Please sign in with your new password.');
       }
     });
+
+  if (secondFactor) return <SecondFactorStep onBack={() => router.replace('/sign-in')} />;
 
   if (codeSent) {
     return (
