@@ -45,6 +45,11 @@ export function startCoinCheckout(supabase: SupabaseClient, packageId: number, r
   return invokeFn<{ url: string }>(supabase, 'coins-checkout', { packageId, returnTo });
 }
 
+/** Asks the server to check the buyer's open payments with Stripe and credit or close them. */
+export function reconcilePayments(supabase: SupabaseClient) {
+  return invokeFn<{ credited: number; failed: number; pending: number }>(supabase, 'payments-reconcile', {});
+}
+
 /** Starts Didit identity verification for the signed-in host; returns the hosted URL. */
 export function startHostVerification(supabase: SupabaseClient, returnTo: string, language?: string) {
   return invokeFn<{ url: string }>(supabase, 'didit-session', { returnTo, language });

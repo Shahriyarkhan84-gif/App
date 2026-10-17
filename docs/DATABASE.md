@@ -45,6 +45,7 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 | `…20261012010000_smart_search.sql` | `private.search_index_state` (room id, text hash, synced at): what the AI worker last sent to the Pinecone search index |
 | `…20261013010000_payment_expired.sql` | `internal_fail_payment(provider_ref)` (service role): an expired or failed Stripe Checkout marks its still-pending payment `failed`; paid payments and coins are never touched |
 | `…20261015010000_checkout_reuse.sql` | `internal_create_payment` takes a per-buyer advisory lock and reuses the buyer's pending Stripe payment for the same package (under 30 min old) instead of creating another, so retries can't produce two payments |
+| `…20261017010000_payment_reconcile.sql` | `internal_expire_unstarted_payments(user)` (service role): closes a buyer's pending payments that never got a Stripe page, after 2 hours; used by `payments-reconcile` |
 
 (Files `20260925…` sort after `20260924…`; the short names above drop the date prefix.)
 

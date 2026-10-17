@@ -1,11 +1,13 @@
-// Stripe webhook: the only path that credits coins. Signature-verified,
-// replay-protected (processed_webhook_events) and backed by idempotent RPCs.
+// Stripe webhook: the main path that credits coins (payments-reconcile is the safety net and
+// applies the same rules from Stripe's own data). Signature-verified, replay-protected
+// (processed_webhook_events) and backed by idempotent RPCs.
 // Subscribe to: checkout.session.completed, checkout.session.async_payment_succeeded,
 // checkout.session.async_payment_failed, checkout.session.expired,
 // charge.refunded, charge.dispute.created, charge.dispute.closed
 import type Stripe from 'npm:stripe@18';
 
 import { json, requireEnv } from '../_shared/cors.ts';
+import { sessionOutcome } from '../_shared/payments.ts';
 import { cryptoProvider, getStripe } from '../_shared/stripe.ts';
 import { adminClient, alreadyProcessed, markEventProcessed } from '../_shared/supabase.ts';
 
@@ -52,7 +54,7 @@ async function handle(event: Stripe.Event) {
     case 'checkout.session.completed':
     case 'checkout.session.async_payment_succeeded': {
       const session = event.data.object;
-      if (session.mode !== 'payment' || session.payment_status !== 'paid') return;
+      if (sessionOutcome(session) !== 'credit') return; // same rule as payments-reconcile
       await rpc('internal_credit_payment', {
         p_provider_ref: session.id,
         p_payment_intent: intentId(session.payment_intent),

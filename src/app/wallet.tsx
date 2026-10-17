@@ -1,9 +1,9 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
-import { useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, View } from 'react-native';
 
 import { Pop, PressScale, stagger } from '@/components/Motion';
@@ -11,7 +11,7 @@ import { resolveState, StateView } from '@/components/StateView';
 import { Button, Coin, Row, Screen, Segmented, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
-import { startCoinCheckout } from '@/lib/api';
+import { reconcilePayments, startCoinCheckout } from '@/lib/api';
 import { errorDetail, friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
@@ -62,6 +62,22 @@ export default function WalletScreen() {
   }, [userId], 'wallet');
   // Coins are credited by the Stripe webhook; the balance updates live.
   useRealtime('wallets', `user_id=eq.${userId}`, () => reload());
+  // If the webhook is late or missed, the server checks this buyer's open payments with Stripe
+  // directly (on open and after returning from checkout), so a paid purchase is never left uncredited.
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      reconcilePayments(supabase)
+        .then((r) => {
+          if (active && (r.credited || r.failed)) reload();
+        })
+        .catch(() => {}); // best effort: the webhook remains the main path
+      return () => {
+        active = false;
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [supabase, returnStatus]),
+  );
 
   const buy = async (pkg: CoinPackage) => {
     setBuying(pkg.id);

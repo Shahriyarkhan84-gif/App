@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.53 — Payments stay consistent with Stripe
+
+- Consistency audit of the live database: wallets match the coin ledger, every paid payment has its coins, no negative balances, rooms/streams/seats/viewers agree. The one problem: payments stuck in `pending` because coins depended only on Stripe's webhook, which has not reached the server.
+- New Edge Function `payments-reconcile` (deployed): the Wallet asks the server to check the buyer's open payments with Stripe directly and credit (paid) or close (expired) them, using the same rule as the webhook (`_shared/payments.ts`, unit-tested). Payments that never got a Stripe page close after 2 hours (`20261017010000_payment_reconcile.sql`, applied; must-pass tests added).
+
 ## 0.9.52 — Website buttons open the app for signed-out visitors
 
 - The website's "Open Zynalive" and "Start hosting" buttons go straight to the welcome screen (`/welcome`); for signed-in visitors a script points them at `/app` instead. The live site still showed an empty "app" page at `/app` for signed-out visitors after 0.9.51, so `/app` now also does a full-page jump to `/welcome` on the web when signed out.

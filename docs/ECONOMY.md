@@ -35,6 +35,12 @@ User pays 3,000 PKR
   answers 409 `payment_processing` (never a second page); if it expired unpaid, the payment is
   closed `failed` and a fresh one starts. A dropped connection, double tap or app restart therefore
   always lands on the same Stripe page, and the webhook credits each payment once.
+- **Reconciliation** (`payments-reconcile`, `20261017010000_payment_reconcile.sql`): coins don't
+  depend on the webhook alone. When the buyer opens the Wallet (and after returning from Stripe) the
+  server asks Stripe about their open payments and applies the same rule as the webhook
+  (`_shared/payments.ts`): paid → `internal_credit_payment` (amount-checked, credits once, so a webhook
+  arriving later changes nothing), expired → `internal_fail_payment`. Payments whose Stripe page was
+  never created are closed after 2 hours (`internal_expire_unstarted_payments`).
 
 ### Stripe plan (from Stripe's implementation planner, 2026-10-12)
 

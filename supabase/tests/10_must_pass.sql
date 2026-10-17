@@ -168,6 +168,7 @@ select tests.fails($$insert into public.coin_transactions (user_id, delta, balan
 select tests.fails($$select public.internal_create_payment('alice', 1)$$, '%permission denied%', 'create payment rpc');
 select tests.fails($$select public.internal_credit_payment('cs_fake', 'pi_fake', 10000, 'pkr')$$, '%permission denied%', 'credit rpc');
 select tests.fails($$select public.internal_fail_payment('cs_fake')$$, '%permission denied%', 'fail payment rpc');
+select tests.fails($$select public.internal_expire_unstarted_payments('alice')$$, '%permission denied%', 'expire unstarted payments rpc');
 select tests.ok(tests.balance('alice') = 0, 'alice balance still 0');
 reset role;
 
@@ -196,6 +197,19 @@ select tests.ok((public.internal_create_payment('alice', 2)).id <> (select id fr
 -- An old pending one (session expired) is not reused either.
 update public.payments set created_at = now() - interval '31 minutes' where id = (select first_id from retry_ids);
 select tests.ok((public.internal_create_payment('alice', 3)).id <> (select first_id from retry_ids), 'stale pending payment not reused');
+-- Reconciliation: a payment whose checkout page was never created is closed after 2 hours;
+-- one with a Stripe session, or a recent one, is left for Stripe to decide.
+update public.payments set status = 'failed' where user_id = 'alice' and status = 'pending';
+create temp table unstarted as select (public.internal_create_payment('alice', 3)).id as old_id;
+update public.payments set created_at = now() - interval '3 hours' where id = (select old_id from unstarted);
+select public.internal_create_payment('alice', 4);
+select public.internal_attach_payment_ref((public.internal_create_payment('alice', 1)).id, 'cs_test_open');
+update public.payments set created_at = now() - interval '3 hours' where provider_ref = 'cs_test_open';
+select tests.ok(public.internal_expire_unstarted_payments('alice') = 1, 'stale unstarted payment closed');
+select tests.ok((select status from public.payments where id = (select old_id from unstarted)) = 'failed', 'unstarted payment marked failed');
+select tests.ok((select count(*) from public.payments where user_id = 'alice' and status = 'pending') = 2, 'recent and Stripe-backed payments untouched');
+select tests.ok(public.internal_expire_unstarted_payments('alice') = 0 and tests.balance('alice') = 350, 'reconcile is idempotent and never moves coins');
+drop table unstarted;
 -- Leave no open checkouts behind for the tests below.
 update public.payments set status = 'failed' where user_id = 'alice' and status = 'pending';
 drop table retry_ids;

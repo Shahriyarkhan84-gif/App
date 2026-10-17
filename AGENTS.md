@@ -46,7 +46,7 @@ Read `docs/ARCHITECTURE.md` first. Status of every product: `docs/REMAINING_WORK
 
 - **Never duplicate what exists.** Before adding a package, component, hook, screen, table, RPC, Edge Function or doc, search for one that already does the job and reuse or extend it. Add packages only with `npx expo install` (never a second version of one already installed); if a library brings its own copy, point it at the app's copy with `overrides` in `package.json`. `npm run check:duplicates` (in CI) fails when React, an Expo or another native module is installed twice.
 - **Smallest safe change.** Don't rebuild for one feature: locate the relevant code, change it, keep existing behaviour.
-- **Never trust the client** for roles, balances, prices or payment success. Money, roles and moderation go through `security definer` RPCs; clients get no write grants on those tables. Coins are credited only by `internal_credit_payment()` from the verified Stripe webhook.
+- **Never trust the client** for roles, balances, prices or payment success. Money, roles and moderation go through `security definer` RPCs; clients get no write grants on those tables. Coins are credited only by `internal_credit_payment()` with data Stripe itself returned to the server (the verified webhook, or `payments-reconcile` asking Stripe directly).
 - **Every schema change** gets RLS policies and, for money or authorization, a case in `supabase/tests/10_must_pass.sql`.
 - **Secrets stay server-side.** Only `EXPO_PUBLIC_*` values reach the app; `LIVEKIT_API_SECRET` never does.
 - **AI proposes, owners approve.** Agents may hide content or warn automatically; anything heavier becomes an `ai_actions` proposal.
