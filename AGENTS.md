@@ -42,7 +42,7 @@ Docs: https://docs.expo.dev/eas/index.md
 
 ## Zynalive project rules
 
-Read `docs/ARCHITECTURE.md` first. Status of every product: `docs/REMAINING_WORK.md`.
+Read `docs/ARCHITECTURE.md` first. Status of every product: `docs/REMAINING_WORK.md`. Role agents (engineers and advisors): `docs/TEAM.md`, defined in `.claude/agents/`.
 
 - **Never duplicate what exists.** Before adding a package, component, hook, screen, table, RPC, Edge Function or doc, search for one that already does the job and reuse or extend it. Add packages only with `npx expo install` (never a second version of one already installed); if a library brings its own copy, point it at the app's copy with `overrides` in `package.json`. `npm run check:duplicates` (in CI) fails when React, an Expo or another native module is installed twice.
 - **Smallest safe change.** Don't rebuild for one feature: locate the relevant code, change it, keep existing behaviour.

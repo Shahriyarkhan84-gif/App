@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.55 — Zynalive agent team
+
+- 35 Claude Code agents in `.claude/agents/`, one per role in the *ZynaLive Professional App Staff List* (Core Team, Business, Community, Marketing, Revenue, Data). Engineers can edit code and must meet the definition of done; advisors are read-only and write plans, policies and drafts. Index and how to use them: `docs/TEAM.md`.
+
 ## 0.9.54 — Sign-in finishes on new devices
 
 - Signing in on a new device (Clerk's new-device check) or to an account with two-step verification used to stop at "Additional verification is required. Please use the web app" — on the web app itself, so those people could not sign in at all. Sign-in and password reset now show a code step (`src/components/SecondFactorStep.tsx`): an emailed code first, then SMS, authenticator app or backup code. Component test added.
