@@ -48,7 +48,7 @@ export default function HostDashboardScreen() {
   const supabase = useSupabase();
   const { c } = useTheme();
   const offline = useOffline();
-  const { profile, host } = useProfile();
+  const { profile, host, isHost } = useProfile();
   const [picking, setPicking] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -118,6 +118,22 @@ export default function HostDashboardScreen() {
 
   const weekHours = (data?.weekSeconds ?? 0) / 3600;
   const pct = Math.min(1, weekHours / WEEKLY_GOAL_HOURS);
+
+  // creator.zynalive.com opens this screen for anyone signed in; it only has numbers for hosts.
+  if (profile && !isHost) {
+    return (
+      <Screen edges={[]}>
+        <StateView
+          state={{
+            kind: 'empty',
+            title: 'Become a host',
+            body: 'The creator dashboard is for Zynalive hosts. Apply with your agency code to start going live and earning from gifts.',
+            action: { title: 'Apply to host', onPress: () => router.push('/hosting') },
+          }}
+        />
+      </Screen>
+    );
+  }
 
   return (
     <Screen edges={[]}>

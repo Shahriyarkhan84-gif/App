@@ -8,7 +8,7 @@ import { ClerkProvider, useAuth, useUser } from '@clerk/clerk-expo';
 import { resourceCache } from '@clerk/clerk-expo/resource-cache';
 import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import { useFonts } from 'expo-font';
-import { Stack, useGlobalSearchParams, usePathname } from 'expo-router';
+import { router, Stack, useGlobalSearchParams, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { PostHogProvider, usePostHog } from 'posthog-react-native';
@@ -22,6 +22,7 @@ import { loadCacheFor } from '@/lib/hooks';
 import { AppI18n } from '@/lib/i18n/AppI18n';
 import { ProfileProvider } from '@/lib/profile';
 import { initSentry, Sentry } from '@/lib/sentry';
+import { subdomainHome } from '@/lib/subdomain';
 import { SupabaseProvider } from '@/lib/supabase';
 import { fonts, useTheme } from '@/lib/theme';
 
@@ -101,6 +102,18 @@ function IdentityAndScreens() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
+  return null;
+}
+
+/** On creator.zynalive.com / agency.zynalive.com, "/" (e.g. right after sign-in) opens that screen. */
+function SubdomainHome() {
+  const { isSignedIn } = useAuth();
+  const pathname = usePathname();
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !isSignedIn || pathname !== '/') return;
+    const target = subdomainHome(globalThis.location?.hostname);
+    if (target) router.replace(target);
+  }, [isSignedIn, pathname]);
   return null;
 }
 
@@ -194,6 +207,7 @@ function RootLayout() {
             <AppI18n>
               <Analytics>
                 <IdentityAndScreens />
+                <SubdomainHome />
                 <StatusBar style="light" />
                 <RootNavigator />
               </Analytics>

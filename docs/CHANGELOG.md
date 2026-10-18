@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.59 — Creator and agency links
+
+- **creator.zynalive.com** opens the creator dashboard and **agency.zynalive.com** the agency portal (Vercel domains + `vercel.json` host redirects; after sign-in the app returns there, `src/lib/subdomain.ts`, unit-tested). The website's Creators and Agencies pages and footer link to them. The creator dashboard shows "Become a host" with an apply button to signed-in people who aren't hosts, instead of empty numbers.
+
 ## 0.9.58 — Smaller Android app
 
 - The APK was 186 MB: it carried native code for four processor types, stored uncompressed. `expo-build-properties` now builds only for phone processors (`armeabi-v7a`, `arm64-v8a`; x86/x86_64 only ran on emulators) and compresses native libraries in the package (`useLegacyPackaging`). Preview APK `6934a22c`: **186 MB → 64 MB**; the website's download now points at it. Code shrinking (R8) stays off until it can be tested on a device, since it can break live video.

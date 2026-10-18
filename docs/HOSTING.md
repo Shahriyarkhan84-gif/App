@@ -76,6 +76,12 @@ Use one of Vercel or Cloudflare for the live domain, not both.
   inside the app. "Open Zynalive" buttons open `/app`, which sends people into the app (Home when
   signed in, the welcome screen when not).
 - Every other address (`/privacy`, `/live/…`, `/sign-in`, …) is the app (`dist/app.html`).
+- **creator.zynalive.com** opens the creator (host) dashboard and **agency.zynalive.com** the agency
+  portal. Both are domains of the same Vercel project (zynalive.com's DNS is on Vercel, so they
+  resolve automatically). `vercel.json` redirects `/` on each host to `/host/dashboard` or
+  `/agency`, and the app sends `/` there again after sign-in (`src/lib/subdomain.ts`). Each
+  subdomain keeps its own sign-in in the browser. With Clerk production keys, add both subdomains
+  to the allowed origins and Google/Apple redirect URLs.
 - People already signed in on that browser skip the home page and go straight to the app
   (`zl-signed-in` flag set by the app). `zynalive.com/?site` always shows it.
 - `npm run build:web` = `expo export -p web` + `scripts/web-landing.mjs`, which wraps each

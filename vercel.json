@@ -5,6 +5,28 @@
   "framework": null,
   "redirects": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "creator.zynalive.com"
+        }
+      ],
+      "destination": "/host/dashboard",
+      "permanent": false
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "agency.zynalive.com"
+        }
+      ],
+      "destination": "/agency",
+      "permanent": false
+    },
+    {
       "source": "/download/android",
       "destination": "https://expo.dev/artifacts/eas/ulfGVo938K6ExJYctFdLV5bLe7Ym1vT9YlKpFLT3gtQ.apk",
       "permanent": false
