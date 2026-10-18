@@ -109,6 +109,7 @@ coach stop (the app still works).
   or the `publish-preview-update.yml` workflow. Needs an `EXPO_TOKEN` (cloud environment variable)
   and network access to `api.expo.dev`, or build minutes on the Expo plan.
 - New native code (e.g. `expo-observe`) needs a new build: `npx eas-cli build --profile preview`.
+- **App size:** Android builds contain only phone processors (`armeabi-v7a`, `arm64-v8a`, set with `expo-build-properties` in `app.json`) with compressed native libraries. To test on an emulator, use an arm64 system image; x86/x86_64 emulators can't run these builds.
 - **APK download on the website:** `/download/android` is a redirect in `vercel.json`. It points at
   the Expo artifact link of the latest preview build, which **expires** (build `4e055c91`: on
   2026-11-01), so update it after each build (`npx eas-cli build:list --platform android`).

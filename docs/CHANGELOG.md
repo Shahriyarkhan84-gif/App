@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.58 — Smaller Android app
+
+- The APK was 186 MB: it carried native code for four processor types, stored uncompressed. `expo-build-properties` now builds only for phone processors (`armeabi-v7a`, `arm64-v8a`; x86/x86_64 only ran on emulators) and compresses native libraries in the package (`useLegacyPackaging`). Applies to preview APKs and Play bundles from the next build. Code shrinking (R8) stays off until it can be tested on a device, since it can break live video.
+
 ## 0.9.57 — Marketing website
 
 - zynalive.com is now a full marketing site built from `site/` (shared layout, menu, footer and stylesheet; `scripts/web-landing.mjs` renders each page to `dist/<page>/index.html`): Home, **Download** (Android app, four-step install guide, Play Protect help), **Creators** (become a host: 90% of gift coins, payouts to Easypaisa/JazzCash/bank, how to apply), **Agencies** (agency code, portal, how to apply), **Safety** (protections, community rules, what to do, Pakistan emergency numbers) and **About** (values, contact). Works on phones with a no-script menu. Replaces `public/landing.html`; sitemap updated.
