@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.56 — Android app download on zynalive.com
+
+- The website has "Download for Android" buttons (hero, bottom band, FAQ) that open `/download/android`, a redirect in `vercel.json` to the current preview APK (EAS build `4e055c91`). Only that one line changes per build; the Expo link expires 2026-11-01 (`docs/HOSTING.md` §5).
+
 ## 0.9.55 — Zynalive agent team
 
 - 35 Claude Code agents in `.claude/agents/`, one per role in the *ZynaLive Professional App Staff List* (Core Team, Business, Community, Marketing, Revenue, Data). Engineers can edit code and must meet the definition of done; advisors are read-only and write plans, policies and drafts. Index and how to use them: `docs/TEAM.md`.

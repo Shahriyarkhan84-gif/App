@@ -72,7 +72,8 @@ Use one of Vercel or Cloudflare for the live domain, not both.
 
 - `/` is the public website (`public/landing.html`: what Zynalive is, features, hosting, safety, FAQ),
   so a search for "zynalive" lands on a real page instead of straight inside the app. Its buttons
-  open `/app`, which sends people into the app (Home when signed in, the welcome screen when not).
+  open `/app`, which sends people into the app (Home when signed in, the welcome screen when not),
+  or download the Android APK (`/download/android`, see §5).
 - Every other address (`/privacy`, `/live/…`, `/sign-in`, …) is the app (`dist/app.html`).
 - People already signed in on that browser skip the website and go straight to the app
   (`zl-signed-in` flag set by the app). `zynalive.com/?site` always shows the website.
@@ -103,6 +104,12 @@ coach stop (the app still works).
   or the `publish-preview-update.yml` workflow. Needs an `EXPO_TOKEN` (cloud environment variable)
   and network access to `api.expo.dev`, or build minutes on the Expo plan.
 - New native code (e.g. `expo-observe`) needs a new build: `npx eas-cli build --profile preview`.
+- **APK download on the website:** zynalive.com's "Download for Android" buttons open
+  `/download/android`, a redirect in `vercel.json` to the latest preview APK on Expo. Expo's
+  artifact links expire (the current one, build `4e055c91`, on 2026-11-01), so after each new
+  preview build copy its APK link (`npx eas-cli build:list --platform android`) into that redirect
+  and push. For a link that never expires, upload the APK to a public Supabase Storage bucket and
+  point the redirect there. Replace the APK with the Play Store link once the app is published.
 
 ## Accounts checklist (the $20/month stack)
 

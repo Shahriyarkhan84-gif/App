@@ -3,6 +3,13 @@
   "buildCommand": "npm run build:web",
   "outputDirectory": "dist",
   "framework": null,
+  "redirects": [
+    {
+      "source": "/download/android",
+      "destination": "https://expo.dev/artifacts/eas/Zdy6kiGBlSXaD2_7-vFTbLEH8EvBoJtRq2-AdyZkQ20.apk",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",
