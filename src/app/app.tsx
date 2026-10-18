@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 /**
- * zynalive.com/ is the public website (public/landing.html); signed-in visitors are sent here.
+ * zynalive.com/ is the public website (site/); signed-in visitors are sent here.
  * Sends people into the app: Home when signed in, the welcome screen when not. Home is
  * protected, so a signed-out visitor must not be redirected to "/".
  */

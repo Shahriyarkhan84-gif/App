@@ -1,0 +1,81 @@
+---
+title: Download Zynalive for Android
+description: Get the Zynalive Android app. Free download for Android 7 and newer, with step-by-step install help. Or use Zynalive in your browser.
+path: /download
+nav: Download
+---
+<!-- scripts -->
+<script>
+  // Shows the size and date of the APK that is on offer (written by the apk-publish function).
+  fetch('https://mdfjbhzriuwxafeagnwo.supabase.co/storage/v1/object/public/downloads/android/latest.json', { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (m) {
+      if (!m || !m.bytes) return;
+      var date = new Date(m.published_at).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+      document.getElementById('apk-meta').textContent = 'APK · ' + Math.round(m.bytes / 1048576) + ' MB · updated ' + date;
+    })
+    .catch(function () {});
+</script>
+<!-- /scripts -->
+<div class="wrap page-hero">
+  <span class="eyebrow"><span class="dot" aria-hidden="true"></span>Android app</span>
+  <h1>Zynalive on your <em>phone</em></h1>
+  <p class="lead">Watch lives, take a seat in party rooms and keep up with the hosts you follow. Free, for Android 7 and newer.</p>
+  <div class="download-card">
+    <img class="icon" src="/logo.png" alt="" width="72" height="72">
+    <div>
+      <h2>Zynalive for Android</h2>
+      <p id="apk-meta">APK · free</p>
+      <div class="ctas"><a class="btn primary" href="/download/android">Download the APK</a></div>
+    </div>
+  </div>
+  <p class="fine">On a computer? Open <b>zynalive.com/download</b> on your phone, or <a href="/welcome" data-app-link>use Zynalive in this browser</a>.</p>
+</div>
+
+<section>
+  <div class="wrap split">
+    <div>
+      <h2>Install in four steps</h2>
+      <p class="sub">The app comes straight from zynalive.com while our Google Play listing is on its way, so Android asks you once to allow it.</p>
+    </div>
+    <ol class="steps">
+      <li><div><b>Download</b><span>Tap <b>Download the APK</b> above. If Chrome asks whether to keep the file, tap <b>Download anyway</b>.</span></div></li>
+      <li><div><b>Open the file</b><span>Tap the finished download in the notification bar or in your Downloads folder.</span></div></li>
+      <li><div><b>Allow this source</b><span>If Android says installs from this source aren't allowed, tap <b>Settings</b>, switch on <b>Allow from this source</b>, then go back.</span></div></li>
+      <li><div><b>Install and open</b><span>Tap <b>Install</b>, then <b>Open</b>. Sign in or create your free account.</span></div></li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Good to know</h2>
+    <div class="cards three">
+      <article class="card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3z"/><path d="m9 12 2 2 4-4"/></svg>
+        <h3>Only from zynalive.com</h3>
+        <p>Download Zynalive only from this page. Copies shared in groups or on other sites may be changed and unsafe.</p>
+      </article>
+      <article class="card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <h3>Updates</h3>
+        <p>Most updates arrive inside the app automatically. For bigger ones, download the newest version here and install it over the old one; your account stays signed in.</p>
+      </article>
+      <article class="card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h16v12H4zM8 20h8M12 16v4"/></svg>
+        <h3>No ads, no ad tracking</h3>
+        <p>The app has no ads and blocks Android's advertising ID, so nothing inside it can track you for ads.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <h2>Questions</h2>
+    <details><summary>Google Play Protect shows a warning. Is it safe?</summary><p>Play Protect warns about apps that are not installed from the Play Store yet. If you downloaded Zynalive from zynalive.com/download, tap <b>More details → Install anyway</b>.</p></details>
+    <details><summary>Is there an iPhone app?</summary><p>Not yet. On iPhone and iPad, use Zynalive in Safari at <a href="/welcome" data-app-link>zynalive.com</a>; it works the same way.</p></details>
+    <details><summary>Which phones are supported?</summary><p>Android 7.0 or newer. Live video works best on Wi-Fi or a 4G connection.</p></details>
+    <details><summary>The download didn't start.</summary><p>Try Chrome, check you have about 500 MB free, or <a href="/about#contact">contact us</a> and we will help.</p></details>
+  </div>
+</section>

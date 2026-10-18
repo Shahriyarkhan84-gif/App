@@ -70,16 +70,21 @@ Use one of Vercel or Cloudflare for the live domain, not both.
 
 ### What zynalive.com shows
 
-- `/` is the public website (`public/landing.html`: what Zynalive is, features, hosting, safety, FAQ),
-  so a search for "zynalive" lands on a real page instead of straight inside the app. Its buttons
-  open `/app`, which sends people into the app (Home when signed in, the welcome screen when not),
-  or download the Android APK (`/download/android`, see §5).
+- The marketing website lives in `site/`: `/` (home), `/download` (Android app and install help),
+  `/creators` (become a host), `/agencies`, `/safety` (safety centre and community rules) and
+  `/about` (about and contact). So a search for "zynalive" lands on real pages instead of straight
+  inside the app. "Open Zynalive" buttons open `/app`, which sends people into the app (Home when
+  signed in, the welcome screen when not).
 - Every other address (`/privacy`, `/live/…`, `/sign-in`, …) is the app (`dist/app.html`).
-- People already signed in on that browser skip the website and go straight to the app
-  (`zl-signed-in` flag set by the app). `zynalive.com/?site` always shows the website.
-- `npm run build:web` = `expo export -p web` + `scripts/web-landing.mjs`, which puts the website at
-  `dist/index.html` and the app at `dist/app.html` (Vercel rewrites to it) and `dist/404.html`
-  (Cloudflare Pages). `robots.txt` and `sitemap.xml` are in `public/`.
+- People already signed in on that browser skip the home page and go straight to the app
+  (`zl-signed-in` flag set by the app). `zynalive.com/?site` always shows it.
+- `npm run build:web` = `expo export -p web` + `scripts/web-landing.mjs`, which wraps each
+  `site/pages/<name>.html` in `site/layout.html` (header, menu, footer) and writes it to
+  `dist/index.html` or `dist/<name>/index.html` with `site/site.css`, and moves the app to
+  `dist/app.html` (Vercel rewrites to it) and `dist/404.html` (Cloudflare Pages). A new page needs a
+  file in `site/pages/` (front matter: title, description, path, nav), its name in the `ORDER` list
+  in the script and in the page rewrite in `vercel.json`, and a line in `public/sitemap.xml`.
+  `robots.txt` and `sitemap.xml` are in `public/`.
 
 ## 4. AI agents + media worker (Render) — about 5 minutes
 
@@ -104,12 +109,20 @@ coach stop (the app still works).
   or the `publish-preview-update.yml` workflow. Needs an `EXPO_TOKEN` (cloud environment variable)
   and network access to `api.expo.dev`, or build minutes on the Expo plan.
 - New native code (e.g. `expo-observe`) needs a new build: `npx eas-cli build --profile preview`.
-- **APK download on the website:** zynalive.com's "Download for Android" buttons open
-  `/download/android`, a redirect in `vercel.json` to the latest preview APK on Expo. Expo's
-  artifact links expire (the current one, build `4e055c91`, on 2026-11-01), so after each new
-  preview build copy its APK link (`npx eas-cli build:list --platform android`) into that redirect
-  and push. For a link that never expires, upload the APK to a public Supabase Storage bucket and
-  point the redirect there. Replace the APK with the Play Store link once the app is published.
+- **APK download on the website:** `/download/android` is a redirect in `vercel.json`. It points at
+  the Expo artifact link of the latest preview build, which **expires** (build `4e055c91`: on
+  2026-11-01), so update it after each build (`npx eas-cli build:list --platform android`).
+  **Permanent link (ready, needs Supabase Pro):** the public `downloads` bucket and the `apk-publish`
+  Edge Function copy the APK to `downloads/android/zynalive.apk`. The free plan caps every file at
+  50 MB and the APK is 186 MB, so the copy fails with "Payload too large" until the project is on
+  Pro (then raise Storage → Settings → upload file size limit above 300 MB). After that, per build:
+  1. Save the build's APK link: `update platform_settings set value = jsonb_build_object('source', '<link>') where key = 'android_apk';`
+  2. Open `https://mdfjbhzriuwxafeagnwo.supabase.co/functions/v1/apk-publish` once. It answers
+     `started`, then `up_to_date` when the copy is done (a minute or two). `/download` shows the
+     size and date from `downloads/android/latest.json`.
+  3. The first time only: point the `vercel.json` redirect at
+     `https://mdfjbhzriuwxafeagnwo.supabase.co/storage/v1/object/public/downloads/android/zynalive.apk?download=Zynalive.apk`.
+  Point the redirect at the Play Store once the app is published there.
 
 ## Accounts checklist (the $20/month stack)
 

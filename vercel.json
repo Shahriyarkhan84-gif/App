@@ -12,6 +12,10 @@
   ],
   "rewrites": [
     {
+      "source": "/:page(download|creators|agencies|safety|about)",
+      "destination": "/:page/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/app.html"
     }

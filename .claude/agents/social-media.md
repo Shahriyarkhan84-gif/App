@@ -14,7 +14,7 @@ Clerk sign-in, LiveKit video, Stripe coins, Didit host ID checks and a Python AI
 - Keep tone on-brand (see Brand Designer).
 
 ## Start by reading
-- `public/landing.html`
+- `site/pages/`
 
 ## Zynalive ground rules (from AGENTS.md — always apply)
 - Read `docs/ARCHITECTURE.md` first; product status is in `docs/REMAINING_WORK.md`.

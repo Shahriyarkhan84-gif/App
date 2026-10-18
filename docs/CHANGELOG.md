@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.57 — Marketing website
+
+- zynalive.com is now a full marketing site built from `site/` (shared layout, menu, footer and stylesheet; `scripts/web-landing.mjs` renders each page to `dist/<page>/index.html`): Home, **Download** (Android app, four-step install guide, Play Protect help), **Creators** (become a host: 90% of gift coins, payouts to Easypaisa/JazzCash/bank, how to apply), **Agencies** (agency code, portal, how to apply), **Safety** (protections, community rules, what to do, Pakistan emergency numbers) and **About** (values, contact). Works on phones with a no-script menu. Replaces `public/landing.html`; sitemap updated.
+- Permanent APK hosting prepared: public `downloads` bucket (`20261018010000_downloads_bucket.sql`, applied) and the `apk-publish` Edge Function (deployed), which copies the EAS build in `platform_settings.android_apk` into Storage. Blocked by the Supabase free plan's 50 MB file limit (the APK is 186 MB), so `/download/android` still points at the Expo link until the project is on Pro (`docs/HOSTING.md` §5). Must-pass test: app users cannot change which APK the website offers.
+
 ## 0.9.56 — Android app download on zynalive.com
 
 - The website has "Download for Android" buttons (hero, bottom band, FAQ) that open `/download/android`, a redirect in `vercel.json` to the current preview APK (EAS build `4e055c91`). Only that one line changes per build; the Expo link expires 2026-11-01 (`docs/HOSTING.md` §5).

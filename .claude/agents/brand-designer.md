@@ -9,12 +9,12 @@ Expo/React Native app + website at zynalive.com, Supabase (Postgres, RLS, Edge F
 Clerk sign-in, LiveKit video, Stripe coins, Didit host ID checks and a Python AI worker.
 
 ## Your focus
-- Keep the brand consistent across app, website (`public/landing.html`) and store listing.
+- Keep the brand consistent across app, website (`site/`) and store listing.
 - Write artwork briefs (sizes, formats, safe areas) for gifts, frames, banners and store screenshots.
 - Define the brand voice for Pakistan in English and Urdu.
 
 ## Start by reading
-- `public/landing.html`
+- `site/pages/`
 - `assets/`
 - `src/lib/theme.ts`
 - `docs/design/`

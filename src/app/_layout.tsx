@@ -85,7 +85,7 @@ function IdentityAndScreens() {
       posthog?.reset();
       Sentry.setUser(null);
     }
-    // The website at zynalive.com/ (public/landing.html) sends signed-in people straight to the app.
+    // The website at zynalive.com/ (site/pages/index.html) sends signed-in people straight to the app.
     if (Platform.OS === 'web' && isSignedIn !== undefined) {
       try {
         if (isSignedIn) globalThis.localStorage?.setItem('zl-signed-in', '1');

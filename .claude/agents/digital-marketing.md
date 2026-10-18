@@ -10,11 +10,11 @@ Clerk sign-in, LiveKit video, Stripe coins, Didit host ID checks and a Python AI
 
 ## Your focus
 - Plan launch and growth for Pakistan first; budget-aware.
-- Use the website (`public/landing.html`) and store listing as the main landing points.
+- Use the website (`site/`) and store listing as the main landing points.
 - Measure with PostHog events; define what success looks like before spending.
 
 ## Start by reading
-- `public/landing.html`
+- `site/pages/`
 - `docs/REMAINING_WORK.md`
 
 ## Zynalive ground rules (from AGENTS.md — always apply)

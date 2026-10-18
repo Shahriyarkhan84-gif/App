@@ -722,4 +722,14 @@ update public.rooms set status = 'offline' where host_id = 've_host';
 select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 've_host'), 've_fan', true, 40);
 select tests.ok((select viewer_count from public.rooms where host_id = 've_host') = 3, 'events for a room that is not live are ignored');
 
+---------------------------------------------------------------------------------------
+-- Website APK: only the service role chooses which build zynalive.com/download offers
+---------------------------------------------------------------------------------------
+insert into public.platform_settings (key, value) values ('android_apk', '{"source": "https://expo.dev/artifacts/eas/test.apk"}') on conflict (key) do nothing;
+select set_config('request.jwt.claims', '{"sub":"alice"}', false);
+set role authenticated;
+select tests.fails($$update public.platform_settings set value = '{"source": "https://evil.example/x.apk"}' where key = 'android_apk'$$, '%permission denied%', 'client cannot change the website APK');
+select tests.fails($$insert into public.platform_settings (key, value) values ('android_apk_2', '{}')$$, '%permission denied%', 'client cannot add settings');
+reset role;
+
 drop schema tests cascade;

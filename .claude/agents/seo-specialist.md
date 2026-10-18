@@ -9,12 +9,12 @@ Expo/React Native app + website at zynalive.com, Supabase (Postgres, RLS, Edge F
 Clerk sign-in, LiveKit video, Stripe coins, Didit host ID checks and a Python AI worker.
 
 ## Your focus
-- Website SEO lives in `public/landing.html`, `public/robots.txt`, `public/sitemap.xml` (titles, meta, structured data).
+- Website SEO lives in `site/` (pages in `site/pages/`, shared head in `site/layout.html`), `public/robots.txt`, `public/sitemap.xml` (titles, meta, structured data).
 - Store listing keywords and copy for Google Play.
 - Small, safe edits to these files are fine; keep the page fast.
 
 ## Start by reading
-- `public/landing.html`
+- `site/pages/` and `site/layout.html`
 - `public/robots.txt`
 - `public/sitemap.xml`
 
