@@ -1,7 +1,7 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
+import { RefreshControl, ScrollView, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 
 import Ionicons from '@expo/vector-icons/Ionicons';
 
@@ -29,6 +29,8 @@ const FEEDS: { id: Feed; label: string }[] = [
   { id: 'new', label: 'New' },
 ];
 const CHIPS = ['all', ...CATEGORIES] as const;
+/** Cards drawn at first; more are added as you scroll, so cheap phones never lay out every live at once. */
+const PAGE = 24;
 /** Bigo-style dense grid: thin outer padding and gaps. */
 const GRID_PAD = 8;
 const GRID_GAP = 6;
@@ -74,29 +76,43 @@ export default function HomeScreen() {
     };
   }, [userId], `home:${userId}`);
 
-  // Rooms going live/offline update the feed in real time.
-  // `rooms` has no full replica identity, so p.old is empty: compare with what the feed shows instead.
-  // Viewer-count updates (many per second) must not refetch the feed.
+  // Rooms going live/offline update the feed in real time, without hearing every viewer-count change
+  // (those update `rooms` many times a second while it stays 'live'): a new live inserts a `streams`
+  // row, and a room leaving 'live' is the only update that matches status=neq.live.
   const liveIds = useRef<Set<string>>(new Set());
   useEffect(() => {
     liveIds.current = new Set((data?.all ?? []).map((r) => r.id));
   }, [data]);
-  // Viewer joins/leaves update `rooms` constantly with status still 'live'. Refetch only when a room
-  // we show goes offline, or a room we don't show goes live while the list isn't full (LIVE_LIMIT) —
-  // debounced, and never before the first load.
+  // Debounced, and never before the first load.
   const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (pending.current) clearTimeout(pending.current); }, []);
-  useRealtime('rooms', undefined, (p) => {
-    const next = p.new as { id?: string; status?: string };
-    if (!next.id || !data) return;
-    const shown = liveIds.current.has(next.id);
-    const live = next.status === 'live';
-    const changed = shown ? !live : live && liveIds.current.size < LIVE_LIMIT;
-    if (!changed || pending.current) return;
+  const refetchSoon = () => {
+    if (!data || pending.current) return;
     pending.current = setTimeout(() => { pending.current = null; reload(); }, 1500);
-  });
+  };
+  useRealtime('rooms', 'status=neq.live', (p) => {
+    const id = (p.new as { id?: string }).id;
+    if (id && liveIds.current.has(id)) refetchSoon();
+  }, true, 'UPDATE');
+  useRealtime('streams', undefined, (p) => {
+    const roomId = (p.new as { room_id?: string }).room_id;
+    if (roomId && !liveIds.current.has(roomId) && liveIds.current.size < LIVE_LIMIT) refetchSoon();
+  }, true, 'INSERT');
 
-  const rooms = data ? pickFeed(data, feed, profile?.country ?? null).filter((r) => category === 'all' || r.category === category) : [];
+  const allRooms = data ? pickFeed(data, feed, profile?.country ?? null).filter((r) => category === 'all' || r.category === category) : [];
+  // How many cards are drawn; starts again at one page when the feed or category changes.
+  const listKey = `${feed}:${category}`;
+  const [shown, setShown] = useState({ key: listKey, n: PAGE });
+  const shownCount = shown.key === listKey ? shown.n : PAGE;
+  const rooms = allRooms.slice(0, shownCount);
+  const viewHeight = useRef(0);
+  const nearEnd = (seen: number, contentHeight: number) => {
+    if (shownCount < allRooms.length && seen > contentHeight - 600) setShown({ key: listKey, n: shownCount + PAGE });
+  };
+  const showMore = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+    nearEnd(layoutMeasurement.height + contentOffset.y, contentSize.height);
+  };
   // TOP 1–4 follow real viewer order (data.live is sorted by viewers), not AI picks.
   const topRank = (id: string) => {
     const i = data ? data.live.findIndex((r) => r.id === id) : -1;
@@ -152,6 +168,11 @@ export default function HomeScreen() {
         <ScrollView
           contentContainerStyle={{ paddingHorizontal: GRID_PAD, paddingBottom: tabSpace + 32, gap: GRID_GAP, maxWidth: 1100, width: '100%', alignSelf: 'center' }}
           refreshControl={<RefreshControl refreshing={loading && !!data} onRefresh={reload} tintColor={c.text} />}
+          onScroll={showMore}
+          scrollEventThrottle={200}
+          onLayout={(e) => { viewHeight.current = e.nativeEvent.layout.height; }}
+          // A tall screen (tablet, web) may show a whole page without scrolling: fill it.
+          onContentSizeChange={(_w, h) => nearEnd(viewHeight.current, h)}
         >
           {showBanners && data && data.followingLive.length > 0 && (
             <FadeIn style={{ marginHorizontal: -GRID_PAD }}>

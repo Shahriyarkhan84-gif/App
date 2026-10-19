@@ -17,7 +17,7 @@ exception when others then
 end $$;
 grant execute on all functions in schema tests to authenticated, service_role;
 
-insert into public.profiles (id, username) values ('ha_ok', 'ha_ok'), ('ha_review', 'ha_review'), ('ha_bad', 'ha_bad'), ('ha_kid', 'ha_kid'), ('ha_admin', 'ha_admin'), ('ha_typo', 'ha_typo'), ('ha_noage', 'ha_noage'), ('ha_manual', 'ha_manual');
+insert into public.profiles (id, username) values ('ha_ok', 'ha_ok'), ('ha_review', 'ha_review'), ('ha_bad', 'ha_bad'), ('ha_kid', 'ha_kid'), ('ha_admin', 'ha_admin'), ('ha_typo', 'ha_typo'), ('ha_noage', 'ha_noage'), ('ha_manual', 'ha_manual'), ('ha_nolive', 'ha_nolive'), ('ha_fake', 'ha_fake');
 update public.profiles set role = 'OWNER_ADMIN' where id = 'ha_admin';
 insert into public.agencies (name, code) values ('Lahore Stars', '4821');
 
@@ -33,12 +33,17 @@ set role service_role;
 -- Without auto-approval (the default) a fully Didit-approved application waits for the owner.
 select tests.ok((public.internal_submit_host_application('ha_manual', 'Manual Person', '+923001112233', '1111', '4821', 'Approved', 'Approved', 90, true, true, 25, 'm1', 'm2') ->> 'status') = 'in_review', 'no auto-approval without the owner setting');
 update public.platform_settings set value = value || '{"auto_approve": true}'::jsonb where key = 'host_verification';
-select tests.ok((public.internal_submit_host_application('ha_ok', 'Ayesha Khan', '+923001234567', '4567', ' 4821 ', 'Approved', 'Approved', 90, true, true, 25, 'r1', 'r2') ->> 'status') = 'approved', 'clean application approved');
+select tests.ok((public.internal_submit_host_application('ha_ok', 'Ayesha Khan', '+923001234567', '4567', ' 4821 ', 'Approved', 'Approved', 90, true, true, 25, 'r1', 'r2', 'Approved') ->> 'status') = 'approved', 'clean application approved');
+-- Liveness not checked, or failed (a gallery or printed photo) → a person reviews it, even with auto-approval.
+select tests.ok((select r ->> 'status' = 'in_review' and (r -> 'reasons') ? 'liveness_not_checked'
+  from (select public.internal_submit_host_application('ha_nolive', 'No Live', '+923001112244', '1212', '4821', 'Approved', 'Approved', 90, true, true, 25, 'l1', 'l2') as r) x), 'no liveness result goes to review');
+select tests.ok((select r ->> 'status' = 'in_review' and (r -> 'reasons') ? 'liveness_failed'
+  from (select public.internal_submit_host_application('ha_fake', 'Fake Photo', '+923001112255', '1313', '4821', 'Approved', 'Approved', 90, true, true, 25, 'l3', 'l4', 'Declined') as r) x), 'failed liveness goes to review');
 -- Didit hasn't decided yet → a person reviews it.
 select tests.ok((public.internal_submit_host_application('ha_review', 'Bilal Ahmed', '+923111234567', '1111', '4821', 'In Review', 'Approved', 88, true, true, 30, 'r3', 'r4') ->> 'status') = 'in_review', 'Didit in review goes to review');
 -- Verified by Didit but typed CNIC/name differ → still approved automatically, mismatch kept as a note.
 select tests.ok((select r ->> 'status' = 'approved' and (r -> 'reasons') ? 'cnic_mismatch' and (r -> 'reasons') ? 'name_mismatch'
-  from (select public.internal_submit_host_application('ha_typo', 'Typo Person', '+923451234567', '5555', '4821', 'Approved', 'Approved', 80, false, false, 27, 'r17', 'r18') as r) x), 'Didit-verified host auto-approved despite typed mismatch');
+  from (select public.internal_submit_host_application('ha_typo', 'Typo Person', '+923451234567', '5555', '4821', 'Approved', 'Approved', 80, false, false, 27, 'r17', 'r18', 'Approved') as r) x), 'Didit-verified host auto-approved despite typed mismatch');
 -- Age unreadable → review.
 select tests.ok((public.internal_submit_host_application('ha_noage', 'No Age', '+923461234567', '6666', '4821', 'Approved', 'Approved', 90, true, true, null, 'r19', 'r20') ->> 'status') = 'in_review', 'unknown age goes to review');
 -- Face doesn't match → declined.
@@ -68,7 +73,7 @@ reset role;
 -- Admin approves the one in review.
 select set_config('request.jwt.claims', '{"sub":"ha_admin"}', false);
 set role authenticated;
-select tests.ok((select count(*) from public.host_applications where status = 'in_review') = 3, 'admin sees review queue (incl. the manual-review one)');
+select tests.ok((select count(*) from public.host_applications where status = 'in_review') = 5, 'admin sees review queue (incl. the manual-review and liveness ones)');
 select public.review_host_application((select id from public.host_applications where user_id = 'ha_review'), true, 'Card photo checked by hand');
 select tests.fails($$select public.review_host_application((select id from public.host_applications where user_id = 'ha_review'), false)$$, '%already_reviewed%', 'no double review');
 reset role;

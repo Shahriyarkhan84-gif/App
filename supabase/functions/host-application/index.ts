@@ -18,6 +18,7 @@ type IdResult = {
   };
 };
 type FaceResult = { request_id?: string; face_match?: { status?: string; score?: number } };
+type LivenessResult = { request_id?: string; liveness?: { status?: string; score?: number } };
 
 async function diditForm<T>(path: string, form: FormData): Promise<T> {
   const res = await fetch(`${DIDIT}${path}`, { method: 'POST', headers: { 'x-api-key': requireEnv('DIDIT_API_KEY') }, body: form });
@@ -90,7 +91,16 @@ Deno.serve(
     faceForm.append('vendor_data', userId);
     const faceRes = await diditForm<FaceResult>('/face-match/', faceForm);
 
-    const { data, error } = await db.rpc('internal_submit_host_application', {
+    // 3) Was the "face with CNIC" photo taken of a live person (not a printed or on-screen photo)?
+    //    Without it a gallery photo could pass the face match; auto-approval needs it Approved.
+    //    If the check can't run, a person reviews the application instead.
+    const liveForm = new FormData();
+    liveForm.append('user_image', selfie, 'selfie.jpg');
+    liveForm.append('face_liveness_score_decline_threshold', '50');
+    liveForm.append('vendor_data', userId);
+    const liveness = await diditForm<LivenessResult>('/passive-liveness/', liveForm).catch(() => null);
+
+    const args = {
       p_user: userId,
       p_full_name: fullName,
       p_phone: phone,
@@ -104,7 +114,14 @@ Deno.serve(
       p_age: typeof id.age === 'number' ? id.age : null,
       p_id_request: idRes.request_id ?? null,
       p_face_request: faceRes.request_id ?? null,
-    });
+    };
+    let { data, error } = await db.rpc('internal_submit_host_application', { ...args, p_liveness_status: liveness?.liveness?.status ?? null });
+    // Before 20261019020000_analysis_fixes.sql the function has no liveness argument and may
+    // auto-approve on the face match alone; without a passed liveness check, send it to a person.
+    if (error?.code === 'PGRST202') {
+      const live = liveness?.liveness?.status === 'Approved';
+      ({ data, error } = await db.rpc('internal_submit_host_application', live ? args : { ...args, p_face_status: null }));
+    }
     if (error) rpcError(error);
     return json(data);
   }),

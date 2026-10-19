@@ -21,7 +21,8 @@ Deno.serve(async (req) => {
   const roomName = event.room?.name;
   try {
     if (roomName && (event.event === 'participant_joined' || event.event === 'participant_left')) {
-      // numParticipants includes the host.
+      // The database counts viewers from its own records (the host may be reconnecting); this
+      // estimate is only kept for the function's arguments.
       const count = Math.max(0, (event.room?.numParticipants ?? 1) - 1);
       const { error } = await db.rpc('internal_viewer_event', {
         p_livekit_room: roomName,

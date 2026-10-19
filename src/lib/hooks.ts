@@ -202,6 +202,7 @@ export function useRealtime(
   filter: string | undefined,
   onChange: (payload: { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }) => void,
   enabled = true,
+  event: '*' | 'INSERT' | 'UPDATE' | 'DELETE' = '*',
 ) {
   const supabase = useSupabase();
   // Always call the latest callback, so handlers see current state (not the first render's).
@@ -212,13 +213,13 @@ export function useRealtime(
   useEffect(() => {
     if (!enabled) return;
     const channel = supabase
-      .channel(`${table}:${filter ?? 'all'}:${Math.random().toString(36).slice(2)}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table, filter }, (payload) =>
+      .channel(`${table}:${event}:${filter ?? 'all'}:${Math.random().toString(36).slice(2)}`)
+      .on('postgres_changes', { event, schema: 'public', table, filter }, (payload) =>
         handler.current(payload as unknown as { eventType: string; new: Record<string, unknown>; old: Record<string, unknown> }),
       )
       .subscribe();
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [supabase, table, filter, enabled]);
+  }, [supabase, table, filter, enabled, event]);
 }

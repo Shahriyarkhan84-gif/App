@@ -703,7 +703,7 @@ select tests.ok((select subject_id from public.get_rankings('gifter', 'week') wh
 reset role;
 
 ---------------------------------------------------------------------------------------
--- Viewer events: counts follow LiveKit, the peak only goes up
+-- Viewer events: counts are the viewers in the live, the peak only goes up
 ---------------------------------------------------------------------------------------
 insert into public.profiles (id, username) values ('ve_host', 've_host'), ('ve_fan', 've_fan');
 insert into public.hosts (user_id) values ('ve_host');
@@ -711,16 +711,16 @@ insert into public.rooms (host_id, status, cover_url) values ('ve_host', 'live',
 insert into public.streams (room_id, host_id, title) select id, host_id, 've' from public.rooms where host_id = 've_host';
 update public.rooms r set current_stream_id = s.id from public.streams s where s.room_id = r.id and r.host_id = 've_host';
 select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 've_host'), 've_fan', true, 5);
-select tests.ok((select viewer_count from public.rooms where host_id = 've_host') = 5
-  and (select peak_viewers from public.streams where host_id = 've_host') = 5, 'a join sets the viewer count and peak');
+select tests.ok((select viewer_count from public.rooms where host_id = 've_host') = 1
+  and (select peak_viewers from public.streams where host_id = 've_host') = 1, 'a join sets the viewer count and peak');
 select tests.ok(exists (select 1 from public.viewers v join public.streams s on s.id = v.stream_id where s.host_id = 've_host' and v.user_id = 've_fan' and v.left_at is null), 'a join records the viewer');
 select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 've_host'), 've_fan', false, 3);
-select tests.ok((select viewer_count from public.rooms where host_id = 've_host') = 3
-  and (select peak_viewers from public.streams where host_id = 've_host') = 5, 'a leave lowers the count but never the peak');
+select tests.ok((select viewer_count from public.rooms where host_id = 've_host') = 0
+  and (select peak_viewers from public.streams where host_id = 've_host') = 1, 'a leave lowers the count but never the peak');
 select tests.ok((select left_at is not null from public.viewers v join public.streams s on s.id = v.stream_id where s.host_id = 've_host' and v.user_id = 've_fan'), 'a leave records when the viewer left');
 update public.rooms set status = 'offline' where host_id = 've_host';
 select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 've_host'), 've_fan', true, 40);
-select tests.ok((select viewer_count from public.rooms where host_id = 've_host') = 3, 'events for a room that is not live are ignored');
+select tests.ok((select viewer_count from public.rooms where host_id = 've_host') = 0, 'events for a room that is not live are ignored');
 
 ---------------------------------------------------------------------------------------
 -- Website APK: only the service role chooses which build zynalive.com/download offers
@@ -801,5 +801,41 @@ insert into public.room_seats (room_id, seat, user_id, created_at)
   select id, 1, 'st_guest', now() - interval '40 seconds' from public.rooms where host_id = 'ok_host';
 select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 'ok_host'), 'st_fan', true, 2);
 select tests.ok(not exists (select 1 from public.room_seats where user_id = 'st_guest'), 'a seat left behind during the grace is freed');
+
+---------------------------------------------------------------------------------------
+-- 2026-10-19 app analysis fixes
+---------------------------------------------------------------------------------------
+-- Every table clients can reach has Row Level Security (catches a future table without it).
+select tests.ok(not exists (
+  select 1 from pg_class c join pg_namespace n on n.oid = c.relnamespace
+  where n.nspname = 'public' and c.relkind in ('r', 'p') and not c.relrowsecurity
+), 'every public table has row level security');
+
+-- Fallback rate limit: counts per key inside the window; only the service role may call it.
+select tests.ok(not has_function_privilege('authenticated', 'public.internal_rate_limit(text, int, int)', 'execute'), 'clients cannot call the rate limiter');
+select tests.ok(public.internal_rate_limit('t:rl', 2, 60) and public.internal_rate_limit('t:rl', 2, 60), 'requests within the limit pass');
+select tests.ok(not public.internal_rate_limit('t:rl', 2, 60), 'the request over the limit is refused');
+select tests.ok(public.internal_rate_limit('t:other', 2, 60), 'other users and actions have their own count');
+update private.rate_limits set window_start = now() - interval '2 minutes' where key = 't:rl';
+select tests.ok(public.internal_rate_limit('t:rl', 2, 60), 'a new window starts the count again');
+
+-- A new live sweeps lives whose host never connected (no join needed).
+insert into public.profiles (id, username) values ('sw_old', 'sw_old'), ('sw_new', 'sw_new');
+insert into public.hosts (user_id) values ('sw_old'), ('sw_new');
+insert into public.rooms (host_id, status, cover_url) values ('sw_old', 'live', 'x');
+insert into public.streams (room_id, host_id, title, started_at)
+  select id, host_id, 'sw', now() - interval '20 minutes' from public.rooms where host_id = 'sw_old';
+update public.rooms r set current_stream_id = s.id from public.streams s where s.room_id = r.id and r.host_id = 'sw_old';
+insert into public.rooms (host_id, status, cover_url) values ('sw_new', 'live', 'x');
+insert into public.streams (room_id, host_id, title) select id, host_id, 'sw' from public.rooms where host_id = 'sw_new';
+select tests.ok((select status from public.rooms where host_id = 'sw_old') = 'offline', 'a new live ends a dead one whose host never connected');
+
+-- Viewer count comes from who is in the live, not LiveKit's estimate (host reconnecting).
+insert into public.profiles (id, username) values ('vc_fan1', 'vc_fan1'), ('vc_fan2', 'vc_fan2');
+select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 'ok_host'), 'vc_fan1', true, 0);
+select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 'ok_host'), 'vc_fan2', true, 0);
+select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 'ok_host'), 'vc_fan1', false, 99);
+select tests.ok((select viewer_count from public.rooms where host_id = 'ok_host')
+  = (select count(*) from public.viewers v join public.rooms r on r.current_stream_id = v.stream_id where r.host_id = 'ok_host' and v.left_at is null), 'viewer count matches the viewers in the live');
 
 drop schema tests cascade;

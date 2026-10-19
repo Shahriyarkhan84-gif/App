@@ -14,7 +14,7 @@ import { AgencyOwnerBadge, Coin, compactNumber, HostBadge, IconButton, Row, Scre
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { env } from '@/lib/env';
-import { useFocusedAsync, useRealtime } from '@/lib/hooks';
+import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useI18n } from '@/lib/i18n';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
@@ -27,6 +27,7 @@ export default function ProfileScreen() {
   const { t } = useI18n();
   const track = useAnalytics();
   const { profile, host, isHost, isPlatformAdmin, error, reload } = useProfile();
+  const offline = useOffline();
   const focused = useIsFocused();
   const { c: d } = useTheme();
 
@@ -61,7 +62,7 @@ export default function ProfileScreen() {
     await WebBrowser.openBrowserAsync(env.productBridgeUrl);
   };
 
-  if (!profile) return <Screen><StateView state={error ? { kind: 'error', error, onRetry: reload } : { kind: 'loading' }} /></Screen>;
+  if (!profile) return <Screen><StateView state={offline ? { kind: 'offline', onRetry: reload } : error ? { kind: 'error', error, onRetry: reload } : { kind: 'loading' }} /></Screen>;
 
   const verified = host?.verification_status === 'approved';
   const isAgencyOwner = profile?.role === 'AGENCY_ADMIN';

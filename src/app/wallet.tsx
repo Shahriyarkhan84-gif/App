@@ -56,27 +56,34 @@ export default function WalletScreen() {
     // A failed balance load must show an error, not a 0 balance.
     if (wallet.error) throw wallet.error;
     if (txs.error) throw txs.error;
+    // Never guess a region when it can't be read: other countries' prices fail at checkout. The
+    // balance and history still show; the prices say they couldn't load.
+    const pricesFailed = !!region.error;
     const myRegion = (region.data as { code?: string } | null)?.code ?? 'GLOBAL';
-    const mine = (packages.data as (CoinPackage & { region: string })[]).filter((p) => p.region === myRegion);
-    return { wallet: wallet.data ?? { coin_balance: 0, frozen: false }, packages: mine as CoinPackage[], txs: (txs.data ?? []) as Tx[] };
+    const mine = pricesFailed ? [] : (packages.data as (CoinPackage & { region: string })[]).filter((p) => p.region === myRegion);
+    return { wallet: wallet.data ?? { coin_balance: 0, frozen: false }, packages: mine as CoinPackage[], pricesFailed, txs: (txs.data ?? []) as Tx[] };
   }, [userId], 'wallet');
   // Coins are credited by the Stripe webhook; the balance updates live.
   useRealtime('wallets', `user_id=eq.${userId}`, () => reload());
   // If the webhook is late or missed, the server checks this buyer's open payments with Stripe
   // directly (on open and after returning from checkout), so a paid purchase is never left uncredited.
+  /** Asks the server to check this buyer's open payments with Stripe; true once nothing is pending. */
+  const checkPayments = useCallback(async () => {
+    try {
+      const r = await reconcilePayments(supabase);
+      if (r.credited || r.failed) reload();
+      return r.pending === 0;
+    } catch {
+      return false; // best effort: the webhook remains the main path
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase]);
   useFocusEffect(
     useCallback(() => {
-      let active = true;
-      reconcilePayments(supabase)
-        .then((r) => {
-          if (active && (r.credited || r.failed)) reload();
-        })
-        .catch(() => {}); // best effort: the webhook remains the main path
-      return () => {
-        active = false;
-      };
+      void checkPayments();
+      // returnStatus: check again when Stripe sends the web app back here.
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [supabase, returnStatus]),
+    }, [checkPayments, returnStatus]),
   );
 
   const buy = async (pkg: CoinPackage) => {
@@ -88,7 +95,17 @@ export default function WalletScreen() {
       if (Platform.OS === 'web') window.location.assign(url);
       else {
         const result = await WebBrowser.openAuthSessionAsync(url, returnTo);
-        if (result.type === 'success' && result.url.includes('status=success')) setAwaiting(data?.wallet.coin_balance ?? 0);
+        const paid = result.type === 'success' && result.url.includes('status=success');
+        if (paid) setAwaiting(data?.wallet.coin_balance ?? 0);
+        // The phone returns to this same (still focused) screen, so check with Stripe now, and a few
+        // more times after a payment, instead of waiting for the next visit. Closing the checkout
+        // page early can still mean it was paid, so that is checked once too.
+        void (async () => {
+          for (const wait of paid ? [0, 3000, 7000, 15000, 30000] : [0]) {
+            if (wait) await new Promise((r) => setTimeout(r, wait));
+            if (await checkPayments()) return;
+          }
+        })();
       }
       reload();
     } catch (e) {
@@ -119,6 +136,16 @@ export default function WalletScreen() {
 
               <View style={{ gap: 10 }}>
                 <Text variant="h3">Buy coins</Text>
+                {data.pricesFailed ? (
+                  <Row gap={10} style={{ padding: 14, borderRadius: 16, backgroundColor: c.surface }}>
+                    <Text variant="bodySmall" muted style={{ flex: 1 }}>Couldn&apos;t load prices for your country.</Text>
+                    <Button title="Try again" variant="secondary" onPress={reload} style={{ minHeight: 40, paddingHorizontal: 16 }} />
+                  </Row>
+                ) : data.packages.length === 0 ? (
+                  <Text variant="bodySmall" muted style={{ padding: 14, borderRadius: 16, backgroundColor: c.surface }}>
+                    Coins aren&apos;t on sale in your country yet. We&apos;ll add your country soon.
+                  </Text>
+                ) : null}
                 <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {data.packages.map((p, i) => {
                     const on = pick?.id === p.id;

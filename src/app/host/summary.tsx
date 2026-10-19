@@ -7,7 +7,7 @@ import { ScrollView, View } from 'react-native';
 import { FadeIn } from '@/components/Motion';
 import { StateView } from '@/components/StateView';
 import { Button, Card, Row, Screen, Text, type IconName } from '@/components/ui';
-import { useAsync, useRealtime } from '@/lib/hooks';
+import { useAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 import { shareMessage } from '@/lib/share';
@@ -37,6 +37,7 @@ export default function StreamSummaryScreen() {
     const t = setInterval(reloadStream, 15000);
     return () => clearInterval(t);
   }, [coaching, stream.data, reloadStream]);
+  const offline = useOffline();
   const leave = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
   const s = stream.data;
@@ -46,6 +47,7 @@ export default function StreamSummaryScreen() {
     <Screen edges={[]}>
       <StateView state={s ? { kind: 'success' }
         : stream.data === null ? { kind: 'empty', title: 'Summary not found', body: 'This stream summary is no longer available.', action: { title: 'Back', onPress: leave } }
+        : offline ? { kind: 'offline', onRetry: stream.reload }
         : stream.error ? { kind: 'error', error: stream.error, onRetry: stream.reload } : { kind: 'loading' }}>
         <ScrollView contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 32, maxWidth: 560, width: '100%', alignSelf: 'center' }}>
           <FadeIn style={{ borderRadius: 22, overflow: 'hidden' }}>

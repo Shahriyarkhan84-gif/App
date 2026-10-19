@@ -98,7 +98,7 @@ and writes ledger rows — one transaction. See [ECONOMY.md](ECONOMY.md).
 
 **Buy coins** — `coins-checkout` creates a pending `payments` row priced from
 `coin_packages` (never from the client) and a Stripe Checkout session. Only the
-signed Stripe webhook can call `internal_credit_payment()`.
+signed Stripe webhook, or `payments-reconcile` asking Stripe directly (the safety net when the webhook is late), calls `internal_credit_payment()`.
 
 **Upload a video** — `create_media_upload()` reserves the asset and fixes the
 object name → the app uploads to `uploads/<host id>/<asset>.<ext>` →

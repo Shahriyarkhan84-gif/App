@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.9.64 — Fixes from the app analysis
+
+From `docs/reports/APP_ANALYSIS.md` (the new `app-analyst` agent).
+
+- **Fake host ID checks blocked** (H1): `host-application` runs Didit passive liveness on the "holding CNIC" photo, so a gallery, printed or on-screen photo no longer passes. Auto-approval needs ID, face match and liveness all Approved; anything else goes to a person (`liveness_failed` / `liveness_not_checked`).
+- **Rate limits can't switch off** (H2): without Upstash, every Edge Function limit (checkout, LiveKit tokens, host applications 5/day, search, account deletion, payment checks, kicks) uses a Postgres counter, `internal_rate_limit`. Agency codes can no longer be guessed for free.
+- **Busy lives are lighter** (M1, M2, M3): gift pop-ups load the gift list once and each sender's name once instead of 2 requests per gift per viewer. Home only hears lives starting (`streams` inserts) and ending (`rooms` leaving `live`), not every viewer-count change. Home draws 24 cards at a time and adds more as you scroll.
+- **Wallet** (M4, M5, M6): if your country can't be read, it says prices couldn't load (with Try again) instead of showing US-dollar packs that fail at checkout. Countries without packs see "Coins aren't on sale in your country yet". After paying in the phone app, the wallet checks with Stripe right away and a few more times, instead of waiting for you to reopen it.
+- **Paid but never credited** (L2): if saving the Stripe session on the payment failed, the Stripe webhook now links them from the session's `payment_id` metadata before crediting.
+- **Dead lives** (L3) are also ended whenever someone goes live, not only when someone joins. **Viewer counts** (L4) are counted from who is in the live, so they're right while the host reconnects (and no longer count the recorder).
+- `livekit-enforce` always answers `{ ok: true }` (L5), so it can't be used to check who is kicked or muted.
+- **Offline and disabled states** (L6): Me, Host live, Stream summary and Edit profile say you're offline (with retry); Edit profile disables Save and photo changes offline and explains how to allow photo access. Chat says up front when you can't message someone (restricted account, or you blocked them) and has **Unblock**.
+- People search uses trigram indexes (L7). A test now fails if any public table lacks row level security (L8). App `version` is 1.1.0, so over-the-air updates for this code don't reach older APKs that lack its native modules (L9).
+- Docs: `avatars_base` in ENVIRONMENT, crediting paths in ARCHITECTURE/SECURITY, `my_region` advisor note removed, REMAINING_WORK status corrected (L1, L11).
+- **Not live yet**: apply `20261019010000_bug_fixes.sql`, then `20261019020000_analysis_fixes.sql`, then deploy `livekit-webhook`, `livekit-enforce`, `host-application`, `stripe-webhook` and the other functions that use `_shared/redis.ts` (`coins-checkout`, `livekit-token`, `smart-search`, `didit-session`, `delete-account`, `payments-reconcile`). The app changes need a new build.
+
 ## 0.9.63 — Bug fixes
 
 - **Kicked people leave the live at once** (new `livekit-enforce` Edge Function, called by the app after a kick, block, mute or seat removal): LiveKit disconnects kicked/blocked people and takes the microphone/camera from anyone without a seat, instead of waiting up to 2 hours for their token to run out. It only applies what the database already decided, so it can never grant access.

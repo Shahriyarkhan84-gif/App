@@ -24,14 +24,15 @@
 - Agency codes are 4 random digits, issued once per agency and **permanent** (a trigger blocks any change,
   even by the owner platform). They are not secret credentials — a code only links a host who
   **passes Didit verification** to that agency. Each owner has exactly one agency. Wrong codes are rejected before any photo is sent to Didit, and
-  `host-application` is rate-limited (5/day per user), which limits code guessing.
+  `host-application` is rate-limited (5/day per user), which limits code guessing. Rate limits use Upstash when it is configured and otherwise a Postgres counter (`internal_rate_limit`), so they never silently switch off.
+- Host ID check: Didit checks the document, matches the face on the "holding CNIC" photo against the card, and runs passive liveness on that photo (a gallery, printed or on-screen photo fails it). Auto-approval needs all three Approved; anything else waits for a person.
 
 ## Financial trust boundary
 
 - Clients have no INSERT/UPDATE on `wallets`, `coin_transactions`, `payments`,
   `gifts`, `creator_earnings`, `withdrawals`, `platform_ledger`.
 - `internal_*` functions are executable only by `service_role` (edge functions,
-  worker). Coins are credited only from a signature-verified Stripe event.
+  worker). Coins are credited only by `internal_credit_payment()` with data Stripe itself returned: the signature-verified webhook, or `payments-reconcile` retrieving the session from Stripe.
 - Replay: `processed_webhook_events` + idempotent RPCs (status checks under row
   locks, unique ledger idempotency keys).
 - Prices come from `coin_packages` / `gift_catalog`; amount + currency are
@@ -98,9 +99,7 @@ CNIC photos and the full CNIC number are sent to Didit and never stored by Zynal
 
 Expected findings, all by design: *signed-in users can execute SECURITY
 DEFINER functions* (every public RPC checks the caller and role inside; that
-is the write path — covered by `10_must_pass.sql`), *anon can execute
-`my_region()`* (returns Global for signed-out visitors, nothing private), and
-*RLS enabled, no policy* on `media_views` / `processed_webhook_events` (no
+is the write path — covered by `10_must_pass.sql`), *RLS enabled, no policy* on `media_views` / `processed_webhook_events` (no
 client access at all). `10_must_pass.sql` asserts that anon can execute no
 other public function. Anything else the advisor reports is a bug.
 

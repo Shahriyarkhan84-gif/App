@@ -21,6 +21,8 @@ Deno.serve(
     const { roomId, userId } = await readJson<{ roomId: string; userId: string }>(req);
     if (!roomId || !UUID_RE.test(roomId) || typeof userId !== 'string' || !userId) throw new HttpError(400, 'invalid_request');
 
+    // Every answer is the same ({ ok: true }), so the call can't be used to find out whether
+    // someone is kicked or muted.
     const db = adminClient();
     const [{ data: room }, { data: bans }, { data: seat }] = await Promise.all([
       db.from('rooms').select('host_id,status,livekit_room,mode').eq('id', roomId).maybeSingle(),
@@ -28,14 +30,14 @@ Deno.serve(
       db.from('room_seats').select('seat').eq('room_id', roomId).eq('user_id', userId).maybeSingle(),
     ]);
     if (!room) throw new HttpError(404, 'room_not_found');
-    if (room.status !== 'live' || room.host_id === userId) return json({ applied: 'none' });
+    if (room.status !== 'live' || room.host_id === userId) return json({ ok: true });
 
     const active = (bans ?? []).filter((b) => !b.expires_at || new Date(b.expires_at) > new Date()).map((b) => b.kind);
     const lk = new RoomServiceClient(livekitApiHost(requireEnv('LIVEKIT_URL')), requireEnv('LIVEKIT_API_KEY'), requireEnv('LIVEKIT_API_SECRET'));
     try {
       if (active.includes('kick') || active.includes('block')) {
         await lk.removeParticipant(room.livekit_room, userId);
-        return json({ applied: 'removed' });
+        return json({ ok: true });
       }
       if (!seat || active.includes('mute')) {
         await lk.updateParticipant(room.livekit_room, userId, undefined, {
@@ -44,13 +46,13 @@ Deno.serve(
           canPublishData: false,
           canPublishSources: [] as TrackSource[],
         });
-        return json({ applied: 'listener' });
+        return json({ ok: true });
       }
     } catch (err) {
       // Not in the LiveKit room (already left): nothing to take away.
-      if (/not found|not_found|404/i.test(String((err as Error)?.message ?? err))) return json({ applied: 'none' });
+      if (/not found|not_found|404/i.test(String((err as Error)?.message ?? err))) return json({ ok: true });
       throw err;
     }
-    return json({ applied: 'none' });
+    return json({ ok: true });
   }),
 );

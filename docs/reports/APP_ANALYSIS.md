@@ -2,6 +2,8 @@
 
 **Date:** 2026-10-19 · **Version checked:** 0.9.63 (commit `5ae7ff3`) · **By:** App Analyst (read-only: no code changed)
 
+> **Update (0.9.64):** the code-side findings (H1, H2 fallback, M1–M6, L1–L9, L11 and the ✗ cells in the screen-states table) are fixed in code; see `docs/CHANGELOG.md`. They go live once both waiting migrations are applied and the functions deployed. Still open: owner actions, H3, H4, L10.
+
 ## Summary
 
 ### Check results

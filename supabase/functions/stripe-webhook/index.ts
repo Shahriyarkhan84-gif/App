@@ -49,12 +49,23 @@ async function rpc(name: string, args: Record<string, unknown>) {
   console.log(name, JSON.stringify(data));
 }
 
+/**
+ * coins-checkout saves the session id on the payment right after Stripe makes the page; if that
+ * save failed, the payment would never be found. The payment id is also in the session's metadata
+ * (set by our server, delivered in Stripe's signed event), so link them here; a no-op when linked.
+ */
+async function attachRef(session: Stripe.Checkout.Session) {
+  const paymentId = session.metadata?.payment_id;
+  if (paymentId) await rpc('internal_attach_payment_ref', { p_payment_id: paymentId, p_provider_ref: session.id });
+}
+
 async function handle(event: Stripe.Event) {
   switch (event.type) {
     case 'checkout.session.completed':
     case 'checkout.session.async_payment_succeeded': {
       const session = event.data.object;
       if (sessionOutcome(session) !== 'credit') return; // same rule as payments-reconcile
+      await attachRef(session);
       await rpc('internal_credit_payment', {
         p_provider_ref: session.id,
         p_payment_intent: intentId(session.payment_intent),
@@ -68,6 +79,7 @@ async function handle(event: Stripe.Event) {
       // Never paid: close the pending payment row (a paid one is left alone).
       const session = event.data.object;
       if (session.mode !== 'payment') return;
+      await attachRef(session);
       await rpc('internal_fail_payment', { p_provider_ref: session.id });
       break;
     }

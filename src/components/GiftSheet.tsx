@@ -149,18 +149,47 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
   );
 }
 
+// Toast lookups shared by every viewer screen: the gift catalogue is loaded once (refreshed after
+// 10 minutes) and each sender's name once, so a busy live doesn't cost every viewer two database
+// requests per gift.
+const TOAST_CATALOG_MS = 10 * 60_000;
+let toastCatalog: { at: number; byId: Map<number, { icon: string; name: string }> } | null = null;
+let toastCatalogLoad: Promise<void> | null = null;
+const senderNames = new Map<string, string>();
+const MAX_SENDER_NAMES = 500;
+
 /** Floating toasts for gifts arriving in a room (realtime). */
 export function GiftToasts({ roomId }: { roomId: string }) {
   const supabase = useSupabase();
   const [toasts, setToasts] = useState<{ id: string; sender: string; gift: string; count: number }[]>([]);
+  const giftFor = async (giftId: number) => {
+    if (!toastCatalog?.byId.has(giftId) || Date.now() - toastCatalog.at > TOAST_CATALOG_MS) {
+      toastCatalogLoad ??= Promise.resolve(supabase.from('gift_catalog').select('id,icon,name'))
+        .then(({ data }) => {
+          if (data) toastCatalog = { at: Date.now(), byId: new Map(data.map((g) => [g.id as number, g as { icon: string; name: string }])) };
+        })
+        .catch(() => {})
+        .finally(() => {
+          toastCatalogLoad = null;
+        });
+      await toastCatalogLoad;
+    }
+    return toastCatalog?.byId.get(giftId);
+  };
+  const senderFor = async (senderId: string) => {
+    const known = senderNames.get(senderId);
+    if (known) return known;
+    const { data } = await supabase.from('profiles').select('display_name,username').eq('id', senderId).maybeSingle();
+    const name = data?.display_name ?? data?.username ?? 'Someone';
+    if (senderNames.size >= MAX_SENDER_NAMES) senderNames.clear();
+    if (data) senderNames.set(senderId, name);
+    return name;
+  };
   useRealtime('gifts', `room_id=eq.${roomId}`, async (payload) => {
     if (payload.eventType !== 'INSERT') return;
     const g = payload.new as { id: string; sender_id: string; gift_id: number; quantity: number };
-    const [{ data: sender }, { data: gift }] = await Promise.all([
-      supabase.from('profiles').select('display_name,username').eq('id', g.sender_id).maybeSingle(),
-      supabase.from('gift_catalog').select('icon,name').eq('id', g.gift_id).maybeSingle(),
-    ]);
-    const toast = { id: g.id, sender: sender?.display_name ?? sender?.username ?? 'Someone', gift: `${gift?.icon ?? '🎁'} ${gift?.name ?? 'a gift'}`, count: g.quantity };
+    const [sender, gift] = await Promise.all([senderFor(g.sender_id), giftFor(g.gift_id)]);
+    const toast = { id: g.id, sender, gift: `${gift?.icon ?? '🎁'} ${gift?.name ?? 'a gift'}`, count: g.quantity };
     setToasts((t) => [...t.slice(-2), toast]);
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== g.id)), 4000);
   });

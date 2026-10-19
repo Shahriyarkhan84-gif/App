@@ -16,7 +16,7 @@ import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { getLiveKitToken, rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
-import { useAsync, useFocusedAsync, useRealtime } from '@/lib/hooks';
+import { useAsync, useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
 import { liveColors as c } from '@/lib/theme';
 import { displayName, normalizeRooms, ROOM_SELECT, type Room } from '@/lib/types';
@@ -38,6 +38,7 @@ export default function HostLiveScreen() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviting, setInviting] = useState<string | null>(null);
 
+  const offline = useOffline();
   const session = useAsync(async () => {
     const { data: room, error } = await supabase.from('rooms')
       .select('id,title,status,viewer_count,current_stream_id,current_battle_id').eq('host_id', userId!).single();
@@ -201,6 +202,8 @@ export default function HostLiveScreen() {
   else if (dropped && dropped === stageToken) state = { kind: 'error', error: new Error('connection_lost'), onRetry: () => { setDropped(null); session.reload(); } };
   else if (!session.data) state = { kind: 'loading' };
   else if (!session.data.token) state = { kind: 'empty', title: "You're not live", action: { title: 'Back', onPress: () => (router.canGoBack() ? router.back() : router.dismissTo('/create')) } };
+  // No connection: say so (and retry) instead of a spinner or a generic error.
+  if (offline && (state.kind === 'loading' || state.kind === 'error')) state = { kind: 'offline', onRetry: () => { setDropped(null); session.reload(); } };
 
   const iAmChallenger = battle?.status === 'invited' && mySide === 'a';
   const iAmChallenged = battle?.status === 'invited' && mySide === 'b';

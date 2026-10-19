@@ -11,6 +11,7 @@ import { Alert, confirmAction } from '@/lib/alert';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useAsync, useOffline, useRealtime } from '@/lib/hooks';
+import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 import { displayName } from '@/lib/types';
@@ -24,20 +25,23 @@ export default function ChatScreen() {
   const { c, radius } = useTheme();
   const insets = useSafeAreaInsets();
   const offline = useOffline();
+  const { profile } = useProfile();
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const listRef = useRef<FlatList<DM>>(null);
 
   const { data, error, loading, reload } = useAsync(async () => {
-    const [msgs, other] = await Promise.all([
+    const [msgs, other, block] = await Promise.all([
       supabase.from('direct_messages').select('*')
         .or(`and(sender_id.eq.${userId},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${userId})`)
         .order('created_at', { ascending: false }).limit(200),
       supabase.from('profiles').select('display_name,username,avatar_url').eq('id', otherId).maybeSingle(),
+      // Only your own blocks are readable; being blocked by them is still found out on send.
+      supabase.from('user_blocks').select('blocked_id').eq('blocker_id', userId!).eq('blocked_id', otherId).maybeSingle(),
     ]);
     if (msgs.error) throw msgs.error;
     // Newest 200, shown oldest first.
-    return { messages: (msgs.data as DM[]).reverse(), other: other.data };
+    return { messages: (msgs.data as DM[]).reverse(), other: other.data, iBlocked: !!block.data };
   }, [userId, otherId]);
 
   useRealtime('direct_messages', `recipient_id=eq.${userId}`, (p) => {
@@ -51,10 +55,14 @@ export default function ChatScreen() {
       .eq('recipient_id', userId!).eq('sender_id', otherId).is('read_at', null);
   }, [data, supabase, userId, otherId]);
 
+  // Restricted or banned accounts, and people you blocked, can't be messaged: say so up front.
+  const cantSend = profile && profile.status !== 'active' ? 'Your account can’t send messages right now.'
+    : data?.iBlocked ? 'You blocked this person. Unblock them to send a message.' : null;
+
   const send = async () => {
     const body = draft.trim();
     // The keyboard's return key bypasses the disabled Send button.
-    if (!body || sending || offline) return;
+    if (!body || sending || offline || cantSend) return;
     setSending(true);
     try {
       await rpc(supabase, 'send_direct_message', { p_recipient: otherId, p_body: body });
@@ -80,9 +88,16 @@ export default function ChatScreen() {
           }
         },
       },
-      {
+      data?.iBlocked ? {
+        text: 'Unblock',
+        onPress: async () => {
+          const { error: unblockErr } = await supabase.from('user_blocks').delete().eq('blocker_id', userId!).eq('blocked_id', otherId);
+          if (unblockErr) Alert.alert('Could not unblock', friendlyError(unblockErr));
+          else reload();
+        },
+      } : {
         text: 'Block',
-        style: 'destructive',
+        style: 'destructive' as const,
         onPress: () => confirmAction('Block this person?', "You'll stop following each other and they can't message you.", 'Block', async () => {
           try {
             await rpc(supabase, 'block_user', { p_user: otherId });
@@ -143,11 +158,12 @@ export default function ChatScreen() {
             }}
           />
         </StateView>
+        {cantSend && <Text variant="bodySmall" muted style={{ paddingHorizontal: 16, paddingTop: 8 }}>{cantSend}</Text>}
         <Row style={{ padding: 12 }}>
           <View style={{ flex: 1 }}>
-            <Input value={draft} onChangeText={setDraft} placeholder="Message" maxLength={1000} onSubmitEditing={send} />
+            <Input editable={!cantSend} value={draft} onChangeText={setDraft} placeholder="Message" maxLength={1000} onSubmitEditing={send} />
           </View>
-          <Button title="Send" onPress={send} loading={sending} disabled={!draft.trim() || offline} />
+          <Button title="Send" onPress={send} loading={sending} disabled={!draft.trim() || offline || !!cantSend} />
         </Row>
       </KeyboardAvoidingView>
     </Screen>
