@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import pathlib
 import subprocess
 import tempfile
@@ -37,6 +38,22 @@ class MediaTools(Protocol):
     def run(self, args: list[str]) -> None: ...
 
 
+# ffmpeg/ffprobe parse untrusted uploads. They get only PATH from the environment (never the
+# service-role key or DATABASE_URL), and may read local files only (no http/tcp/concat tricks
+# from inside a crafted file).
+def _tool_env() -> dict[str, str]:
+    return {"PATH": os.environ.get("PATH", "/usr/bin:/bin")}
+
+
+def _files_only(args: list[str]) -> list[str]:
+    out: list[str] = []
+    for a in args:
+        if a == "-i":
+            out += ["-protocol_whitelist", "file"]
+        out.append(a)
+    return out
+
+
 @dataclass
 class FFmpegTools:
     ffprobe: str = "ffprobe"
@@ -44,21 +61,23 @@ class FFmpegTools:
 
     def probe(self, path: pathlib.Path) -> dict:
         out = subprocess.run(
-            [self.ffprobe, "-v", "error", "-print_format", "json", "-show_format", "-show_streams",
+            [self.ffprobe, "-v", "error", "-protocol_whitelist", "file", "-print_format", "json", "-show_format", "-show_streams",
              # First frame's side data carries HDR10 mastering / light-level metadata.
              "-show_frames", "-read_intervals", "%+#1", "-select_streams", "v:0", str(path)],
-            capture_output=True, text=True, timeout=300, check=False)
+            capture_output=True, text=True, timeout=300, check=False, env=_tool_env())
         if out.returncode != 0:
             raise MediaError(f"unreadable source: {out.stderr.strip()[:300]}")
         data = json.loads(out.stdout or "{}")
         # -select_streams limited streams to video; re-probe once for audio presence.
-        audio = subprocess.run([self.ffprobe, "-v", "error", "-print_format", "json", "-show_streams",
-                                "-select_streams", "a", str(path)], capture_output=True, text=True, timeout=120, check=False)
+        audio = subprocess.run([self.ffprobe, "-v", "error", "-protocol_whitelist", "file", "-print_format", "json", "-show_streams",
+                                "-select_streams", "a", str(path)], capture_output=True, text=True, timeout=120, check=False,
+                               env=_tool_env())
         data["streams"] = (data.get("streams") or []) + (json.loads(audio.stdout or "{}").get("streams") or [])
         return data
 
     def run(self, args: list[str]) -> None:
-        out = subprocess.run(args, capture_output=True, text=True, timeout=self.timeout_s, check=False)
+        out = subprocess.run(_files_only(args), capture_output=True, text=True, timeout=self.timeout_s, check=False,
+                             env=_tool_env())
         if out.returncode != 0:
             raise RuntimeError(f"{args[0]} exited {out.returncode}: {out.stderr.strip()[-500:]}")
 

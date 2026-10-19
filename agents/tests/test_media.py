@@ -141,7 +141,7 @@ class FakeTools:
 def media_world(db, tmp_path):
     db.run("""
       insert into public.profiles (id, username, display_name) values ('mhost', 'mhost', 'Media Host');
-      insert into public.hosts (user_id) values ('mhost');
+      insert into public.hosts (user_id, verification_status) values ('mhost', 'approved');
     """)
     asset = as_user(db, "mhost", "select id from public.create_media_upload('Night market', 'mov')")[0]["id"]
     source_path = db.one("select source_path from public.media_assets where id = %s", (asset,))["source_path"]

@@ -72,7 +72,12 @@ def build_creator_graph(db: Database, llm: LLM):
 
     def save(state: CreatorState) -> CreatorState:
         s, c = state["stats"], state["coaching"]
-        db.run("update public.streams set ai_summary = %s where id = %s", (Jsonb(c), s["id"]))
+        # Private to the host (stream_coaching RLS); streams rows are public.
+        db.run(
+            "insert into public.stream_coaching (stream_id, host_id, summary) values (%s, %s, %s) "
+            "on conflict (stream_id) do update set summary = excluded.summary",
+            (s["id"], s["host_id"], Jsonb(c)),
+        )
         db.notify(s["host_id"], "creator_assist", c["headline"], c["summary"], {"stream_id": str(s["id"])})
         return {}
 

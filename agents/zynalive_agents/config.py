@@ -18,6 +18,10 @@ class Settings:
     fraud_every_min: int = field(default_factory=lambda: _int("AI_FRAUD_EVERY_MIN", 30))
     recs_every_min: int = field(default_factory=lambda: _int("AI_RECS_EVERY_MIN", 15))
     max_attempts: int = field(default_factory=lambda: _int("AI_MAX_ATTEMPTS", 5))
+    # Spending cap: AI (Claude) jobs one replica starts per UTC day. Past it, AI jobs wait in the
+    # queue until the next day (media jobs keep running), so a flood of chat, reports or support
+    # tickets can't run up an unbounded bill. 0 = no cap.
+    daily_ai_jobs: int = field(default_factory=lambda: _int("AI_DAILY_JOB_LIMIT", 5000))
     # Which job queues this replica consumes: "all", "ai" or "media". Run media
     # (ffmpeg encoding) in its own deployment (Dockerfile.media) so long encodes
     # never starve moderation.

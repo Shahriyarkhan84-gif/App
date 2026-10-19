@@ -12,7 +12,9 @@ const NEEDED: Record<string, string[]> = {
   delete_account: ['CLERK_SECRET_KEY'],
   host_application: ['DIDIT_API_KEY'],
   smart_search: ['PINECONE_API_KEY'],
-  rate_limits: ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN'],
+  // Optional: without Upstash, limits use the Postgres counter (internal_rate_limit).
+  rate_limits_upstash: ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN'],
+  cnic_duplicate_check: ['CNIC_HASH_KEY'],
   emails: ['RESEND_API_KEY'],
 };
 

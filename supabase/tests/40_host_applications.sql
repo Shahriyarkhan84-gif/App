@@ -80,6 +80,14 @@ reset role;
 select tests.ok((select verification_status from public.hosts where user_id = 'ha_review') = 'approved', 'admin approval applied');
 select tests.ok((select verified_at is not null from public.profiles where id = 'ha_review'), 'admin approval gives Host badge');
 
+-- The same CNIC on a second account never auto-approves.
+set role service_role;
+insert into public.profiles (id, username) values ('ha_twin1', 'ha_twin1'), ('ha_twin2', 'ha_twin2');
+select tests.ok((public.internal_submit_host_application('ha_twin1', 'Twin One', '+923001119999', '9999', '4821', 'Approved', 'Approved', 90, true, true, 30, 't1', 't2', 'Approved', 'hash-1') ->> 'status') = 'approved', 'first account with a CNIC is approved');
+select tests.ok((select r ->> 'status' = 'in_review' and (r -> 'reasons') ? 'cnic_reused'
+  from (select public.internal_submit_host_application('ha_twin2', 'Twin Two', '+923001118888', '9999', '4821', 'Approved', 'Approved', 90, true, true, 30, 't3', 't4', 'Approved', 'hash-1') as r) x), 'a second account with the same CNIC goes to review');
+reset role;
+
 -- Account deletion removes applications.
 set role service_role;
 select public.internal_delete_account('ha_bad');

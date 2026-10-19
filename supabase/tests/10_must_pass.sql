@@ -838,4 +838,79 @@ select public.internal_viewer_event((select livekit_room from public.rooms where
 select tests.ok((select viewer_count from public.rooms where host_id = 'ok_host')
   = (select count(*) from public.viewers v join public.rooms r on r.current_stream_id = v.stream_id where r.host_id = 'ok_host' and v.left_at is null), 'viewer count matches the viewers in the live');
 
+---------------------------------------------------------------------------------------
+-- 2026-10-19 security audit fixes
+---------------------------------------------------------------------------------------
+-- No internal_* function is callable by clients (blanket check against regressions).
+select tests.ok(not exists (
+  select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.proname like 'internal\_%'
+    and (has_function_privilege('authenticated', p.oid, 'execute') or has_function_privilege('anon', p.oid, 'execute'))
+), 'clients cannot execute any internal_* function');
+
+-- Tokens issued by Supabase Auth itself (not Clerk) are not a signed-in user.
+select set_config('request.jwt.claims', '{"sub":"alice","iss":"https://ref.supabase.co/auth/v1"}', false);
+select tests.ok(public.requesting_user_id() is null, 'a Supabase Auth token maps to no user');
+select set_config('request.jwt.claims', '{"sub":"alice","iss":"https://clerk.zynalive.com"}', false);
+select tests.ok(public.requesting_user_id() = 'alice', 'a Clerk token maps to its user');
+
+-- A banned owner loses admin rights; an owner cannot action a super admin.
+insert into public.profiles (id, username, role) values ('sec_owner', 'sec_owner', 'OWNER_ADMIN'), ('sec_root', 'sec_root', 'SUPER_ADMIN'), ('sec_user', 'sec_user', 'USER');
+select set_config('request.jwt.claims', '{"sub":"sec_owner"}', false);
+set role authenticated;
+select tests.ok(public.is_platform_admin(), 'an active owner is an admin');
+select tests.fails($$select public.apply_moderation_action('sec_root', 'temp_ban', 'x', 24)$$, '%protected_account%', 'an owner cannot ban the super admin');
+reset role;
+update public.profiles set status = 'banned' where id = 'sec_owner';
+select set_config('request.jwt.claims', '{"sub":"sec_owner"}', false);
+set role authenticated;
+select tests.ok(not public.is_platform_admin(), 'a banned owner is not an admin');
+select tests.fails($$select public.apply_moderation_action('sec_user', 'warning', 'x')$$, '%forbidden%', 'a banned owner cannot moderate');
+reset role;
+
+-- Uploads need the host ID check.
+insert into public.profiles (id, username) values ('sec_host', 'sec_host');
+insert into public.hosts (user_id) values ('sec_host');
+update public.platform_settings set value = value || '{"uploads_enabled": true}' where key = 'media';
+select set_config('request.jwt.claims', '{"sub":"sec_host"}', false);
+set role authenticated;
+select tests.fails($$select public.create_media_upload('Clip', 'mp4')$$, '%verification_required%', 'an unverified host cannot publish videos');
+reset role;
+
+-- Support tickets: 5 a day.
+select set_config('request.jwt.claims', '{"sub":"sec_user"}', false);
+set role authenticated;
+select public.create_support_ticket('Help me', 'Something broke') from generate_series(1, 5);
+select tests.fails($$select public.create_support_ticket('Help me', 'Something broke')$$, '%slow_down%', 'a 6th support ticket in a day is refused');
+reset role;
+
+-- Agency staff no longer read reports or withdrawals through RLS.
+select tests.ok(not exists (select 1 from pg_policies where tablename in ('reports', 'withdrawals') and qual like '%is_agency_admin_of_user%'),
+  'reports and withdrawals are not visible to agency staff');
+
+-- Hidden chat can't be read through a translation.
+insert into public.rooms (host_id, status, cover_url) values ('sec_host', 'offline', 'x');
+insert into public.messages (room_id, sender_id, body) select id, 'sec_host', 'hello' from public.rooms where host_id = 'sec_host';
+insert into public.message_translations (message_id, language, body) select id, 'ur', 'salaam' from public.messages where sender_id = 'sec_host';
+select set_config('request.jwt.claims', '{"sub":"sec_user"}', false);
+set role authenticated;
+select tests.ok((select count(*) from public.message_translations t join public.messages m on m.id = t.message_id where m.sender_id = 'sec_host') = 1, 'a visible message''s translation is readable');
+reset role;
+update public.messages set status = 'hidden' where sender_id = 'sec_host';
+set role authenticated;
+select tests.ok((select count(*) from public.message_translations where body = 'salaam') = 0, 'a hidden message''s translation is not readable');
+reset role;
+
+-- AI coaching is private to the host.
+insert into public.streams (room_id, host_id, title) select id, host_id, 'c' from public.rooms where host_id = 'sec_host';
+insert into public.stream_coaching (stream_id, host_id, summary) select id, host_id, '{"headline":"x"}' from public.streams where host_id = 'sec_host';
+select set_config('request.jwt.claims', '{"sub":"sec_user"}', false);
+set role authenticated;
+select tests.ok((select count(*) from public.stream_coaching) = 0, 'others cannot read a host''s coaching');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"sec_host"}', false);
+set role authenticated;
+select tests.ok((select count(*) from public.stream_coaching) = 1, 'the host reads their own coaching');
+reset role;
+
 drop schema tests cascade;

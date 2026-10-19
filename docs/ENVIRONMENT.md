@@ -33,6 +33,7 @@ token plus `LIVEKIT_URL`.
 | `PINECONE_API_KEY` | `smart-search` (optional; the app falls back to word search and same-category lives without it). `PINECONE_INDEX` (default `zynalive-live`) or `PINECONE_INDEX_HOST` to skip the index lookup |
 | `RESEND_API_KEY`, `EMAIL_FROM` | welcome email (optional) |
 | `DIDIT_API_KEY`, `DIDIT_WORKFLOW_ID`, `DIDIT_WEBHOOK_SECRET` | `didit-session`, `didit-webhook` (host identity verification) |
+| `CNIC_HASH_KEY` | `host-application`: key for the hash of the full CNIC that stops one person verifying several host accounts (a long random string; never change it once set, or old applications stop matching). Without it the duplicate check is off. |
 | `STORAGE_S3_ENDPOINT`, `STORAGE_S3_REGION`, `STORAGE_S3_ACCESS_KEY`, `STORAGE_S3_SECRET` | `livekit-webhook` live recordings: LiveKit egress writes into the `uploads` bucket through Supabase Storage's S3 endpoint (Project settings → Storage → S3 access keys). Only needed when `platform_settings.media.record_live` is on. |
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected automatically.
@@ -46,6 +47,7 @@ token plus `LIVEKIT_URL`.
 | `AI_MODEL` | `claude-opus-5` | Default model for all branches |
 | `AI_MODEL_<BRANCH>` | — | Per-branch override: `MODERATION`, `FRAUD`, `SUPPORT`, `CREATOR_ASSIST`, `TRANSLATION`, `CEO` |
 | `AI_CONCURRENCY` | 4 | Parallel jobs per worker |
+| `AI_DAILY_JOB_LIMIT` | 5000 | AI (Claude) jobs one worker starts per UTC day; past it AI jobs wait until the next day (media jobs keep running). `0` = no cap |
 | `AI_CEO_EVERY_MIN` / `AI_FRAUD_EVERY_MIN` / `AI_RECS_EVERY_MIN` | 60 / 30 / 15 | Schedules |
 | `WORKER_QUEUES` | `all` | `ai` (Dockerfile) · `media` (Dockerfile.media) · `all`. A replica never claims a job kind it has no handler for. |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | — | Media worker only: downloads sources from `uploads`, writes HLS to `media`. Server-side only. |

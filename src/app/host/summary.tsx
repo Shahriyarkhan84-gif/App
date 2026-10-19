@@ -22,13 +22,17 @@ export default function StreamSummaryScreen() {
 
   const stream = useAsync(async () => {
     if (!streamId) return null;
-    const { data, error } = await supabase.from('streams').select('*').eq('id', streamId).single();
+    const [{ data, error }, coaching] = await Promise.all([
+      supabase.from('streams').select('title,started_at,ended_at,peak_viewers,gift_coins').eq('id', streamId).single(),
+      // Private to the host: the Creator Assist agent's coaching lives in stream_coaching.
+      supabase.from('stream_coaching').select('summary').eq('stream_id', streamId).maybeSingle(),
+    ]);
     if (error) throw error;
-    return data as { title: string | null; started_at: string; ended_at: string; peak_viewers: number; gift_coins: number; ai_summary: Summary | null };
+    return { ...(data as { title: string | null; started_at: string; ended_at: string; peak_viewers: number; gift_coins: number }), ai_summary: (coaching.data?.summary ?? null) as Summary | null };
   }, [streamId]);
 
-  // The Creator Assist agent writes ai_summary shortly after the stream ends.
-  useRealtime('streams', `id=eq.${streamId}`, (p) => setAi((p.new as { ai_summary: Summary | null }).ai_summary), !!streamId);
+  // The Creator Assist agent writes the coaching shortly after the stream ends.
+  useRealtime('stream_coaching', `stream_id=eq.${streamId}`, (p) => setAi((p.new as { summary: Summary | null }).summary), !!streamId);
   const coaching = ai ?? stream.data?.ai_summary ?? null;
   // Fallback for projects without realtime on streams: check every 15 s until the coach is done.
   const reloadStream = stream.reload;

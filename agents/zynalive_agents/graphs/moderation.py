@@ -22,6 +22,11 @@ from ..llm import LLM, untrusted
 
 Category = Literal["ok", "spam", "harassment", "hate", "sexual", "violence", "self_harm", "scam", "other"]
 
+WARNING_TEXT = (
+    "Several reports about your behaviour were reviewed and found to break the community guidelines. "
+    "Please follow the rules to avoid restrictions."
+)
+
 SYSTEM = (
     "You moderate live-stream chat for Zynalive, a South-Asia-first social live streaming platform "
     "(Urdu, Hindi, Bengali, Roman Urdu, English and more). Judge messages in context, including slang "
@@ -121,7 +126,7 @@ def build_message_graph(db: Database, llm: LLM):
             effort="low",
             schema=MessageVerdict,
             prompt=(
-                f"Room: {msg['room_title']}\nRecent chat for context:\n{untrusted(context)}\n\n"
+                f"Room title:\n{untrusted(msg['room_title'] or '')}\nRecent chat for context:\n{untrusted(context)}\n\n"
                 f"Message to judge:\n{untrusted(msg['body'])}\n\n"
                 f"Heuristic flags: {', '.join(state.get('flags') or []) or 'none'}. "
                 f"Sender's moderation actions in the last 30 days: {state.get('prior_actions', 0)}."
@@ -213,14 +218,28 @@ def build_report_graph(db: Database, llm: LLM):
         )
         return {"assessment": a.model_dump()}
 
+    def distinct_reporters(target: str | None) -> int:
+        if not target:
+            return 0
+        row = db.one(
+            "select count(distinct reporter_id) as n from public.reports "
+            "where target_user_id = %s and created_at > now() - interval '7 days'",
+            (target,),
+        )
+        return int(row["n"]) if row else 0
+
     def act(state: ReportState) -> ReportState:
         r, a = state["report"], state["assessment"]
         db.run("update public.reports set ai_assessment = %s, status = 'reviewing' where id = %s", (Jsonb(a), r["id"]))
         action = a["recommended_action"]
         if not a["valid"] or action == "dismiss":
             return {"outcome": "recommend_dismiss"}
-        if action == "warning" and a["confidence"] >= 0.8:
-            db.run("select public.internal_ai_moderation(%s, 'warning', %s, %s)", (r["target_user_id"], a["summary"], r["id"]))
+        # An automatic warning needs a confident verdict and reports from at least two different
+        # people in the last week, so one person (or text they wrote to steer the model) can't get
+        # someone warned. The warning text is fixed: the model's summary is written partly from the
+        # reporter's words, so it stays in ai_assessment for the owner and is never sent to the user.
+        if action == "warning" and a["confidence"] >= 0.8 and distinct_reporters(r["target_user_id"]) >= 2:
+            db.run("select public.internal_ai_moderation(%s, 'warning', %s, %s)", (r["target_user_id"], WARNING_TEXT, r["id"]))
             return {"outcome": "warned"}
         db.propose_action("moderation", action, r["target_user_id"], a["summary"], a["confidence"],
                           {"hours": a.get("duration_hours") or 24, "report_id": str(r["id"])})

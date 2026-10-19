@@ -2,6 +2,10 @@
 
 ## Roles (RBAC)
 
+- Only Clerk sessions are signed-in users: `requesting_user_id()` ignores tokens issued by Supabase
+  Auth itself (`…/auth/v1`). Keep Supabase Auth sign-ups and anonymous sign-ins **off** in the dashboard.
+- Platform admin rights need an active, not deleted account; only a super admin can action a super admin.
+
 `USER · HOST · AGENCY_MEMBER · AGENCY_ADMIN · OWNER_ADMIN · SUPER_ADMIN`
 (`profiles.role`). Enforced server-side only:
 
@@ -16,8 +20,9 @@
 
 `admin_agency_ids()` / `member_agency_ids()` scope every agency query:
 
-- Agency admins/managers see earnings, withdrawals, reports and moderation for
-  **their own hosts only**; agents see their agency but **no financials**.
+- Agency admins/managers see earnings and moderation for **their own hosts only**; agents see
+  their agency but **no financials**. They don't see who reported their hosts or their hosts'
+  payout account numbers (reports and withdrawals are own-or-owner only).
 - Agency staff can recruit only **unassigned** hosts, only into their agency.
 - The Agency portal reads everything through `agency_portal()` (security definer): only the caller's own agency;
   earnings totals and applicant phone numbers only for admins/managers; never CNIC digits, photos or Didit data.
@@ -40,6 +45,7 @@
 
 ## Media uploads
 
+- Only hosts who passed the ID check can publish videos (`host_verification.required_to_upload`, on by default).
 - Hosts reserve an upload with `create_media_upload()`, which fixes the object
   name (`<own id>/<asset id>.<ext>`); the `uploads` bucket policy only allows
   inserting that exact reserved path while it's `awaiting_upload`. The bucket
@@ -88,8 +94,15 @@ CNIC photos and the full CNIC number are sent to Didit and never stored by Zynal
 
 ## AI safety
 
-- User content is fenced in `<untrusted>` tags and system prompts instruct the
-  model to treat it as data (prompt-injection defence).
+- User content (chat, reports, room titles) is fenced in `<untrusted>` tags (any fence-like tag
+  inside it is removed, in any case) and system prompts instruct the model to treat it as data
+  (prompt-injection defence).
+- An automatic AI warning needs reports from at least 2 different people in 7 days and uses a fixed
+  text; the model's words (partly written from the reporter's) are shown only to the owner.
+- Paid AI calls are capped: 5 support tickets a day per person, and the worker starts at most
+  `AI_DAILY_JOB_LIMIT` AI jobs a day (the rest wait in the queue).
+- ffmpeg/ffprobe (parsing untrusted uploads) run with only `PATH` in their environment (no
+  service-role key or database URL) and may read local files only (`-protocol_whitelist file`).
 - AI may only hide content and issue warnings automatically
   (`internal_ai_moderation` rejects anything else). Restrictions, bans and
   wallet freezes are `ai_actions` proposals executed only after owner approval.

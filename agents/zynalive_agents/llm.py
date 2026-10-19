@@ -8,6 +8,7 @@ outputs, so graph nodes never parse free text. Graph code depends only on the
 from __future__ import annotations
 
 import logging
+import re
 from typing import Literal, Protocol, TypeVar
 
 import anthropic
@@ -61,5 +62,9 @@ class ClaudeLLM:
         return response.parsed_output
 
 
+_FENCE = re.compile(r"<\s*/?\s*untrusted[^>]*>", re.IGNORECASE)
+
+
 def untrusted(text: str) -> str:
-    return f"<untrusted>\n{text.replace('</untrusted>', '')}\n</untrusted>"
+    # Any fence-like tag in user text (any case or spacing) is removed so it can't close the fence.
+    return f"<untrusted>\n{_FENCE.sub('', text)}\n</untrusted>"

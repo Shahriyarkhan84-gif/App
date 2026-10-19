@@ -5,7 +5,7 @@ import { ScrollView, View } from 'react-native';
 import { resolveState, StateView } from '@/components/StateView';
 import { Button, Card, Chip, Input, Row, Screen, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
-import { rpc } from '@/lib/api';
+import { enforceInRoom, rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
@@ -173,6 +173,12 @@ function ReportsSection() {
   const supabase = useSupabase();
   const offline = useOffline();
   const act = useAct();
+  // A ban takes the host's room offline in the database; close it in LiveKit too, so the banned
+  // host's stream stops for everyone watching now.
+  const closeLiveOf = async (userId: string) => {
+    const { data: room } = await supabase.from('rooms').select('id').eq('host_id', userId).maybeSingle();
+    if (room) void enforceInRoom(supabase, room.id, userId);
+  };
   const { data, error, loading, reload } = useFocusedAsync(async () => {
     const { data, error } = await supabase.from('reports').select('*').in('status', ['open', 'reviewing']).order('created_at', { ascending: false }).limit(100);
     if (error) throw error;
@@ -193,7 +199,7 @@ function ReportsSection() {
             <Row style={{ flexWrap: 'wrap' }}>
               <Button title="Warn" size="sm" onPress={() => act('apply_moderation_action', { p_user: r.target_user_id, p_action: 'warning', p_reason: r.ai_assessment?.summary ?? r.reason, p_report: r.id }, reload)} />
               <Button title="Restrict 24h" size="sm" variant="secondary" onPress={() => confirmThen('Restrict for 24 hours?', 'They can watch but not chat, gift or go live for a day.', 'Restrict', () => act('apply_moderation_action', { p_user: r.target_user_id, p_action: 'temp_restriction', p_reason: r.ai_assessment?.summary ?? r.reason, p_hours: 24, p_report: r.id }, reload))} />
-              <Button title="Ban 7d" size="sm" variant="danger" onPress={() => confirmThen('Ban for 7 days?', 'They are signed out of lives, chat and gifts for a week.', 'Ban', () => act('apply_moderation_action', { p_user: r.target_user_id, p_action: 'temp_ban', p_reason: r.ai_assessment?.summary ?? r.reason, p_hours: 168, p_report: r.id }, reload))} />
+              <Button title="Ban 7d" size="sm" variant="danger" onPress={() => confirmThen('Ban for 7 days?', 'They are signed out of lives, chat and gifts for a week.', 'Ban', () => act('apply_moderation_action', { p_user: r.target_user_id, p_action: 'temp_ban', p_reason: r.ai_assessment?.summary ?? r.reason, p_hours: 168, p_report: r.id }, () => { if (r.target_user_id) void closeLiveOf(r.target_user_id); reload(); }))} />
               <Button title="Dismiss" size="sm" variant="ghost" onPress={() => act('dismiss_report', { p_report: r.id }, reload)} />
             </Row>
           </Card>

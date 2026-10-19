@@ -29,14 +29,18 @@ export function windowSeconds(window: Window): number {
  * Sliding-window rate limit per user + action (Upstash). Without Upstash it falls back to a
  * fixed-window counter in Postgres (`internal_rate_limit`), so limits never silently switch off.
  */
-export async function rateLimit(action: string, userId: string, limit: number, window: Window) {
+export async function rateLimit(action: string, userId: string, limit: number, window: Window, opts: { failClosed?: boolean } = {}) {
   const r = getRedis();
   if (!r) {
     const { data, error } = await adminClient().rpc('internal_rate_limit', {
       p_key: `${action}:${userId}`, p_limit: limit, p_window_seconds: windowSeconds(window),
     });
-    // If the counter itself fails (e.g. before its migration is applied), don't block real users.
-    if (error) console.error('rate limit fallback failed', error.message);
+    // If the counter itself fails, don't block real users, except on actions that cost money
+    // (failClosed). Before its migration is applied (function missing) everything stays open.
+    if (error) {
+      console.error('rate limit fallback failed', error.message);
+      if (opts.failClosed && error.code !== 'PGRST202') throw new HttpError(503, 'rate_limit_unavailable', 'Please try again in a minute.');
+    }
     else if (data === false) throw new HttpError(429, 'rate_limited', 'Too many requests, slow down');
     return;
   }

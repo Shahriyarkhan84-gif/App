@@ -4,6 +4,7 @@ import { EgressStatus, WebhookReceiver } from 'npm:livekit-server-sdk@2';
 
 import { json, requireEnv } from '../_shared/cors.ts';
 import { isRecording, startHostRecording } from '../_shared/egress.ts';
+import { enforceParticipant } from '../_shared/livekit_enforce.ts';
 import { adminClient, alreadyProcessed, markEventProcessed } from '../_shared/supabase.ts';
 
 Deno.serve(async (req) => {
@@ -32,6 +33,11 @@ Deno.serve(async (req) => {
       });
       if (error) throw error;
       if (event.event === 'participant_joined' && event.participant?.identity) {
+        // Tokens last 2 hours: someone kicked, blocked or unseated (or anyone, once the live has
+        // ended or its host was banned) could reconnect with a token they already hold. Check
+        // every join against the database and take away what they shouldn't have.
+        const { data: room } = await db.from('rooms').select('id,host_id,status,livekit_room').eq('livekit_room', roomName).maybeSingle();
+        if (room) await enforceParticipant(db, room, event.participant.identity, event.participant.permission?.canPublish).catch((e) => console.error('enforce on join failed', e));
         await maybeRecordHost(db, roomName, event.participant.identity);
       }
     } else if (event.event === 'egress_ended' && event.egressInfo) {

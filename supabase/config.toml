@@ -27,3 +27,15 @@ verify_jwt = false
 verify_jwt = false
 [functions.host-application]
 verify_jwt = false
+[functions.livekit-enforce]
+verify_jwt = false
+[functions.payments-reconcile]
+verify_jwt = false
+[functions.smart-search]
+verify_jwt = false
+[functions.apk-publish]
+verify_jwt = false
+[functions.config-status]
+verify_jwt = false
+[functions.pay-session]
+verify_jwt = false

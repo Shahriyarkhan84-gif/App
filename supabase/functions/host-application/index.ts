@@ -37,6 +37,12 @@ function image(form: FormData, key: string): File {
   return f;
 }
 
+async function hmacHex(key: string, text: string) {
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(sig), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 function base64ToFile(b64: string, name: string) {
   const bin = atob(b64.replace(/^data:[^,]+,/, ''));
   const bytes = Uint8Array.from(bin, (ch) => ch.charCodeAt(0));
@@ -46,7 +52,7 @@ function base64ToFile(b64: string, name: string) {
 Deno.serve(
   handler(async (req) => {
     const { userId } = await requireUser(req);
-    await rateLimit('host-application', userId, 5, '24 h');
+    await rateLimit('host-application', userId, 5, '24 h', { failClosed: true });
 
     let form: FormData;
     try {
@@ -115,7 +121,14 @@ Deno.serve(
       p_id_request: idRes.request_id ?? null,
       p_face_request: faceRes.request_id ?? null,
     };
-    let { data, error } = await db.rpc('internal_submit_host_application', { ...args, p_liveness_status: liveness?.liveness?.status ?? null });
+    const p_liveness_status = liveness?.liveness?.status ?? null;
+    // One CNIC, one host account: a keyed hash of the full number (the number itself is never stored).
+    const cnicKey = Deno.env.get('CNIC_HASH_KEY');
+    if (!cnicKey) console.warn('CNIC_HASH_KEY not set: duplicate CNIC check is off');
+    const p_cnic_hash = cnicKey ? await hmacHex(cnicKey, cnic) : null;
+    let { data, error } = await db.rpc('internal_submit_host_application', { ...args, p_liveness_status, p_cnic_hash });
+    // Older database versions (migrations not applied yet) don't have the newer arguments.
+    if (error?.code === 'PGRST202') ({ data, error } = await db.rpc('internal_submit_host_application', { ...args, p_liveness_status }));
     // Before 20261019020000_analysis_fixes.sql the function has no liveness argument and may
     // auto-approve on the face match alone; without a passed liveness check, send it to a person.
     if (error?.code === 'PGRST202') {

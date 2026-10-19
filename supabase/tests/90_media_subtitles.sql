@@ -29,7 +29,7 @@ end $$;
 grant execute on all functions in schema tests to anon, authenticated, service_role;
 
 insert into public.profiles (id, username, display_name) values ('st_host', 'st_host', 'Sub Host'), ('st_viewer', 'st_viewer', 'Viewer');
-insert into public.hosts (user_id) values ('st_host');
+insert into public.hosts (user_id, verification_status) values ('st_host', 'approved');
 
 select set_config('request.jwt.claims', '{"sub":"st_host"}', false);
 set role authenticated;

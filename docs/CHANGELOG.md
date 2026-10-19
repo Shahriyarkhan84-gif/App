@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.9.65 — Backend security fixes
+
+From `docs/reports/SECURITY_AUDIT.md` (security-engineer agent). No Critical or High findings; these close the Medium and Low ones.
+
+- **Kicked and banned people can't sneak back** (M1): every LiveKit join is checked against the database (kick/block → removed; no seat or muted → listen only), a room that's no longer live is closed in LiveKit, and an owner's ban from the command center closes the host's live at once. Shared logic in `_shared/livekit_enforce.ts` (with Deno tests).
+- **Videos need the ID check** (M2), **the pay page only works for Zynalive's own payments** (M3, new `pay-session` function), **Supabase Auth tokens aren't users** (M4), **one CNIC, one host account** (M5, keyed hash with `CNIC_HASH_KEY`; reuse goes to review).
+- **AI cost limits** (M6): 5 support tickets a day per person; the worker starts at most `AI_DAILY_JOB_LIMIT` AI jobs a day.
+- **AI moderation** (L1): automatic warnings need 2+ different reporters and use a fixed text; untrusted-text fences can't be closed in any letter case; room titles are fenced.
+- **Admins** (L2): banned or deleted owners lose admin rights; only a super admin can action a super admin.
+- **Privacy** (L3–L5): agency staff no longer see reporters or payout accounts; translations of hidden chat are hidden; AI coaching moved to host-only `stream_coaching`.
+- L6 Tor sign-ups get Global prices; L7 production site links only open the Zynalive app; L8 ffmpeg runs without secrets and reads local files only; L9 `verify_jwt = false` for every Clerk-authenticated function; L10 checkout and host applications fail closed if the rate counter breaks, the website can't be framed, a test fails if any `internal_*` function becomes callable by clients.
+- Migration `20261019030000_security_fixes.sql` with must-pass tests.
+- **Not live yet**: apply `20261019010000_bug_fixes.sql`, `20261019020000_analysis_fixes.sql`, then `20261019030000_security_fixes.sql`; deploy every Edge Function (they share the changed `_shared` code) including the new `pay-session`; set `CNIC_HASH_KEY`; turn off Supabase Auth sign-ups. The app and website changes need a new build/deploy.
+
 ## 0.9.64 — Fixes from the app analysis
 
 From `docs/reports/APP_ANALYSIS.md` (the new `app-analyst` agent).

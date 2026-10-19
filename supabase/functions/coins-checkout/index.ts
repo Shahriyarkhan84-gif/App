@@ -31,7 +31,7 @@ async function createPayment(db: ReturnType<typeof adminClient>, userId: string,
 Deno.serve(
   handler(async (req) => {
     const { userId } = await requireUser(req);
-    await rateLimit('checkout', userId, 5, '1 m');
+    await rateLimit('checkout', userId, 5, '1 m', { failClosed: true });
 
     const { packageId, returnTo } = await readJson<{ packageId: number; returnTo: string }>(req);
     if (typeof packageId !== 'number' || !Number.isInteger(packageId)) throw new HttpError(400, 'invalid_package');

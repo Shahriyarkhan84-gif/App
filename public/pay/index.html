@@ -63,10 +63,14 @@
 
 <script>
 (function () {
+  var PAY_SESSION_URL = 'https://mdfjbhzriuwxafeagnwo.supabase.co/functions/v1/pay-session';
   // coins-checkout sends everything in the URL fragment (never sent to a server). Read it, then
   // take it out of the address bar so the client secret isn't left in history.
   var p = new URLSearchParams(location.hash.slice(1));
-  var cs = p.get('cs'), pk = p.get('pk'), ret = p.get('ret'), back = p.get('back');
+  // A publishable key in the link is ignored: the key comes from Zynalive's server, and only for
+  // a session Zynalive created (pay-session), so a link with someone else's Stripe session can't
+  // take a payment on this page.
+  var cs = p.get('cs'), ret = p.get('ret'), back = p.get('back');
   history.replaceState(null, '', location.pathname);
 
   var msg = document.getElementById('msg');
@@ -81,11 +85,18 @@
     msg.textContent = text;
     payBtn.disabled = true;
   }
-  if (!cs || !pk || typeof Stripe === 'undefined') {
+  function notFound() {
     document.getElementById('item').textContent = 'Payment not found';
-    return fail('This payment link is incomplete or expired. Go back to your wallet and try again.');
+    fail('This payment link is incomplete or expired. Go back to your wallet and try again.');
   }
+  if (!cs || typeof Stripe === 'undefined') return notFound();
 
+  fetch(PAY_SESSION_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cs: cs }) })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (res) { if (res && res.pk) start(res.pk); else notFound(); })
+    .catch(notFound);
+
+  function start(pk) {
   var stripe = Stripe(pk);
   var checkout = stripe.initCheckoutElementsSdk({
     clientSecret: cs,
@@ -137,6 +148,7 @@
       });
     });
   });
+  }
 })();
 </script>
 </body>

@@ -22,7 +22,7 @@ insert into public.profiles (id, username, display_name) values
   ('md_host', 'md_host', 'Media Host'), ('md_host2', 'md_host2', 'Other Host'),
   ('md_viewer', 'md_viewer', 'Viewer'), ('md_owner', 'md_owner', 'Owner');
 update public.profiles set role = 'OWNER_ADMIN' where id = 'md_owner';
-insert into public.hosts (user_id) values ('md_host'), ('md_host2');
+insert into public.hosts (user_id, verification_status) values ('md_host', 'approved'), ('md_host2', 'approved');
 insert into public.rooms (host_id, status, cover_url) values ('md_host', 'offline', 'https://cdn.test/md.jpg'), ('md_host2', 'offline', null);
 
 ---------------------------------------------------------------------------------------

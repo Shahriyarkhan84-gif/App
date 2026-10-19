@@ -106,6 +106,8 @@ class Worker:
         self.kinds = queue_kinds(self.dispatch, settings.queues)
         self.stop = threading.Event()
         self.slots = threading.Semaphore(settings.concurrency)
+        self.ai_day: str | None = None
+        self.ai_started = 0
         self.pool = ThreadPoolExecutor(max_workers=settings.concurrency, thread_name_prefix="agent")
 
     # Jobs ---------------------------------------------------------------------
@@ -134,14 +136,28 @@ class Worker:
         finally:
             self.slots.release()
 
+    def claimable_kinds(self, now: datetime | None = None) -> list[str]:
+        """This replica's job kinds, minus AI kinds once today's AI budget is used up."""
+        day = f"{(now or datetime.now(timezone.utc)):%Y%m%d}"
+        if day != self.ai_day:
+            self.ai_day, self.ai_started = day, 0
+        if self.settings.daily_ai_jobs and self.ai_started >= self.settings.daily_ai_jobs:
+            return [k for k in self.kinds if k in MEDIA_KINDS]
+        return self.kinds
+
     def drain_once(self) -> int:
         """Claims and starts as many jobs as there are free slots. Returns how many started."""
         started = 0
         while not self.stop.is_set() and self.slots.acquire(blocking=False):
-            job = self.db.claim_job(self.kinds)
+            kinds = self.claimable_kinds()
+            job = self.db.claim_job(kinds) if kinds else None
             if job is None:
                 self.slots.release()
+                if kinds != self.kinds and self.ai_started == self.settings.daily_ai_jobs:
+                    log.warning("daily AI job limit (%s) reached; AI jobs wait until tomorrow (UTC)", self.settings.daily_ai_jobs)
                 break
+            if job["kind"] not in MEDIA_KINDS:
+                self.ai_started += 1
             self.pool.submit(self.process, job)
             started += 1
         return started

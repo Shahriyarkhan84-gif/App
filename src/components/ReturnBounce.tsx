@@ -4,8 +4,9 @@ import { Platform } from 'react-native';
 
 import { StateView } from './StateView';
 
-// Allowed deep-link prefixes to bounce back into the native app.
-const APP_URL_PREFIXES = ['zynalive://', 'exp://', 'exps://'];
+// Allowed deep-link prefixes to bounce back into the native app. Expo Go links (exp://) only in
+// development: on zynalive.com they would let a link open anyone's Expo project.
+const APP_URL_PREFIXES = __DEV__ ? ['zynalive://', 'exp://', 'exps://'] : ['zynalive://'];
 
 /**
  * External flows (Stripe, Didit) redirect to the Vercel-hosted web app. If the

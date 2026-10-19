@@ -15,7 +15,7 @@ refusal fallbacks; override per branch with `AI_MODEL_<BRANCH>`.
 | 🤖 Moderation (reports) | every report | `load → assess → act` | report → `reviewing` with AI assessment; confident warnings | ladder actions |
 | 🤖 Fraud detection | every `AI_FRAUD_EVERY_MIN` (30) | `collect_signals (SQL) → assess → propose` | none | freeze wallet / account review / temp ban |
 | 🤖 Support | every ticket | `load → draft → respond` | answer or escalate | — |
-| 🤖 Creator assist | stream ends | `load → coach → save` | `streams.ai_summary` + host notification | — |
+| 🤖 Creator assist | stream ends | `load → coach → save` | `stream_coaching` (private to the host) + host notification | — |
 | 🤖 Translation | user taps Translate | `load → translate` | cached `message_translations` | — |
 | 🤖 Recommendations | every `AI_RECS_EVERY_MIN` (15) | `score` (SQL, no model) | `user_recommendations` ("For you" row) | — |
 | 🤖 Subtitles | a video (upload or live replay) with audio becomes ready | `extract audio → Whisper → source WebVTT → Claude translates cues (1:1 lines) → HLS subtitle playlists → master playlist gets EXT-X-MEDIA tracks` | `media_subtitles` rows; captions menu in the player (defaults to the viewer's language) | — |
