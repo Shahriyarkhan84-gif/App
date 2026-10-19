@@ -47,6 +47,7 @@ Tests: `supabase/tests/run.sh` (throwaway Postgres; needs `initdb`/`pg_ctl`/`psq
 | `…20261015010000_checkout_reuse.sql` | `internal_create_payment` takes a per-buyer advisory lock and reuses the buyer's pending Stripe payment for the same package (under 30 min old) instead of creating another, so retries can't produce two payments |
 | `…20261017010000_payment_reconcile.sql` | `internal_expire_unstarted_payments(user)` (service role): closes a buyer's pending payments that never got a Stripe page, after 2 hours; used by `payments-reconcile` |
 | `20261018010000_downloads_bucket.sql` | Public `downloads` storage bucket (APK and its `latest.json`; written only by the service role via `apk-publish`, no client write policies) + `platform_settings.android_apk` (the EAS build the website offers) |
+| `20261019010000_bug_fixes.sql` | `my_region()` signed-in only; indexes for 16 foreign keys; `internal_end_stream_by_livekit_room(room, created_at)` ignores a late room_finished for an earlier live; `streams.host_connected_at` + `private.end_unconnected_lives()` and a stale-seat sweep in `internal_viewer_event`; `set_avatar(path)` (own avatars folder only; clients lose `update (avatar_url)`, setting `media.avatars_base`); `send_direct_message` caps unanswered messages to strangers at 3 (`wait_for_reply`) |
 
 (Files `20260925…` sort after `20260924…`; the short names above drop the date prefix.)
 

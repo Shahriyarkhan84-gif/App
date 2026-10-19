@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 
 import { TabBarCenterButton, TabBarGlass, tabButton, useTabBarStyle } from '@/components/Menus';
 import { useI18n } from '@/lib/i18n';
+import { useHasUnread } from '@/lib/unread';
 import { useTheme } from '@/lib/theme';
 
 // User app navigation: Home · Party · [+ Go live] · Messages · Me
@@ -21,7 +22,7 @@ export default function TabsLayout() {
           tabBarButton: ({ onPress }) => <TabBarCenterButton icon="add" label={t('tab.golive')} onPress={onPress} />,
         }}
       />
-      <Tabs.Screen name="messages" options={{ title: t('tab.messages'), tabBarButton: tabButton('chatbox-outline', 'chatbox', t('tab.messages')) }} />
+      <Tabs.Screen name="messages" options={{ title: t('tab.messages'), tabBarButton: tabButton('chatbox-outline', 'chatbox', t('tab.messages'), useHasUnread) }} />
       <Tabs.Screen name="profile" options={{ title: t('tab.me'), tabBarButton: tabButton('person-outline', 'person', t('tab.me')) }} />
     </Tabs>
   );

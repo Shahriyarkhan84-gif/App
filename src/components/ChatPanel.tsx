@@ -5,7 +5,7 @@ import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable,
 
 import { Alert, confirmAction } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
-import { rpc } from '@/lib/api';
+import { enforceInRoom, rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
@@ -116,6 +116,7 @@ export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress, ac
     setSelected(null);
     try {
       await rpc(supabase, 'room_moderate', { p_room: roomId, p_target: m.sender_id, p_action: action, p_minutes: minutes ?? null });
+      void enforceInRoom(supabase, roomId, m.sender_id);
       Alert.alert('Done', `${displayName(m.sender)} was ${action === 'mute' ? 'muted' : action === 'kick' ? 'removed' : 'blocked'}.`);
     } catch (e) {
       Alert.alert('Action failed', friendlyError(e));

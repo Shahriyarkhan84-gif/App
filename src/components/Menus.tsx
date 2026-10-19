@@ -118,15 +118,16 @@ export function SideMenuButton({ items, header, color }: { items: MenuItem[]; he
 // 3. Tab bar -------------------------------------------------------------------
 
 /** One tab: icon over label; the focused tab takes the primary color. */
-export function TabBarItem({ icon, activeIcon, label, focused, onPress }: { icon: IconName; activeIcon: IconName; label: string; focused: boolean; onPress?: (e: GestureResponderEvent) => void }) {
+export function TabBarItem({ icon, activeIcon, label, focused, onPress, badge }: { icon: IconName; activeIcon: IconName; label: string; focused: boolean; onPress?: (e: GestureResponderEvent) => void; badge?: boolean }) {
   const { c, radius } = useTheme();
   // Six tabs on a narrow phone leave ~50px per label.
   const narrow = useWindowDimensions().width < 360;
   return (
-    <PressScale onPress={onPress} haptic scaleTo={0.9} accessibilityRole="tab" accessibilityState={{ selected: focused }} accessibilityLabel={label}
+    <PressScale onPress={onPress} haptic scaleTo={0.9} accessibilityRole="tab" accessibilityState={{ selected: focused }} accessibilityLabel={badge ? `${label}, unread` : label}
       style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 2 }}>
       <View style={{ width: 48, height: 28, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: focused ? `${c.primary}2E` : 'transparent' }}>
         <Ionicons name={focused ? activeIcon : icon} size={22} color={focused ? c.primary : c.textFaint} />
+        {badge && <View style={{ position: 'absolute', top: 0, right: 10, width: 9, height: 9, borderRadius: 5, backgroundColor: c.live, borderWidth: 1.5, borderColor: c.tabBar }} />}
       </View>
       <Text variant="caption" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} color={focused ? c.primary : c.textFaint} style={{ fontSize: narrow ? 10 : 11, fontWeight: focused ? '700' : '500' }}>{label}</Text>
     </PressScale>
@@ -137,12 +138,18 @@ export function TabBarItem({ icon, activeIcon, label, focused, onPress }: { icon
 export type TabButtonProps = { onPress?: (e: GestureResponderEvent) => void; 'aria-selected'?: boolean; accessibilityState?: { selected?: boolean } };
 
 /** `tabBarButton` for a router tab: a TabBarItem that reads focus from the navigator. */
-export function tabButton(icon: IconName, activeIcon: IconName, label: string) {
+/** `useBadge` (optional) is a hook returning whether to show the unread dot. */
+export function tabButton(icon: IconName, activeIcon: IconName, label: string, useBadge: () => boolean = noBadge) {
   function TabButton({ onPress, accessibilityState, 'aria-selected': ariaSelected }: TabButtonProps) {
-    return <TabBarItem icon={icon} activeIcon={activeIcon} label={label} focused={!!(ariaSelected ?? accessibilityState?.selected)} onPress={onPress} />;
+    const badge = useBadge();
+    return <TabBarItem icon={icon} activeIcon={activeIcon} label={label} focused={!!(ariaSelected ?? accessibilityState?.selected)} onPress={onPress} badge={badge} />;
   }
   TabButton.displayName = `TabButton(${label})`;
   return TabButton;
+}
+
+function noBadge() {
+  return false;
 }
 
 /** Round Go live button in the middle of the dock. */

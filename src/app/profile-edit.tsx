@@ -53,9 +53,17 @@ function EditProfileForm() {
       const path = `${profile.id}/avatar-${Date.now()}.jpg`;
       const { error: upErr } = await supabase.storage.from('avatars').upload(path, body, { contentType: 'image/jpeg' });
       if (upErr) throw upErr;
-      const url = `${env.supabaseUrl}/storage/v1/object/public/avatars/${path}`;
-      const { error: saveErr } = await supabase.from('profiles').update({ avatar_url: url }).eq('id', profile.id);
-      if (saveErr) throw saveErr;
+      // The server checks the picture is in your own folder and sets the public address (set_avatar).
+      // Until 20261019010000_bug_fixes.sql is applied the function doesn't exist yet: write the
+      // address directly as before (that column grant is removed by the same migration).
+      const { data: saved, error: rpcErr } = await supabase.rpc('set_avatar', { p_path: path });
+      let url = (saved as { avatar_url?: string | null } | null)?.avatar_url ?? null;
+      if (rpcErr) {
+        if (rpcErr.code !== 'PGRST202') throw new Error(rpcErr.message);
+        url = `${env.supabaseUrl}/storage/v1/object/public/avatars/${path}`;
+        const { error: saveErr } = await supabase.from('profiles').update({ avatar_url: url }).eq('id', profile.id);
+        if (saveErr) throw saveErr;
+      }
       setAvatar(url);
       await reload();
     } catch (e) {

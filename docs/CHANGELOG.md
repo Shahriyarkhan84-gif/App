@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.9.63 — Bug fixes
+
+- **Kicked people leave the live at once** (new `livekit-enforce` Edge Function, called by the app after a kick, block, mute or seat removal): LiveKit disconnects kicked/blocked people and takes the microphone/camera from anyone without a seat, instead of waiting up to 2 hours for their token to run out. It only applies what the database already decided, so it can never grant access.
+- **A late "room finished" no longer ends a new live**: the LiveKit webhook passes when the finished LiveKit room was created; events for a room older than the current live are ignored.
+- **Stuck lives end**: a live whose host never connected to LiveKit for 10 minutes is ended (`streams.host_connected_at`), and **seats left behind** during the 20-second reconnect grace are freed on the next room event (no scheduler on the project, so LiveKit's join/leave events drive both sweeps).
+- **No duplicate replays**: a host rejoining no longer starts a second recording of the same live.
+- **Diamonds no longer reset to 0** when the host reopens the live screen after an app restart.
+- **Profile photos** can only be set through `set_avatar()` from the user's own avatars folder (clients could set any address before).
+- **DMs to strangers**: up to 3 messages until the other person replies or follows back (`wait_for_reply`).
+- **Unread dot** on the Messages tab for unread DMs and notifications.
+- **DM keyboard** no longer covers the message box on Android (edge-to-edge).
+- `my_region()` no longer callable signed out; indexes for 16 unindexed foreign keys.
+- Migration `20261019010000_bug_fixes.sql` with must-pass tests for each fix.
+- **Not live yet** (the owner hasn't approved the database change): apply `20261019010000_bug_fixes.sql`, *then* deploy `livekit-webhook` and `livekit-enforce` (the new webhook calls the new function signature). Until then the app saves profile photos the old way and the kick/seat call fails quietly.
+
 ## 0.9.62 — Live-app look
 
 - Redesigned to look like a live-streaming app instead of a generic template: actions are a purple-to-pink gradient taken from the app icon's purple (white text, at least 4.8:1 everywhere on the blend), LIVE tags are red, selected chips and tabs are purple, Party tags purple and PK tags gold. Big headings (display, h1) use the chunky Bricolage Grotesque brand face. Cards are rounder. The in-app logo (launch screen) now matches the purple icon, and the welcome/sign-in hero shows the app icon instead of abstract coloured blocks. Live video screens use a light purple-to-pink on black. `src/lib/theme.ts`, `ui.tsx` (Chip, Segmented, LiveBadge, Card), `RoomCard`, `LaunchScreen`, `AuthForm`; theme tests updated.

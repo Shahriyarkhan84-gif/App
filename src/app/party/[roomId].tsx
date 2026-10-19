@@ -13,7 +13,7 @@ import { PartyStage } from '@/components/PartyStage';
 import { StateView, type ViewState } from '@/components/StateView';
 import { Avatar, Button, Row, Sheet, Text, ViewerCount } from '@/components/ui';
 import { Alert } from '@/lib/alert';
-import { getLiveKitToken, rpc } from '@/lib/api';
+import { enforceInRoom, getLiveKitToken, rpc } from '@/lib/api';
 import { errorCode, friendlyError } from '@/lib/errors';
 import { useAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
@@ -205,7 +205,7 @@ export default function PartyRoomScreen() {
       const guest = s.user;
       Alert.alert(guest.name, undefined, [
         { text: 'View profile', onPress: () => router.push({ pathname: '/user/[id]', params: { id: guest.id } }) },
-        { text: 'Remove from seat', style: 'destructive', onPress: () => act(() => rpc(supabase, 'remove_from_seat', { p_room: roomId, p_user: guest.id }), 'Could not remove') },
+        { text: 'Remove from seat', style: 'destructive', onPress: () => act(async () => { await rpc(supabase, 'remove_from_seat', { p_room: roomId, p_user: guest.id }); void enforceInRoom(supabase, roomId, guest.id); }, 'Could not remove') },
         { text: 'Cancel', style: 'cancel' },
       ]);
       return;

@@ -8,12 +8,18 @@ import { EgressClient, EncodedFileOutput, EncodedFileType, S3Upload } from 'npm:
 import { requireEnv } from './cors.ts';
 import { livekitApiHost, RECORDINGS_BUCKET, recordingPath } from './recording.ts';
 
+function egressClient() {
+  return new EgressClient(livekitApiHost(requireEnv('LIVEKIT_URL')), requireEnv('LIVEKIT_API_KEY'), requireEnv('LIVEKIT_API_SECRET'));
+}
+
+/** True when a recording of this participant in this room is already running. */
+export async function isRecording(livekitRoom: string, identity: string): Promise<boolean> {
+  const active = await egressClient().listEgress({ roomName: livekitRoom, active: true });
+  return active.some((e) => e.request.case === 'participant' && e.request.value.identity === identity);
+}
+
 export async function startHostRecording(livekitRoom: string, hostId: string, now = new Date()): Promise<string> {
-  const client = new EgressClient(
-    livekitApiHost(requireEnv('LIVEKIT_URL')),
-    requireEnv('LIVEKIT_API_KEY'),
-    requireEnv('LIVEKIT_API_SECRET'),
-  );
+  const client = egressClient();
   const file = new EncodedFileOutput({
     fileType: EncodedFileType.MP4,
     filepath: recordingPath(hostId, now),

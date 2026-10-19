@@ -732,4 +732,74 @@ select tests.fails($$update public.platform_settings set value = '{"source": "ht
 select tests.fails($$insert into public.platform_settings (key, value) values ('android_apk_2', '{}')$$, '%permission denied%', 'client cannot add settings');
 reset role;
 
+---------------------------------------------------------------------------------------
+-- 2026-10-19 bug fixes
+---------------------------------------------------------------------------------------
+-- my_region(): signed-in only
+select tests.ok(not has_function_privilege('anon', 'public.my_region()', 'execute'), 'signed-out visitors cannot call my_region');
+select tests.ok(has_function_privilege('authenticated', 'public.my_region()', 'execute'), 'signed-in users can call my_region');
+
+-- Profile photos only through set_avatar(), from the caller's own folder
+insert into public.profiles (id, username) values ('av_user', 'av_user'), ('av_other', 'av_other');
+update public.platform_settings set value = value || '{"avatars_base": "https://cdn.test/avatars"}' where key = 'media';
+select set_config('request.jwt.claims', '{"sub":"av_user"}', false);
+set role authenticated;
+select tests.fails($$update public.profiles set avatar_url = 'https://evil.example/x.png' where id = 'av_user'$$, '%permission denied%', 'clients cannot write avatar_url directly');
+select tests.fails($$select public.set_avatar('av_other/pic.png')$$, '%invalid_avatar%', 'a picture from someone else''s folder is refused');
+select tests.fails($$select public.set_avatar('av_user/../x.png')$$, '%invalid_avatar%', 'path tricks are refused');
+select tests.ok((select avatar_url from public.set_avatar('av_user/me.png')) = 'https://cdn.test/avatars/av_user/me.png', 'own picture is set from the configured base');
+select tests.ok((select avatar_url from public.set_avatar(null)) is null, 'the photo can be removed');
+reset role;
+
+-- DMs to strangers: 3 until they reply or follow back
+insert into public.profiles (id, username) values ('dm_a', 'dm_a'), ('dm_b', 'dm_b');
+select set_config('request.jwt.claims', '{"sub":"dm_a"}', false);
+set role authenticated;
+select public.send_direct_message('dm_b', 'hi 1');
+select public.send_direct_message('dm_b', 'hi 2');
+select public.send_direct_message('dm_b', 'hi 3');
+select tests.fails($$select public.send_direct_message('dm_b', 'hi 4')$$, '%wait_for_reply%', 'a 4th unanswered message to a stranger waits for a reply');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"dm_b"}', false);
+set role authenticated;
+select public.send_direct_message('dm_a', 'hello back');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"dm_a"}', false);
+set role authenticated;
+select tests.ok((select body from public.send_direct_message('dm_b', 'hi 4')) = 'hi 4', 'after a reply the conversation is open');
+reset role;
+
+-- Late room_finished for an earlier live does not end the current one
+insert into public.profiles (id, username) values ('lf_host', 'lf_host');
+insert into public.hosts (user_id) values ('lf_host');
+insert into public.rooms (host_id, status, cover_url) values ('lf_host', 'live', 'x');
+insert into public.streams (room_id, host_id, title, started_at, host_connected_at)
+  select id, host_id, 'lf', now(), now() from public.rooms where host_id = 'lf_host';
+update public.rooms r set current_stream_id = s.id from public.streams s where s.room_id = r.id and r.host_id = 'lf_host';
+select public.internal_end_stream_by_livekit_room((select livekit_room from public.rooms where host_id = 'lf_host'), now() - interval '10 minutes');
+select tests.ok((select status from public.rooms where host_id = 'lf_host') = 'live', 'room_finished for a LiveKit room created before this live is ignored');
+select public.internal_end_stream_by_livekit_room((select livekit_room from public.rooms where host_id = 'lf_host'), now());
+select tests.ok((select status from public.rooms where host_id = 'lf_host') = 'offline', 'room_finished for the current LiveKit room ends the live');
+
+-- A live whose host never connected is ended by the next join anywhere; connected lives stay
+insert into public.profiles (id, username) values ('uc_host', 'uc_host'), ('ok_host', 'ok_host'), ('uc_fan', 'uc_fan');
+insert into public.hosts (user_id) values ('uc_host'), ('ok_host');
+insert into public.rooms (host_id, status, cover_url) values ('uc_host', 'live', 'x'), ('ok_host', 'live', 'x');
+insert into public.streams (room_id, host_id, title, started_at, host_connected_at)
+  select id, host_id, 'uc', now() - interval '20 minutes', case when host_id = 'ok_host' then now() - interval '20 minutes' end
+  from public.rooms where host_id in ('uc_host', 'ok_host');
+update public.rooms r set current_stream_id = s.id from public.streams s where s.room_id = r.id and r.host_id in ('uc_host', 'ok_host');
+select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 'ok_host'), 'uc_fan', true, 1);
+select tests.ok((select status from public.rooms where host_id = 'uc_host') = 'offline', 'a live whose host never connected for 10 minutes is ended');
+select tests.ok((select status from public.rooms where host_id = 'ok_host') = 'live', 'a connected live is not touched');
+
+-- A guest who left inside the seat grace and stayed away loses the seat on the next event
+insert into public.profiles (id, username) values ('st_guest', 'st_guest'), ('st_fan', 'st_fan');
+insert into public.viewers (stream_id, user_id, left_at)
+  select current_stream_id, 'st_guest', now() - interval '30 seconds' from public.rooms where host_id = 'ok_host';
+insert into public.room_seats (room_id, seat, user_id, created_at)
+  select id, 1, 'st_guest', now() - interval '40 seconds' from public.rooms where host_id = 'ok_host';
+select public.internal_viewer_event((select livekit_room from public.rooms where host_id = 'ok_host'), 'st_fan', true, 2);
+select tests.ok(not exists (select 1 from public.room_seats where user_id = 'st_guest'), 'a seat left behind during the grace is freed');
+
 drop schema tests cascade;

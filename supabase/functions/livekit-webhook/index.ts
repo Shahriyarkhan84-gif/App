@@ -3,7 +3,7 @@
 import { EgressStatus, WebhookReceiver } from 'npm:livekit-server-sdk@2';
 
 import { json, requireEnv } from '../_shared/cors.ts';
-import { startHostRecording } from '../_shared/egress.ts';
+import { isRecording, startHostRecording } from '../_shared/egress.ts';
 import { adminClient, alreadyProcessed, markEventProcessed } from '../_shared/supabase.ts';
 
 Deno.serve(async (req) => {
@@ -45,7 +45,13 @@ Deno.serve(async (req) => {
         if (error) throw error;
       }
     } else if (roomName && event.event === 'room_finished') {
-      const { error } = await db.rpc('internal_end_stream_by_livekit_room', { p_livekit_room: roomName });
+      // Room names are reused per host: pass when this LiveKit room was created, so a late
+      // room_finished for an earlier live can't end the one running now.
+      const created = Number(event.room?.creationTime ?? 0);
+      const { error } = await db.rpc('internal_end_stream_by_livekit_room', {
+        p_livekit_room: roomName,
+        p_room_created_at: created > 0 ? new Date(created * 1000).toISOString() : null,
+      });
       if (error) throw error;
     }
   } catch (err) {
@@ -67,6 +73,9 @@ async function maybeRecordHost(db: ReturnType<typeof adminClient>, livekitRoom: 
   if (setting?.value?.record_live !== true) return;
   // A recording problem must not fail the webhook (and so viewer counting): log it and move on.
   try {
+    // The host rejoining (network drop, app restart) must not start a second recording of the same
+    // live, which became a duplicate replay.
+    if (await isRecording(livekitRoom, identity)) return;
     const egressId = await startHostRecording(livekitRoom, identity);
     console.log('recording host', identity, 'egress', egressId);
   } catch (err) {

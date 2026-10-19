@@ -30,7 +30,9 @@ export default function HostLiveScreen() {
   const track = useAnalytics();
   const insets = useSafeAreaInsets();
   const [viewers, setViewers] = useState<number | null>(null);
-  const [coins, setCoins] = useState(0);
+  // Diamonds from gifts that arrive while this screen is open; `earned` (loaded with the session)
+  // holds what came before, so reopening after an app restart doesn't start from 0.
+  const [newCoins, setCoins] = useState(0);
   const [battleId, setBattleId] = useState<string | null | undefined>(undefined);
   const [ending, setEnding] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -40,9 +42,19 @@ export default function HostLiveScreen() {
     const { data: room, error } = await supabase.from('rooms')
       .select('id,title,status,viewer_count,current_stream_id,current_battle_id').eq('host_id', userId!).single();
     if (error) throw error;
-    if (room.status !== 'live') return { room, token: null };
-    return { room, token: await getLiveKitToken(supabase, room.id, 'host') };
+    if (room.status !== 'live') return { room, token: null, earned: 0 };
+    // Diamonds already earned in this live (the screen may reopen after an app restart); new gifts
+    // are added live below.
+    const [token, gifts] = await Promise.all([
+      getLiveKitToken(supabase, room.id, 'host'),
+      room.current_stream_id
+        ? supabase.from('gifts').select('host_share').eq('stream_id', room.current_stream_id).limit(10000)
+        : Promise.resolve({ data: [] as { host_share: number }[] }),
+    ]);
+    const earned = (gifts.data ?? []).reduce((sum, g) => sum + Number(g.host_share), 0);
+    return { room, token, earned };
   }, [userId]);
+
 
   const roomId = session.data?.room.id;
   // Set once the live is ending, so the summary opens once and Back no longer asks.
@@ -80,6 +92,7 @@ export default function HostLiveScreen() {
     if (p.eventType === 'INSERT') setCoins((n) => n + Number((p.new as { host_share: number }).host_share));
   }, !!roomId);
 
+  const coins = (session.data?.earned ?? 0) + newCoins;
   const effectiveBattleId = battleId !== undefined ? battleId : (session.data?.room.current_battle_id ?? null);
   const { battle, opponentRoom, mySide, secondsLeft } = usePkBattleState(roomId, effectiveBattleId);
   // End an expired battle once per battle (not on every render).

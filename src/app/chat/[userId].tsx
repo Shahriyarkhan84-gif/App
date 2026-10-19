@@ -1,6 +1,7 @@
 import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
 
@@ -21,6 +22,7 @@ export default function ChatScreen() {
   const supabase = useSupabase();
   const { userId } = useAuth();
   const { c, radius } = useTheme();
+  const insets = useSafeAreaInsets();
   const offline = useOffline();
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
@@ -107,7 +109,8 @@ export default function ChatScreen() {
           ),
         }}
       />
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }} keyboardVerticalOffset={90}>
+      {/* Android draws edge to edge, so the window no longer shrinks for the keyboard: pad on both platforms. */}
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }} keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : insets.top + 56}>
         <StateView state={resolveState({ offline, loading, error, data, onRetry: reload, isEmpty: (d) => d.messages.length === 0, empty: { title: 'Say hi 👋' } })}>
           <FlatList
             ref={listRef}

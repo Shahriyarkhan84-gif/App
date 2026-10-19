@@ -45,6 +45,14 @@ export function startCoinCheckout(supabase: SupabaseClient, packageId: number, r
   return invokeFn<{ url: string }>(supabase, 'coins-checkout', { packageId, returnTo });
 }
 
+/**
+ * Applies a kick, block, mute or seat removal to the live video at once (otherwise it waits for the
+ * person to reconnect). Best effort: the database decision already stands if this fails.
+ */
+export function enforceInRoom(supabase: SupabaseClient, roomId: string, userId: string) {
+  return invokeFn<{ applied: string }>(supabase, 'livekit-enforce', { roomId, userId }).catch(() => null);
+}
+
 /** Asks the server to check the buyer's open payments with Stripe and credit or close them. */
 export function reconcilePayments(supabase: SupabaseClient) {
   return invokeFn<{ credited: number; failed: number; pending: number }>(supabase, 'payments-reconcile', {});
