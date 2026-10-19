@@ -1,6 +1,6 @@
 import { useWindowDimensions } from 'react-native';
 
-// Design tokens — clean premium look: black, flat sky blue for actions, gold for coins;
+// Design tokens — clean premium look: white, sky blue for actions, gold for coins;
 // DM Sans everywhere (Bricolage Grotesque only for the wordmark).
 export const spacing = { 4: 4, 8: 8, 12: 12, 16: 16, 20: 20, 24: 24, 32: 32, 40: 40, 48: 48, 64: 64 } as const;
 export const radius = { 8: 8, 12: 12, 16: 16, 20: 20, 24: 24, 32: 32, pill: 999 } as const;
@@ -58,9 +58,9 @@ export function bodyFont(weight?: string | number | null) {
   return w >= 600 ? fonts.bold : w >= 500 ? fonts.medium : fonts.regular;
 }
 
-// Black + light sky blue brand. The whole app is dark (black), with light sky blue for actions,
-// highlights and the live badge. Filled sky surfaces carry near-black text (primaryText): white on
-// light sky is unreadable. Gold stays the coin/gift colour (an industry-wide "currency" cue).
+// Live video screens stay dark (video reads best on black): black ground, light sky blue accents,
+// near-black text on filled sky surfaces (white on light sky is unreadable). Gold is the coin/gift
+// colour (an industry-wide "currency" cue).
 type Gradient = readonly [string, string, string];
 const dark = {
   background: '#000000',
@@ -95,16 +95,47 @@ const dark = {
   glow: 'transparent',
 };
 
-// The app has one look now; `light` is kept as an alias so older imports keep working.
-const light: typeof dark = dark;
+// The rest of the app is white. Light sky blue is too pale for text or icons on white (1.7:1), so
+// actions use a deeper sky blue that reads at 4.8:1 and carries white text; the light sky stays as
+// the accent. Every text colour here meets 4.5:1 on its background.
+const light: typeof dark = {
+  background: '#FFFFFF',
+  surface: '#F3F5F8',
+  surfaceRaised: '#FFFFFF',
+  border: '#DDE2E8',
+  divider: '#EDF0F3',
+  tabBar: '#FFFFFF',
+  text: '#0B0F14',
+  textMuted: '#4A5562',
+  textFaint: '#6B7684',
+  primary: '#0277BD',
+  primaryText: '#FFFFFF',
+  accent: '#87CEFA',
+  live: '#0277BD',
+  gold: '#FFC24B',
+  onGold: '#2A1A00',
+  goldSurface: '#FFF6E0',
+  goldBorder: '#F2D58E',
+  goldText: '#8A5A00',
+  violet: '#0277BD',
+  violetSurface: '#E8F4FC',
+  violetBorder: '#BFE3F8',
+  violetText: '#014A75',
+  success: '#16875A',
+  warning: '#9A6200',
+  danger: '#C8323A',
+  overlay: 'rgba(0,0,0,0.45)',
+  gradient: ['#0277BD', '#0277BD', '#0277BD'] as Gradient,
+  glow: 'transparent',
+};
 
 export type Palette = typeof dark;
 
-/** The app is always black with light sky blue accents, whatever the phone's setting. */
+/** The app is always white with sky blue accents, whatever the phone's setting. */
 export function useTheme() {
   const breakpoint = useBreakpoint();
-  return { c: light, scheme: 'dark', spacing, radius, type, breakpoint, hPadding: H_PADDING[breakpoint] } as const;
+  return { c: light, scheme: 'light', spacing, radius, type, breakpoint, hPadding: H_PADDING[breakpoint] } as const;
 }
 
-// Live video screens use the same black palette.
+// Live video screens (live rooms, party rooms, going live, PK battles) stay dark.
 export const liveColors = dark;

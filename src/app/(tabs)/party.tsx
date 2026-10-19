@@ -215,7 +215,7 @@ function PartyRow({ room, mode, rank }: { room: Room; mode: Mode; rank?: number 
       style={{ flexDirection: 'row', gap: 12, padding: 8, borderRadius: radius[12], backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider }}
     >
       <View style={{ width: 88, height: 88, borderRadius: radius[8], backgroundColor: c.surfaceRaised, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
-        {cover ? <Image source={cover} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : <Text variant="display" color="rgba(255,255,255,0.2)" style={{ fontSize: 44, lineHeight: 50 }}>{host.slice(0, 1).toUpperCase()}</Text>}
+        {cover ? <Image source={cover} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : <Text variant="display" color={c.textFaint} style={{ fontSize: 44, lineHeight: 50 }}>{host.slice(0, 1).toUpperCase()}</Text>}
         <View style={{ position: 'absolute', left: 6, top: 6, backgroundColor: c.live, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 }}>
           <Text variant="caption" color={c.primaryText} style={{ fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>{mode === 'voice' ? 'VOICE' : mode === 'video' ? 'VIDEO' : 'LIVE'}</Text>
         </View>

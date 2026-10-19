@@ -18,7 +18,7 @@ import { useFocusedAsync, useRealtime } from '@/lib/hooks';
 import { useI18n } from '@/lib/i18n';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
-import { liveColors, useTheme } from '@/lib/theme';
+import { useTheme } from '@/lib/theme';
 import { displayName } from '@/lib/types';
 
 export default function ProfileScreen() {
@@ -65,17 +65,17 @@ export default function ProfileScreen() {
   const verified = host?.verification_status === 'approved';
   const isAgencyOwner = profile?.role === 'AGENCY_ADMIN';
   const isAgencyStaff = isAgencyOwner || profile?.role === 'AGENCY_MEMBER';
-  const d = liveColors;
+  const { c: d } = useTheme();
 
   // Dark "Me" page in the style of other live apps: centred framed photo, stats, four tiles, grouped rows.
   return (
     <View style={{ flex: 1, backgroundColor: d.background }}>
-      {focused && <StatusBar style="light" />}
+      {focused && <StatusBar style="dark" />}
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16, gap: 18, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
           <Row gap={8} style={{ justifyContent: 'flex-end' }}>
-            <IconButton icon="settings-outline" label="Settings" color={d.text} bg="rgba(255,255,255,0.08)" onPress={() => router.push('/settings')} />
-            <IconButton icon="create-outline" label="Edit profile" color={d.text} bg="rgba(255,255,255,0.08)" onPress={() => router.push('/profile-edit')} />
+            <IconButton icon="settings-outline" label="Settings" color={d.text} bg={d.surface} onPress={() => router.push('/settings')} />
+            <IconButton icon="create-outline" label="Edit profile" color={d.text} bg={d.surface} onPress={() => router.push('/profile-edit')} />
           </Row>
 
           <FadeIn style={{ alignItems: 'center', gap: 8 }}>
@@ -147,7 +147,7 @@ export default function ProfileScreen() {
 
 /** One of the four flat tiles under the stats. */
 function Tile({ icon, coin, label, sub, onPress }: { icon?: IconName; coin?: boolean; label: string; sub: string; onPress: () => void }) {
-  const d = liveColors;
+  const { c: d } = useTheme();
   return (
     <PressScale onPress={onPress} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={`${label} ${sub}`} style={{ flex: 1 }}>
       <View style={{ minHeight: 92, borderRadius: 12, backgroundColor: d.surface, borderWidth: 1, borderColor: d.divider, alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 4 }}>
@@ -160,12 +160,13 @@ function Tile({ icon, coin, label, sub, onPress }: { icon?: IconName; coin?: boo
 }
 
 function Group({ children }: { children: ReactNode }) {
-  return <View style={{ borderRadius: 12, backgroundColor: liveColors.surface, borderWidth: 1, borderColor: liveColors.divider, overflow: 'hidden' }}>{children}</View>;
+  const { c } = useTheme();
+  return <View style={{ borderRadius: 12, backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider, overflow: 'hidden' }}>{children}</View>;
 }
 
 /** Menu row: plain line icon, label, optional detail, chevron. */
 function DarkRow({ icon, label, detail, onPress, last }: { icon: IconName; label: string; detail?: string; onPress: () => void; last?: boolean }) {
-  const d = liveColors;
+  const { c: d } = useTheme();
   return (
     <PressScale onPress={onPress} scaleTo={0.98} accessibilityRole="button" accessibilityLabel={detail ? `${label}, ${detail}` : label}>
       <Row gap={14} style={{ paddingHorizontal: 16, minHeight: 54, borderBottomWidth: last ? 0 : 1, borderBottomColor: d.divider }}>
@@ -181,14 +182,14 @@ function DarkRow({ icon, label, detail, onPress, last }: { icon: IconName; label
 function Badge({ label, gold }: { label: string; gold?: boolean }) {
   const { c } = useTheme();
   return (
-    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, backgroundColor: gold ? c.gold : liveColors.surfaceRaised }}>
-      <Text variant="caption" color={gold ? c.onGold : liveColors.textMuted} style={{ fontSize: 11, fontWeight: gold ? '700' : '500' }}>{label}</Text>
+    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, backgroundColor: gold ? c.gold : c.surfaceRaised }}>
+      <Text variant="caption" color={gold ? c.onGold : c.textMuted} style={{ fontSize: 11, fontWeight: gold ? '700' : '500' }}>{label}</Text>
     </View>
   );
 }
 
 function Stat({ label, value }: { label: string; value?: number }) {
-  const d = liveColors;
+  const { c: d } = useTheme();
   return (
     <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
       <Text variant="display" color={d.text} style={{ fontSize: 24, lineHeight: 30 }}>{value === undefined ? '–' : compactNumber(value)}</Text>

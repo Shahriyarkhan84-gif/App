@@ -208,7 +208,7 @@ function RootLayout() {
               <Analytics>
                 <IdentityAndScreens />
                 <SubdomainHome />
-                <StatusBar style="light" />
+                <StatusBar style="dark" />
                 <RootNavigator />
               </Analytics>
             </AppI18n>

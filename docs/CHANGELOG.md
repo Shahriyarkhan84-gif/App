@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.61 — White app
+
+- The app is white: white screens, light grey cards, near-black text, a light glass tab bar and a white launch/splash screen. Actions use a deeper sky blue (`#0277BD`, white text, 4.8:1 on white) because the light sky blue is unreadable on white; light sky stays as the accent and gold stays the coin colour. Every text colour meets 4.5:1. Live video screens (live rooms, party rooms, going live, PK battles) stay dark. The Me tab now follows the white theme too. `src/lib/theme.ts` (`light` palette; `liveColors` = dark), tests updated. Android picks it up from the next build; the website keeps its dark look.
+
 ## 0.9.60 — Zynalive's own payment page
 
 - Coins can be bought on Zynalive's own page (zynalive.com/pay) instead of Stripe's checkout page: the Zynalive look, the package and total, Stripe's secure card form (Payment Element) and a Pay button. `coins-checkout` creates the Checkout session in Elements mode and sends buyers there; the web app and Android app open it the same way as before, and coins are still credited only from what Stripe reports to the server. Turns on when the `STRIPE_PUBLISHABLE_KEY` secret is set (`config-status` shows `own_payment_page`); until then Stripe's hosted page is used. `payPageUrl` is unit-tested.

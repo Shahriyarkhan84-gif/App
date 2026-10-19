@@ -185,13 +185,13 @@ export function TabBarGlass() {
   return (
     <View style={{
       position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: DOCK_HEIGHT / 2,
-      shadowColor: '#000', shadowOpacity: 0.6, shadowRadius: 22, shadowOffset: { width: 0, height: 10 },
+      shadowColor: '#0B0F14', shadowOpacity: 0.12, shadowRadius: 22, shadowOffset: { width: 0, height: 10 },
     }}>
       <View style={[
-        { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: DOCK_HEIGHT / 2, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)', backgroundColor: 'rgba(20,22,26,0.74)' },
+        { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: DOCK_HEIGHT / 2, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(11,15,20,0.08)', backgroundColor: 'rgba(255,255,255,0.88)' },
         Platform.OS === 'web' ? ({ backdropFilter: 'blur(22px) saturate(170%)', WebkitBackdropFilter: 'blur(22px) saturate(170%)' } as object) : null,
       ]}>
-        <LinearGradient colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.03)', 'rgba(135,206,250,0.08)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={['rgba(255,255,255,0.6)', 'rgba(255,255,255,0.2)', 'rgba(2,119,189,0.05)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
       </View>
     </View>
   );
