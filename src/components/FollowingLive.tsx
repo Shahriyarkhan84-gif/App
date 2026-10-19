@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 
 import { useTheme } from '@/lib/theme';
@@ -26,8 +26,8 @@ export function LiveAvatar({ uri, name, size }: { uri?: string | null; name: str
 }
 
 /** Stories-style row: people you follow who are live now. */
-export function FollowingLive({ rooms, header = true, onOpen, inset = 20 }: { rooms: Room[]; header?: boolean; onOpen?: () => void; inset?: number }) {
-  if (rooms.length === 0) return null;
+export function FollowingLive({ rooms, header = true, onOpen, inset = 20, leading }: { rooms: Room[]; header?: boolean; onOpen?: () => void; inset?: number; leading?: ReactNode }) {
+  if (rooms.length === 0 && !leading) return null;
   return (
     <View style={{ gap: 6 }}>
       {header && (
@@ -37,6 +37,7 @@ export function FollowingLive({ rooms, header = true, onOpen, inset = 20 }: { ro
         </Row>
       )}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14, paddingHorizontal: header ? inset : 4, paddingVertical: 10 }}>
+        {leading}
         {rooms.map((r, i) => {
           const name = displayName(r.host);
           return (
@@ -143,5 +144,18 @@ export function LoopStrip({ me, rooms }: { me: { avatar_url?: string | null; nam
         );
       })}
     </ScrollView>
+  );
+}
+
+/** First bubble of the Home stories row: start your own live. */
+export function GoLiveBubble() {
+  const { c } = useTheme();
+  return (
+    <PressScale scaleTo={0.92} onPress={() => router.push('/create')} accessibilityRole="button" accessibilityLabel="Go live" style={{ width: 72, alignItems: 'center', gap: 10 }}>
+      <View style={{ width: SIZE, height: SIZE, borderRadius: SIZE / 2, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: c.violetBorder, borderStyle: 'dashed' }}>
+        <Ionicons name="add" size={28} color={c.primary} />
+      </View>
+      <Text variant="caption" color={c.primary} style={{ fontWeight: '700' }}>Go live</Text>
+    </PressScale>
   );
 }

@@ -6,8 +6,8 @@ import { RefreshControl, ScrollView, View, useWindowDimensions, type NativeScrol
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 import { LiveEventBanner } from '@/components/EventRow';
-import { RoomCard } from '@/components/RoomCard';
-import { FollowingLive, LiveBell } from '@/components/FollowingLive';
+import { FeaturedRoomCard, RoomCard } from '@/components/RoomCard';
+import { FollowingLive, GoLiveBubble, LiveBell } from '@/components/FollowingLive';
 import { useTabBarSpace } from '@/components/Menus';
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
@@ -174,9 +174,10 @@ export default function HomeScreen() {
           // A tall screen (tablet, web) may show a whole page without scrolling: fill it.
           onContentSizeChange={(_w, h) => nearEnd(viewHeight.current, h)}
         >
-          {showBanners && data && data.followingLive.length > 0 && (
+          {showBanners && data && (
+            // Stories row (Redesign v2): your own "Go live" bubble, then people you follow who are live.
             <FadeIn style={{ marginHorizontal: -GRID_PAD }}>
-              <FollowingLive rooms={data.followingLive} inset={GRID_PAD + 4} />
+              <FollowingLive rooms={data.followingLive} header={false} inset={GRID_PAD + 4} leading={<GoLiveBubble />} />
             </FadeIn>
           )}
           {rooms.length === 0 ? (
@@ -187,15 +188,17 @@ export default function HomeScreen() {
             </View>
           ) : (
             <>
-              {/* Lives first; the event and PK banners sit after the first two rows instead of above them. */}
-              {grid(rooms.slice(0, columns * 2), 0)}
+              {/* The most watched live is featured full width on Popular; the event and PK banners sit after
+                  the first two rows of the grid instead of above them. */}
+              {showBanners && rooms[0] && <FadeIn><FeaturedRoomCard room={rooms[0]} width={cardWidth * columns + GRID_GAP * (columns - 1)} /></FadeIn>}
+              {grid(rooms.slice(showBanners ? 1 : 0, columns * 2 + (showBanners ? 1 : 0)), 0)}
               {showBanners && (
                 <>
                   <FadeIn><LiveEventBanner /></FadeIn>
                   <FadeIn><PkBattleBanner room={battleRoom} /></FadeIn>
                 </>
               )}
-              {rooms.length > columns * 2 && grid(rooms.slice(columns * 2), columns * 2)}
+              {rooms.length > columns * 2 + (showBanners ? 1 : 0) && grid(rooms.slice(columns * 2 + (showBanners ? 1 : 0)), columns * 2)}
             </>
           )}
           {rooms.length === 0 && showBanners && (

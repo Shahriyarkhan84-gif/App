@@ -70,3 +70,35 @@ function Bars({ color }: { color: string }) {
     </View>
   );
 }
+
+/** Home's big featured live (Redesign v2): full-width cover with LIVE tag, viewers and host line. */
+export function FeaturedRoomCard({ room, width }: { room: Room; width: number }) {
+  const { c, radius } = useTheme();
+  const cover = room.cover_url ?? room.host?.avatar_url;
+  const name = displayName(room.host);
+  const country = room.host?.country;
+  const height = Math.round(Math.min(width * 0.56, 260));
+  return (
+    <Link href={roomHref(room)} asChild>
+      <PressScale style={{ width }} scaleTo={0.98} accessibilityLabel={`Featured: ${name} live, ${room.title}. ${room.viewer_count} watching`}>
+        <View style={{ width, height, borderRadius: radius[20], overflow: 'hidden', backgroundColor: liveColors.surfaceRaised }}>
+          {cover ? <Image source={cover} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : null}
+          <View style={{ position: 'absolute', top: 12, left: 12, right: 12, flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, height: 22, borderRadius: 6, backgroundColor: c.live }}>
+              <Bars color="#FFFFFF" />
+              <Text variant="caption" color="#FFFFFF" style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.4 }}>LIVE</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, height: 24, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.5)' }}>
+              <Ionicons name="eye-outline" size={13} color="#fff" />
+              <Text variant="caption" color="#fff" style={{ fontWeight: '700' }}>{compactNumber(room.viewer_count)}</Text>
+            </View>
+          </View>
+          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.82)']} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 14, paddingTop: 44, paddingBottom: 12, gap: 2 }}>
+            <Text variant="h3" color="#fff" numberOfLines={1}>{name} · {room.title || categoryLabel(room.category)}</Text>
+            <Text variant="caption" color="rgba(255,255,255,0.8)" numberOfLines={1}>{country ? `${flag(country)} ` : ''}Most watched right now</Text>
+          </LinearGradient>
+        </View>
+      </PressScale>
+    </Link>
+  );
+}
