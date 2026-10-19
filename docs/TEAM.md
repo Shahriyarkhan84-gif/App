@@ -24,6 +24,7 @@ drafts; they don't edit code and hand changes to an engineer agent.
 | `ai-engineer` — AI Engineer | Engineer | the Python agents worker: AI CEO, moderation, fraud, recommendations, subtitles, smart search. |
 | `qa-test-engineer` — QA/Test Engineer | Engineer | test a feature end to end, write missing tests, or reproduce a bug before it is fixed. |
 | `security-engineer` — Security Engineer | Engineer | review a change or area for security: auth, RLS, payments, secrets, uploads, webhooks. |
+| `app-analyst` — App Analyst | Analyst | analyse the whole app and write one ranked health report (`docs/reports/APP_ANALYSIS.md`); runs the checks but doesn't change code. |
 | `technical-writer` — Technical Writer | Editor | write or update docs, the changelog, help articles, privacy/terms text or store listing copy. |
 
 ## Business
