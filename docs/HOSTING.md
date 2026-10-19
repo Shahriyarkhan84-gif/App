@@ -117,8 +117,8 @@ coach stop (the app still works).
 - New native code (e.g. `expo-observe`) needs a new build: `npx eas-cli build --profile preview`.
 - **App size:** Android builds contain only phone processors (`armeabi-v7a`, `arm64-v8a`, set with `expo-build-properties` in `app.json`) with compressed native libraries. To test on an emulator, use an arm64 system image; x86/x86_64 emulators can't run these builds.
 - **APK download on the website:** `/download/android` is a redirect in `vercel.json`. It points at
-  the Expo artifact link of the latest preview build, which **expires** (build `6934a22c`, 64 MB: on
-  2026-11-01), so update it after each build (`npx eas-cli build:list --platform android`).
+  the Expo artifact link of the latest preview build, which **expires** (build `bac268f0`: on
+  2026-11-02), so update it after each build (`npx eas-cli build:list --platform android`).
   **Permanent link (ready, needs Supabase Pro):** the public `downloads` bucket and the `apk-publish`
   Edge Function copy the APK to `downloads/android/zynalive.apk`. The free plan caps every file at
   50 MB and the APK is 64 MB, so the copy fails with "Payload too large" until the project is on
