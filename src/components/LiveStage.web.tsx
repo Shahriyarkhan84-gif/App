@@ -1,14 +1,18 @@
-import { isTrackReference, LiveKitRoom, RoomAudioRenderer, useTracks, VideoTrack } from '@livekit/components-react';
+import { isTrackReference, LiveKitRoom, RoomAudioRenderer, useLocalParticipant, useTracks, VideoTrack } from '@livekit/components-react';
 import { Track, VideoPresets } from 'livekit-client';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { liveColors } from '@/lib/theme';
 
+import { type Facing, FacingContext, useFacing } from './liveFacing';
 import type { LiveStageProps } from './LiveStage.types';
 import { Text } from './ui';
 
 /** Web LiveKit stage (browser WebRTC); same behaviour as the native stage. */
-export function LiveStage({ token, url, role, onDisconnected, onError }: LiveStageProps) {
+export function LiveStage({ token, url, role, facing: initialFacing = 'user', onDisconnected, onError, children }: LiveStageProps) {
+  const [facing, setFacing] = useState<Facing>(initialFacing);
   return (
     <LiveKitRoom
       serverUrl={url}
@@ -25,7 +29,10 @@ export function LiveStage({ token, url, role, onDisconnected, onError }: LiveSta
       onError={onError}
       style={{ position: 'absolute', inset: 0 }}
     >
-      <Stage role={role} />
+      <FacingContext.Provider value={{ facing, setFacing }}>
+        <Stage role={role} />
+        {children}
+      </FacingContext.Provider>
       <RoomAudioRenderer />
     </LiveKitRoom>
   );
@@ -33,7 +40,17 @@ export function LiveStage({ token, url, role, onDisconnected, onError }: LiveSta
 
 function Stage({ role }: { role: LiveStageProps['role'] }) {
   const tracks = useTracks([Track.Source.Camera]);
+  const { facing } = useFacing();
+  const { isCameraEnabled } = useLocalParticipant();
   const trackRef = tracks.find((t) => isTrackReference(t) && (role === 'host' ? t.participant.isLocal : !t.participant.isLocal));
+  if (role === 'host' ? !isCameraEnabled && !!trackRef : trackRef && isTrackReference(trackRef) && trackRef.publication.isMuted) {
+    return (
+      <View style={styles.waiting}>
+        <Ionicons name="videocam-off" size={36} color={liveColors.textMuted} />
+        <Text color={liveColors.textMuted}>{role === 'host' ? 'Your camera is off' : 'The host turned the camera off'}</Text>
+      </View>
+    );
+  }
   if (!trackRef || !isTrackReference(trackRef)) {
     return (
       <View style={styles.waiting}>
@@ -45,7 +62,7 @@ function Stage({ role }: { role: LiveStageProps['role'] }) {
   return (
     <VideoTrack
       trackRef={trackRef}
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transform: role === 'host' ? 'scaleX(-1)' : undefined }}
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transform: role === 'host' && facing === 'user' ? 'scaleX(-1)' : undefined }}
     />
   );
 }

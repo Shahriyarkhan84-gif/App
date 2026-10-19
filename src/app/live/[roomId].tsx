@@ -9,6 +9,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChatPanel } from '@/components/ChatPanel';
 import { GiftSheet, GiftToasts } from '@/components/GiftSheet';
 import { LiveStage } from '@/components/LiveStage';
+import { FloatingHearts, JoinedLine, useLiveReactions } from '@/components/LiveReactions';
+import { ProfileCard } from '@/components/ProfileCard';
 import { PkBattleBar, PkBattleStage, usePkBattleState } from '@/components/PkBattle';
 import { SimilarLives } from '@/components/SimilarLives';
 import { StateView, type ViewState } from '@/components/StateView';
@@ -19,6 +21,7 @@ import { useAnalytics } from '@/lib/analytics';
 import { getLiveKitToken, rpc } from '@/lib/api';
 import { errorCode, friendlyError } from '@/lib/errors';
 import { useAsync, useOffline, useRealtime } from '@/lib/hooks';
+import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { liveColors as c } from '@/lib/theme';
 import { displayName, normalizeRoom, ROOM_SELECT, type Room } from '@/lib/types';
@@ -36,6 +39,8 @@ export default function LiveRoomScreen() {
   const [giftOpen, setGiftOpen] = useState(false);
   const [following, setFollowing] = useState<boolean | null>(null);
   const [live, setLive] = useState<Partial<Room>>({});
+  const [cardUser, setCardUser] = useState<string | null>(null);
+  const { profile: me } = useProfile();
 
   // One round trip for what the screen needs; the follow state and the LiveKit token load alongside
   // (each extra sequential request costs ~0.5 s from Pakistan to the us-east-1 server).
@@ -148,12 +153,15 @@ export default function LiveRoomScreen() {
       ? await supabase.from('follows').insert({ followee_id: r.host_id })
       : await supabase.from('follows').delete().eq('follower_id', userId!).eq('followee_id', r.host_id);
     followBusy.current = false;
-    if (error) setFollowing(!next);
-    else track('follow_toggled', { user_id: r.host_id, following: next });
+    if (error) {
+      setFollowing(!next);
+      Alert.alert(next ? "Couldn't follow" : "Couldn't unfollow", friendlyError(error));
+    } else track('follow_toggled', { user_id: r.host_id, following: next });
   };
 
   const shareRoom = () => {
-    void shareMessage(`Watch ${displayName(r?.host)} live on Zynalive: zynalive://live/${roomId}`);
+    // https links are tappable in WhatsApp; zynalive.com/live/<id> opens the app or the web player.
+    void shareMessage(`Watch ${displayName(r?.host)} live on Zynalive: https://zynalive.com/live/${roomId}`);
     track('room_shared', { room_id: roomId });
   };
 
@@ -189,6 +197,10 @@ export default function LiveRoomScreen() {
   else if (!token.data) state = { kind: 'loading' };
   else if (dropped && dropped === stageToken) state = { kind: 'error', error: new Error('connection_lost'), onRetry: reconnect };
 
+  // Likes and "X joined" lines (display only). Your own join is announced once you're watching.
+  const watching = state.kind === 'success' && !!r;
+  const reactions = useLiveReactions(watching ? roomId : undefined, me ? displayName(me) : null, true);
+
   const viewers = r?.viewer_count ?? 0;
   const coins = extras.data?.coins ?? 0;
   const gifters = extras.data?.gifters ?? [];
@@ -198,7 +210,7 @@ export default function LiveRoomScreen() {
   const topBar = r && (
     <Row gap={8} style={{ paddingHorizontal: 12 }}>
       <Row gap={8} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 26, padding: 4, paddingRight: isFollowing || r.host_id === userId ? 14 : 4, flexShrink: 1 }}>
-        <Pressable onPress={() => router.push({ pathname: '/user/[id]', params: { id: r.host_id } })} accessibilityRole="button" accessibilityLabel={`${displayName(r.host)} profile, ${coins} coins this live`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
+        <Pressable onPress={() => setCardUser(r.host_id)} accessibilityRole="button" accessibilityLabel={`${displayName(r.host)} profile, ${coins} coins this live`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
           <Avatar uri={r.host?.avatar_url} name={displayName(r.host)} size={40} />
           <View style={{ flexShrink: 1 }}>
             <Text variant="label" color={c.text} numberOfLines={1} style={{ maxWidth: 120 }}>{displayName(r.host)}</Text>
@@ -218,7 +230,7 @@ export default function LiveRoomScreen() {
       <View style={{ flex: 1 }} />
       <Row gap={2}>
         {gifters.map((g, i) => (
-          <Pressable key={g.user_id} onPress={() => router.push({ pathname: '/contributions/[id]', params: { id: r.host_id } })} accessibilityRole="button" accessibilityLabel={`Top gifter ${i + 1}: ${g.display_name ?? g.username ?? ''}`}>
+          <Pressable key={g.user_id} onPress={() => setCardUser(g.user_id)} onLongPress={() => router.push({ pathname: '/contributions/[id]', params: { id: r.host_id } })} accessibilityRole="button" accessibilityLabel={`Top gifter ${i + 1}: ${g.display_name ?? g.username ?? ''}`}>
             <FramedAvatar uri={g.avatar_url} name={g.display_name ?? g.username} size={30} frameId={g.frame} ring={RANK_RINGS[i]} />
           </Pressable>
         ))}
@@ -240,11 +252,14 @@ export default function LiveRoomScreen() {
       canModerate={!!room.data?.isRoomAdmin}
       placeholder="Say Hi…"
       fill={battleLive}
-      onUserPress={(id) => router.push({ pathname: '/user/[id]', params: { id } })}
+      onUserPress={setCardUser}
       actions={
         <>
           <Pressable onPress={() => setMenuOpen(true)} accessibilityRole="button" accessibilityLabel="More: message, share, report" style={roundButton('rgba(20,24,30,0.78)')}>
             <Ionicons name="menu" size={24} color={c.text} />
+          </Pressable>
+          <Pressable onPress={reactions.like} accessibilityRole="button" accessibilityLabel="Send a heart" style={roundButton('rgba(244,143,184,0.92)')}>
+            <Ionicons name="heart" size={22} color="#fff" />
           </Pressable>
           <Pressable onPress={() => setGiftOpen(true)} accessibilityRole="button" accessibilityLabel="Send a gift" style={roundButton(c.gold)}>
             <Ionicons name="gift" size={22} color={c.onGold} />
@@ -276,6 +291,7 @@ export default function LiveRoomScreen() {
               />
               <View style={{ flex: 1, paddingHorizontal: 12, paddingTop: 10, paddingBottom: insets.bottom + 10, gap: 8 }}>
                 <GiftToasts roomId={roomId} />
+                <JoinedLine joined={reactions.joined} />
                 {chat}
               </View>
             </View>
@@ -286,14 +302,17 @@ export default function LiveRoomScreen() {
                 {topBar}
                 <Row gap={6} style={{ paddingHorizontal: 12 }}><LiveBadge /></Row>
               </View>
+              <FloatingHearts hearts={reactions.hearts} onDone={reactions.removeHeart} bottom={insets.bottom + 70} />
               <View style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 10, gap: 10 }}>
                 <GiftToasts roomId={roomId} />
+                <JoinedLine joined={reactions.joined} />
                 {chat}
               </View>
             </>
           )
         )}
         <GiftSheet roomId={roomId} visible={giftOpen} onClose={() => setGiftOpen(false)} />
+        {r && <ProfileCard userId={cardUser} roomId={roomId} hostId={r.host_id} canModerate={!!room.data?.isRoomAdmin} isHost={false} onClose={() => setCardUser(null)} />}
         <Sheet visible={menuOpen} onClose={() => setMenuOpen(false)} title="More">
           {r && (
             <View style={{ gap: 8 }}>

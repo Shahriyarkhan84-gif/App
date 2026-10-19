@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 export type LiveStageProps = {
   token: string;
   url: string;
@@ -6,4 +8,6 @@ export type LiveStageProps = {
   facing?: 'user' | 'environment';
   onDisconnected?: () => void;
   onError?: (error: Error) => void;
+  /** Rendered inside the LiveKit room (e.g. host controls that need the room's hooks). */
+  children?: ReactNode;
 };

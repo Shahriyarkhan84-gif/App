@@ -8,10 +8,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChatPanel } from '@/components/ChatPanel';
 import { GiftToasts } from '@/components/GiftSheet';
+import { ConnectionBadge, HostControlRail, LiveTimer, MicOffBanner } from '@/components/HostControls';
+import { FloatingHearts, JoinedLine, useLiveReactions } from '@/components/LiveReactions';
 import { LiveStage } from '@/components/LiveStage';
 import { endBattleIfExpired, PkBattleBar, PkBattleStage, usePkBattleState } from '@/components/PkBattle';
+import { ProfileCard } from '@/components/ProfileCard';
 import { StateView, type ViewState } from '@/components/StateView';
-import { Avatar, Button, IconButton, LiveBadge, Row, Sheet, Text } from '@/components/ui';
+import { Avatar, Button, LiveBadge, Row, Sheet, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { getLiveKitToken, rpc } from '@/lib/api';
@@ -32,7 +35,10 @@ export default function HostLiveScreen() {
   const [viewers, setViewers] = useState<number | null>(null);
   // Diamonds from gifts that arrive while this screen is open; `earned` (loaded with the session)
   // holds what came before, so reopening after an app restart doesn't start from 0.
-  const [newCoins, setCoins] = useState(0);
+  // Keyed by the session's token: after Reconnect the session recounts every gift, so gifts counted
+  // under the old token must not be added again.
+  const [newCoins, setCoins] = useState<{ key: string | null; n: number }>({ key: null, n: 0 });
+  const [cardUser, setCardUser] = useState<string | null>(null);
   const [battleId, setBattleId] = useState<string | null | undefined>(undefined);
   const [ending, setEnding] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -43,7 +49,7 @@ export default function HostLiveScreen() {
     const { data: room, error } = await supabase.from('rooms')
       .select('id,title,status,viewer_count,current_stream_id,current_battle_id').eq('host_id', userId!).single();
     if (error) throw error;
-    if (room.status !== 'live') return { room, token: null, earned: 0 };
+    if (room.status !== 'live') return { room, token: null, earned: 0, startedAt: null };
     // Diamonds already earned in this live (the screen may reopen after an app restart); new gifts
     // are added live below.
     const [token, gifts] = await Promise.all([
@@ -52,8 +58,11 @@ export default function HostLiveScreen() {
         ? supabase.from('gifts').select('host_share').eq('stream_id', room.current_stream_id).limit(10000)
         : Promise.resolve({ data: [] as { host_share: number }[] }),
     ]);
+    const stream = room.current_stream_id
+      ? (await supabase.from('streams').select('started_at').eq('id', room.current_stream_id).maybeSingle()).data
+      : null;
     const earned = (gifts.data ?? []).reduce((sum, g) => sum + Number(g.host_share), 0);
-    return { room, token, earned };
+    return { room, token, earned, startedAt: (stream as { started_at?: string } | null)?.started_at ?? null };
   }, [userId]);
 
 
@@ -90,10 +99,14 @@ export default function HostLiveScreen() {
     setBattleId(next.current_battle_id);
   }, !!roomId);
   useRealtime('gifts', `room_id=eq.${roomId}`, (p) => {
-    if (p.eventType === 'INSERT') setCoins((n) => n + Number((p.new as { host_share: number }).host_share));
+    if (p.eventType !== 'INSERT') return;
+    const key = session.data?.token?.token ?? null;
+    const add = Number((p.new as { host_share: number }).host_share);
+    setCoins((prev) => ({ key, n: (prev.key === key ? prev.n : 0) + add }));
   }, !!roomId);
 
-  const coins = (session.data?.earned ?? 0) + newCoins;
+  const coins = (session.data?.earned ?? 0) + (newCoins.key === (session.data?.token?.token ?? null) ? newCoins.n : 0);
+  const reactions = useLiveReactions(roomId, null, false);
   const effectiveBattleId = battleId !== undefined ? battleId : (session.data?.room.current_battle_id ?? null);
   const { battle, opponentRoom, mySide, secondsLeft } = usePkBattleState(roomId, effectiveBattleId);
   // End an expired battle once per battle (not on every render).
@@ -156,7 +169,8 @@ export default function HostLiveScreen() {
 
   const shareRoom = () => {
     if (!roomId) return;
-    void shareMessage(`I'm live on Zynalive: zynalive://live/${roomId}`);
+    // https links are tappable in WhatsApp; zynalive.com/live/<id> opens the app or the web player.
+    void shareMessage(`I'm live on Zynalive: https://zynalive.com/live/${roomId}`);
     track('room_shared', { room_id: roomId });
   };
 
@@ -209,6 +223,30 @@ export default function HostLiveScreen() {
   const iAmChallenged = battle?.status === 'invited' && mySide === 'b';
   const battleLive = battle?.status === 'live' && !!opponentRoom;
 
+  // Two rows so every control fits on small phones (End stays on screen at 360 dp). `inRoom` is true
+  // when rendered inside the LiveKit room, where the connection badge and mic reminder can read it.
+  const topBar = (inRoom: boolean) => session.data && (
+    <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, gap: 8 }}>
+      <Row gap={6}>
+        <LiveBadge viewers={viewers ?? session.data.room.viewer_count} />
+        <LiveTimer since={session.data.startedAt} />
+        {inRoom && <ConnectionBadge />}
+        <View style={{ flex: 1 }} />
+        <Button title="End" variant="danger" size="sm" onPress={end} loading={ending} />
+      </Row>
+      <Row gap={8}>
+        <View accessible accessibilityLabel={`${coins.toLocaleString()} diamonds this live`}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.45)' }}>
+          <Ionicons name="diamond" size={14} color="#CFC8FF" />
+          <Text variant="label" color={c.text}>{coins.toLocaleString()}</Text>
+        </View>
+        <Text variant="label" color={c.text} style={{ flex: 1, minWidth: 0 }} numberOfLines={1}>{session.data.room.title}</Text>
+        {battleLive && <Button title="End battle" size="sm" variant="secondary" onPress={endBattle} />}
+      </Row>
+      {inRoom && <MicOffBanner />}
+    </View>
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <StatusBar style="light" />
@@ -219,38 +257,25 @@ export default function HostLiveScreen() {
               <>
                 <PkBattleStage
                   mySide={mySide}
-                  myStage={<LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" facing={facing} onError={onStageError} onDisconnected={onStageDisconnected} />}
+                  myStage={
+                    <LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" facing={facing} onError={onStageError} onDisconnected={onStageDisconnected}>
+                      <HostControlRail top={8} compact onShare={shareRoom} />
+                    </LiveStage>
+                  }
                   opponentRoom={opponentRoom!}
                   mySideLabel="You"
                   opponentSideLabel={displayName(opponentRoom!.host)}
                 />
                 <PkBattleBar battle={battle!} mySide={mySide} secondsLeft={secondsLeft} timerBelow={false} />
+                {topBar(false)}
               </>
             ) : (
-              <LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" facing={facing} onError={onStageError} onDisconnected={onStageDisconnected} />
+              <LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" facing={facing} onError={onStageError} onDisconnected={onStageDisconnected}>
+                {/* Inside the LiveKit room: these read the host's own mic, camera and connection. */}
+                {topBar(true)}
+                <HostControlRail top={insets.top + 120} onShare={shareRoom} onBattle={!battle ? () => setInviteOpen(true) : undefined} />
+              </LiveStage>
             )}
-            {/* Two rows so every control fits on small phones (End stays on screen at 360 dp). */}
-            <View style={{ position: 'absolute', top: insets.top + 8, left: 12, right: 12, gap: 8 }}>
-              <Row gap={8}>
-                <LiveBadge viewers={viewers ?? session.data.room.viewer_count} />
-                <Text variant="label" color={c.text} style={{ flex: 1, minWidth: 0 }} numberOfLines={1}>{session.data.room.title}</Text>
-                <Button title="End" variant="danger" size="sm" onPress={end} loading={ending} />
-              </Row>
-              <Row gap={8}>
-                <View accessible accessibilityLabel={`${coins.toLocaleString()} diamonds this live`}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.45)' }}>
-                  <Ionicons name="diamond" size={14} color="#CFC8FF" />
-                  <Text variant="label" color={c.text}>{coins.toLocaleString()}</Text>
-                </View>
-                <View style={{ flex: 1 }} />
-                <IconButton icon="share-social-outline" label="Share this stream" onPress={shareRoom} bg="rgba(0,0,0,0.45)" color="#fff" />
-                {!battle && (
-                  <Button title="Battle" size="sm" variant="gold" onPress={() => setInviteOpen(true)}
-                    icon={<Ionicons name="flash" size={14} color={c.onGold} />} />
-                )}
-                {battleLive && <Button title="End battle" size="sm" variant="secondary" onPress={endBattle} />}
-              </Row>
-            </View>
 
             {iAmChallenger && (
               <View style={{ position: 'absolute', top: insets.top + 104, left: 12, right: 12, backgroundColor: 'rgba(0,0,0,0.75)', borderRadius: 16, padding: 14, gap: 8 }}>
@@ -271,10 +296,13 @@ export default function HostLiveScreen() {
               </View>
             )}
 
+            <FloatingHearts hearts={reactions.hearts} onDone={reactions.removeHeart} bottom={insets.bottom + 90} />
             <View style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 12, gap: 10 }}>
               <GiftToasts roomId={roomId} />
-              <ChatPanel roomId={roomId} hostId={userId!} isHost canModerate />
+              <JoinedLine joined={reactions.joined} />
+              <ChatPanel roomId={roomId} hostId={userId!} isHost canModerate onUserPress={setCardUser} />
             </View>
+            <ProfileCard userId={cardUser} roomId={roomId} hostId={userId!} canModerate isHost onClose={() => setCardUser(null)} />
           </>
         )}
       </StateView>
