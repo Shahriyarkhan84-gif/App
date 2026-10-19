@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
@@ -69,7 +70,9 @@ export default function RankingsScreen() {
           keyExtractor={(r) => `${r.rank}-${r.subject_id}`}
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           ListHeaderComponent={
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 6, paddingBottom: 12 }}>
+            // Redesign v2: the top 3 stand on a purple-to-pink card, white text.
+            <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 16, paddingHorizontal: 8, borderRadius: 24, marginBottom: 12, overflow: 'hidden' }}>
               {podium.map((r, i) => {
                 const first = r.rank === 1;
                 const size = first ? 84 : 68;
@@ -82,14 +85,14 @@ export default function RankingsScreen() {
                         <Text variant="caption" color="#1A1206" style={{ fontWeight: '700' }}>{r.rank}</Text>
                       </View>
                     </View>
-                    <Text variant="label" numberOfLines={1} style={{ marginTop: 6 }}>{r.label}</Text>
-                    <Row gap={4}>{kind !== 'live' && <Coin size={12} />}<Text variant="caption" muted>{score(r)}</Text></Row>
-                    <GrowBar height={first ? 56 : 36} delay={350 + i * 120} style={{ alignSelf: 'stretch', borderTopLeftRadius: 12, borderTopRightRadius: 12, backgroundColor: c.surface }} />
+                    <Text variant="label" color="#fff" numberOfLines={1} style={{ marginTop: 6 }}>{r.label}</Text>
+                    <Row gap={4}>{kind !== 'live' && <Coin size={12} />}<Text variant="caption" color="#fff" style={{ fontWeight: '700' }}>{score(r)}</Text></Row>
+                    <GrowBar height={first ? 56 : 36} delay={350 + i * 120} style={{ alignSelf: 'stretch', borderTopLeftRadius: 12, borderTopRightRadius: 12, backgroundColor: 'rgba(255,255,255,0.22)' }} />
                   </PressScale>
                   </FadeIn>
                 );
               })}
-            </View>
+            </LinearGradient>
           }
           renderItem={({ item }) => (
             <Pressable onPress={() => open(item)} disabled={kind === 'country'}>

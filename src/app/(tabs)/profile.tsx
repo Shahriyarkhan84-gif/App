@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useIsFocused } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import type { ReactNode } from 'react';
 import * as WebBrowser from 'expo-web-browser';
@@ -79,6 +80,8 @@ export default function ProfileScreen() {
             <IconButton icon="create-outline" label="Edit profile" color={d.text} bg={d.surface} onPress={() => router.push('/profile-edit')} />
           </Row>
 
+          {/* Redesign v2: photo, name, badges and the three counts sit on one soft purple-to-pink card. */}
+          <LinearGradient colors={['#F2EBFF', '#FFE4EF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 24, paddingVertical: 20, paddingHorizontal: 12, gap: 16 }}>
           <FadeIn style={{ alignItems: 'center', gap: 8 }}>
             <Pressable onPress={() => router.push('/frames')} accessibilityRole="button" accessibilityLabel="Profile frames">
               <FramedAvatar uri={profile.avatar_url} name={displayName(profile)} size={116} ring={d.primary} frameId={profile.active_frame_id} />
@@ -106,6 +109,7 @@ export default function ProfileScreen() {
             <Stat label="Following" value={stats.data?.following} />
             <Stat label="Fans" value={stats.data?.followers} />
           </FadeIn>
+          </LinearGradient>
 
           <FadeIn delay={140} style={{ flexDirection: 'row', gap: 8 }}>
             <Tile coin label={stats.data ? compactNumber(stats.data.coins) : '–'} sub="Coins" onPress={() => router.push('/wallet')} />
@@ -151,8 +155,8 @@ function Tile({ icon, coin, label, sub, onPress }: { icon?: IconName; coin?: boo
   const { c: d } = useTheme();
   return (
     <PressScale onPress={onPress} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={`${label} ${sub}`} style={{ flex: 1 }}>
-      <View style={{ minHeight: 92, borderRadius: 12, backgroundColor: d.surface, borderWidth: 1, borderColor: d.divider, alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 4 }}>
-        {coin ? <Coin size={22} /> : icon && <Ionicons name={icon} size={22} color={d.text} />}
+      <View style={{ minHeight: 92, borderRadius: 18, backgroundColor: d.surface, alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 4 }}>
+        {coin ? <Coin size={22} /> : icon && <Ionicons name={icon} size={22} color={d.primary} />}
         <Text variant="label" color={d.text} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
         <Text variant="caption" color={d.textFaint} numberOfLines={1}>{sub}</Text>
       </View>
@@ -162,7 +166,7 @@ function Tile({ icon, coin, label, sub, onPress }: { icon?: IconName; coin?: boo
 
 function Group({ children }: { children: ReactNode }) {
   const { c } = useTheme();
-  return <View style={{ borderRadius: 12, backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider, overflow: 'hidden' }}>{children}</View>;
+  return <View style={{ borderRadius: 18, backgroundColor: c.surface, overflow: 'hidden' }}>{children}</View>;
 }
 
 /** Menu row: plain line icon, label, optional detail, chevron. */

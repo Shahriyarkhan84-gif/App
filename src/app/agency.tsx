@@ -1,11 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
 import { FadeIn, Pop, PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { AgencyOwnerBadge, Avatar, Button, Card, Chip, Coin, compactNumber, HostBadge, Row, Screen, Text } from '@/components/ui';
+import { AgencyOwnerBadge, Avatar, Card, Chip, Coin, compactNumber, HostBadge, Row, Screen, Text } from '@/components/ui';
 import { rpc } from '@/lib/api';
 import { errorCode } from '@/lib/errors';
 import { useFocusedAsync, useOffline } from '@/lib/hooks';
@@ -57,25 +58,30 @@ export default function AgencyPortalScreen() {
             </FadeIn>
 
             <FadeIn delay={60}>
-              <Card style={{ gap: 12, backgroundColor: c.goldSurface, borderColor: c.goldBorder }}>
+              {/* Redesign v2: the code on a purple-to-pink card, white digits. */}
+              <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ gap: 12, padding: 18, borderRadius: 24 }}>
                 <Row style={{ justifyContent: 'space-between' }}>
-                  <Text variant="label" color={c.goldText}>Agency code</Text>
-                  <Row gap={4}><Ionicons name="lock-closed" size={12} color={c.goldText} /><Text variant="caption" color={c.goldText}>Permanent</Text></Row>
+                  <Text variant="label" color="#fff">Your agency code</Text>
+                  <Row gap={4}><Ionicons name="lock-closed" size={12} color="#fff" /><Text variant="caption" color="#fff">Permanent</Text></Row>
                 </Row>
-                <View accessible accessibilityLabel={`Agency code ${data.agency.code.split('').join(' ')}`} style={{ flexDirection: 'row', gap: 8 }}>
+                <View accessible accessibilityLabel={`Agency code ${data.agency.code.split('').join(' ')}`} style={{ flexDirection: 'row', gap: 8, justifyContent: 'center' }}>
                   {data.agency.code.split('').map((d, i) => (
                     <Pop key={`${i}-${d}`} delay={200 + i * 90} from={0.5}>
-                      <View style={{ width: 58, height: 68, borderRadius: 14, backgroundColor: '#1A1408', borderWidth: 1, borderColor: c.goldBorder, alignItems: 'center', justifyContent: 'center' }}>
-                        <Text variant="display" selectable style={{ fontSize: 36, lineHeight: 44, color: c.gold }}>{d}</Text>
+                      <View style={{ width: 58, height: 68, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
+                        <Text variant="display" selectable color="#fff" style={{ fontSize: 36, lineHeight: 44 }}>{d}</Text>
                       </View>
                     </Pop>
                   ))}
                 </View>
-                <Text variant="bodySmall" color={c.goldText}>New hosts enter this code in “Verify with Didit”. Once they pass, they join your agency automatically. This code is yours for good — it never changes.</Text>
-                <Row gap={8}>
-                  {data.agency.status === 'active' && <Button title="Share code" icon={<Ionicons name="share-social-outline" size={16} color={c.onGold} />} variant="gold" size="sm" onPress={() => void shareCode(data)} />}
-                </Row>
-              </Card>
+                <Text variant="bodySmall" color="#fff" style={{ opacity: 0.92 }}>New hosts enter this code in “Verify with Didit”. Once they pass, they join your agency automatically. This code is yours for good — it never changes.</Text>
+                {data.agency.status === 'active' && (
+                  <PressScale onPress={() => void shareCode(data)} accessibilityRole="button" accessibilityLabel="Share code"
+                    style={{ alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, minHeight: 40, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.22)' }}>
+                    <Ionicons name="share-social-outline" size={16} color="#fff" />
+                    <Text variant="label" color="#fff">Share code</Text>
+                  </PressScale>
+                )}
+              </LinearGradient>
             </FadeIn>
 
             <FadeIn delay={120} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>

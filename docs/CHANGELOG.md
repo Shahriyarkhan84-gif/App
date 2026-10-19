@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.66 — Redesign v2 (live rooms first)
+
+Built from the "Redesign v2" page in Figma (file ZzfRLqjtUyE7KjeeFYnpz7).
+
+- **Host live**: a control rail on the right (Flip camera, Mic, Camera, Battle, Share; PK battles keep Flip/Mic/Camera), a live timer, a connection badge (Good / OK / Weak network / Reconnecting…), a "Your mic is off" reminder, and "Your camera is off" instead of a black screen. The back camera is no longer mirrored. The diamond counter no longer doubles after Reconnect. Shares use https://zynalive.com/live/<id> (tappable in WhatsApp).
+- **Profile card** (`ProfileCard`): tap anyone in a live (chat name, host, top gifter) for their photo, ID, country, followers/following, Follow / Message / Profile; the host and room admins also get Mute 10m / Remove / Block (and Admin for the host); Report.
+- **Hearts and "joined" lines** (`LiveReactions`): a heart button for viewers, floating hearts for everyone, and "✨ Name joined the live", over Supabase Realtime broadcast (display only, nothing stored). Viewers now see why a follow failed.
+- **Welcome**: full purple-to-pink screen, white "Create account", outlined "I have an account". **Home**: a stories row ("Go live" + people you follow who are live) and the most watched live featured full width on Popular. **Me**: photo, name and counts on a soft gradient card; rounder tiles. **Wallet**: purple balance card; "Popular" and "Best value" tags (Popular is selected first). **Rankings**: top 3 on a gradient card. **Agency portal**: code on a gradient card.
+- Not yet: beauty filters (needs a native filter library), a pinned chat message (needs a database change).
+
 ## 0.9.65 — Backend security fixes
 
 From `docs/reports/SECURITY_AUDIT.md` (security-engineer agent). No Critical or High findings; these close the Medium and Low ones.

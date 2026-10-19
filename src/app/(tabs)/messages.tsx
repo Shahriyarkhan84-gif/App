@@ -52,7 +52,7 @@ export default function MessagesScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
                 accessibilityLabel={t.label}
-                style={{ flex: 1, alignItems: 'center', gap: 6, paddingVertical: 12, borderRadius: 16, backgroundColor: on ? c.primary : c.surface }}
+                style={{ flex: 1, alignItems: 'center', gap: 6, paddingVertical: 14, borderRadius: 20, backgroundColor: on ? c.primary : c.surface }}
               >
                 <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? 'rgba(255,255,255,0.2)' : c.surfaceRaised }}>
                   <Ionicons name={t.icon} size={20} color={on ? '#fff' : c.primary} />

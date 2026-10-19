@@ -120,16 +120,19 @@ export default function WalletScreen() {
     <Screen edges={[]}>
       <StateView state={resolveState({ offline, loading, error, data, onRetry: reload })}>
         {data && (() => {
-          const pick = data.packages.find((p) => p.id === selected) ?? data.packages[1] ?? data.packages[0];
+          // Tags (Redesign v2): the middle pack is "Popular" (and selected first), the biggest is "Best value".
+          const popularId = data.packages.length >= 3 ? data.packages[2].id : null;
+          const bestId = data.packages.length >= 4 ? data.packages[data.packages.length - 1].id : null;
+          const pick = data.packages.find((p) => p.id === selected) ?? data.packages.find((p) => p.id === popularId) ?? data.packages[1] ?? data.packages[0];
           return (
             <ScrollView contentContainerStyle={{ padding: 16, gap: 18, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
-              <LinearGradient colors={[c.goldSurface, c.goldBorder]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                style={{ padding: 20, borderRadius: 22, borderWidth: 1, borderColor: c.goldBorder, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={{ padding: 22, borderRadius: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <View style={{ gap: 4 }}>
-                  <Row gap={6}><Coin /><Text variant="bodySmall" color={c.goldText}>Coin balance</Text></Row>
-                  <Text variant="display" accessibilityLiveRegion="polite">{data.wallet.coin_balance.toLocaleString()}</Text>
+                  <Text variant="bodySmall" color="#fff" style={{ opacity: 0.9 }}>Your coins</Text>
+                  <Row gap={8}><Coin size={28} /><Text variant="display" color="#fff" accessibilityLiveRegion="polite">{data.wallet.coin_balance.toLocaleString()}</Text></Row>
                 </View>
-                <Text variant="caption" color={c.goldText} style={{ maxWidth: 130, textAlign: 'right' }}>
+                <Text variant="caption" color="#fff" style={{ maxWidth: 130, textAlign: 'right', opacity: 0.9 }}>
                   {data.wallet.frozen ? 'On hold while a payment dispute is reviewed' : 'Used to send gifts in live rooms'}
                 </Text>
               </LinearGradient>
@@ -160,8 +163,13 @@ export default function WalletScreen() {
                         // The web needs aria-checked on a radio. No custom label: screen readers read the card's
                         // own text ("140", "$1.99 · Starter"), which is what the audit requires.
                         aria-checked={on}
-                        style={{ width: '100%', minHeight: 76, paddingHorizontal: 14, justifyContent: 'center', borderRadius: radius[16], backgroundColor: c.surface, borderWidth: 2, borderColor: on ? c.primary : c.divider, gap: 4 }}
+                        style={{ width: '100%', minHeight: 76, paddingHorizontal: 14, justifyContent: 'center', borderRadius: radius[16], backgroundColor: on ? c.violetSurface : c.surface, borderWidth: 2, borderColor: on ? c.primary : c.divider, gap: 4 }}
                       >
+                        {(p.id === popularId || p.id === bestId) && (
+                          <View style={{ position: 'absolute', top: -9, right: 10, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, backgroundColor: c.live }}>
+                            <Text variant="caption" color="#fff" style={{ fontSize: 10, fontWeight: '700' }}>{p.id === popularId ? 'Popular' : 'Best value'}</Text>
+                          </View>
+                        )}
                         <Row gap={6}><Coin size={14} /><Text variant="h3" style={{ fontSize: 18 }}>{p.coins.toLocaleString()}</Text></Row>
                         <Text variant="bodySmall" muted>{formatMoney(p.price_minor, p.currency)} · {p.name}</Text>
                       </PressScale>
