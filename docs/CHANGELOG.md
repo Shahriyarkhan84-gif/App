@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.60 — Zynalive's own payment page
+
+- Coins can be bought on Zynalive's own page (zynalive.com/pay) instead of Stripe's checkout page: the Zynalive look, the package and total, Stripe's secure card form (Payment Element) and a Pay button. `coins-checkout` creates the Checkout session in Elements mode and sends buyers there; the web app and Android app open it the same way as before, and coins are still credited only from what Stripe reports to the server. Turns on when the `STRIPE_PUBLISHABLE_KEY` secret is set (`config-status` shows `own_payment_page`); until then Stripe's hosted page is used. `payPageUrl` is unit-tested.
+
 ## 0.9.59 — Creator and agency links
 
 - **creator.zynalive.com** opens the creator dashboard and **agency.zynalive.com** the agency portal (Vercel domains + `vercel.json` host redirects; after sign-in the app returns there, `src/lib/subdomain.ts`, unit-tested). The website's Creators and Agencies pages and footer link to them. The creator dashboard shows "Become a host" with an apply button to signed-in people who aren't hosts, instead of empty numbers.

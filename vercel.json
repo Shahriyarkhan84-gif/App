@@ -34,7 +34,7 @@
   ],
   "rewrites": [
     {
-      "source": "/:page(download|creators|agencies|safety|about)",
+      "source": "/:page(download|creators|agencies|safety|about|pay)",
       "destination": "/:page/index.html"
     },
     {

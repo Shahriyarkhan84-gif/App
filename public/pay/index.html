@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pay · Zynalive</title>
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<link rel="stylesheet" href="/site.css">
+<!-- Stripe.js must load from js.stripe.com (PCI). Version matches the Elements-mode sessions coins-checkout creates. -->
+<script src="https://js.stripe.com/dahlia/stripe.js"></script>
+<style>
+.pay { max-width: 480px; margin: 0 auto; padding: 32px 20px 48px; }
+.pay h1 { font-size: 28px; margin: 0 0 6px; }
+.summary { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin: 20px 0; }
+.summary .item { color: var(--muted); }
+.summary .total { font: 800 26px/1 var(--brand); color: var(--sky); }
+#payment-element { min-height: 180px; }
+.field { display: grid; gap: 6px; margin-bottom: 14px; }
+.field label { color: var(--muted); font-size: 14px; }
+.field input { min-height: 48px; border-radius: 10px; border: 1px solid var(--line); background: var(--raised); color: var(--text); padding: 0 14px; font: 16px var(--body); }
+.pay .btn { width: 100%; margin-top: 18px; border: 0; cursor: pointer; }
+.pay .btn[disabled] { opacity: .6; cursor: default; }
+.msg { margin-top: 14px; color: #ffb4c0; min-height: 1.4em; }
+.secure { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--faint); font-size: 13px; margin-top: 16px; }
+.back { display: block; text-align: center; margin-top: 18px; color: var(--muted); }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <span class="wordmark"><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#87CEFA"/><path d="M9 10h11v2.6L13.2 20H21v3H9v-2.6L15.8 13H9z" fill="#00131F"/><circle cx="24.5" cy="8" r="2.6" fill="#00131F"/></svg><span>zyna<span style="color:var(--sky)">live</span></span></span>
+  </div>
+</header>
+<main class="pay">
+  <h1>Buy coins</h1>
+  <p class="fine" style="margin:0">Coins appear in your wallet as soon as the payment is confirmed.</p>
+
+  <div class="summary" aria-live="polite">
+    <span class="item" id="item">Loading…</span>
+    <span class="total" id="total"></span>
+  </div>
+
+  <form id="form" novalidate>
+    <div class="field" id="email-field" hidden>
+      <label for="email">Email for your receipt</label>
+      <input id="email" type="email" autocomplete="email" inputmode="email">
+    </div>
+    <div id="payment-element"></div>
+    <button class="btn primary" id="pay" type="submit" disabled>Pay</button>
+    <p class="msg" id="msg" role="alert"></p>
+  </form>
+
+  <p class="secure"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Card details go straight to Stripe and never touch Zynalive's servers.</p>
+  <a class="back" id="back" href="/wallet">Cancel and go back</a>
+</main>
+
+<script>
+(function () {
+  // coins-checkout sends everything in the URL fragment (never sent to a server). Read it, then
+  // take it out of the address bar so the client secret isn't left in history.
+  var p = new URLSearchParams(location.hash.slice(1));
+  var cs = p.get('cs'), pk = p.get('pk'), ret = p.get('ret'), back = p.get('back');
+  history.replaceState(null, '', location.pathname);
+
+  var msg = document.getElementById('msg');
+  var payBtn = document.getElementById('pay');
+  var sameSite = function (u) { try { return new URL(u).origin === location.origin; } catch (e) { return false; } };
+  // Only ever send people back to Zynalive.
+  if (back && sameSite(back)) document.getElementById('back').href = back;
+  if (!ret || !sameSite(ret)) ret = '/checkout-return?status=success';
+
+  function fail(text) {
+    document.getElementById('payment-element').hidden = true;
+    msg.textContent = text;
+    payBtn.disabled = true;
+  }
+  if (!cs || !pk || typeof Stripe === 'undefined') {
+    document.getElementById('item').textContent = 'Payment not found';
+    return fail('This payment link is incomplete or expired. Go back to your wallet and try again.');
+  }
+
+  var stripe = Stripe(pk);
+  var checkout = stripe.initCheckoutElementsSdk({
+    clientSecret: cs,
+    elementsOptions: {
+      appearance: {
+        theme: 'night',
+        variables: { colorPrimary: '#87CEFA', colorBackground: '#1A1D22', colorText: '#FFFFFF', fontFamily: 'DM Sans, system-ui, sans-serif', borderRadius: '10px' },
+      },
+      fonts: [{ cssSrc: 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap' }],
+    },
+  });
+  checkout.createPaymentElement().mount('#payment-element');
+
+  checkout.loadActions().then(function (res) {
+    if (res.type === 'error') return fail(res.error.message || 'This payment could not be loaded. Go back and try again.');
+    var actions = res.actions;
+    var session = actions.getSession();
+    var item = session.lineItems && session.lineItems[0];
+    document.getElementById('item').textContent = item ? item.name : 'Zynalive coins';
+    var total = session.total && session.total.total;
+    var amount = total ? (total.amount || '') : '';
+    document.getElementById('total').textContent = amount;
+    payBtn.textContent = amount ? 'Pay ' + amount : 'Pay';
+    var needEmail = !session.email;
+    document.getElementById('email-field').hidden = !needEmail;
+    payBtn.disabled = false;
+
+    document.getElementById('form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      msg.textContent = '';
+      var opts = {};
+      if (needEmail) {
+        var email = document.getElementById('email').value.trim();
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = 'Enter a valid email for your receipt.'; return; }
+        opts.email = email;
+      }
+      payBtn.disabled = true;
+      payBtn.textContent = 'Processing…';
+      actions.confirm(opts).then(function (r) {
+        if (r.type === 'error') {
+          msg.textContent = r.error.message || 'The payment didn’t go through. Check your details and try again.';
+          payBtn.disabled = false;
+          payBtn.textContent = amount ? 'Pay ' + amount : 'Pay';
+          return;
+        }
+        // Paid. Stripe may already be redirecting; otherwise go back to Zynalive, which
+        // shows the coins once the server has confirmed the payment with Stripe.
+        location.replace(ret);
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

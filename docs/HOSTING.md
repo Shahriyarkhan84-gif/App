@@ -141,7 +141,7 @@ right place. Paste keys into the dashboards named here, never into chat or the r
 | Supabase | supabase.com (have it) | — | Done: database up to date |
 | Vercel *or* Cloudflare Pages | vercel.com / dash.cloudflare.com | — | Import the GitHub repo (step 3 / 3b) |
 | Namecheap | namecheap.com (have zynalive.com) | — | DNS → Cloudflare (step 3) |
-| Stripe | dashboard.stripe.com | Secret key, webhook signing secret | Supabase → Edge Functions → Secrets: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
+| Stripe | dashboard.stripe.com | Secret key, publishable key, webhook signing secret | Supabase → Edge Functions → Secrets: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` (own payment page), `STRIPE_WEBHOOK_SECRET` |
 | Clerk | dashboard.clerk.com (have it) | Production publishable + secret key; Webhooks → add endpoint `/functions/v1/clerk-webhook` (events user.created/updated/deleted) → signing secret | Website/EAS: `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`; Supabase secrets: `CLERK_SECRET_KEY`, `CLERK_ISSUER`, `CLERK_WEBHOOK_SECRET` |
 | Resend | resend.com → API keys; verify zynalive.com | API key | Supabase secrets: `RESEND_API_KEY` |
 | Upstash | console.upstash.com → Create Redis database | REST URL + REST token | Supabase secrets: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |

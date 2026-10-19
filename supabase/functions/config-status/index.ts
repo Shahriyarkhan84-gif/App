@@ -6,6 +6,7 @@ import { corsHeaders } from '../_shared/cors.ts';
 const NEEDED: Record<string, string[]> = {
   checkout: ['CLERK_ISSUER', 'STRIPE_SECRET_KEY', 'SITE_URL', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'],
   stripe_webhook: ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET'],
+  own_payment_page: ['STRIPE_PUBLISHABLE_KEY'],
   live_video: ['LIVEKIT_URL', 'LIVEKIT_API_KEY', 'LIVEKIT_API_SECRET'],
   clerk_webhook: ['CLERK_WEBHOOK_SECRET'],
   delete_account: ['CLERK_SECRET_KEY'],

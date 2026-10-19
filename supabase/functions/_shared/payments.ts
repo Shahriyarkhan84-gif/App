@@ -15,3 +15,13 @@ export function sessionOutcome(s: SessionState): 'credit' | 'fail' | 'wait' {
   if (s.status === 'expired') return 'fail';
   return 'wait'; // open, or complete but a delayed payment method is still processing
 }
+
+/**
+ * Zynalive's own payment page (zynalive.com/pay) for a Checkout session in Elements mode. Everything
+ * the page needs travels in the URL fragment, which browsers never send to a server or put in logs:
+ * the session's client secret, the publishable key, and where to go after paying or going back.
+ */
+export function payPageUrl(site: string, p: { clientSecret: string; publishableKey: string; returnUrl: string; backUrl: string }) {
+  const hash = new URLSearchParams({ cs: p.clientSecret, pk: p.publishableKey, ret: p.returnUrl, back: p.backUrl });
+  return `${site.replace(/\/$/, '')}/pay#${hash.toString()}`;
+}

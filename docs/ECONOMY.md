@@ -19,7 +19,17 @@ User pays 3,000 PKR
 
 ### Stripe Checkout settings (coins-checkout)
 
-- Stripe-hosted Checkout, payment methods chosen by Stripe from the Dashboard settings (cards, Link
+- **Zynalive's own payment page** (`public/pay/index.html` → zynalive.com/pay): with the
+  `STRIPE_PUBLISHABLE_KEY` secret set (same test/live mode as the secret key), `coins-checkout`
+  creates the session in Elements mode (`ui_mode: 'elements'`, API `2026-08-26.dahlia`, buyer's
+  profile email as `customer_email`) and returns `zynalive.com/pay#cs=…&pk=…&ret=…&back=…`. The
+  page loads Stripe.js from js.stripe.com, shows the package and total from the session and Stripe's
+  Payment Element (card details go straight to Stripe), and confirms the session. Everything is in
+  the URL fragment (never sent to a server) and removed from the address bar on load; it only
+  returns to Zynalive addresses. The web app and the Android app open it the same way they opened
+  Stripe's page, and crediting is unchanged (webhook / reconciliation on the same Checkout session).
+  Without the publishable key, buyers get Stripe's hosted page as before.
+- Payment methods chosen by Stripe from the Dashboard settings (cards, Link
   and others; no hard-coded list), **Adaptive Pricing** on (buyers abroad see a local-currency
   price; `amount_total`/`currency` on the session stay in the package currency, so the webhook's
   amount check still holds — Stripe API 2025-03-31 and later).

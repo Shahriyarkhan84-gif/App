@@ -1,5 +1,7 @@
 import Stripe from 'npm:stripe@18';
 
+export type { Stripe };
+
 import { requireEnv } from './cors.ts';
 
 export function getStripe() {

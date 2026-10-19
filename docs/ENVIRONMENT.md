@@ -27,6 +27,7 @@ token plus `LIVEKIT_URL`.
 | `CLERK_SECRET_KEY` | `delete-account` (deletes the Clerk user). Server-side only. |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | `livekit-token`, `livekit-webhook` |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | `coins-checkout`, `stripe-webhook` |
+| `STRIPE_PUBLISHABLE_KEY` (`pk_test_…`/`pk_live_…`, same mode as the secret key; public, safe to share) | `coins-checkout`: turns on Zynalive's own payment page (zynalive.com/pay); without it buyers use Stripe's hosted page |
 | `SITE_URL` | Stripe return URLs |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | rate limiting (optional; limits off without it) |
 | `PINECONE_API_KEY` | `smart-search` (optional; the app falls back to word search and same-category lives without it). `PINECONE_INDEX` (default `zynalive-live`) or `PINECONE_INDEX_HOST` to skip the index lookup |
