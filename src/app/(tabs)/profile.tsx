@@ -28,6 +28,7 @@ export default function ProfileScreen() {
   const track = useAnalytics();
   const { profile, host, isHost, isPlatformAdmin, error, reload } = useProfile();
   const focused = useIsFocused();
+  const { c: d } = useTheme();
 
   const stats = useFocusedAsync(async () => {
     if (!profile) return null;
@@ -65,9 +66,8 @@ export default function ProfileScreen() {
   const verified = host?.verification_status === 'approved';
   const isAgencyOwner = profile?.role === 'AGENCY_ADMIN';
   const isAgencyStaff = isAgencyOwner || profile?.role === 'AGENCY_MEMBER';
-  const { c: d } = useTheme();
 
-  // Dark "Me" page in the style of other live apps: centred framed photo, stats, four tiles, grouped rows.
+  // "Me" page in the style of other live apps: centred framed photo, stats, four tiles, grouped rows.
   return (
     <View style={{ flex: 1, backgroundColor: d.background }}>
       {focused && <StatusBar style="dark" />}

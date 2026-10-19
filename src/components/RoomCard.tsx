@@ -12,7 +12,7 @@ import { PressScale } from './Motion';
 import { compactNumber, RoleBadges, Text } from './ui';
 
 /**
- * Live-app grid card (Bigo/Tango style): full-bleed cover, a small LIVE / PK / Party tag top-left,
+ * Live-app grid card (Bigo/Tango style): full-bleed cover, a small red LIVE / purple Party / gold PK tag top-left,
  * TOP rank top-right, and name + flag + viewers over a dark fade at the bottom.
  */
 export function RoomCard({ room, width, reason, rank }: { room: Room; width: number; reason?: string | null; rank?: number }) {
@@ -24,16 +24,16 @@ export function RoomCard({ room, width, reason, rank }: { room: Room; width: num
   return (
     <Link href={roomHref(room)} asChild>
       <PressScale style={{ width }} scaleTo={0.97} accessibilityLabel={`Watch ${name} live: ${room.title}. ${room.viewer_count} watching`}>
-        <View style={{ width, height: Math.round(width * 1.25), borderRadius: radius[8], overflow: 'hidden', backgroundColor: liveColors.surfaceRaised }}>
+        <View style={{ width, height: Math.round(width * 1.25), borderRadius: radius[12], overflow: 'hidden', backgroundColor: liveColors.surfaceRaised }}>
           {cover ? <Image source={cover} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
               <Text variant="display" color="rgba(255,255,255,0.12)" style={{ fontSize: 88, lineHeight: 100 }}>{name.replace('@', '').slice(0, 1).toUpperCase()}</Text>
             </View>
           )}
           <View style={{ position: 'absolute', top: 6, left: 6, right: 6, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 6, height: 20, borderRadius: 4, backgroundColor: tag === 'PK' ? c.gold : c.primary }}>
-              {tag === 'LIVE' && <Bars color={c.primaryText} />}
-              <Text variant="caption" color={tag === 'PK' ? c.onGold : c.primaryText} style={{ fontSize: 10, lineHeight: 12, fontWeight: '700', letterSpacing: 0.4 }}>{tag}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 6, height: 20, borderRadius: 4, backgroundColor: tag === 'PK' ? c.gold : tag === 'LIVE' ? c.live : c.primary }}>
+              {tag === 'LIVE' && <Bars color="#FFFFFF" />}
+              <Text variant="caption" color={tag === 'PK' ? c.onGold : '#FFFFFF'} style={{ fontSize: 10, lineHeight: 12, fontWeight: '700', letterSpacing: 0.4 }}>{tag}</Text>
             </View>
             {rank !== undefined && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, height: 20, paddingHorizontal: 6, borderRadius: 4, backgroundColor: 'rgba(0,0,0,0.55)' }}>

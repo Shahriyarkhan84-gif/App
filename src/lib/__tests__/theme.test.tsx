@@ -9,18 +9,22 @@ describe('useTheme', () => {
     const { result } = await renderHook(() => useTheme());
     expect(result.current.scheme).toBe('light');
     expect(result.current.c.background).toBe('#FFFFFF');
-    expect(result.current.c.primary).toBe('#0277BD');
+    expect(result.current.c.primary).toBe('#6A1FE0');
   });
 
   it('keeps live video screens dark', () => {
     expect(liveColors.background).toBe('#000000');
-    expect(liveColors.primary).toBe('#87CEFA');
+    expect(liveColors.primary).toBe('#B488FF');
   });
 
-  it('puts white text on flat sky blue surfaces', async () => {
+  it('blends actions from the icon purple into pink, with white text', async () => {
     const { result } = await renderHook(() => useTheme());
-    expect(result.current.c.gradient.every((x) => x === result.current.c.primary)).toBe(true);
-    expect(result.current.c.glow).toBe('transparent');
+    expect(result.current.c.gradient).toEqual(['#6A1FE0', '#9B2FE0', '#D62872']);
     expect(result.current.c.primaryText).toBe('#FFFFFF');
+  });
+
+  it('uses the same red LIVE tag on white and on video', async () => {
+    const { result } = await renderHook(() => useTheme());
+    expect(result.current.c.live).toBe(liveColors.live);
   });
 });

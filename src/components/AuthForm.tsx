@@ -1,5 +1,6 @@
 import { isClerkAPIResponseError, useAuth, useClerk, useSSO } from '@clerk/clerk-expo';
 import * as AuthSession from 'expo-auth-session';
+import { Image } from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState, type ReactNode } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -56,21 +57,15 @@ export function clerkErrorMessage(err: unknown) {
   return err instanceof Error && err.message ? err.message : friendlyError(err);
 }
 
-const TILES = ['#0369A1', '#0EA5E9', '#5AC8FA', '#B5E4FC'];
-
-/** Tiles + wordmark + tagline from the design canvas. */
+/** App icon + wordmark + tagline at the top of the welcome and sign-in screens. */
 export function AuthHero({ size = 44 }: { size?: number }) {
   return (
     <View style={{ gap: 14 }}>
-      <View style={{ flexDirection: 'row', gap: 6 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        {TILES.map((bg, i) => (
-          <FadeIn key={bg} delay={i * 90} from={-24}>
-            <Float offset={i * 350} style={{ marginTop: i % 2 ? 18 : 0 }}>
-              <View style={{ width: 56, height: 76, borderRadius: 14, backgroundColor: bg }} />
-            </Float>
-          </FadeIn>
-        ))}
-      </View>
+      <FadeIn from={-16}>
+        <Float>
+          <Image source={require('../../assets/splash-icon.png')} style={{ width: 84, height: 84 }} contentFit="contain" accessible={false} />
+        </Float>
+      </FadeIn>
       <FadeIn delay={380}><Wordmark size={size} /></FadeIn>
       <FadeIn delay={500}><Text variant="bodyLarge" muted>Go live, meet people and support the hosts you love.</Text></FadeIn>
     </View>

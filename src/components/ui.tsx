@@ -135,7 +135,7 @@ export function IconButton({ icon, label, onPress, color, badge, bg }: { icon: I
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const { c, radius } = useTheme();
   return (
-    <View style={[{ backgroundColor: c.surface, borderRadius: radius[12], borderWidth: 1, borderColor: c.divider, padding: 16, gap: 8 }, style]}>
+    <View style={[{ backgroundColor: c.surface, borderRadius: radius[16], borderWidth: 1, borderColor: c.divider, padding: 16, gap: 8 }, style]}>
       {children}
     </View>
   );
@@ -173,12 +173,12 @@ export function Chip({ label, selected, onPress }: { label: string; selected?: b
         justifyContent: 'center',
         paddingHorizontal: 16,
         borderRadius: radius.pill,
-        backgroundColor: selected ? c.text : c.surfaceRaised,
+        backgroundColor: selected ? c.primary : c.surface,
         borderWidth: 1,
-        borderColor: selected ? c.text : c.border,
+        borderColor: selected ? c.primary : c.border,
       }}
     >
-      <Text variant="label" color={selected ? c.background : c.textMuted} style={{ fontWeight: '500' }}>{label}</Text>
+      <Text variant="label" color={selected ? c.primaryText : c.textMuted} style={{ fontWeight: selected ? '700' : '500' }}>{label}</Text>
     </PressScale>
   );
 }
@@ -196,9 +196,9 @@ export function Segmented<T extends string>({ options, value, onChange }: { opti
             onPress={() => onChange(o.id)}
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
-            style={{ flex: 1, minHeight: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.text : 'transparent' }}
+            style={{ flex: 1, minHeight: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.primary : 'transparent' }}
           >
-            <Text variant="label" color={on ? c.background : c.textMuted} style={{ fontSize: 13 }}>{o.label}</Text>
+            <Text variant="label" color={on ? c.primaryText : c.textMuted} style={{ fontSize: 13 }}>{o.label}</Text>
           </Pressable>
         );
       })}
@@ -233,13 +233,9 @@ export function LiveBadge({ viewers }: { viewers?: number }) {
   const { c } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-      <View style={{ borderRadius: 6, shadowColor: c.glow, shadowOpacity: 1, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 4 }}>
-        <View style={{ borderRadius: 6, overflow: 'hidden' }}>
-          <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 8, paddingVertical: 3, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <Pulse min={0.6} max={1.15} period={1100}><View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: c.primaryText }} /></Pulse>
-            <Text variant="caption" color={c.primaryText} style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>LIVE</Text>
-          </LinearGradient>
-        </View>
+      <View style={{ borderRadius: 6, backgroundColor: c.live, paddingHorizontal: 8, paddingVertical: 3, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+        <Pulse min={0.6} max={1.15} period={1100}><View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFFFFF' }} /></Pulse>
+        <Text variant="caption" color="#FFFFFF" style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>LIVE</Text>
       </View>
       {viewers !== undefined && <ViewerCount count={viewers} />}
     </View>

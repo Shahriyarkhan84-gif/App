@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.62 — Live-app look
+
+- Redesigned to look like a live-streaming app instead of a generic template: actions are a purple-to-pink gradient taken from the app icon's purple (white text, at least 4.8:1 everywhere on the blend), LIVE tags are red, selected chips and tabs are purple, Party tags purple and PK tags gold. Big headings (display, h1) use the chunky Bricolage Grotesque brand face. Cards are rounder. The in-app logo (launch screen) now matches the purple icon, and the welcome/sign-in hero shows the app icon instead of abstract coloured blocks. Live video screens use a light purple-to-pink on black. `src/lib/theme.ts`, `ui.tsx` (Chip, Segmented, LiveBadge, Card), `RoomCard`, `LaunchScreen`, `AuthForm`; theme tests updated.
+
 ## 0.9.61 — White app
 
 - The app is white: white screens, light grey cards, near-black text, a light glass tab bar and a white launch/splash screen. Actions use a deeper sky blue (`#0277BD`, white text, 4.8:1 on white) because the light sky blue is unreadable on white; light sky stays as the accent and gold stays the coin colour. Every text colour meets 4.5:1. Live video screens (live rooms, party rooms, going live, PK battles) stay dark. The Me tab now follows the white theme too. `src/lib/theme.ts` (`light` palette; `liveColors` = dark), tests updated. Android picks it up from the next build; the website keeps its dark look.
