@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
+import { brand } from '@/lib/brand';
 import { FadeIn, PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Avatar, Button, Coin, compactNumber, Row, Screen, Sheet, Text } from '@/components/ui';
@@ -127,7 +128,7 @@ export default function HostDashboardScreen() {
           state={{
             kind: 'empty',
             title: 'Become a host',
-            body: 'The creator dashboard is for Zynalive hosts. Apply with your agency code to start going live and earning from gifts.',
+            body: `The creator dashboard is for ${brand.name} hosts. Apply with your agency code to start going live and earning from gifts.`,
             action: { title: 'Apply to host', onPress: () => router.push('/hosting') },
           }}
         />

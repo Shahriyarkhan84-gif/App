@@ -9,7 +9,7 @@ import { Text } from './ui';
 // Likes (floating hearts) and "X joined" lines for a live room, sent over Supabase Realtime broadcast:
 // display only, nothing is stored and nothing counts towards money or rankings.
 
-const HEART_COLORS = ['#F48FB8', '#B488FF', '#E11D48', '#FFC24B', '#FF7AA2'];
+const HEART_COLORS = ['#7DD3FC', '#38BDF8', '#E11D48', '#FFC24B', '#FF7AA2'];
 const MAX_HEARTS = 14;
 
 type Heart = { id: number; color: string; drift: number };
@@ -112,7 +112,7 @@ function RisingHeart({ heart, onDone }: { heart: Heart; onDone: (id: number) => 
 export function JoinedLine({ joined }: { joined: { id: number; name: string } | null }) {
   if (!joined) return null;
   return (
-    <View key={joined.id} accessibilityLiveRegion="polite" style={{ alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: 'rgba(180,136,255,0.38)' }}>
+    <View key={joined.id} accessibilityLiveRegion="polite" style={{ alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: 'rgba(56,189,248,0.38)' }}>
       <Text variant="caption" color="#fff" style={{ fontWeight: '600' }}>✨ {joined.name} joined the live</Text>
     </View>
   );

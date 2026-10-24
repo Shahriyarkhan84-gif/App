@@ -69,3 +69,4 @@ Media adds `MEDIA_UPLOADS_BUCKET` (private S3 bucket for sources; clients get pr
 | Name | Where |
 |---|---|
 | `SENTRY_AUTH_TOKEN` | EAS secret, uploads source maps |
+| `BRAND` | Which client brand to build (`brands/<id>/brand.json`); default `zynalive`. See `docs/WHITE_LABEL.md` |

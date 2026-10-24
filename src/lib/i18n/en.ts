@@ -46,7 +46,7 @@ export const en = {
   'settings.title': 'Settings',
   'settings.language': 'Language',
   'settings.language.device': 'Device language',
-  'settings.language.restart': 'Restart Zynalive to switch the layout direction.',
+  'settings.language.restart': 'Restart the app to switch the layout direction.',
   'settings.privacy': 'Privacy policy',
   'settings.signOut': 'Sign out',
   'settings.delete': 'Delete account',

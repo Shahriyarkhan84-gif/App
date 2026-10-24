@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { brand } from '@/lib/brand';
 import { ChatPanel } from '@/components/ChatPanel';
 import { GiftSheet, GiftToasts } from '@/components/GiftSheet';
 import { LiveStage } from '@/components/LiveStage';
@@ -161,7 +162,7 @@ export default function LiveRoomScreen() {
 
   const shareRoom = () => {
     // https links are tappable in WhatsApp; zynalive.com/live/<id> opens the app or the web player.
-    void shareMessage(`Watch ${displayName(r?.host)} live on Zynalive: https://zynalive.com/live/${roomId}`);
+    void shareMessage(`Watch ${displayName(r?.host)} live on ${brand.name}: ${brand.website}/live/${roomId}`);
     track('room_shared', { room_id: roomId });
   };
 
@@ -258,7 +259,7 @@ export default function LiveRoomScreen() {
           <Pressable onPress={() => setMenuOpen(true)} accessibilityRole="button" accessibilityLabel="More: message, share, report" style={roundButton('rgba(20,24,30,0.78)')}>
             <Ionicons name="menu" size={24} color={c.text} />
           </Pressable>
-          <Pressable onPress={reactions.like} accessibilityRole="button" accessibilityLabel="Send a heart" style={roundButton('rgba(244,143,184,0.92)')}>
+          <Pressable onPress={reactions.like} accessibilityRole="button" accessibilityLabel="Send a heart" style={roundButton('rgba(56,189,248,0.92)')}>
             <Ionicons name="heart" size={22} color="#fff" />
           </Pressable>
           <Pressable onPress={() => setGiftOpen(true)} accessibilityRole="button" accessibilityLabel="Send a gift" style={roundButton(c.gold)}>

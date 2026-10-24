@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
+import { brand } from '@/lib/brand';
 import { bodyFont, fonts, useTheme, type TypeVariant } from '@/lib/theme';
 
 import { PressScale, Pulse } from './Motion';
@@ -44,16 +45,33 @@ export function Text({ variant = 'body', muted, faint, color, style, ...rest }: 
 export function Wordmark({ size = 28 }: { size?: number }) {
   const { c } = useTheme();
   return (
-    <Text variant="display" accessibilityRole="header" accessibilityLabel="Zynalive" style={{ fontFamily: fonts.brand, fontSize: size, lineHeight: size * 1.15, letterSpacing: 0 }}>
-      zyna<Text variant="display" color={c.primary} style={{ fontFamily: fonts.brand, fontSize: size, lineHeight: size * 1.15, letterSpacing: 0 }}>live</Text>
+    <Text variant="display" accessibilityRole="header" accessibilityLabel={brand.name} style={{ fontFamily: fonts.brand, fontSize: size, lineHeight: size * 1.15, letterSpacing: 0 }}>
+      {brand.wordmark[0]}<Text variant="display" color={c.primary} style={{ fontFamily: fonts.brand, fontSize: size, lineHeight: size * 1.15, letterSpacing: 0 }}>{brand.wordmark[1]}</Text>
     </Text>
   );
 }
 
+/** Full-screen page on the brand's sky background (Glass & sky: light blue fading to near white). */
 export function Screen({ children, edges = ['top'], style }: { children: ReactNode; edges?: Edge[]; style?: StyleProp<ViewStyle> }) {
-  const { c } = useTheme();
-  return <SafeAreaView edges={edges} style={[{ flex: 1, backgroundColor: c.background }, style]}>{children}</SafeAreaView>;
+  return (
+    <SkyBackground>
+      <SafeAreaView edges={edges} style={[{ flex: 1 }, style]}>{children}</SafeAreaView>
+    </SkyBackground>
+  );
 }
+
+export function SkyBackground({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const { c } = useTheme();
+  return (
+    <View style={[{ flex: 1, backgroundColor: c.background }, style]}>
+      <LinearGradient colors={c.sky} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} pointerEvents="none" />
+      {children}
+    </View>
+  );
+}
+
+/** Soft shadow under frosted cards. */
+export const glassShadow: ViewStyle = { shadowColor: '#0C4A6E', shadowOpacity: 0.1, shadowRadius: 24, shadowOffset: { width: 0, height: 10 }, elevation: 2 };
 
 type ButtonProps = Omit<PressableProps, 'style'> & {
   title: string;
@@ -135,7 +153,7 @@ export function IconButton({ icon, label, onPress, color, badge, bg }: { icon: I
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const { c, radius } = useTheme();
   return (
-    <View style={[{ backgroundColor: c.surface, borderRadius: radius[16], borderWidth: 1, borderColor: c.divider, padding: 16, gap: 8 }, style]}>
+    <View style={[{ backgroundColor: c.surface, borderRadius: radius[24], borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', padding: 16, gap: 8 }, glassShadow, style]}>
       {children}
     </View>
   );
@@ -316,7 +334,7 @@ export function Input({ label, error, style, ...props }: TextInputProps & { labe
         placeholderTextColor={c.textFaint}
         style={[
           type.body as TextStyle,
-          { fontFamily: fonts.regular, backgroundColor: c.surface, color: c.text, borderColor: error ? c.danger : c.border, borderWidth: 1, borderRadius: radius[12] + 2, paddingHorizontal: 16, minHeight: 52 },
+          { fontFamily: fonts.regular, backgroundColor: c.surfaceRaised, color: c.text, borderColor: error ? c.danger : c.violetBorder, borderWidth: 1, borderRadius: radius[12] + 2, paddingHorizontal: 16, minHeight: 52 },
           style,
         ]}
         {...props}

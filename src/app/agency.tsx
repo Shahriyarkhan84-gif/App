@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
+import { brand } from '@/lib/brand';
 import { FadeIn, Pop, PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { AgencyOwnerBadge, Avatar, Card, Chip, Coin, compactNumber, HostBadge, Row, Screen, Text } from '@/components/ui';
@@ -38,11 +39,11 @@ export default function AgencyPortalScreen() {
   const { data, error, loading, reload } = useFocusedAsync(() => rpc<Portal>(supabase, 'agency_portal', {}), [], 'agency');
 
   if (error && errorCode(error) === 'not_agency_member') {
-    return <Screen edges={[]}><StateView state={{ kind: 'disabled', title: 'No agency yet', body: 'The agency portal is for agency owners and staff. Ask Zynalive to set up your agency.' }} /></Screen>;
+    return <Screen edges={[]}><StateView state={{ kind: 'disabled', title: 'No agency yet', body: `The agency portal is for agency owners and staff. Ask ${brand.name} to set up your agency.` }} /></Screen>;
   }
 
   const shareCode = (p: Portal) =>
-    shareMessage(`Join ${p.agency.name} on Zynalive! When you verify for hosting, enter agency code ${p.agency.code}.`);
+    shareMessage(`Join ${p.agency.name} on ${brand.name}! When you verify for hosting, enter agency code ${p.agency.code}.`);
 
   return (
     <Screen edges={['bottom']}>

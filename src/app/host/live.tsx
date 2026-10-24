@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { brand, hasFeature } from '@/lib/brand';
 import { ChatPanel } from '@/components/ChatPanel';
 import { GiftToasts } from '@/components/GiftSheet';
 import { ConnectionBadge, HostControlRail, LiveTimer, MicOffBanner } from '@/components/HostControls';
@@ -170,7 +171,7 @@ export default function HostLiveScreen() {
   const shareRoom = () => {
     if (!roomId) return;
     // https links are tappable in WhatsApp; zynalive.com/live/<id> opens the app or the web player.
-    void shareMessage(`I'm live on Zynalive: https://zynalive.com/live/${roomId}`);
+    void shareMessage(`I'm live on ${brand.name}: ${brand.website}/live/${roomId}`);
     track('room_shared', { room_id: roomId });
   };
 
@@ -273,7 +274,7 @@ export default function HostLiveScreen() {
               <LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" facing={facing} onError={onStageError} onDisconnected={onStageDisconnected}>
                 {/* Inside the LiveKit room: these read the host's own mic, camera and connection. */}
                 {topBar(true)}
-                <HostControlRail top={insets.top + 120} onShare={shareRoom} onBattle={!battle ? () => setInviteOpen(true) : undefined} />
+                <HostControlRail top={insets.top + 120} onShare={shareRoom} onBattle={!battle && hasFeature('pkBattles') ? () => setInviteOpen(true) : undefined} />
               </LiveStage>
             )}
 

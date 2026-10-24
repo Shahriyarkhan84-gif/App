@@ -17,6 +17,7 @@ import { Platform, View } from 'react-native';
 
 import { LaunchScreen } from '@/components/LaunchScreen';
 import { Text } from '@/components/ui';
+import { hasFeature } from '@/lib/brand';
 import { env, missingRequiredEnv } from '@/lib/env';
 import { loadCacheFor } from '@/lib/hooks';
 import { AppI18n } from '@/lib/i18n/AppI18n';
@@ -123,7 +124,7 @@ function RootNavigator() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: c.background },
+        headerStyle: { backgroundColor: c.sky[0] },
         headerTintColor: c.text,
         headerTitleStyle: { fontFamily: fonts.bold },
         contentStyle: { backgroundColor: c.background },
@@ -136,29 +137,47 @@ function RootNavigator() {
       <Stack.Protected guard={!!isSignedIn}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="live/[roomId]" options={{ headerShown: false, animation: 'fade' }} />
-        <Stack.Screen name="party/[roomId]" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Protected guard={hasFeature('partyRooms')}>
+          <Stack.Screen name="party/[roomId]" options={{ headerShown: false, animation: 'fade' }} />
+        </Stack.Protected>
         <Stack.Screen name="host/live" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="host/summary" options={{ title: 'Stream summary', headerBackVisible: false }} />
         <Stack.Screen name="host/dashboard" options={{ title: 'Host dashboard' }} />
         <Stack.Screen name="user/[id]" options={{ title: '' }} />
         <Stack.Screen name="chat/[userId]" options={{ title: 'Chat' }} />
         <Stack.Screen name="wallet" options={{ title: 'Wallet' }} />
-        <Stack.Screen name="frames" options={{ title: 'Profile frames' }} />
-        <Stack.Screen name="rankings" options={{ title: 'Rankings' }} />
+        <Stack.Protected guard={hasFeature('frames')}>
+          <Stack.Screen name="frames" options={{ title: 'Profile frames' }} />
+        </Stack.Protected>
+        <Stack.Protected guard={hasFeature('rankings')}>
+          <Stack.Screen name="rankings" options={{ title: 'Rankings' }} />
+        </Stack.Protected>
         <Stack.Screen name="delete-account" options={{ title: 'Delete account' }} />
         <Stack.Screen name="hosting" options={{ title: 'Hosting' }} />
         <Stack.Screen name="verify-form" options={{ title: 'Verify with Didit' }} />
         <Stack.Screen name="earnings" options={{ title: 'Earnings' }} />
         <Stack.Screen name="support" options={{ title: 'Help & support' }} />
         <Stack.Screen name="profile-edit" options={{ title: 'Edit profile', presentation: 'modal' }} />
-        <Stack.Screen name="agency" options={{ title: 'Agency portal' }} />
+        <Stack.Protected guard={hasFeature('agencies')}>
+          <Stack.Screen name="agency" options={{ title: 'Agency portal' }} />
+        </Stack.Protected>
         <Stack.Screen name="contributions/[id]" options={{ title: 'Contributions' }} />
         <Stack.Screen name="admin/index" options={{ title: 'Owner command center' }} />
-        <Stack.Screen name="videos/index" options={{ title: 'Videos' }} />
-        <Stack.Screen name="videos/upload" options={{ title: 'My videos' }} />
-        <Stack.Screen name="videos/[id]" options={{ title: 'Video' }} />
-        <Stack.Screen name="events/index" options={{ title: 'Events' }} />
-        <Stack.Screen name="events/[id]" options={{ title: 'Event' }} />
+        <Stack.Protected guard={hasFeature('videos')}>
+          <Stack.Screen name="videos/index" options={{ title: 'Videos' }} />
+        </Stack.Protected>
+        <Stack.Protected guard={hasFeature('videos')}>
+          <Stack.Screen name="videos/upload" options={{ title: 'My videos' }} />
+        </Stack.Protected>
+        <Stack.Protected guard={hasFeature('videos')}>
+          <Stack.Screen name="videos/[id]" options={{ title: 'Video' }} />
+        </Stack.Protected>
+        <Stack.Protected guard={hasFeature('events')}>
+          <Stack.Screen name="events/index" options={{ title: 'Events' }} />
+        </Stack.Protected>
+        <Stack.Protected guard={hasFeature('events')}>
+          <Stack.Screen name="events/[id]" options={{ title: 'Event' }} />
+        </Stack.Protected>
         <Stack.Screen name="menus" options={{ title: 'Menu styles' }} />
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       </Stack.Protected>

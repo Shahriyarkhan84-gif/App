@@ -2,6 +2,7 @@ import { useClerk, useSignUp } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 
+import { brand } from '@/lib/brand';
 import { AuthShell, clerkErrorMessage, Field, FormError, PENDING_TASK_MESSAGE, useRedirectWhenSignedIn } from '@/components/AuthForm';
 import { StateView } from '@/components/StateView';
 import { OtpInput } from '@/components/OtpInput';
@@ -127,7 +128,7 @@ export default function CompleteSignUpScreen() {
   const ready = usernameOk && (Object.keys(needs) as (keyof typeof needs)[]).every((k) => !needs[k] || values[k].trim().length > 0);
 
   return (
-    <AuthShell title="Finish your profile" subtitle="Just a few more details to create your Zynalive account.">
+    <AuthShell title="Finish your profile" subtitle={`Just a few more details to create your ${brand.name} account.`}>
       {needs.firstName && <Field label="First name" value={values.firstName} onChangeText={set('firstName')} autoCapitalize="words" autoComplete="given-name" />}
       {needs.lastName && <Field label="Last name" value={values.lastName} onChangeText={set('lastName')} autoCapitalize="words" autoComplete="family-name" />}
       {needs.username && <Field label="Username" value={values.username} onChangeText={set('username')} autoComplete="username" placeholder="8–20 characters" />}

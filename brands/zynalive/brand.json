@@ -1,0 +1,38 @@
+{
+  "id": "zynalive",
+  "name": "Zynalive",
+  "wordmark": ["zyna", "live"],
+  "tagline": "Go live. Make friends. Support the hosts you love.",
+  "legalName": "Zynalive",
+  "website": "https://zynalive.com",
+  "supportEmail": "support@zynalive.com",
+  "currency": "PKR",
+  "app": {
+    "slug": "zynalive",
+    "scheme": "zynalive",
+    "iosBundleId": "com.zynalive.app",
+    "androidPackage": "com.zynalive.app",
+    "easOwner": "khan888s-team",
+    "easProjectId": "f451a41a-b7ae-4a50-821e-b6fb8ed9cdb7"
+  },
+  "assets": {
+    "icon": "./assets/icon.png",
+    "splash": "./assets/splash-icon.png",
+    "favicon": "./assets/favicon.png",
+    "androidForeground": "./assets/android-icon-foreground.png",
+    "androidBackground": "./assets/android-icon-background.png",
+    "androidMonochrome": "./assets/android-icon-monochrome.png"
+  },
+  "theme": {
+    "preset": "glass-sky"
+  },
+  "features": {
+    "partyRooms": true,
+    "pkBattles": true,
+    "agencies": true,
+    "events": true,
+    "videos": true,
+    "rankings": true,
+    "frames": true
+  }
+}

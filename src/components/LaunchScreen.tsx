@@ -2,6 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, View } from 'react-native';
 
+import { brand } from '@/lib/brand';
 import { useTheme } from '@/lib/theme';
 
 import { FadeIn } from './Motion';
@@ -17,7 +18,6 @@ const BOTTOM_BAR = { left: 131, top: 356, width: 218, height: 57 };
 const DIAG_CLIP = { left: 131, top: 129, width: 213, height: 284 };
 const DIAG = { x: 216.4, y: 21, length: 320, thickness: 61.4, angle: '131.45deg' };
 const DOT = { left: 374, top: 49, size: 86 };
-const LOGO_GRADIENT = ['#6A1FE0', '#8A35BE', '#B44BD8'] as const; // the app icon's purple
 const FEATHER = 18;
 
 type Strokes = Record<'tile' | 'top' | 'diag' | 'bottom' | 'dot' | 'word', Animated.Value>;
@@ -62,6 +62,7 @@ function useWriting(): Strokes {
 
 /** The Z icon, drawn in code so each stroke can be written on in turn. */
 function WrittenLogo({ size, v }: { size: number; v: Strokes }) {
+  const { c } = useTheme();
   const k = size / GRID;
   const box = (b: { left: number; top: number; width: number; height: number }) => ({
     position: 'absolute' as const, left: b.left * k, top: b.top * k, width: b.width * k, height: b.height * k,
@@ -69,7 +70,7 @@ function WrittenLogo({ size, v }: { size: number; v: Strokes }) {
   const grow = (x: Animated.Value) => ({ transformOrigin: 'left center', transform: [{ scaleX: x }] });
   return (
     <Animated.View style={{ width: size, height: size, opacity: v.tile }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <LinearGradient colors={LOGO_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, borderRadius: TILE_RADIUS * k }} />
+      <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, borderRadius: TILE_RADIUS * k }} />
       <Animated.View style={[box(TOP_BAR), { backgroundColor: '#fff' }, grow(v.top)]} />
       <View style={[box(DIAG_CLIP), { overflow: 'hidden' }]}>
         <Animated.View
@@ -143,7 +144,7 @@ export function LaunchScreen() {
   });
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.background, alignItems: 'center', justifyContent: 'center', gap: 20 }} accessibilityLabel="Loading Zynalive" accessibilityRole="progressbar">
+    <View style={{ flex: 1, backgroundColor: c.background, alignItems: 'center', justifyContent: 'center', gap: 20 }} accessibilityLabel={`Loading ${brand.name}`} accessibilityRole="progressbar">
       <WrittenLogo size={96} v={writing} />
       <View style={{ alignItems: 'center', gap: 12 }}>
         <WrittenWordmark size={40} v={writing.word} />

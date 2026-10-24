@@ -1,13 +1,14 @@
+import { brand } from '@/lib/brand';
 import { Bullets, H, LegalPage, P } from '@/components/LegalPage';
 
 // Public URL for the Google Play "Delete account URL" field: https://zynalive.com/account-deletion
 export default function AccountDeletionPage() {
   return (
-    <LegalPage title="Delete your Zynalive account" updated="26 September 2026">
+    <LegalPage title={`Delete your ${brand.name} account`} updated="26 September 2026">
       <H>In the app</H>
-      <Bullets items={['Open Zynalive and sign in.', 'Go to Me → Settings (gear icon) → Delete account.', 'Type DELETE and confirm. Deletion happens immediately.']} />
+      <Bullets items={[`Open ${brand.name} and sign in.`, 'Go to Me → Settings (gear icon) → Delete account.', 'Type DELETE and confirm. Deletion happens immediately.']} />
       <H>Without the app</H>
-      <P>Email support@zynalive.com from the address on your account with the subject “Delete my account” and your 8-digit Zynalive ID. We delete the account within 30 days and confirm by email.</P>
+      <P>Email {brand.supportEmail} from the address on your account with the subject “Delete my account” and your 8-digit {brand.name} ID. We delete the account within 30 days and confirm by email.</P>
       <H>What we delete</H>
       <Bullets items={['Name, username, photo, bio, email and country', 'Followers, following and blocks', 'Direct messages and notifications', 'Live chat messages (replaced with “[deleted]”)', 'Your sign-in account']} />
       <H>What we keep, and why</H>

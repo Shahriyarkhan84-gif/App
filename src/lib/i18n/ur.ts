@@ -43,7 +43,7 @@ export const ur: Catalog = {
   'settings.title': 'سیٹنگز',
   'settings.language': 'زبان',
   'settings.language.device': 'ڈیوائس کی زبان',
-  'settings.language.restart': 'لے آؤٹ کی سمت بدلنے کے لیے زائنالائیو دوبارہ کھولیں۔',
+  'settings.language.restart': 'لے آؤٹ کی سمت بدلنے کے لیے ایپ دوبارہ کھولیں۔',
   'settings.privacy': 'پرائیویسی پالیسی',
   'settings.signOut': 'سائن آؤٹ',
   'settings.delete': 'اکاؤنٹ ڈیلیٹ کریں',

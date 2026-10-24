@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
+import { brand } from '@/lib/brand';
 import { FadeIn } from '@/components/Motion';
 import { StateView } from '@/components/StateView';
 import { Button, Card, Row, Screen, Text, type IconName } from '@/components/ui';
@@ -94,7 +95,7 @@ export default function StreamSummaryScreen() {
           <Button
             title="Share highlights"
             variant="secondary"
-            onPress={() => shareMessage(`I just went live on Zynalive — ${s?.peak_viewers ?? 0} peak viewers and ${(s?.gift_coins ?? 0).toLocaleString()} gift coins!`)}
+            onPress={() => shareMessage(`I just went live on ${brand.name} — ${s?.peak_viewers ?? 0} peak viewers and ${(s?.gift_coins ?? 0).toLocaleString()} gift coins!`)}
           />
         </ScrollView>
       </StateView>

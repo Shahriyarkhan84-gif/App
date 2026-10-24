@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 
+import { brand } from '@/lib/brand';
 import { FadeIn } from '@/components/Motion';
 import { StateView } from '@/components/StateView';
 import { Button, Card, HostBadge, Row, Screen, Text, type IconName } from '@/components/ui';
@@ -17,7 +18,7 @@ const REQUIREMENTS: { icon: IconName; text: string }[] = [
   { icon: 'person-outline', text: 'You are 18 or older' },
   { icon: 'card-outline', text: 'Your own original CNIC — not expired, no photocopies or screenshots' },
   { icon: 'call-outline', text: 'A Pakistani mobile number (+92 3XX XXXXXXX)' },
-  { icon: 'business-outline', text: 'The 4-digit agency code from the Zynalive agency you host with — ask your agency for it, you can\'t continue without one' },
+  { icon: 'business-outline', text: `The 4-digit agency code from the ${brand.name} agency you host with — ask your agency for it, you can't continue without one` },
   { icon: 'camera-outline', text: 'A phone camera for 3 photos: CNIC front, CNIC back, and your face holding your CNIC' },
   { icon: 'sunny-outline', text: 'Good light and about 3 minutes' },
 ];

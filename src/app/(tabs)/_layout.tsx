@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 
 import { TabBarCenterButton, TabBarGlass, tabButton, useTabBarStyle } from '@/components/Menus';
+import { hasFeature } from '@/lib/brand';
 import { useI18n } from '@/lib/i18n';
 import { useHasUnread } from '@/lib/unread';
 import { useTheme } from '@/lib/theme';
@@ -13,7 +14,7 @@ export default function TabsLayout() {
   return (
     <Tabs screenOptions={{ headerShown: false, tabBarShowLabel: false, tabBarStyle, tabBarBackground: () => <TabBarGlass />, sceneStyle: { backgroundColor: c.background } }}>
       <Tabs.Screen name="index" options={{ title: t('tab.home'), tabBarButton: tabButton('home-outline', 'home', t('tab.home')) }} />
-      <Tabs.Screen name="party" options={{ title: t('tab.party'), tabBarButton: tabButton('people-outline', 'people', t('tab.party')) }} />
+      <Tabs.Screen name="party" options={{ title: t('tab.party'), href: hasFeature('partyRooms') ? undefined : null, tabBarButton: hasFeature('partyRooms') ? tabButton('people-outline', 'people', t('tab.party')) : () => null }} />
       <Tabs.Screen
         name="create"
         options={{

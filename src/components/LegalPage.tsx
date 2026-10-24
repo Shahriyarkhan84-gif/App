@@ -5,24 +5,30 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/lib/theme';
 
-import { IconButton, Text, Wordmark } from './ui';
+import { Card, IconButton, SkyBackground, Text, Wordmark } from './ui';
 
 /** Public, signed-out-readable page (privacy policy, account deletion) — also served on the web. */
 export function LegalPage({ title, updated, children }: { title: string; updated: string; children: ReactNode }) {
   const { c } = useTheme();
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: c.background }}>
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 14, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          {router.canGoBack() ? <IconButton icon="chevron-back" label="Back" onPress={() => router.back()} /> : <View style={{ width: 44 }} />}
-          <Wordmark size={22} />
-          <View style={{ width: 44 }} />
-        </View>
-        <Text variant="h1" accessibilityRole="header">{title}</Text>
-        <Text variant="caption" faint>Last updated {updated}</Text>
-        {children}
-      </ScrollView>
-    </SafeAreaView>
+    <SkyBackground>
+      <SafeAreaView style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={{ padding: 16, gap: 14, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            {router.canGoBack() ? <IconButton icon="chevron-back" label="Back" onPress={() => router.back()} /> : <View style={{ width: 44 }} />}
+            <Wordmark size={22} />
+            <View style={{ width: 44 }} />
+          </View>
+          <Text variant="h1" accessibilityRole="header">{title}</Text>
+          <Card style={{ padding: 20, gap: 12 }}>
+            <View style={{ alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: c.violetSurface }}>
+              <Text variant="caption" color={c.violetText}>Updated {updated}</Text>
+            </View>
+            {children}
+          </Card>
+        </ScrollView>
+      </SafeAreaView>
+    </SkyBackground>
   );
 }
 
