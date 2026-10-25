@@ -1,3 +1,5 @@
+import { brand } from './brand';
+
 export type AppRole = 'USER' | 'HOST' | 'AGENCY_MEMBER' | 'AGENCY_ADMIN' | 'OWNER_ADMIN' | 'SUPER_ADMIN';
 
 export type Profile = {
@@ -82,7 +84,7 @@ export function normalizeRooms(raw: unknown): Room[] {
 }
 
 export function displayName(p?: { display_name?: string | null; username?: string | null } | null) {
-  return p?.display_name || (p?.username ? `@${p.username}` : 'Zynalive user');
+  return p?.display_name || (p?.username ? `@${p.username}` : `${brand.name} user`);
 }
 
 const CURRENCY_SYMBOL: Record<string, string> = { PKR: 'Rs', INR: '₹', BDT: '৳', USD: '$', GBP: '£', AED: 'AED' };

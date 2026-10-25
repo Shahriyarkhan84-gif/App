@@ -35,7 +35,13 @@ is tracked in [REMAINING_WORK.md](REMAINING_WORK.md).
  Localization layer: src/lib/i18n (en · ur (RTL) · hi · bn), region default language
  Engagement layer:   PK battles + events (gifting races, battle leagues) scored by triggers
  Regional variants:  regions (currency, language, timezone, features) → regional pricing
+ White label:        brands/<id>/brand.json → app.config.ts (name, ids, icons) + src/lib/brand.ts
+                     (theme preset, feature switches); one backend per client
 ```
+
+**White label.** The app is sold to clients as separate copies: each client gets their own build
+and backend. The brand (name, logo, colours, features) comes from `brands/<id>/brand.json`, chosen
+with `BRAND=<id>` at build time. See [WHITE_LABEL.md](WHITE_LABEL.md).
 
 ## Components
 

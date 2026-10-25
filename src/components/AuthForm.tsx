@@ -1,6 +1,7 @@
 import { isClerkAPIResponseError, useAuth, useClerk, useSSO } from '@clerk/clerk-expo';
 import * as AuthSession from 'expo-auth-session';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState, type ReactNode } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -8,11 +9,12 @@ import { router } from 'expo-router';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View, type TextInputProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { brand } from '@/lib/brand';
 import { errorCode, friendlyError } from '@/lib/errors';
 import { useTheme } from '@/lib/theme';
 
 import { FadeIn, Float } from './Motion';
-import { Button, Input, Text, Wordmark } from './ui';
+import { Button, Card, glassShadow, Input, SkyBackground, Text, Wordmark } from './ui';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -67,7 +69,7 @@ export function AuthHero({ size = 44 }: { size?: number }) {
         </Float>
       </FadeIn>
       <FadeIn delay={380}><Wordmark size={size} /></FadeIn>
-      <FadeIn delay={500}><Text variant="bodyLarge" muted>Go live, meet people and support the hosts you love.</Text></FadeIn>
+      <FadeIn delay={500}><Text variant="bodyLarge" muted>{brand.tagline}</Text></FadeIn>
     </View>
   );
 }
@@ -85,34 +87,48 @@ export function AuthTerms() {
   );
 }
 
-/** Sign-in / sign-up frame: back button, compact wordmark, title, form. */
+/** Sign-in / sign-up frame (Glass & sky): back button and logo tile, big title, then the form on a frosted card. */
 export function AuthShell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   const { c } = useTheme();
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: c.background }}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
-            <Pressable
-              onPress={() => (router.canGoBack() ? router.back() : router.replace('/welcome'))}
-              accessibilityRole="button"
-              accessibilityLabel="Back"
-              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}
-            >
-              <Ionicons name="chevron-back" size={22} color={c.text} />
-            </Pressable>
-            <Wordmark size={24} />
-            <View style={{ width: 44 }} />
-          </View>
-          <FadeIn>
-            <Text variant="h1">{title}</Text>
-            <Text muted style={{ marginTop: 4, marginBottom: 20 }}>{subtitle}</Text>
-          </FadeIn>
-          <FadeIn delay={120} style={{ gap: 12 }}>{children}</FadeIn>
-          <AuthTerms />
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    <SkyBackground>
+      <SafeAreaView style={{ flex: 1 }}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+              <Pressable
+                onPress={() => (router.canGoBack() ? router.back() : router.replace('/welcome'))}
+                accessibilityRole="button"
+                accessibilityLabel="Back"
+                style={[{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center' }]}
+              >
+                <Ionicons name="chevron-back" size={22} color={c.text} />
+              </Pressable>
+              <LogoTile />
+            </View>
+            <FadeIn>
+              <Text variant="display" accessibilityRole="header">{title}</Text>
+              <Text variant="bodyLarge" muted style={{ marginTop: 6, marginBottom: 20 }}>{subtitle}</Text>
+            </FadeIn>
+            <FadeIn delay={120}>
+              <Card style={{ padding: 20, gap: 14, borderRadius: 28 }}>{children}</Card>
+            </FadeIn>
+            <AuthTerms />
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </SkyBackground>
+  );
+}
+
+/** Small rounded tile with the brand's first letter on the button gradient. */
+export function LogoTile({ size = 44 }: { size?: number }) {
+  const { c } = useTheme();
+  return (
+    <View style={[{ width: size, height: size, borderRadius: size * 0.32, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }, glassShadow]} accessible={false}>
+      <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+      <Text variant="h1" color="#fff" style={{ fontSize: size * 0.5, lineHeight: size * 0.6 }}>{brand.wordmark[0].slice(0, 1).toLowerCase()}</Text>
+    </View>
   );
 }
 
@@ -176,12 +192,14 @@ export function SocialButtons({ onError, divider = true }: { onError: (message: 
 
   return (
     <View style={{ gap: 12 }}>
-      <Button title="Continue with Google" variant="secondary" loading={pending === 'oauth_google'} onPress={() => start('oauth_google')}
-        icon={<Ionicons name="logo-google" size={18} color="#4285F4" />} />
-      {Platform.OS !== 'android' && (
-        <Button title="Continue with Apple" variant="secondary" loading={pending === 'oauth_apple'} onPress={() => start('oauth_apple')}
-          icon={<Ionicons name="logo-apple" size={19} color={c.text} />} />
-      )}
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <Button title="Google" accessibilityLabel="Continue with Google" variant="secondary" loading={pending === 'oauth_google'} onPress={() => start('oauth_google')}
+          icon={<Ionicons name="logo-google" size={18} color="#4285F4" />} style={{ flex: 1, backgroundColor: c.surfaceRaised, borderColor: c.violetBorder }} />
+        {Platform.OS !== 'android' && (
+          <Button title="Apple" accessibilityLabel="Continue with Apple" variant="secondary" loading={pending === 'oauth_apple'} onPress={() => start('oauth_apple')}
+            icon={<Ionicons name="logo-apple" size={19} color={c.text} />} style={{ flex: 1, backgroundColor: c.surfaceRaised, borderColor: c.violetBorder }} />
+        )}
+      </View>
       {divider && <OrDivider />}
     </View>
   );
@@ -191,15 +209,15 @@ export function OrDivider() {
   const { c } = useTheme();
   return (
     <View style={styles.dividerRow}>
-      <View style={[styles.divider, { backgroundColor: c.divider }]} />
-      <Text variant="bodySmall" faint>or</Text>
-      <View style={[styles.divider, { backgroundColor: c.divider }]} />
+      <View style={[styles.divider, { backgroundColor: c.violetBorder }]} />
+      <Text variant="caption" faint>or use email</Text>
+      <View style={[styles.divider, { backgroundColor: c.violetBorder }]} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, paddingHorizontal: 24, paddingVertical: 16, maxWidth: 480, width: '100%', alignSelf: 'center' },
+  container: { flexGrow: 1, paddingHorizontal: 20, paddingVertical: 12, maxWidth: 480, width: '100%', alignSelf: 'center' },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 4 },
   divider: { flex: 1, height: 1 },
 });

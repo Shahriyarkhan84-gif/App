@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Linking, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { brand, hasFeature } from '@/lib/brand';
 import { useTabBarSpace, useTabBarStyle } from '@/components/Menus';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -27,11 +28,12 @@ import { fonts, liveColors, useTheme } from '@/lib/theme';
 import { CATEGORIES, categoryLabel } from '@/lib/types';
 
 type LiveMode = 'live' | 'voice' | 'video';
+// Multi-guest and Audio LIVE are party rooms; brands without party rooms only get solo LIVE.
 const LIVE_MODES: { key: LiveMode; label: string }[] = [
-  { key: 'video', label: 'Multi-guest LIVE' },
-  { key: 'live', label: 'LIVE' },
-  { key: 'voice', label: 'Audio LIVE' },
-];
+  { key: 'video' as const, label: 'Multi-guest LIVE' },
+  { key: 'live' as const, label: 'LIVE' },
+  { key: 'voice' as const, label: 'Audio LIVE' },
+].filter((m) => m.key === 'live' || hasFeature('partyRooms'));
 
 /** Icon + label button on the camera screen (Flip, Cover, Creator Center). */
 function Tool({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
@@ -187,7 +189,7 @@ export default function CreateScreen() {
     state = {
       kind: 'permission',
       title: voiceOnly ? 'Microphone' : 'Camera & microphone',
-      body: voiceOnly ? 'Zynalive needs your microphone for a voice party.' : 'Zynalive needs your camera and microphone to broadcast.',
+      body: voiceOnly ? `${brand.name} needs your microphone for a voice party.` : `${brand.name} needs your camera and microphone to broadcast.`,
       onGrant: async () => {
         if (!voiceOnly) await requestCamera();
         await requestMic();
@@ -197,7 +199,7 @@ export default function CreateScreen() {
     state = {
       kind: 'permission',
       title: 'Permissions blocked',
-      body: voiceOnly ? 'Turn on the microphone for Zynalive in your phone settings.' : 'Turn on the camera and microphone for Zynalive in your phone settings.',
+      body: voiceOnly ? `Turn on the microphone for ${brand.name} in your phone settings.` : `Turn on the camera and microphone for ${brand.name} in your phone settings.`,
       grantTitle: 'Open settings',
       onGrant: () => void Linking.openSettings(),
     };

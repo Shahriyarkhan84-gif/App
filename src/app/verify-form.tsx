@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 
+import { brand } from '@/lib/brand';
 import { FadeIn, Pop } from '@/components/Motion';
 import { Button, Card, HostBadge, Row, Screen, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
@@ -50,7 +51,7 @@ async function appendPhoto(form: FormData, key: PhotoKey, photo: Photo) {
   }
 }
 
-/** Host verification form: details + CNIC photos, checked by Didit. Photos are never stored by Zynalive. */
+/** Host verification form: details + CNIC photos, checked by Didit. Photos are never stored by us. */
 export default function VerifyFormScreen() {
   const supabase = useSupabase();
   const { c, radius } = useTheme();
@@ -90,7 +91,7 @@ export default function VerifyFormScreen() {
       } else {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (!perm.granted) {
-          Alert.alert('Camera needed', 'Allow camera access for Zynalive in your device settings to take these photos.');
+          Alert.alert('Camera needed', `Allow camera access for ${brand.name} in your device settings to take these photos.`);
           return;
         }
         picked = await ImagePicker.launchCameraAsync({
@@ -227,7 +228,7 @@ export default function VerifyFormScreen() {
           <Button title={submitting ? 'Submitting to Didit…' : 'Submit for verification'} onPress={submit} loading={submitting} disabled={offline || !!capturing} />
           {offline && <Text variant="caption" muted style={{ textAlign: 'center' }}>You need a connection to submit.</Text>}
           <Text variant="caption" faint style={{ textAlign: 'center' }}>
-            Sent securely to Didit for verification. Zynalive keeps only your name, phone, agency code, the last 4 CNIC digits and the result — never your photos.
+            Sent securely to Didit for verification. {brand.name} keeps only your name, phone, agency code, the last 4 CNIC digits and the result — never your photos.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>

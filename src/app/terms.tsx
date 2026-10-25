@@ -1,12 +1,13 @@
+import { brand } from '@/lib/brand';
 import { Bullets, H, LegalPage, P } from '@/components/LegalPage';
 
 // Public URL for the store listings and sign-up screens: https://zynalive.com/terms
 export default function TermsPage() {
   return (
     <LegalPage title="Terms of Service" updated="7 October 2026">
-      <P>These terms are an agreement between you and Zynalive (“we”) for using the Zynalive app and website. By creating an account you agree to them. Contact: support@zynalive.com.</P>
+      <P>These terms are an agreement between you and {brand.name} (“we”) for using the {brand.name} app and website. By creating an account you agree to them. Contact: {brand.supportEmail}.</P>
 
-      <H>Who can use Zynalive</H>
+      <H>Who can use {brand.name}</H>
       <Bullets items={[
         'You must be 18 or older.',
         'One account per person. Keep your sign-in details private; you are responsible for activity on your account.',
@@ -14,7 +15,7 @@ export default function TermsPage() {
       ]} />
 
       <H>Community guidelines</H>
-      <P>To keep Zynalive safe, you must not:</P>
+      <P>To keep {brand.name} safe, you must not:</P>
       <Bullets items={[
         'Show or share nudity, sexual content, or anything involving minors.',
         'Harass, threaten, bully or spread hate against anyone.',
@@ -40,16 +41,16 @@ export default function TermsPage() {
       ]} />
 
       <H>Your content</H>
-      <P>You own what you stream and post. You give Zynalive a licence to host, show and distribute it in the app so the service can work (for example, replays and highlights). You can delete your account at any time in Settings → Delete account.</P>
+      <P>You own what you stream and post. You give {brand.name} a licence to host, show and distribute it in the app so the service can work (for example, replays and highlights). You can delete your account at any time in Settings → Delete account.</P>
 
       <H>Ending your account</H>
-      <P>You can stop using Zynalive and delete your account at any time. We may suspend or close accounts that break these terms.</P>
+      <P>You can stop using {brand.name} and delete your account at any time. We may suspend or close accounts that break these terms.</P>
 
       <H>Disclaimer</H>
-      <P>Zynalive is provided “as is”. We work to keep it running and safe but cannot promise it will always be available or error-free. To the extent the law allows, we are not liable for indirect losses.</P>
+      <P>{brand.name} is provided “as is”. We work to keep it running and safe but cannot promise it will always be available or error-free. To the extent the law allows, we are not liable for indirect losses.</P>
 
       <H>Changes</H>
-      <P>We will post updates here and tell you in the app about important changes. Continuing to use Zynalive after a change means you accept it.</P>
+      <P>We will post updates here and tell you in the app about important changes. Continuing to use {brand.name} after a change means you accept it.</P>
     </LegalPage>
   );
 }

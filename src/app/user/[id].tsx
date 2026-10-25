@@ -4,6 +4,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
+import { brand } from '@/lib/brand';
 import { ContributionsCard } from '@/components/Contributions';
 import { LiveAvatar } from '@/components/FollowingLive';
 import { PressScale } from '@/components/Motion';
@@ -79,7 +80,7 @@ export default function UserProfileScreen() {
 
   const shareProfile = () => {
     if (!data) return;
-    void shareMessage(`${displayName(data.profile)} on Zynalive — ID ${data.profile.user_number}: zynalive://user/${id}`);
+    void shareMessage(`${displayName(data.profile)} on ${brand.name} — ID ${data.profile.user_number}: ${brand.app.scheme}://user/${id}`);
     track('profile_shared', { user_id: id! });
   };
 

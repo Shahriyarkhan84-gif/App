@@ -41,7 +41,10 @@ export default function DeleteAccountScreen() {
     <Screen edges={[]}>
       <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 560, width: '100%', alignSelf: 'center' }} keyboardShouldPersistTaps="handled">
         <View style={{ gap: 6 }}>
-          <Text variant="h2">Delete your account</Text>
+          <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: '#FFE4E6', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
+            <Ionicons name="warning-outline" size={26} color={c.danger} />
+          </View>
+          <Text variant="h1">Delete your account</Text>
           <Text muted>This is permanent. You won’t be able to sign in again with this account, and unused coins and unpaid earnings are lost.</Text>
         </View>
         <Card>

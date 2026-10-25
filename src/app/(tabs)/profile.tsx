@@ -12,6 +12,7 @@ import { StateView } from '@/components/StateView';
 import { FadeIn, PressScale } from '@/components/Motion';
 import { FramedAvatar } from '@/components/FramedAvatar';
 import { AgencyOwnerBadge, Coin, compactNumber, HostBadge, IconButton, Row, Screen, Text, type IconName } from '@/components/ui';
+import { hasFeature } from '@/lib/brand';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { env } from '@/lib/env';
@@ -113,24 +114,24 @@ export default function ProfileScreen() {
 
           <FadeIn delay={140} style={{ flexDirection: 'row', gap: 8 }}>
             <Tile coin label={stats.data ? compactNumber(stats.data.coins) : '–'} sub="Coins" onPress={() => router.push('/wallet')} />
-            <Tile icon="sparkles-outline" label="Frames" sub="Shop" onPress={() => router.push('/frames')} />
-            <Tile icon="business-outline" label="Agency" sub={isAgencyStaff ? 'Portal' : 'Join'} onPress={() => router.push(isAgencyStaff ? '/agency' : '/hosting')} />
+            {hasFeature('frames') && <Tile icon="sparkles-outline" label="Frames" sub="Shop" onPress={() => router.push('/frames')} />}
+            {hasFeature('agencies') && <Tile icon="business-outline" label="Agency" sub={isAgencyStaff ? 'Portal' : 'Join'} onPress={() => router.push(isAgencyStaff ? '/agency' : '/hosting')} />}
             <Tile icon="diamond-outline" label={host && stats.data ? compactNumber(stats.data.earnings) : 'Earn'} sub={host ? 'Diamonds' : 'Money'} onPress={() => router.push(host ? '/earnings' : '/hosting')} />
           </FadeIn>
 
           <FadeIn delay={200}>
             <Group>
               {isHost && <DarkRow icon="trending-up-outline" label="Creator Center" onPress={() => router.push('/host/dashboard')} />}
-              <DarkRow icon="megaphone-outline" label={t('menu.events')} onPress={() => router.push('/events')} />
-              <DarkRow icon="trophy-outline" label={t('menu.rankings')} onPress={() => router.push('/rankings')} last />
+              {hasFeature('events') && <DarkRow icon="megaphone-outline" label={t('menu.events')} onPress={() => router.push('/events')} last={!hasFeature('rankings')} />}
+              {hasFeature('rankings') && <DarkRow icon="trophy-outline" label={t('menu.rankings')} onPress={() => router.push('/rankings')} last />}
             </Group>
           </FadeIn>
 
           <FadeIn delay={240}>
             <Group>
               <DarkRow icon="wallet-outline" label="Wallet" detail={stats.data ? `${stats.data.coins.toLocaleString()} coins` : undefined} onPress={() => router.push('/wallet')} />
-              <DarkRow icon="sparkles-outline" label="Profile frames" onPress={() => router.push('/frames')} />
-              <DarkRow icon="play-circle-outline" label={t('menu.videos')} onPress={() => router.push('/videos')} last={verified} />
+              {hasFeature('frames') && <DarkRow icon="sparkles-outline" label="Profile frames" onPress={() => router.push('/frames')} />}
+              {hasFeature('videos') && <DarkRow icon="play-circle-outline" label={t('menu.videos')} onPress={() => router.push('/videos')} last={verified} />}
               {!verified && <DarkRow icon="shield-checkmark-outline" label={t('menu.hostingVerification')} onPress={() => router.push('/hosting')} last />}
             </Group>
           </FadeIn>
@@ -140,7 +141,7 @@ export default function ProfileScreen() {
               <DarkRow icon="help-buoy-outline" label={t('menu.support')} onPress={() => router.push('/support')} last={!env.productBridgeUrl && !isAgencyStaff && !isPlatformAdmin} />
               {/* Only when a feedback board is configured; otherwise the row would just show a setup message. */}
               {!!env.productBridgeUrl && <DarkRow icon="chatbubble-ellipses-outline" label={t('menu.feedback')} onPress={openFeedback} last={!isAgencyStaff && !isPlatformAdmin} />}
-              {isAgencyStaff && <DarkRow icon="business-outline" label={t('menu.agency')} onPress={() => router.push('/agency')} last={!isPlatformAdmin} />}
+              {isAgencyStaff && hasFeature('agencies') && <DarkRow icon="business-outline" label={t('menu.agency')} onPress={() => router.push('/agency')} last={!isPlatformAdmin} />}
               {isPlatformAdmin && <DarkRow icon="analytics-outline" label={t('menu.admin')} onPress={() => router.push('/admin')} last />}
             </Group>
           </FadeIn>

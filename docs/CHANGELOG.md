@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.67 — Glass & sky look and white-label brands
+
+Designed in Figma (file ZzfRLqjtUyE7KjeeFYnpz7: "Design kit", "New look — sample", "Batch A").
+
+- **Sell to clients** (`docs/WHITE_LABEL.md`): `brands/<id>/brand.json` holds the name, logo text, tagline, website, support email, store ids, icons, theme and feature switches. `app.config.ts` builds the chosen brand (`BRAND=<id>`, default `zynalive`); `src/lib/brand.ts` gives screens `brand` and `hasFeature()`. Every in-app "Zynalive", support email and share link now comes from the brand.
+- **Feature switches**: party rooms, PK battles, agencies, events, videos, rankings and frames can be turned off per brand; they disappear from tabs, menus, banners and notifications, and their screens can't be opened.
+- **New look, Glass & sky** (replaces purple-to-pink): a sky-blue background on every screen, frosted white cards with a soft shadow, solid white inputs with a light-blue border, deep-blue pill buttons (white text 4.7:1+), navy text. Live rooms use the night version (navy, light sky-blue actions). A brand can set its own main colour (`theme.primary`).
+- **Batch A screens**: Welcome (sky, dark wordmark, blue "Create account"), Sign in / Sign up / code / Finish profile / Reset password (back button + logo tile, big title, form on a frosted card, Google and Apple side by side), Settings (profile card, grouped frosted sections, Help & support), Edit profile and Terms/Privacy (frosted cards), Delete account (warning tile). Live hearts, "joined" lines and the launch logo use the new blue.
+
 ## 0.9.66 — Redesign v2 (live rooms first)
 
 Built from the "Redesign v2" page in Figma (file ZzfRLqjtUyE7KjeeFYnpz7).

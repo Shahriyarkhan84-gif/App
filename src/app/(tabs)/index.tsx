@@ -12,6 +12,7 @@ import { useTabBarSpace } from '@/components/Menus';
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { IconButton, Row, Screen, Text } from '@/components/ui';
+import { hasFeature } from '@/lib/brand';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
@@ -154,7 +155,7 @@ export default function HomeScreen() {
         <Row style={{ justifyContent: 'space-between' }}>
           <FeedTabs value={feed} onChange={setFeed} />
           <Row gap={0}>
-            <IconButton icon="search" label="Search" bg="transparent" onPress={() => router.push('/party')} />
+            {hasFeature('partyRooms') && <IconButton icon="search" label="Search" bg="transparent" onPress={() => router.push('/party')} />}
             <LiveBell rooms={data ? data.followingLive : []} />
           </Row>
         </Row>
@@ -194,8 +195,8 @@ export default function HomeScreen() {
               {grid(rooms.slice(showBanners ? 1 : 0, columns * 2 + (showBanners ? 1 : 0)), 0)}
               {showBanners && (
                 <>
-                  <FadeIn><LiveEventBanner /></FadeIn>
-                  <FadeIn><PkBattleBanner room={battleRoom} /></FadeIn>
+                  {hasFeature('events') && <FadeIn><LiveEventBanner /></FadeIn>}
+                  {hasFeature('pkBattles') && <FadeIn><PkBattleBanner room={battleRoom} /></FadeIn>}
                 </>
               )}
               {rooms.length > columns * 2 + (showBanners ? 1 : 0) && grid(rooms.slice(columns * 2 + (showBanners ? 1 : 0)), columns * 2)}
@@ -203,8 +204,8 @@ export default function HomeScreen() {
           )}
           {rooms.length === 0 && showBanners && (
             <>
-              <FadeIn><LiveEventBanner /></FadeIn>
-              <FadeIn><PkBattleBanner room={battleRoom} /></FadeIn>
+              {hasFeature('events') && <FadeIn><LiveEventBanner /></FadeIn>}
+              {hasFeature('pkBattles') && <FadeIn><PkBattleBanner room={battleRoom} /></FadeIn>}
             </>
           )}
         </ScrollView>
@@ -218,7 +219,7 @@ function PkBattleBanner({ room }: { room: Room | null }) {
   const { c, radius } = useTheme();
   return (
     <PressScale
-      onPress={() => (room ? router.push(roomHref(room)) : router.push('/rankings'))}
+      onPress={() => (room ? router.push(roomHref(room)) : hasFeature('rankings') ? router.push('/rankings') : undefined)}
       accessibilityRole="button"
       accessibilityLabel={room ? 'Watch the live PK battle' : 'PK Battle Night. See the top hosts'}
       scaleTo={0.98}

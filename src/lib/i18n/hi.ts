@@ -45,7 +45,7 @@ export const hi: Catalog = {
   'settings.title': 'सेटिंग्स',
   'settings.language': 'भाषा',
   'settings.language.device': 'डिवाइस की भाषा',
-  'settings.language.restart': 'लेआउट की दिशा बदलने के लिए ज़ायनालाइव फिर से खोलें।',
+  'settings.language.restart': 'लेआउट की दिशा बदलने के लिए ऐप फिर से खोलें।',
   'settings.privacy': 'प्राइवेसी पॉलिसी',
   'settings.signOut': 'साइन आउट',
   'settings.delete': 'अकाउंट डिलीट करें',

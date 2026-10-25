@@ -5,9 +5,10 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Platform, ScrollView, View } from 'react-native';
 
+import { brand } from '@/lib/brand';
 import { PressScale } from '@/components/Motion';
 import { StateView } from '@/components/StateView';
-import { Avatar, Button, Input, Screen, Text } from '@/components/ui';
+import { Avatar, Button, Card, Input, Screen, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { env } from '@/lib/env';
 import { friendlyError } from '@/lib/errors';
@@ -51,7 +52,7 @@ function EditProfileForm() {
       picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 1 });
     } catch {
       // Older phones ask for photo access; if it was refused, say how to allow it.
-      Alert.alert('Photo access is off', 'Allow Zynalive to use your photos in your phone\'s settings, then try again.', [
+      Alert.alert('Photo access is off', `Allow ${brand.name} to use your photos in your phone's settings, then try again.`, [
         { text: 'Not now', style: 'cancel' },
         ...(Platform.OS === 'web' ? [] : [{ text: 'Open settings', onPress: () => void Linking.openSettings() }]),
       ]);
@@ -109,25 +110,27 @@ function EditProfileForm() {
 
   return (
     <Screen edges={['bottom']}>
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
-        <View style={{ alignItems: 'center', gap: 8, paddingVertical: 8 }}>
-          <PressScale onPress={changePhoto} disabled={uploading || offline} accessibilityRole="button" accessibilityLabel="Change photo" scaleTo={0.95}>
-            <Avatar uri={avatar} name={nameOf(profile)} size={96} ring={c.primary} />
-            <View style={{ position: 'absolute', right: 0, bottom: 0, width: 32, height: 32, borderRadius: 16, backgroundColor: c.primary, borderWidth: 2, borderColor: c.background, alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="camera" size={16} color={c.primaryText} />
-            </View>
-          </PressScale>
-          <Button title={uploading ? 'Uploading…' : 'Change photo'} variant="ghost" size="sm" loading={uploading} disabled={offline} onPress={changePhoto} />
-        </View>
-        <Input label="Display name" value={displayName} onChangeText={setDisplayName} maxLength={50} />
-        <Input label="Username" value={username} onChangeText={(t) => setUsername(t.toLowerCase())} autoCapitalize="none" error={usernameValid ? (error === 'That username is taken.' ? error : null) : '3–24 letters, numbers, _ or .'} />
-        <Input label="Bio" value={bio} onChangeText={setBio} maxLength={280} multiline style={{ minHeight: 80, paddingTop: 12 }} />
-        <Input label="Country code" value={country} onChangeText={(t) => setCountry(t.toUpperCase().slice(0, 2))} placeholder="PK" autoCapitalize="characters" error={countryValid ? null : 'Two-letter code, e.g. PK, IN, BD'} />
-        {offline && <Text variant="bodySmall" muted accessibilityRole="alert">You&apos;re offline. Connect to save changes.</Text>}
-        {error && error !== 'That username is taken.' && <Text color={c.danger} accessibilityRole="alert">{error}</Text>}
-        {/* Saving closes the screen, so wait for a photo upload to finish first. */}
-        <Button title="Save" onPress={save} loading={saving} disabled={!usernameValid || !countryValid || uploading || offline} />
-        <Text variant="caption" faint style={{ textAlign: 'center' }}>Your photo, name and bio are public.</Text>
+      <ScrollView contentContainerStyle={{ padding: 16, maxWidth: 560, width: '100%', alignSelf: 'center' }}>
+        <Card style={{ padding: 20, gap: 16, borderRadius: 28 }}>
+          <View style={{ alignItems: 'center', gap: 8, paddingVertical: 8 }}>
+            <PressScale onPress={changePhoto} disabled={uploading || offline} accessibilityRole="button" accessibilityLabel="Change photo" scaleTo={0.95}>
+              <Avatar uri={avatar} name={nameOf(profile)} size={96} ring={c.primary} />
+              <View style={{ position: 'absolute', right: 0, bottom: 0, width: 32, height: 32, borderRadius: 16, backgroundColor: c.primary, borderWidth: 2, borderColor: c.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="camera" size={16} color={c.primaryText} />
+              </View>
+            </PressScale>
+            <Button title={uploading ? 'Uploading…' : 'Change photo'} variant="outline" size="sm" loading={uploading} disabled={offline} onPress={changePhoto} />
+          </View>
+          <Input label="Display name" value={displayName} onChangeText={setDisplayName} maxLength={50} />
+          <Input label="Username" value={username} onChangeText={(t) => setUsername(t.toLowerCase())} autoCapitalize="none" error={usernameValid ? (error === 'That username is taken.' ? error : null) : '3–24 letters, numbers, _ or .'} />
+          <Input label="Bio" value={bio} onChangeText={setBio} maxLength={280} multiline style={{ minHeight: 80, paddingTop: 12 }} />
+          <Input label="Country code" value={country} onChangeText={(t) => setCountry(t.toUpperCase().slice(0, 2))} placeholder="PK" autoCapitalize="characters" error={countryValid ? null : 'Two-letter code, e.g. PK, IN, BD'} />
+          {offline && <Text variant="bodySmall" muted accessibilityRole="alert">You&apos;re offline. Connect to save changes.</Text>}
+          {error && error !== 'That username is taken.' && <Text color={c.danger} accessibilityRole="alert">{error}</Text>}
+          {/* Saving closes the screen, so wait for a photo upload to finish first. */}
+          <Button title="Save" onPress={save} loading={saving} disabled={!usernameValid || !countryValid || uploading || offline} />
+          <Text variant="caption" faint style={{ textAlign: 'center' }}>Your photo, name and bio are public.</Text>
+        </Card>
       </ScrollView>
     </Screen>
   );
