@@ -4,12 +4,12 @@ import * as RN from 'react-native';
 import { liveColors, useTheme } from '../theme';
 
 describe('useTheme', () => {
-  it('is always the dark theme, whatever the phone setting', async () => {
-    jest.spyOn(RN, 'useColorScheme').mockReturnValue('light');
+  it('is always the white theme, whatever the phone setting', async () => {
+    jest.spyOn(RN, 'useColorScheme').mockReturnValue('dark');
     const { result } = await renderHook(() => useTheme());
-    expect(result.current.scheme).toBe('dark');
-    expect(result.current.c.background).toBe('#000000');
-    expect(result.current.c.primary).toBe('#B488FF');
+    expect(result.current.scheme).toBe('light');
+    expect(result.current.c.background).toBe('#FFFFFF');
+    expect(result.current.c.primary).toBe('#6A1FE0');
   });
 
   it('keeps live video screens dark', () => {
@@ -17,14 +17,13 @@ describe('useTheme', () => {
     expect(liveColors.primary).toBe('#B488FF');
   });
 
-  it('uses a violet-only action blend with dark text, and no pink', async () => {
+  it('blends actions from the icon purple into pink, with white text', async () => {
     const { result } = await renderHook(() => useTheme());
-    expect(result.current.c.gradient).toEqual(['#B488FF', '#A57AF7', '#9B6CF0']);
-    expect(result.current.c.accent).toBe('#B488FF');
-    expect(result.current.c.primaryText).toBe('#1A0633');
+    expect(result.current.c.gradient).toEqual(['#6A1FE0', '#9B2FE0', '#D62872']);
+    expect(result.current.c.primaryText).toBe('#FFFFFF');
   });
 
-  it('uses the same red LIVE tag on every screen and on video', async () => {
+  it('uses the same red LIVE tag on white and on video', async () => {
     const { result } = await renderHook(() => useTheme());
     expect(result.current.c.live).toBe(liveColors.live);
   });

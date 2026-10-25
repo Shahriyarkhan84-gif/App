@@ -58,7 +58,7 @@ export default function AgencyPortalScreen() {
             </FadeIn>
 
             <FadeIn delay={60}>
-              {/* Redesign v2: the code on a violet card, white digits. */}
+              {/* Redesign v2: the code on a purple-to-pink card, white digits. */}
               <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ gap: 12, padding: 18, borderRadius: 24 }}>
                 <Row style={{ justifyContent: 'space-between' }}>
                   <Text variant="label" color="#fff">Your agency code</Text>

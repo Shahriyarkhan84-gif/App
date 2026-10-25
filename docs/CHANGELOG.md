@@ -1,11 +1,5 @@
 # Changelog
 
-## 0.9.67 — Dark theme, no pink
-
-- The whole app is dark now, matching the Figma design: `useTheme()` returns the dark palette (black screens, dark cards, white text), the status bar is light, and the splash/background colour is black (`app.json`, `userInterfaceStyle: dark`).
-- Pink is gone: actions use a violet-only blend (`#B488FF → #9B6CF0`, near-black text), the accent is violet, and the floating hearts use violet, red and gold. The old white palette (no longer used) is removed. `src/lib/theme.ts`, `src/app/_layout.tsx`, `src/components/LiveReactions.tsx`; theme tests updated.
-- Not yet: the exact Figma violet (`#8B5CF6`) and DM-Sans-only headings — see the senior developer review.
-
 ## 0.9.66 — Redesign v2 (live rooms first)
 
 Built from the "Redesign v2" page in Figma (file ZzfRLqjtUyE7KjeeFYnpz7).
