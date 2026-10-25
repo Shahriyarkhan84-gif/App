@@ -6,7 +6,7 @@
     "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.zynalive.app",
@@ -50,7 +50,7 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 140,
           "resizeMode": "contain",
-          "backgroundColor": "#FFFFFF"
+          "backgroundColor": "#000000"
         }
       ],
       "expo-secure-store",
@@ -115,6 +115,6 @@
         "projectId": "f451a41a-b7ae-4a50-821e-b6fb8ed9cdb7"
       }
     },
-    "backgroundColor": "#FFFFFF"
+    "backgroundColor": "#000000"
   }
 }

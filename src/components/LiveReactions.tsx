@@ -9,7 +9,7 @@ import { Text } from './ui';
 // Likes (floating hearts) and "X joined" lines for a live room, sent over Supabase Realtime broadcast:
 // display only, nothing is stored and nothing counts towards money or rankings.
 
-const HEART_COLORS = ['#F48FB8', '#B488FF', '#E11D48', '#FFC24B', '#FF7AA2'];
+const HEART_COLORS = ['#B488FF', '#8B5CF6', '#E11D48', '#FFC24B', '#FF5A61'];
 const MAX_HEARTS = 14;
 
 type Heart = { id: number; color: string; drift: number };

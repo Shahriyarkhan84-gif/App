@@ -12,7 +12,7 @@ import { Text } from '@/components/ui';
 import { fonts, useTheme } from '@/lib/theme';
 
 /**
- * First screen after the loading page (Redesign v2): full purple-to-pink hero, white "Create account",
+ * First screen after the loading page (Redesign v2): full violet hero, white "Create account",
  * outlined "I have an account", then Google/Apple. Everything on the gradient is white text (4.8:1+).
  */
 export default function WelcomeScreen() {
