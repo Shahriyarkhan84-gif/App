@@ -25,7 +25,7 @@ import { ProfileProvider } from '@/lib/profile';
 import { initSentry, Sentry } from '@/lib/sentry';
 import { subdomainHome } from '@/lib/subdomain';
 import { SupabaseProvider } from '@/lib/supabase';
-import { fonts, useTheme } from '@/lib/theme';
+import { appIsDark, fonts, useTheme } from '@/lib/theme';
 
 initSentry();
 // Keep the native logo splash up until fonts are ready, then hand over to <LaunchScreen />.
@@ -227,7 +227,7 @@ function RootLayout() {
               <Analytics>
                 <IdentityAndScreens />
                 <SubdomainHome />
-                <StatusBar style="dark" />
+                <StatusBar style={appIsDark ? 'light' : 'dark'} />
                 <RootNavigator />
               </Analytics>
             </AppI18n>

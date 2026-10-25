@@ -81,7 +81,7 @@ export default function ProfileScreen() {
             <IconButton icon="create-outline" label="Edit profile" color={d.text} bg={d.surface} onPress={() => router.push('/profile-edit')} />
           </Row>
 
-          {/* Redesign v2: photo, name, badges and the three counts sit on one soft purple-to-pink card. */}
+          {/* Redesign v2: photo, name, badges and the three counts sit on one soft brand-colour card. */}
           <LinearGradient colors={['#F2EBFF', '#FFE4EF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 24, paddingVertical: 20, paddingHorizontal: 12, gap: 16 }}>
           <FadeIn style={{ alignItems: 'center', gap: 8 }}>
             <Pressable onPress={() => router.push('/frames')} accessibilityRole="button" accessibilityLabel="Profile frames">

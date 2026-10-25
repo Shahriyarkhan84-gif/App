@@ -100,7 +100,7 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
                 onPress={() => (router.canGoBack() ? router.back() : router.replace('/welcome'))}
                 accessibilityRole="button"
                 accessibilityLabel="Back"
-                style={[{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center' }]}
+                style={[{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }]}
               >
                 <Ionicons name="chevron-back" size={22} color={c.text} />
               </Pressable>

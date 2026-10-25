@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.68 — Dark theme (Midnight), no pink
+
+- **Zynalive is dark everywhere** (`brands/zynalive/brand.json` → `"preset": "midnight"`), matching the Figma design: near-black screens (`#0E0E10`), charcoal cards, white text, light-violet buttons with near-black text (5:1+), gold coins, red LIVE. Live rooms use the same palette.
+- New `midnight` preset in `src/lib/theme.ts`; presets now say whether everyday screens are light or dark (`appearance`). `useTheme().scheme` and the new `appIsDark` follow it; the status bar, splash and root background turn dark for dark presets (`src/app/_layout.tsx`, `app.config.ts`). A client's own colour is lightened on a dark preset so text on it stays readable. `glass-sky` stays available for other brands.
+- **No pink anywhere**: floating hearts now use the brand colour, red and gold; a test checks no preset contains pink. Bright white borders meant for frosted light cards (Welcome, sign-in back button) now use the theme border.
+
 ## 0.9.67 — Glass & sky look and white-label brands
 
 Designed in Figma (file ZzfRLqjtUyE7KjeeFYnpz7: "Design kit", "New look — sample", "Batch A").

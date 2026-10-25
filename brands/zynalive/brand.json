@@ -24,7 +24,7 @@
     "androidMonochrome": "./assets/android-icon-monochrome.png"
   },
   "theme": {
-    "preset": "glass-sky"
+    "preset": "midnight"
   },
   "features": {
     "partyRooms": true,

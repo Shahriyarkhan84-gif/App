@@ -70,7 +70,7 @@ export default function RankingsScreen() {
           keyExtractor={(r) => `${r.rank}-${r.subject_id}`}
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           ListHeaderComponent={
-            // Redesign v2: the top 3 stand on a purple-to-pink card, white text.
+            // Redesign v2: the top 3 stand on a brand-colour card, white text.
             <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 16, paddingHorizontal: 8, borderRadius: 24, marginBottom: 12, overflow: 'hidden' }}>
               {podium.map((r, i) => {
