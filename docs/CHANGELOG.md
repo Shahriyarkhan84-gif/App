@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.81 — VIP, our own look
+
+- The VIP page no longer copies other apps' dark "My VIP" layout (dark page, gold, swipe cards, dot line). It now uses the Glass & sky look: a deep-blue **Your VIP level** card (level badge, diamonds bought, progress bar, how many more to the next level, **Buy diamonds**), then **The VIP path**, V1 → V6 down the page joined by a line that fills as you climb.
+- Levels go from light sky to night blue. Tap a level to open it (smooth expand): every privilege it includes, with the one it adds marked "new". The next level is open by default. Privileges are still "coming soon"; levels still come only from diamonds bought.
+
 ## 0.9.80 — My VIP swipes with the flow
 
 - The VIP level cards now follow your finger: the card in the middle grows while its neighbours shrink and fade, the gem drifts slightly against the swipe, and the highlight on the V1–V6 line slides along with it.
