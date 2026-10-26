@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.75 — Diamonds history at the top
+
+- On the Diamonds screen, history is no longer at the bottom of the page: a **History** button (clock) at the top right opens it in a sheet, with the All / Purchases / Gifts filter.
+
 ## 0.9.74 — No more "Wallet"
 
 - The Wallet rows are gone from Me and Settings. The 💎 **Diamonds** button on Me opens the buy-diamonds screen (now titled "Diamonds"); the 🫘 **Beans** button opens your earnings (titled "Beans") — or Hosting if you aren't a host yet. Wording that said "wallet" now says diamonds.

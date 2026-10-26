@@ -1,15 +1,16 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Platform, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, View } from 'react-native';
 
 import { U, units } from '@/lib/brand';
 import { Pop, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { Button, Coin, glassShadow, Row, Screen, Segmented, Text } from '@/components/ui';
+import { Button, Coin, glassShadow, Row, Screen, Segmented, Sheet, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { reconcilePayments, startCoinCheckout } from '@/lib/api';
@@ -32,6 +33,7 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 export default function WalletScreen() {
+  const [historyOpen, setHistoryOpen] = useState(false);
   const supabase = useSupabase();
   const { userId } = useAuth();
   const { c, radius } = useTheme();
@@ -126,6 +128,14 @@ export default function WalletScreen() {
           const bestId = data.packages.length >= 4 ? data.packages[data.packages.length - 1].id : null;
           const pick = data.packages.find((p) => p.id === selected) ?? data.packages.find((p) => p.id === popularId) ?? data.packages[1] ?? data.packages[0];
           return (
+            <>
+            {/* History lives behind the clock button at the top right, not at the bottom of the page. */}
+            <Stack.Screen options={{ headerRight: () => (
+              <Pressable onPress={() => setHistoryOpen(true)} accessibilityRole="button" accessibilityLabel="History" hitSlop={10} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Ionicons name="time-outline" size={21} color={c.text} />
+                <Text variant="label">History</Text>
+              </Pressable>
+            ) }} />
             <ScrollView contentContainerStyle={{ padding: 16, gap: 18, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
               <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                 style={{ padding: 22, borderRadius: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -210,11 +220,13 @@ export default function WalletScreen() {
               </Row>
               <Text variant="caption" faint>{U.Spend} are added only after the payment is confirmed.</Text>
 
-              <View style={{ gap: 4 }}>
-                <Text variant="h3">History</Text>
+            </ScrollView>
+            <Sheet visible={historyOpen} onClose={() => setHistoryOpen(false)} title="History">
+              <View style={{ gap: 4, flexShrink: 1 }}>
                 <View style={{ paddingVertical: 6 }}>
                   <Segmented options={HISTORY_TABS} value={tab} onChange={setTab} />
                 </View>
+                <ScrollView style={{ flexShrink: 1 }}>
                 {(() => {
                   const txs = data.txs.filter((t) => tab === 'all' || (tab === 'purchases' ? t.kind === 'purchase' : t.kind === 'gift_sent'));
                   return txs.length === 0 ? <Text muted style={{ paddingVertical: 12 }}>{tab === 'gifts' ? 'No gifts sent yet.' : tab === 'purchases' ? 'No purchases yet.' : 'No transactions yet.'}</Text> : txs.map((t) => {
@@ -240,8 +252,10 @@ export default function WalletScreen() {
                   );
                 });
                 })()}
+                </ScrollView>
               </View>
-            </ScrollView>
+            </Sheet>
+            </>
           );
         })()}
       </StateView>
