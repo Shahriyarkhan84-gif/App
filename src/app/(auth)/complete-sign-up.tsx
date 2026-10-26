@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 
 import { brand } from '@/lib/brand';
-import { AuthShell, clerkErrorMessage, Field, FormError, PENDING_TASK_MESSAGE, useRedirectWhenSignedIn } from '@/components/AuthForm';
+import { AuthShell, clerkErrorMessage, Field, FormError, pendingTaskMessage, useRedirectWhenSignedIn } from '@/components/AuthForm';
 import { StateView } from '@/components/StateView';
 import { OtpInput } from '@/components/OtpInput';
 import { Button, Text } from '@/components/ui';
@@ -50,7 +50,7 @@ export default function CompleteSignUpScreen() {
     const s = clerk.client?.signUp ?? signUp!;
     if (s.status === 'complete') {
       await setActive!({ session: s.createdSessionId });
-      if (clerk.session?.currentTask) return setError(PENDING_TASK_MESSAGE);
+      if (clerk.session?.currentTask) return setError(pendingTaskMessage(clerk.session.currentTask));
       router.replace('/');
     } else if (s.unverifiedFields.includes('phone_number')) {
       await s.preparePhoneNumberVerification({ strategy: 'phone_code' });

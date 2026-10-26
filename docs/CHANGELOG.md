@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.90 — Sign-in screens: Kitty logo, clearer "extra step" error
+
+- The sign-in, sign-up and password screens show the Kitty logo instead of the old "z" tile.
+- When Clerk holds a new session on a task the app can't show (for example `choose-organization`, which appears when Organizations with "Membership required" is switched on in the Clerk dashboard), the error now names the step, e.g. "(step: choose-organization)".
+
 ## 0.9.89 — Design clean-up from the Figma review
 
 - VIP cards 4–6 use ocean, deep-blue and night-navy instead of indigo/purple (`src/lib/svip.ts`); the website's PK tag is navy instead of purple.

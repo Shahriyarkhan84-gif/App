@@ -2,7 +2,7 @@ import { useClerk, useSignUp } from '@clerk/clerk-expo';
 import { Link, router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 
-import { AuthShell, clerkErrorMessage, Field, FormError, PENDING_TASK_MESSAGE, SocialButtons, useRedirectWhenSignedIn } from '@/components/AuthForm';
+import { AuthShell, clerkErrorMessage, Field, FormError, pendingTaskMessage, SocialButtons, useRedirectWhenSignedIn } from '@/components/AuthForm';
 import { OtpInput } from '@/components/OtpInput';
 import { Button, Text } from '@/components/ui';
 import { fonts, useTheme } from '@/lib/theme';
@@ -45,7 +45,7 @@ export default function SignUpScreen() {
       const attempt = await signUp!.attemptEmailAddressVerification({ code: (entered ?? code).trim() });
       if (attempt.status === 'complete') {
         await setActive!({ session: attempt.createdSessionId });
-        if (clerk.session?.currentTask) return setError(PENDING_TASK_MESSAGE);
+        if (clerk.session?.currentTask) return setError(pendingTaskMessage(clerk.session.currentTask));
         // Stack.Protected re-evaluates on the next render, but a signed-in
         // user can otherwise be left stranded on this (auth) screen when the
         // group's guard flips mid-navigation; push home explicitly.

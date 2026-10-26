@@ -2,7 +2,7 @@ import { useClerk, useSignIn } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 
-import { AuthShell, clerkErrorMessage, Field, FormError, PENDING_TASK_MESSAGE } from './AuthForm';
+import { AuthShell, clerkErrorMessage, Field, FormError, pendingTaskMessage } from './AuthForm';
 import { OtpInput } from './OtpInput';
 import { Button } from './ui';
 
@@ -64,7 +64,7 @@ export function SecondFactorStep({ onBack }: { onBack: () => void }) {
       const attempt = await signIn.attemptSecondFactor({ strategy, code: value.trim() });
       if (attempt.status !== 'complete') return setError('That code could not be confirmed. Please try again.');
       await setActive!({ session: attempt.createdSessionId });
-      if (clerk.session?.currentTask) return setError(PENDING_TASK_MESSAGE);
+      if (clerk.session?.currentTask) return setError(pendingTaskMessage(clerk.session.currentTask));
       router.replace('/');
     } catch (err) {
       setError(clerkErrorMessage(err));

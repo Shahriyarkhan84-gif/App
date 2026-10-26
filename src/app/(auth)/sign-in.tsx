@@ -2,7 +2,7 @@ import { useClerk, useSignIn } from '@clerk/clerk-expo';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
 
-import { AuthShell, clerkErrorMessage, Field, FormError, PENDING_TASK_MESSAGE, SocialButtons, useRedirectWhenSignedIn } from '@/components/AuthForm';
+import { AuthShell, clerkErrorMessage, Field, FormError, pendingTaskMessage, SocialButtons, useRedirectWhenSignedIn } from '@/components/AuthForm';
 import { SecondFactorStep } from '@/components/SecondFactorStep';
 import { Button, Text } from '@/components/ui';
 import { fonts, useTheme } from '@/lib/theme';
@@ -28,7 +28,7 @@ export default function SignInScreen() {
       if (attempt.status === 'complete') {
         await setActive({ session: attempt.createdSessionId });
         // A session task (e.g. a required step in Clerk) leaves the user signed out of the app.
-        if (clerk.session?.currentTask) return setError(PENDING_TASK_MESSAGE);
+        if (clerk.session?.currentTask) return setError(pendingTaskMessage(clerk.session.currentTask));
         // See sign-up.tsx: push home explicitly rather than rely solely on
         // Stack.Protected's guard re-evaluation.
         router.replace('/');

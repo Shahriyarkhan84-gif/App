@@ -1,7 +1,6 @@
 import { isClerkAPIResponseError, useAuth, useClerk, useSSO } from '@clerk/clerk-expo';
 import * as AuthSession from 'expo-auth-session';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState, type ReactNode } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -46,9 +45,17 @@ export function useRedirectWhenSignedIn() {
   }, [isSignedIn]);
 }
 
-/** Shown when Clerk created the session but holds it on a task (e.g. "choose an organization"). */
+/**
+ * Shown when Clerk created the session but holds it on a task (e.g. "choose-organization" when the
+ * dashboard requires organization membership). The task name is shown so support can tell which
+ * Clerk setting caused it.
+ */
 export const PENDING_TASK_MESSAGE =
   'Your account is ready, but one more sign-in step is needed that the app can\'t show yet. Please try again in a few minutes or contact support.';
+
+export function pendingTaskMessage(task?: { key?: string } | null) {
+  return task?.key ? `${PENDING_TASK_MESSAGE} (step: ${task.key})` : PENDING_TASK_MESSAGE;
+}
 
 export function clerkErrorMessage(err: unknown) {
   if (isClerkAPIResponseError(err)) return err.errors[0]?.longMessage ?? err.errors[0]?.message ?? 'Request failed';
@@ -122,12 +129,11 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
 }
 
 /** Small rounded tile with the brand's first letter on the button gradient. */
+/** The app logo (the Kitty icon, assets/logo.png) on the sign-in screens. */
 export function LogoTile({ size = 44 }: { size?: number }) {
-  const { c } = useTheme();
   return (
-    <View style={[{ width: size, height: size, borderRadius: size * 0.32, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }, glassShadow]} accessible={false}>
-      <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-      <Text variant="h1" color="#fff" style={{ fontSize: size * 0.5, lineHeight: size * 0.6 }}>{brand.wordmark[0].slice(0, 1).toLowerCase()}</Text>
+    <View style={[{ width: size, height: size, borderRadius: size * 0.24, overflow: 'hidden' }, glassShadow]} accessible={false}>
+      <Image source={require('../../assets/logo.png')} style={{ width: size, height: size }} contentFit="cover" />
     </View>
   );
 }
@@ -160,7 +166,7 @@ export function SocialButtons({ onError, divider = true }: { onError: (message: 
       });
       if (createdSessionId) {
         await setActive?.({ session: createdSessionId });
-        if (clerk.session?.currentTask) return onError(PENDING_TASK_MESSAGE);
+        if (clerk.session?.currentTask) return onError(pendingTaskMessage(clerk.session.currentTask));
         // See sign-up.tsx: push home explicitly rather than rely solely on
         // Stack.Protected's guard re-evaluation.
         router.replace('/');

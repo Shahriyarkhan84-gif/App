@@ -2,7 +2,7 @@ import { useClerk, useSignIn } from '@clerk/clerk-expo';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
-import { AuthShell, clerkErrorMessage, Field, FormError, PENDING_TASK_MESSAGE, useRedirectWhenSignedIn } from '@/components/AuthForm';
+import { AuthShell, clerkErrorMessage, Field, FormError, pendingTaskMessage, useRedirectWhenSignedIn } from '@/components/AuthForm';
 import { OtpInput } from '@/components/OtpInput';
 import { SecondFactorStep } from '@/components/SecondFactorStep';
 import { Button } from '@/components/ui';
@@ -44,7 +44,7 @@ export default function ForgotPasswordScreen() {
       const attempt = await signIn!.attemptFirstFactor({ strategy: 'reset_password_email_code', code: code.trim(), password });
       if (attempt.status === 'complete') {
         await setActive!({ session: attempt.createdSessionId });
-        if (clerk.session?.currentTask) return setError(PENDING_TASK_MESSAGE);
+        if (clerk.session?.currentTask) return setError(pendingTaskMessage(clerk.session.currentTask));
         router.replace('/');
       } else if (attempt.status === 'needs_second_factor') {
         setSecondFactor(true); // password is already changed; finish signing in with the code
