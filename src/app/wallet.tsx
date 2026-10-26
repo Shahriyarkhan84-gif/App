@@ -1,7 +1,6 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useState } from 'react';
@@ -129,10 +128,9 @@ export default function WalletScreen() {
           const pick = data.packages.find((p) => p.id === selected) ?? data.packages.find((p) => p.id === popularId) ?? data.packages[1] ?? data.packages[0];
           return (
             <>
-            {/* History lives behind the clock button at the top right, not at the bottom of the page. */}
+            {/* History lives behind the button at the top right, not at the bottom of the page. */}
             <Stack.Screen options={{ headerRight: () => (
-              <Pressable onPress={() => setHistoryOpen(true)} accessibilityRole="button" accessibilityLabel="History" hitSlop={10} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                <Ionicons name="time-outline" size={21} color={c.text} />
+              <Pressable onPress={() => setHistoryOpen(true)} accessibilityRole="button" accessibilityLabel="History" hitSlop={10}>
                 <Text variant="label">History</Text>
               </Pressable>
             ) }} />

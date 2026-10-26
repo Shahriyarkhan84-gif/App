@@ -2,7 +2,7 @@
 
 ## 0.9.75 — Diamonds history at the top
 
-- On the Diamonds screen, history is no longer at the bottom of the page: a **History** button (clock) at the top right opens it in a sheet, with the All / Purchases / Gifts filter.
+- On the Diamonds screen, history is no longer at the bottom of the page: a **History** button at the top right opens it in a sheet, with the All / Purchases / Gifts filter.
 
 ## 0.9.74 — No more "Wallet"
 
