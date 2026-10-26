@@ -24,7 +24,7 @@ export const SVIP_LEVELS: SvipLevel[] = [
   { level: 3, need: 20_000, tagline: 'Arrive with an entrance effect', color: '#0284C7' },
   { level: 4, need: 50_000, tagline: 'Wear the exclusive VIP frame', color: '#0369A1' },
   { level: 5, need: 100_000, tagline: 'Send gifts only VIPs can send', color: '#1D4ED8' },
-  { level: 6, need: 300_000, tagline: 'The top tier, with priority support', color: '#1E3A8A' },
+  { level: 6, need: 300_000, tagline: 'Top tier with priority support', color: '#1E3A8A' },
 ];
 
 /** Privileges a level includes (everything unlocked at or below it). */
