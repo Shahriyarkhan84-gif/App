@@ -15,16 +15,16 @@ export const PRIVILEGES: Privilege[] = [
   { id: 'support', icon: 'headset', title: 'Priority support', body: 'Your support messages go to the front of the queue.', from: 6 },
 ];
 
-// Levels climb from light sky to deep night blue, matching the Glass & sky look.
-export type SvipLevel = { level: number; need: number; tagline: string; color: string };
+// Each level card has its own blue, from sky to night (white text stays readable on all of them).
+export type SvipLevel = { level: number; need: number; tagline: string; colors: [string, string] };
 
 export const SVIP_LEVELS: SvipLevel[] = [
-  { level: 1, need: 1_000, tagline: 'Your first VIP medal', color: '#38BDF8' },
-  { level: 2, need: 5_000, tagline: 'Stand out with a coloured name', color: '#0EA5E9' },
-  { level: 3, need: 20_000, tagline: 'Arrive with an entrance effect', color: '#0284C7' },
-  { level: 4, need: 50_000, tagline: 'Wear the exclusive VIP frame', color: '#0369A1' },
-  { level: 5, need: 100_000, tagline: 'Send gifts only VIPs can send', color: '#1D4ED8' },
-  { level: 6, need: 300_000, tagline: 'Top tier with priority support', color: '#1E3A8A' },
+  { level: 1, need: 1_000, tagline: 'Your first VIP medal', colors: ['#0284C7', '#0369A1'] },
+  { level: 2, need: 5_000, tagline: 'Stand out with a coloured name', colors: ['#0369A1', '#075985'] },
+  { level: 3, need: 20_000, tagline: 'Arrive with an entrance effect', colors: ['#0E7490', '#155E75'] },
+  { level: 4, need: 50_000, tagline: 'Wear the exclusive VIP frame', colors: ['#1D4ED8', '#1E40AF'] },
+  { level: 5, need: 100_000, tagline: 'Send gifts only VIPs can send', colors: ['#4338CA', '#3730A3'] },
+  { level: 6, need: 300_000, tagline: 'Top tier with priority support', colors: ['#1E3A8A', '#172554'] },
 ];
 
 /** Privileges a level includes (everything unlocked at or below it). */

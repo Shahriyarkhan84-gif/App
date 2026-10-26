@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.82 — VIP as six cards
+
+- The VIP page is now just the six level cards, **V1 to V6**, swiped sideways (the card in the middle grows, the others shrink and fade; it opens on your level). The V1–V6 list is gone.
+- Each card, in its own shade of blue, holds everything about that level: the level number, Your level / Reached / Locked, what it's for, the diamonds it needs (and how many to go, with a progress bar on your next level), and every privilege it includes, with the one it adds marked NEW.
+- Under the cards: "Level 3 of 6", **Buy diamonds**, and the note that privileges are coming soon.
+
 ## 0.9.81 — VIP, our own look
 
 - The VIP page no longer copies other apps' dark "My VIP" layout (dark page, gold, swipe cards, dot line). It now uses the Glass & sky look: a deep-blue **Your VIP level** card (level badge, diamonds bought, progress bar, how many more to the next level, **Buy diamonds**), then **The VIP path**, V1 → V6 down the page joined by a line that fills as you climb.
