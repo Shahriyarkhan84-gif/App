@@ -7,6 +7,7 @@ import { type Contributor, PERIODS, type Period, contributorName, MEDALS } from 
 import { FadeIn, GrowBar, Pop, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Avatar, Coin, compactNumber, glassShadow, Row, Screen, Segmented, Text } from '@/components/ui';
+import { units } from '@/lib/brand';
 import { rpc } from '@/lib/api';
 import { useAsync, useOffline } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
@@ -46,7 +47,7 @@ export default function ContributionsScreen() {
                 return (
                   <FadeIn key={r.user_id} delay={first ? 0 : r.rank === 2 ? 150 : 300} from={40} style={{ flex: 1 }}>
                     <PressScale onPress={() => open(r)} style={{ alignItems: 'center', gap: 6 }} accessibilityRole="button"
-                      accessibilityLabel={`${first && period === 'overall' ? 'Overall top 1' : `Rank ${r.rank}`}, ${contributorName(r)}, ${r.coins} coins`}>
+                      accessibilityLabel={`${first && period === 'overall' ? 'Overall top 1' : `Rank ${r.rank}`}, ${contributorName(r)}, ${units(r.coins)}`}>
                       {first && <Pop delay={250} from={0}><Ionicons name="trophy" size={24} color={MEDALS[0]} /></Pop>}
                       <View>
                         <Avatar uri={r.avatar_url} name={contributorName(r)} size={size} ring={MEDALS[r.rank - 1]} />
@@ -66,7 +67,7 @@ export default function ContributionsScreen() {
           }
           renderItem={({ item, index }) => (
             <FadeIn delay={stagger(index, 40)} from={10}>
-              <PressScale onPress={() => open(item)} scaleTo={0.98} accessibilityRole="button" accessibilityLabel={`Rank ${item.rank}, ${contributorName(item)}, ${item.coins} coins`}
+              <PressScale onPress={() => open(item)} scaleTo={0.98} accessibilityRole="button" accessibilityLabel={`Rank ${item.rank}, ${contributorName(item)}, ${units(item.coins)}`}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
                 <Text variant="label" faint style={{ width: 26, textAlign: 'center' }}>{item.rank}</Text>
                 <Avatar uri={item.avatar_url} name={contributorName(item)} size={40} />

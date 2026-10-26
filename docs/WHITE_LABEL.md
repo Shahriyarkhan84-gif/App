@@ -12,6 +12,7 @@ Everything brand-specific lives in `brands/<id>/brand.json` (types in `src/lib/b
 | `name`, `wordmark`, `tagline` | App name on the phone, the logo text (second part in the brand colour), Welcome screen line. Every in-app mention of the name, share messages, Terms, Privacy and permission prompts. |
 | `legalName`, `website`, `supportEmail` | Legal pages, share links (`<website>/live/<id>`), contact lines. |
 | `currency` | Default currency shown before the server's coin packs load. |
+| `units` | Names of the two in-app units, `[singular, plural]`: `spend` (what viewers buy and send — Zynalive: diamond/diamonds) and `earn` (what hosts earn and withdraw — Zynalive: bean/beans). |
 | `app.*` | Store ids (`iosBundleId`, `androidPackage`), deep-link `scheme`, Expo `slug`, EAS owner and project id. |
 | `assets.*` | App icon, Android adaptive icon layers, splash image, web favicon. Put the files in `brands/<id>/` and point to them. |
 | `theme.preset` | The look. `glass-sky` (sky-blue background, frosted cards, deep-blue buttons; navy live rooms — Zynalive's default) or `midnight` (all dark: near-black screens, charcoal cards, light-violet buttons). |

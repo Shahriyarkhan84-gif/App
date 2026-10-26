@@ -1,4 +1,4 @@
-import { brand } from '@/lib/brand';
+import { brand, U } from '@/lib/brand';
 import { Bullets, H, LegalPage, P } from '@/components/LegalPage';
 
 // Public URL for the store listings and sign-up screens: https://zynalive.com/terms
@@ -25,16 +25,16 @@ export default function TermsPage() {
       ]} />
       <P>We use automated and human moderation. Breaking these rules can lead to warnings, muted chat, removal from rooms, suspension or a permanent ban. Report anything unsafe from the room, profile or chat menu.</P>
 
-      <H>Coins and gifts</H>
+      <H>{U.Spend} and gifts</H>
       <Bullets items={[
-        'Coins are a virtual item for sending gifts in the app. They have no cash value, cannot be transferred between accounts and are not refundable, except where the law requires.',
+        `${U.Spend} are a virtual item for sending gifts in the app. They have no cash value, cannot be transferred between accounts and are not refundable, except where the law requires.`,
         'Gifts are final once sent.',
-        'Purchases that are reversed or charged back may remove coins and can lead to account restrictions.',
+        `Purchases that are reversed or charged back may remove ${U.spend} and can lead to account restrictions.`,
       ]} />
 
       <H>Host earnings</H>
       <Bullets items={[
-        'Hosts earn diamonds from gifts. Diamonds can be withdrawn at the rate and minimum shown in the app, after verification.',
+        `Hosts earn ${U.earn} from gifts. ${U.Earn} can be withdrawn at the rate and minimum shown in the app, after verification.`,
         'Recent earnings are held for a short period before they can be withdrawn, to protect against payment disputes.',
         'We review withdrawals and may hold or cancel earnings from fraud, abuse or rule-breaking.',
         'Hosts are responsible for their own taxes.',

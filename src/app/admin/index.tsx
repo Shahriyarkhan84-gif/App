@@ -4,6 +4,7 @@ import { ScrollView, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
 import { Button, Card, Chip, Input, Row, Screen, Text } from '@/components/ui';
+import { U } from '@/lib/brand';
 import { Alert } from '@/lib/alert';
 import { enforceInRoom, rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -318,7 +319,7 @@ function WithdrawalsSection() {
             {w.status === 'requested' ? (
               <Row>
                 <Button title="Approve" size="sm" onPress={() => confirmThen('Approve withdrawal?', `${formatMoney(w.amount_minor, w.currency)} to ${w.payout_method.type} ${w.payout_method.account ?? ''}. Send the payout, then mark it paid.`, 'Approve', () => act('review_withdrawal', { p_withdrawal_id: w.id, p_approve: true }, reload))} />
-                <Button title="Reject" size="sm" variant="secondary" onPress={() => confirmThen('Reject withdrawal?', 'The coins go back to the host\'s balance.', 'Reject', () => act('review_withdrawal', { p_withdrawal_id: w.id, p_approve: false, p_note: 'Rejected by owner' }, reload))} />
+                <Button title="Reject" size="sm" variant="secondary" onPress={() => confirmThen('Reject withdrawal?', `The ${U.earn} go back to the host's balance.`, 'Reject', () => act('review_withdrawal', { p_withdrawal_id: w.id, p_approve: false, p_note: 'Rejected by owner' }, reload))} />
               </Row>
             ) : (
               <Row>
@@ -349,20 +350,20 @@ function SettingsSection() {
   }, []);
   const w = data?.withdrawal;
   const rateNum = Number(rate);
-  const settingError = rate && (!Number.isFinite(rateNum) || rateNum <= 0 || rateNum > 1000) ? 'PKR per coin must be a number above 0'
-    : minCoins && Number(minCoins) < 1 ? 'Minimum coins must be at least 1' : null;
+  const settingError = rate && (!Number.isFinite(rateNum) || rateNum <= 0 || rateNum > 1000) ? `PKR per ${U.earnOne} must be a number above 0`
+    : minCoins && Number(minCoins) < 1 ? `Minimum ${U.earn} must be at least 1` : null;
 
   return (
     <StateView state={resolveState({ offline, loading, error, data, onRetry: reload })}>
       <ScrollView contentContainerStyle={listStyle}>
         <Card>
-          <Text variant="h3">Withdrawal rate (coin → PKR)</Text>
+          <Text variant="h3">Withdrawal rate ({U.earnOne} → PKR)</Text>
           <Text muted>
             Bridges the gift economy (90/5/5 in coins) and the PKR revenue split. Withdrawals stay disabled until this is set.
-            Current: {w?.pkr_per_coin ?? 'not set'} · min {w?.min_coins ?? '–'} coins
+            Current: {w?.pkr_per_coin ?? 'not set'} · min {w?.min_coins ?? '–'} {U.earn}
           </Text>
-          <Input label="PKR per coin" value={rate} onChangeText={setRate} keyboardType="decimal-pad" placeholder={String(w?.pkr_per_coin ?? '0.5')} />
-          <Input label="Minimum coins" value={minCoins} onChangeText={(t) => setMinCoins(t.replace(/\D/g, ''))} keyboardType="number-pad" placeholder={String(w?.min_coins ?? 1000)} />
+          <Input label={`PKR per ${U.earnOne}`} value={rate} onChangeText={setRate} keyboardType="decimal-pad" placeholder={String(w?.pkr_per_coin ?? '0.5')} />
+          <Input label={`Minimum ${U.earn}`} value={minCoins} onChangeText={(t) => setMinCoins(t.replace(/\D/g, ''))} keyboardType="number-pad" placeholder={String(w?.min_coins ?? 1000)} />
           {settingError && <Text variant="caption" color={c.danger}>{settingError}</Text>}
           <Button
             title="Save"
@@ -454,7 +455,7 @@ function EventsSection() {
             <Button title="Publish" disabled={title.trim().length < 3 || offline} onPress={() => save(true)} style={{ flex: 1 }} />
             <Button title="Save draft" variant="secondary" disabled={title.trim().length < 3 || offline} onPress={() => save(false)} style={{ flex: 1 }} />
           </Row>
-          <Text variant="caption" muted>Scores count automatically from gifts and battles. Rewards are announced to winners when the event ends; coin prizes are paid by an owner.</Text>
+          <Text variant="caption" muted>Scores count automatically from gifts and battles. Rewards are announced to winners when the event ends; {U.spendOne} prizes are paid by an owner.</Text>
         </Card>
         {(data?.events ?? []).length === 0 && <Text muted style={{ textAlign: 'center' }}>No events yet.</Text>}
         {(data?.events ?? []).map((e) => {

@@ -15,6 +15,11 @@ export type Brand = {
   supportEmail: string;
   /** Default currency for prices shown before the server's own coin packs load. */
   currency: string;
+  /**
+   * Names of the two in-app units, [singular, plural], lower case: `spend` is what viewers buy and send
+   * as gifts (Zynalive: diamonds), `earn` is what hosts receive and withdraw (Zynalive: beans).
+   */
+  units: { spend: [string, string]; earn: [string, string] };
   app: { slug: string; scheme: string; iosBundleId: string; androidPackage: string; easOwner: string; easProjectId: string };
   assets: { icon: string; splash: string; favicon: string; androidForeground: string; androidBackground: string; androidMonochrome: string };
   /** `primary` (a #RRGGBB colour) replaces the preset's main colour; the rest of the palette is kept. */

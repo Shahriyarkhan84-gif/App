@@ -16,3 +16,22 @@ export const brand: Brand = (Constants.expoConfig?.extra?.brand as Brand | undef
 export function hasFeature(feature: Feature): boolean {
   return brand.features[feature] !== false;
 }
+
+const cap = (w: string) => w.charAt(0).toUpperCase() + w.slice(1);
+const unitNames = brand.units ?? { spend: ['coin', 'coins'], earn: ['diamond', 'diamonds'] };
+
+/**
+ * The brand's names for its two units, for app text: `U.spend` "diamonds", `U.Spend` "Diamonds",
+ * `U.spendOne` "diamond"; `U.earn` "beans", `U.Earn` "Beans", `U.earnOne` "bean". The database
+ * keeps its own column names (coin_balance, …); only what people read changes.
+ */
+export const U = {
+  spendOne: unitNames.spend[0], spend: unitNames.spend[1], SpendOne: cap(unitNames.spend[0]), Spend: cap(unitNames.spend[1]),
+  earnOne: unitNames.earn[0], earn: unitNames.earn[1], EarnOne: cap(unitNames.earn[0]), Earn: cap(unitNames.earn[1]),
+};
+
+/** "1 diamond" / "1,250 diamonds" (or beans with `kind: 'earn'`). */
+export function units(n: number, kind: 'spend' | 'earn' = 'spend') {
+  const [one, many] = unitNames[kind];
+  return `${n.toLocaleString()} ${n === 1 ? one : many}`;
+}

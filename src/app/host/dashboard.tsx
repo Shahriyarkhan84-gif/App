@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
-import { brand } from '@/lib/brand';
+import { brand, U, units } from '@/lib/brand';
 import { FadeIn, PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Avatar, Button, Coin, compactNumber, glassShadow, Row, Screen, Sheet, Text } from '@/components/ui';
@@ -163,7 +163,7 @@ export default function HostDashboardScreen() {
               <Text variant="h3">Today</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 <Tile label="Live time" value={duration(data.today.seconds)} sub={`${data.today.sessions} session${data.today.sessions === 1 ? '' : 's'}`} />
-                <Tile label="Diamonds" value={data.today.diamonds.toLocaleString()} sub={`from ${data.today.gifts} gifts`} />
+                <Tile label={U.Earn} value={data.today.diamonds.toLocaleString()} sub={`from ${data.today.gifts} gifts`} />
                 <Tile label="New followers" value={data.today.newFollowers.toLocaleString()} sub={`total ${compactNumber(data.today.totalFollowers)}`} />
                 <Tile label="Peak viewers" value={data.today.peak.toLocaleString()} sub="today" />
               </View>
@@ -219,10 +219,10 @@ export default function HostDashboardScreen() {
                       <Text style={{ fontSize: 14, fontWeight: '500' }} numberOfLines={1}>{s.title || 'Live stream'}</Text>
                       <Text variant="caption" faint>{shortTime(s.started_at)} · {duration(s.secs)}</Text>
                     </View>
-                    {/* gift_coins is the gifts' full coin value (not the host's diamond share). */}
+                    {/* gift_coins is the gifts' full value in the viewers' unit (not the host's share). */}
                     <Row gap={4}>
                       <Coin size={14} />
-                      <Text variant="label" color={c.violetText} accessibilityLabel={`${(s.gift_coins ?? 0).toLocaleString()} coins in gifts`}>{(s.gift_coins ?? 0).toLocaleString()}</Text>
+                      <Text variant="label" color={c.violetText} accessibilityLabel={`${units(s.gift_coins ?? 0)} in gifts`}>{(s.gift_coins ?? 0).toLocaleString()}</Text>
                     </Row>
                   </Row>
                 </PressScale>

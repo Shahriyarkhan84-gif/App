@@ -1,5 +1,18 @@
 # Economy
 
+## Names people see
+
+The database calls the two units **coins** (bought, sent as gifts: `coin_balance`, `coin_price`,
+`gift_coins`) and **diamonds** (the host's share, withdrawable: `earnings`). The app shows each
+brand's own names from `brand.json` → `units` (helpers `U` and `units()` in `src/lib/brand.ts`):
+
+| Database | Zynalive shows | Icon |
+|---|---|---|
+| coins (viewers buy and send) | **Diamonds** | blue diamond (`Coin` in `ui.tsx`) |
+| diamonds (hosts earn and withdraw) | **Beans** | golden bean (`Bean` in `ui.tsx`) |
+
+Server notification texts still say coins/diamonds; the app swaps the words when showing them.
+
 ## Money path (purchase)
 
 Implemented in `internal_credit_payment()`; split percentages live in

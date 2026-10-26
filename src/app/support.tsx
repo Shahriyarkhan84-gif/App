@@ -5,6 +5,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
 import { Button, Card, glassShadow, Input, Row, Screen, Text } from '@/components/ui';
+import { U } from '@/lib/brand';
 import { Alert } from '@/lib/alert';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -16,7 +17,7 @@ const FAQ = [
   { q: 'How do I become a host?', a: 'Profile → Verification for hosting. Enter your details, CNIC photos and your agency’s 4-digit code. Verified hosts are approved instantly.' },
   { q: 'Where do I get an agency code?', a: 'Ask the agency you host with. Every agency has one permanent 4-digit code.' },
   { q: 'How long do withdrawals take?', a: 'Withdrawals are reviewed by our team first; you get a notification when yours is paid.' },
-  { q: 'I was charged but got no coins', a: 'Coins are added when the payment is confirmed. If it takes longer than 10 minutes, send us a message below.' },
+  { q: `I was charged but got no ${U.spend}`, a: `${U.Spend} are added when the payment is confirmed. If it takes longer than 10 minutes, send us a message below.` },
 ];
 
 type Ticket = { id: string; subject: string; body: string; status: string; ai_reply: string | null; created_at: string };

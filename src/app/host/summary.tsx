@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
-import { brand } from '@/lib/brand';
+import { brand, U } from '@/lib/brand';
 import { FadeIn } from '@/components/Motion';
 import { StateView } from '@/components/StateView';
 import { Button, Card, Row, Screen, Text, type IconName } from '@/components/ui';
@@ -68,7 +68,7 @@ export default function StreamSummaryScreen() {
           <FadeIn delay={80} style={{ flexDirection: 'row', gap: 10 }}>
             <Metric icon="time-outline" label="Minutes" value={minutes} />
             <Metric icon="eye-outline" label="Peak viewers" value={s?.peak_viewers ?? 0} />
-            <Metric icon="gift-outline" label="Gift coins" value={s?.gift_coins ?? 0} />
+            <Metric icon="gift-outline" label={`Gift ${U.spend}`} value={s?.gift_coins ?? 0} />
           </FadeIn>
 
           <FadeIn delay={160}>
@@ -95,7 +95,7 @@ export default function StreamSummaryScreen() {
           <Button
             title="Share highlights"
             variant="secondary"
-            onPress={() => shareMessage(`I just went live on ${brand.name} — ${s?.peak_viewers ?? 0} peak viewers and ${(s?.gift_coins ?? 0).toLocaleString()} gift coins!`)}
+            onPress={() => shareMessage(`I just went live on ${brand.name} — ${s?.peak_viewers ?? 0} peak viewers and ${(s?.gift_coins ?? 0).toLocaleString()} gift ${U.spend}!`)}
           />
         </ScrollView>
       </StateView>

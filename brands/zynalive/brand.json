@@ -1,12 +1,25 @@
 {
   "id": "zynalive",
   "name": "Zynalive",
-  "wordmark": ["zyna", "live"],
+  "wordmark": [
+    "zyna",
+    "live"
+  ],
   "tagline": "Go live. Make friends. Support the hosts you love.",
   "legalName": "Zynalive",
   "website": "https://zynalive.com",
   "supportEmail": "support@zynalive.com",
   "currency": "PKR",
+  "units": {
+    "spend": [
+      "diamond",
+      "diamonds"
+    ],
+    "earn": [
+      "bean",
+      "beans"
+    ]
+  },
   "app": {
     "slug": "zynalive",
     "scheme": "zynalive",

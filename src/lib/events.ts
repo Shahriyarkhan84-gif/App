@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { U } from './brand';
 
 // Regional variants + engagement events (see docs/ARCHITECTURE.md → Engagement & regions).
 
@@ -64,4 +65,4 @@ export async function fetchEvents(supabase: SupabaseClient, region: string | nul
   return (data ?? []) as AppEvent[];
 }
 
-export const scoreLabel = (kind: AppEvent['kind']) => (kind === 'pk_battle' ? 'pts' : 'coins');
+export const scoreLabel = (kind: AppEvent['kind']) => (kind === 'pk_battle' ? 'pts' : U.spend);

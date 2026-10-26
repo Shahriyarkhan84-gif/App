@@ -1,4 +1,5 @@
 import { hasMessage, t } from './i18n';
+import { U } from './brand';
 
 // Maps server error codes (RPC exceptions and edge-function error.code) to
 // user-facing copy. Unknown errors get a generic message; details stay server-side.
@@ -6,7 +7,7 @@ const MESSAGES: Record<string, string> = {
   not_authenticated: 'Please sign in again.',
   forbidden: "You don't have permission to do that.",
   account_restricted: 'Your account is currently restricted.',
-  insufficient_coins: "You don't have enough coins.",
+  insufficient_coins: `You don't have enough ${U.spend}.`,
   wallet_frozen: 'Your wallet is on hold while a payment is reviewed.',
   room_not_live: 'This room is no longer live.',
   banned_from_room: "You can't join this room.",
@@ -20,7 +21,7 @@ const MESSAGES: Record<string, string> = {
   not_a_host: 'Become a host first.',
   withdrawals_not_configured: 'Withdrawals open soon — the payout rate is being finalised.',
   below_minimum: 'Amount is below the minimum withdrawal.',
-  insufficient_earnings: "You don't have that many withdrawable diamonds. New gift earnings unlock after a short safety hold.",
+  insufficient_earnings: `You don't have that many withdrawable ${U.earn}. New gift earnings unlock after a short safety hold.`,
   withdrawals_unavailable: 'Withdrawals are not available in your region yet.',
   invalid_payout_method: 'Check the payout account number and try again.',
   must_follow_host: 'Only people who follow you can be room admins.',
@@ -83,8 +84,8 @@ const MESSAGES: Record<string, string> = {
   connection_lost: 'The connection to the stream was lost.',
   too_long: 'That video is longer than the limit.',
   file_too_large: 'That video is larger than the limit.',
-  invalid_package: 'That coin package is not available in your region.',
-  payment_processing: 'Your payment went through and is being confirmed. Your coins will appear in a moment.',
+  invalid_package: `That ${U.spendOne} package is not available in your region.`,
+  payment_processing: `Your payment went through and is being confirmed. Your ${U.spend} will appear in a moment.`,
   checkout_in_progress: 'You already started this purchase. Finish it on the payment page you opened, or try again in 30 minutes.',
   invalid_region: 'Unknown region.',
   invalid_rewards: 'Check the rewards: each needs a rank range and a description.',

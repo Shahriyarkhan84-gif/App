@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.73 — Diamonds and beans
+
+- What viewers buy and send as gifts is now called **Diamonds** (blue diamond icon); what hosts earn and withdraw is called **Beans** (golden bean icon). Wallet, gift sheet, frames, earnings, host live counter, host dashboard, Me, agency portal, admin withdrawal settings, Terms, Privacy, support answers, error messages (all four languages) and notifications use the new names.
+- The names come from `brand.json` → `units`, so each client can call them what they like (`U`, `units()` in `src/lib/brand.ts`). Database names and money logic are unchanged.
+
 ## 0.9.72 — Simpler Home
 
 - Home goes straight from the topic chips to the grid of lives: the "following live" circles row and the big featured live card are gone (removed `GoLiveBubble` and `FeaturedRoomCard`). Going live stays on the + tab; followed hosts who are live are still on the bell.

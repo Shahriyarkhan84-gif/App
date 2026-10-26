@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { U, units } from '@/lib/brand';
 import { useAnalytics } from '@/lib/analytics';
 import { idempotencyKey, rpc } from '@/lib/api';
 import { errorCode, friendlyError } from '@/lib/errors';
@@ -99,7 +100,7 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
         <Text variant="h2" color={c.text}>Gifts</Text>
         <Row gap={6}>
           <Coin />
-          <Text variant="label" color={c.goldText} accessibilityLabel={`Balance ${balance} coins`}>{balanceKnown ? balance.toLocaleString() : "…"}</Text>
+          <Text variant="label" color={c.goldText} accessibilityLabel={`Balance ${units(balance)}`}>{balanceKnown ? balance.toLocaleString() : "…"}</Text>
           <Pressable onPress={() => { close(); router.push('/wallet'); }} accessibilityRole="link" hitSlop={10} style={{ marginLeft: 8 }}>
             <Text variant="bodySmall" color={c.gold} style={{ fontWeight: '700' }}>Recharge</Text>
           </Pressable>
@@ -113,7 +114,7 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
             <PressScale
               onPress={() => pick(g)}
               accessibilityRole="button"
-              accessibilityLabel={`${g.name}, ${g.coin_price} coins`}
+              accessibilityLabel={`${g.name}, ${units(g.coin_price)}`}
               accessibilityState={{ selected: on }}
               style={{
                 width: '100%', height: 96, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: radius[12] + 2,
@@ -138,11 +139,11 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
       {wallet.data?.frozen ? (
         <Text color={c.warning}>Your wallet is on hold while a payment is reviewed.</Text>
       ) : insufficient ? (
-        <Button title={`Need ${(total - balance).toLocaleString()} more coins — Recharge`} variant="gold" onPress={() => { close(); router.push('/wallet'); }} />
+        <Button title={`Need ${(total - balance).toLocaleString()} more ${U.spend} — Recharge`} variant="gold" onPress={() => { close(); router.push('/wallet'); }} />
       ) : (
         <Row>
           <Text variant="bodySmall" color={c.textMuted} style={{ flex: 1 }}>
-            {selected ? `${selected.name} ×${quantity} · ${total.toLocaleString()} coins.${wallet.data?.hostPct != null ? ` The host gets ${wallet.data.hostPct}%.` : ''}` : 'Pick a gift to send.'}
+            {selected ? `${selected.name} ×${quantity} · ${units(total)}.${wallet.data?.hostPct != null ? ` The host gets ${wallet.data.hostPct}%.` : ''}` : 'Pick a gift to send.'}
           </Text>
           <Button title="Send" disabled={!selected || !balanceKnown} loading={sending} onPress={send} style={{ minHeight: 44, paddingHorizontal: 26 }} />
         </Row>

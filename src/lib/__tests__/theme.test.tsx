@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react-native';
 import * as RN from 'react-native';
 
-import { brand, hasFeature } from '../brand';
+import { brand, hasFeature, U, units } from '../brand';
 import { appIsDark, brandPalettes, liveColors, useTheme } from '../theme';
 
 const PINK = ['#F48FB8', '#D62872', '#FF7AA2', '#C98CF5', '#9B2FE0'];
@@ -71,5 +71,15 @@ describe('brand', () => {
 
   it('ignores an invalid colour', () => {
     expect(brandPalettes({ preset: 'glass-sky', primary: 'red' }).light.primary).toBe('#0369A1');
+  });
+});
+
+describe('unit names', () => {
+  it('calls the bought unit diamonds and the earned unit beans for Zynalive', () => {
+    expect(U.Spend).toBe('Diamonds');
+    expect(U.earn).toBe('beans');
+    expect(units(1)).toBe('1 diamond');
+    expect(units(1250)).toBe('1,250 diamonds');
+    expect(units(2, 'earn')).toBe('2 beans');
   });
 });

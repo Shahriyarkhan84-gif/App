@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { brand } from '@/lib/brand';
+import { brand, units } from '@/lib/brand';
 import { ChatPanel } from '@/components/ChatPanel';
 import { GiftSheet, GiftToasts } from '@/components/GiftSheet';
 import { LiveStage } from '@/components/LiveStage';
@@ -211,7 +211,7 @@ export default function LiveRoomScreen() {
   const topBar = r && (
     <Row gap={8} style={{ paddingHorizontal: 12 }}>
       <Row gap={8} style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 26, padding: 4, paddingRight: isFollowing || r.host_id === userId ? 14 : 4, flexShrink: 1 }}>
-        <Pressable onPress={() => setCardUser(r.host_id)} accessibilityRole="button" accessibilityLabel={`${displayName(r.host)} profile, ${coins} coins this live`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
+        <Pressable onPress={() => setCardUser(r.host_id)} accessibilityRole="button" accessibilityLabel={`${displayName(r.host)} profile, ${units(coins)} this live`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
           <Avatar uri={r.host?.avatar_url} name={displayName(r.host)} size={40} />
           <View style={{ flexShrink: 1 }}>
             <Text variant="label" color={c.text} numberOfLines={1} style={{ maxWidth: 120 }}>{displayName(r.host)}</Text>

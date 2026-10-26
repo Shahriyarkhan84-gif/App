@@ -1,13 +1,13 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
+import { U, units } from '@/lib/brand';
 import { resolveState, StateView } from '@/components/StateView';
 import { FadeIn } from '@/components/Motion';
-import { Button, Card, Chip, Input, Row, Screen, Text } from '@/components/ui';
+import { Bean, Button, Card, Chip, Input, Row, Screen, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
@@ -68,8 +68,8 @@ export default function EarningsScreen() {
   const amount = Number.parseInt(coins, 10);
   const max = data ? data.withdrawable ?? data.earnings.balance : 0;
   const amountError = !coins || !data ? null
-    : amount < data.minCoins ? `Minimum ${data.minCoins.toLocaleString()} coins`
-    : amount > max ? `You can withdraw up to ${max.toLocaleString()} coins right now`
+    : amount < data.minCoins ? `Minimum ${units(data.minCoins, 'earn')}`
+    : amount > max ? `You can withdraw up to ${units(max, 'earn')} right now`
     : null;
   const accountError = account && account.trim().length < 6 ? 'Enter the full account number' : null;
   const valid = Number.isFinite(amount) && amount > 0 && !amountError && account.trim().length >= 6;
@@ -96,8 +96,8 @@ export default function EarningsScreen() {
           <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
             <FadeIn>
               <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, borderRadius: 22, gap: 10 }}>
-                <Text variant="bodySmall" color={c.primaryText}>Available diamonds</Text>
-                <Row gap={10}><Ionicons name="diamond" size={24} color={c.primaryText} /><Text variant="display" color={c.primaryText} accessibilityLiveRegion="polite">{data.earnings.balance.toLocaleString()}</Text></Row>
+                <Text variant="bodySmall" color={c.primaryText}>Available {U.earn}</Text>
+                <Row gap={10}><Bean size={24} /><Text variant="display" color={c.primaryText} accessibilityLiveRegion="polite">{data.earnings.balance.toLocaleString()}</Text></Row>
                 <Row gap={24}>
                   <View><Text variant="label" color={c.primaryText}>{data.earnings.held.toLocaleString()}</Text><Text variant="caption" color={c.primaryText}>In review</Text></View>
                   <View><Text variant="label" color={c.primaryText}>{data.earnings.lifetime.toLocaleString()}</Text><Text variant="caption" color={c.primaryText}>Lifetime</Text></View>
@@ -108,7 +108,7 @@ export default function EarningsScreen() {
             {data.split && (
               <Card>
                 <Text variant="h3">Where each gift goes</Text>
-                <Text muted>For every 100 coins a viewer gifts you:</Text>
+                <Text muted>For every 100 {U.spend} a viewer gifts you:</Text>
                 {[
                   { label: 'You (host)', pct: data.split.host_pct, color: c.primary },
                   { label: 'Stream pool', pct: data.split.stream_pct, color: c.gold },
@@ -117,7 +117,7 @@ export default function EarningsScreen() {
                   <View key={r.label} style={{ gap: 4 }}>
                     <Row style={{ justifyContent: 'space-between' }}>
                       <Text>{r.label}</Text>
-                      <Text variant="label">{r.pct} coins ({r.pct}%)</Text>
+                      <Text variant="label">{r.pct}%</Text>
                     </Row>
                     <View style={{ height: 6, borderRadius: 3, backgroundColor: c.surfaceRaised, overflow: 'hidden' }}>
                       <View style={{ width: `${r.pct}%`, height: '100%', backgroundColor: r.color }} />
@@ -135,14 +135,14 @@ export default function EarningsScreen() {
                   <Button title="Verify identity" variant="secondary" onPress={() => router.push('/hosting')} />
                 </>
               ) : data.rate === null ? (
-                <Text muted>Withdrawals open soon — the coin payout rate is being finalised.</Text>
+                <Text muted>Withdrawals open soon — the payout rate is being finalised.</Text>
               ) : (
                 <>
-                  <Text muted>1 coin = Rs {data.rate} · minimum {data.minCoins.toLocaleString()} coins</Text>
+                  <Text muted>1 {U.earnOne} = Rs {data.rate} · minimum {units(data.minCoins, 'earn')}</Text>
                   {data.withdrawable !== null && data.withdrawable < data.earnings.balance && (
-                    <Text variant="caption" muted>{data.withdrawable.toLocaleString()} coins can be withdrawn now; newer gifts unlock after the hold period.</Text>
+                    <Text variant="caption" muted>{units(data.withdrawable, 'earn')} can be withdrawn now; newer gifts unlock after the hold period.</Text>
                   )}
-                  <Input label="Coins" value={coins} onChangeText={(t) => setCoins(t.replace(/\D/g, '').slice(0, 9))} keyboardType="number-pad" placeholder={String(data.minCoins)} error={amountError ?? undefined} />
+                  <Input label={U.Earn} value={coins} onChangeText={(t) => setCoins(t.replace(/\D/g, '').slice(0, 9))} keyboardType="number-pad" placeholder={String(data.minCoins)} error={amountError ?? undefined} />
                   {Number.isFinite(amount) && amount > 0 && <Text variant="label">≈ Rs {(amount * data.rate).toLocaleString()}</Text>}
                   <Row gap={8} style={{ flexWrap: 'wrap' }}>
                     {METHODS.map((m) => <Chip key={m.id} label={m.label} selected={method === m.id} onPress={() => setMethod(m.id)} />)}

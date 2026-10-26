@@ -6,6 +6,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { FramedAvatar } from '@/components/FramedAvatar';
 import { StateView, type ViewState } from '@/components/StateView';
 import { Button, Coin, glassShadow, Row, Screen, Text } from '@/components/ui';
+import { U, units } from '@/lib/brand';
 import { Alert, confirmAction } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { idempotencyKey, rpc } from '@/lib/api';
@@ -65,8 +66,8 @@ export default function FramesScreen() {
     const owned = ownedRow(f.id);
     confirmAction(
       owned ? `Renew ${f.name}?` : `Buy ${f.name}?`,
-      `${f.coin_price.toLocaleString()} coins · ${frameDuration(f)}${owned ? ' more' : ''}. You'll wear it right away.`,
-      `Pay ${f.coin_price.toLocaleString()} coins`,
+      `${units(f.coin_price)} · ${frameDuration(f)}${owned ? ' more' : ''}. You'll wear it right away.`,
+      `Pay ${units(f.coin_price)}`,
       () => void (async () => {
         setBusy(true);
         try {
@@ -128,7 +129,7 @@ export default function FramesScreen() {
               const owned = ownedRow(f.id);
               return (
                 <Pressable key={f.id} onPress={() => setPicked(f.id)} accessibilityRole="button" accessibilityState={{ selected: on }}
-                  accessibilityLabel={`${f.name}, ${f.coin_price} coins, ${frameDuration(f)}${owned ? ', owned' : ''}${wearing === f.id ? ', wearing' : ''}`}
+                  accessibilityLabel={`${f.name}, ${units(f.coin_price)}, ${frameDuration(f)}${owned ? ', owned' : ''}${wearing === f.id ? ', wearing' : ''}`}
                   style={{ flexBasis: '47%', flexGrow: 1, alignItems: 'center', gap: 8, padding: 14, borderRadius: 18, backgroundColor: c.surface, ...glassShadow, borderWidth: 2, borderColor: on ? c.primary : c.glassBorder }}>
                   <FramedAvatar uri={profile?.avatar_url} name={profile ? displayName(profile) : ''} size={64} frame={f} />
                   <Text variant="label" numberOfLines={1}>{f.name}</Text>
@@ -143,7 +144,7 @@ export default function FramesScreen() {
               );
             })}
           </View>
-          <Text variant="caption" muted style={{ textAlign: 'center' }}>Frames show around your photo on your profile. Coins spent on frames aren&apos;t refundable.</Text>
+          <Text variant="caption" muted style={{ textAlign: 'center' }}>Frames show around your photo on your profile. {U.Spend} spent on frames aren&apos;t refundable.</Text>
         </ScrollView>
 
         {sel && state.kind === 'success' && (
@@ -156,9 +157,9 @@ export default function FramesScreen() {
             ) : selOwned ? (
               <Button title={`Wear ${sel.name}`} loading={busy} disabled={offline} onPress={() => void wear(sel.id)} />
             ) : short > 0 ? (
-              <Button title={`Need ${short.toLocaleString()} more coins · Recharge`} variant="gold" onPress={() => router.push('/wallet')} icon={<Ionicons name="add-circle" size={18} color={c.onGold} />} />
+              <Button title={`Need ${short.toLocaleString()} more ${U.spend} · Recharge`} variant="gold" onPress={() => router.push('/wallet')} icon={<Ionicons name="add-circle" size={18} color={c.onGold} />} />
             ) : (
-              <Button title={`Buy for ${sel.coin_price.toLocaleString()} coins`} loading={busy} disabled={offline} onPress={() => buy(sel)} />
+              <Button title={`Buy for ${units(sel.coin_price)}`} loading={busy} disabled={offline} onPress={() => buy(sel)} />
             )}
             {offline && <Text variant="caption" muted style={{ textAlign: 'center' }}>You need a connection to buy or change frames.</Text>}
           </View>

@@ -1,4 +1,4 @@
-import { brand } from '@/lib/brand';
+import { brand, U } from '@/lib/brand';
 import { Bullets, H, LegalPage, P } from '@/components/LegalPage';
 
 // Public URL for the Google Play "Delete account URL" field: https://zynalive.com/account-deletion
@@ -13,11 +13,11 @@ export default function AccountDeletionPage() {
       <Bullets items={['Name, username, photo, bio, email and country', 'Followers, following and blocks', 'Direct messages and notifications', 'Live chat messages (replaced with “[deleted]”)', 'Your sign-in account']} />
       <H>What we keep, and why</H>
       <Bullets items={[
-        'Coin purchase, gift, earnings and payout records — required for accounting and tax law, kept as required by Pakistani law.',
+        `${U.SpendOne} purchase, gift, earnings and payout records — required for accounting and tax law, kept as required by Pakistani law.`,
         'Reports and moderation history — to prevent abuse, kept as required by Pakistani law.',
         'Host identity-verification documents are held by our verification partner Didit under its retention policy.',
       ]} />
-      <P>Unused coins and unpaid earnings are lost when you delete your account. If you have a withdrawal in progress, you can delete once it has been paid or rejected.</P>
+      <P>Unused {U.spend} and unpaid {U.earn} are lost when you delete your account. If you have a withdrawal in progress, you can delete once it has been paid or rejected.</P>
     </LegalPage>
   );
 }

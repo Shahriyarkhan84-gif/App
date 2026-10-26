@@ -6,6 +6,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, View } from 'react-native';
 
+import { U, units } from '@/lib/brand';
 import { Pop, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Button, Coin, glassShadow, Row, Screen, Segmented, Text } from '@/components/ui';
@@ -27,7 +28,7 @@ const HISTORY_TABS = [
 ] as const;
 
 const KIND_LABEL: Record<string, string> = {
-  purchase: 'Coins purchased', gift_sent: 'Gift sent', refund: 'Refund reversal', chargeback: 'Chargeback reversal', adjustment: 'Adjustment',
+  purchase: `${U.Spend} purchased`, gift_sent: 'Gift sent', refund: 'Refund reversal', chargeback: 'Chargeback reversal', adjustment: 'Adjustment',
 };
 
 export default function WalletScreen() {
@@ -129,7 +130,7 @@ export default function WalletScreen() {
               <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                 style={{ padding: 22, borderRadius: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <View style={{ gap: 4 }}>
-                  <Text variant="bodySmall" color={c.primaryText} style={{ opacity: 0.9 }}>Your coins</Text>
+                  <Text variant="bodySmall" color={c.primaryText} style={{ opacity: 0.9 }}>Your {U.spend}</Text>
                   <Row gap={8}><Coin size={28} /><Text variant="display" color={c.primaryText} accessibilityLiveRegion="polite">{data.wallet.coin_balance.toLocaleString()}</Text></Row>
                 </View>
                 <Text variant="caption" color={c.primaryText} style={{ maxWidth: 130, textAlign: 'right', opacity: 0.9 }}>
@@ -138,7 +139,7 @@ export default function WalletScreen() {
               </LinearGradient>
 
               <View style={{ gap: 10 }}>
-                <Text variant="h3">Buy coins</Text>
+                <Text variant="h3">Buy {U.spend}</Text>
                 {data.pricesFailed ? (
                   <Row gap={10} style={{ padding: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
                     <Text variant="bodySmall" muted style={{ flex: 1 }}>Couldn&apos;t load prices for your country.</Text>
@@ -146,7 +147,7 @@ export default function WalletScreen() {
                   </Row>
                 ) : data.packages.length === 0 ? (
                   <Text variant="bodySmall" muted style={{ padding: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
-                    Coins aren&apos;t on sale in your country yet. We&apos;ll add your country soon.
+                    {U.Spend} aren&apos;t on sale in your country yet. We&apos;ll add your country soon.
                   </Text>
                 ) : null}
                 <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -184,20 +185,20 @@ export default function WalletScreen() {
                   <ActivityIndicator color={c.violetText} />
                   <View style={{ flex: 1, gap: 2 }}>
                     <Text variant="label">Waiting for payment confirmation</Text>
-                    <Text variant="caption" muted>Coins are added as soon as the payment provider confirms. Don&apos;t pay again.</Text>
+                    <Text variant="caption" muted>{U.Spend} are added as soon as the payment provider confirms. Don&apos;t pay again.</Text>
                   </View>
                 </Row>
               )}
               {awaiting === null && returnStatus === 'success' && (
-                <Text variant="label" accessibilityRole="alert">Payment received — your coins appear here as soon as it&apos;s confirmed. Don&apos;t pay again.</Text>
+                <Text variant="label" accessibilityRole="alert">Payment received — your {U.spend} appear here as soon as it&apos;s confirmed. Don&apos;t pay again.</Text>
               )}
               {returnStatus === 'cancelled' && <Text variant="caption" muted accessibilityRole="alert">Checkout cancelled — you weren&apos;t charged.</Text>}
               {awaiting !== null && data.wallet.coin_balance > awaiting && (
-                <Text variant="label" color={c.success} accessibilityRole="alert">Payment confirmed — coins added.</Text>
+                <Text variant="label" color={c.success} accessibilityRole="alert">Payment confirmed — {U.spend} added.</Text>
               )}
               {pick && (
                 <Button
-                  title={buying ? 'Opening checkout…' : `Buy ${pick.coins.toLocaleString()} coins · ${formatMoney(pick.price_minor, pick.currency)}`}
+                  title={buying ? 'Opening checkout…' : `Buy ${units(pick.coins)} · ${formatMoney(pick.price_minor, pick.currency)}`}
                   loading={buying !== null}
                   disabled={offline}
                   onPress={() => buy(pick)}
@@ -207,7 +208,7 @@ export default function WalletScreen() {
                 <Text style={{ flex: 1, fontSize: 15 }}>Pay with card</Text>
                 <Text variant="caption" faint>Secure checkout · Stripe</Text>
               </Row>
-              <Text variant="caption" faint>Coins are added only after the payment is confirmed.</Text>
+              <Text variant="caption" faint>{U.Spend} are added only after the payment is confirmed.</Text>
 
               <View style={{ gap: 4 }}>
                 <Text variant="h3">History</Text>

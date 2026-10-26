@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
 import { Button, Card, Input, Screen, Text } from '@/components/ui';
+import { U } from '@/lib/brand';
 import { useAnalytics } from '@/lib/analytics';
 import { deleteAccount } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -45,7 +46,7 @@ export default function DeleteAccountScreen() {
             <Ionicons name="warning-outline" size={26} color={c.danger} />
           </View>
           <Text variant="h1">Delete your account</Text>
-          <Text muted>This is permanent. You won’t be able to sign in again with this account, and unused coins and unpaid earnings are lost.</Text>
+          <Text muted>This is permanent. You won’t be able to sign in again with this account, and unused {U.spend} and unpaid {U.earn} are lost.</Text>
         </View>
         <Card>
           <Text variant="label">We delete</Text>

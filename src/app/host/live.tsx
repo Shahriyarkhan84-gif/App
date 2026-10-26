@@ -1,12 +1,11 @@
 import { useAuth } from '@clerk/clerk-expo';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { brand, hasFeature } from '@/lib/brand';
+import { brand, hasFeature, units } from '@/lib/brand';
 import { ChatPanel } from '@/components/ChatPanel';
 import { GiftToasts } from '@/components/GiftSheet';
 import { ConnectionBadge, HostControlRail, LiveTimer, MicOffBanner } from '@/components/HostControls';
@@ -15,7 +14,7 @@ import { LiveStage } from '@/components/LiveStage';
 import { endBattleIfExpired, PkBattleBar, PkBattleStage, usePkBattleState } from '@/components/PkBattle';
 import { ProfileCard } from '@/components/ProfileCard';
 import { StateView, type ViewState } from '@/components/StateView';
-import { Avatar, Button, LiveBadge, Row, Sheet, Text } from '@/components/ui';
+import { Avatar, Bean, Button, LiveBadge, Row, Sheet, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { getLiveKitToken, rpc } from '@/lib/api';
@@ -236,9 +235,9 @@ export default function HostLiveScreen() {
         <Button title="End" variant="danger" size="sm" onPress={end} loading={ending} />
       </Row>
       <Row gap={8}>
-        <View accessible accessibilityLabel={`${coins.toLocaleString()} diamonds this live`}
+        <View accessible accessibilityLabel={`${units(coins, 'earn')} this live`}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.45)' }}>
-          <Ionicons name="diamond" size={14} color="#CFC8FF" />
+          <Bean size={14} />
           <Text variant="label" color={c.text}>{coins.toLocaleString()}</Text>
         </View>
         <Text variant="label" color={c.text} style={{ flex: 1, minWidth: 0 }} numberOfLines={1}>{session.data.room.title}</Text>

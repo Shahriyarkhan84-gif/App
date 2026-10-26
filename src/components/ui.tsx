@@ -314,8 +314,18 @@ export function RoleBadges({ profile, small }: { profile?: { verified_at?: strin
 }
 
 /** Gold coin glyph used next to balances and prices. */
+/** Icon of the unit viewers buy and send (Zynalive: a diamond). */
 export function Coin({ size = 16 }: { size?: number }) {
-  return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: '#FFC24B', borderWidth: Math.max(2, size / 8), borderColor: '#C98A12' }} />;
+  return <Ionicons name="diamond" size={size} color="#38BDF8" accessible={false} />;
+}
+
+/** Icon of the unit hosts earn (Zynalive: a bean): a small golden-brown bean with a crease. */
+export function Bean({ size = 16 }: { size?: number }) {
+  return (
+    <View accessible={false} style={{ width: size * 0.78, height: size, borderRadius: size / 2, backgroundColor: '#E2A33A', borderWidth: Math.max(1, size / 12), borderColor: '#9A6200', transform: [{ rotate: '-28deg' }], alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: Math.max(1.5, size / 10), height: size * 0.55, borderRadius: size, backgroundColor: '#9A6200', opacity: 0.7 }} />
+    </View>
+  );
 }
 
 export function compactNumber(n: number) {

@@ -8,7 +8,7 @@ import { useTabBarSpace } from '@/components/Menus';
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Avatar, Coin, glassShadow, Row, Screen, Text } from '@/components/ui';
-import { hasFeature } from '@/lib/brand';
+import { hasFeature, U } from '@/lib/brand';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
@@ -193,8 +193,8 @@ function Notifications() {
                   <Ionicons name={notificationIcon(item.type)} size={19} color={c.primary} />
                 </View>
                 <View style={{ flex: 1, gap: 3 }}>
-                  <Text variant="label" style={{ fontSize: 15 }}>{item.title}</Text>
-                  {item.body && <Text variant="bodySmall" muted numberOfLines={3}>{item.body}</Text>}
+                  <Text variant="label" style={{ fontSize: 15 }}>{unitWords(item.title)}</Text>
+                  {item.body && <Text variant="bodySmall" muted numberOfLines={3}>{unitWords(item.body)}</Text>}
                 </View>
                 <View style={{ alignItems: 'flex-end', gap: 6 }}>
                   <Text variant="caption" faint>{shortTime(item.created_at)}</Text>
@@ -207,6 +207,13 @@ function Notifications() {
       />
     </StateView>
   );
+}
+
+/** Server notifications say "coins"/"diamonds" (the database's unit names); show the brand's names. */
+function unitWords(text: string) {
+  return text
+    .replace(/\bdiamonds\b/g, U.earn).replace(/\bDiamonds\b/g, U.Earn).replace(/\bdiamond\b/g, U.earnOne)
+    .replace(/\bcoins\b/g, U.spend).replace(/\bCoins\b/g, U.Spend).replace(/\bcoin\b/g, U.spendOne);
 }
 
 /** Icon for a notification type (gifts, follows, lives, money, support…). */

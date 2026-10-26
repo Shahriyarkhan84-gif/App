@@ -1,4 +1,4 @@
-import { brand } from '@/lib/brand';
+import { brand, U } from '@/lib/brand';
 import { Bullets, H, LegalPage, P } from '@/components/LegalPage';
 
 // Public URL for the store listings' privacy-policy field: https://zynalive.com/privacy
@@ -12,14 +12,14 @@ export default function PrivacyPage() {
         'Account: email address, name and profile photo from sign-up (email, Google or Apple sign-in).',
         `Profile: username, bio, country, language, your 8-digit ${brand.name} ID, followers and following.`,
         'Content: live video and audio while you broadcast, chat messages, direct messages, gifts and reports.',
-        'Purchases and earnings: coin packages bought, gifts sent and received, withdrawal requests and payout details you enter. Card details are handled by Stripe; we never see them.',
+        `Purchases and earnings: ${U.spendOne} packages bought, gifts sent and received, withdrawal requests and payout details you enter. Card details are handled by Stripe; we never see them.`,
         'Host verification: if you apply to host, you give us your name, phone, CNIC number, agency code, photos of your CNIC and a photo of you holding it. The photos and CNIC number are sent to our partner Didit to check; we keep only your name, phone, agency code, the last 4 CNIC digits and the result — never the photos.',
         'Device and usage: app version, device model, crash reports and in-app events (screens viewed, rooms joined, gifts sent).',
       ]} />
 
       <H>How we use it</H>
       <Bullets items={[
-        'To run the service: sign-in, live rooms, chat, gifts, coins and payouts.',
+        `To run the service: sign-in, live rooms, chat, gifts, ${U.spend} and payouts.`,
         'Safety: automated and human moderation of chat, rooms and accounts, and fraud prevention on payments.',
         'Recommendations: suggesting live rooms you may like.',
         'Support, service emails, and improving the app.',

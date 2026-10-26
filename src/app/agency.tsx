@@ -4,10 +4,10 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
-import { brand } from '@/lib/brand';
+import { brand, U } from '@/lib/brand';
 import { FadeIn, Pop, PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { AgencyOwnerBadge, Avatar, Card, Chip, Coin, compactNumber, HostBadge, Row, Screen, Text } from '@/components/ui';
+import { AgencyOwnerBadge, Avatar, Bean, Card, Chip, Coin, compactNumber, HostBadge, Row, Screen, Text } from '@/components/ui';
 import { rpc } from '@/lib/api';
 import { errorCode } from '@/lib/errors';
 import { useFocusedAsync, useOffline } from '@/lib/hooks';
@@ -90,7 +90,7 @@ export default function AgencyPortalScreen() {
               <Stat label="Verified" value={data.stats.verified} />
               <Stat label="Live now" value={data.stats.live_now} color={c.primary} />
               <Stat label="In review" value={data.stats.in_review} />
-              {data.stats.earnings_lifetime != null && <Stat label="Host earnings" value={data.stats.earnings_lifetime} coin />}
+              {data.stats.earnings_lifetime != null && <Stat label={`Host earnings (${U.earn})`} value={data.stats.earnings_lifetime} bean />}
             </FadeIn>
 
             <Row gap={8}>
@@ -144,11 +144,11 @@ export default function AgencyPortalScreen() {
   );
 }
 
-function Stat({ label, value, color, coin }: { label: string; value: number; color?: string; coin?: boolean }) {
+function Stat({ label, value, color, bean }: { label: string; value: number; color?: string; bean?: boolean }) {
   return (
     <Card style={{ flexGrow: 1, flexBasis: '45%', gap: 4 }}>
       <Row gap={6}>
-        {coin && <Coin size={18} />}
+        {bean && <Bean size={18} />}
         <Text variant="h2" color={color}>{compactNumber(value)}</Text>
       </Row>
       <Text variant="caption" muted>{label}</Text>

@@ -10,8 +10,8 @@ import { useTabBarSpace } from '@/components/Menus';
 import { StateView } from '@/components/StateView';
 import { FadeIn, PressScale } from '@/components/Motion';
 import { FramedAvatar } from '@/components/FramedAvatar';
-import { AgencyOwnerBadge, Coin, compactNumber, glassShadow, HostBadge, IconButton, Row, Screen, Text, type IconName } from '@/components/ui';
-import { hasFeature } from '@/lib/brand';
+import { AgencyOwnerBadge, Bean, Coin, compactNumber, glassShadow, HostBadge, IconButton, Row, Screen, Text, type IconName } from '@/components/ui';
+import { hasFeature, U, units } from '@/lib/brand';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { env } from '@/lib/env';
@@ -115,10 +115,10 @@ export default function ProfileScreen() {
           </View>
 
           <FadeIn delay={140} style={{ flexDirection: 'row', gap: 8 }}>
-            <Tile coin label={stats.data ? compactNumber(stats.data.coins) : '–'} sub="Coins" onPress={() => router.push('/wallet')} />
+            <Tile coin label={stats.data ? compactNumber(stats.data.coins) : '–'} sub={U.Spend} onPress={() => router.push('/wallet')} />
             {hasFeature('frames') && <Tile icon="sparkles-outline" label="Frames" sub="Shop" onPress={() => router.push('/frames')} />}
             {hasFeature('agencies') && <Tile icon="business-outline" label="Agency" sub={isAgencyStaff ? 'Portal' : 'Join'} onPress={() => router.push(isAgencyStaff ? '/agency' : '/hosting')} />}
-            <Tile icon="diamond-outline" label={host && stats.data ? compactNumber(stats.data.earnings) : 'Earn'} sub={host ? 'Diamonds' : 'Money'} onPress={() => router.push(host ? '/earnings' : '/hosting')} />
+            <Tile bean label={host && stats.data ? compactNumber(stats.data.earnings) : 'Earn'} sub={host ? U.Earn : 'Money'} onPress={() => router.push(host ? '/earnings' : '/hosting')} />
           </FadeIn>
 
           <FadeIn delay={200}>
@@ -131,7 +131,7 @@ export default function ProfileScreen() {
 
           <FadeIn delay={240}>
             <Group>
-              <DarkRow icon="wallet-outline" label="Wallet" detail={stats.data ? `${stats.data.coins.toLocaleString()} coins` : undefined} onPress={() => router.push('/wallet')} />
+              <DarkRow icon="wallet-outline" label="Wallet" detail={stats.data ? units(stats.data.coins) : undefined} onPress={() => router.push('/wallet')} />
               {hasFeature('frames') && <DarkRow icon="sparkles-outline" label="Profile frames" onPress={() => router.push('/frames')} />}
               {hasFeature('videos') && <DarkRow icon="play-circle-outline" label={t('menu.videos')} onPress={() => router.push('/videos')} last={verified} />}
               {!verified && <DarkRow icon="shield-checkmark-outline" label={t('menu.hostingVerification')} onPress={() => router.push('/hosting')} last />}
@@ -154,12 +154,12 @@ export default function ProfileScreen() {
 }
 
 /** One of the four flat tiles under the stats. */
-function Tile({ icon, coin, label, sub, onPress }: { icon?: IconName; coin?: boolean; label: string; sub: string; onPress: () => void }) {
+function Tile({ icon, coin, bean, label, sub, onPress }: { icon?: IconName; coin?: boolean; bean?: boolean; label: string; sub: string; onPress: () => void }) {
   const { c: d } = useTheme();
   return (
     <PressScale onPress={onPress} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={`${label} ${sub}`} style={{ flex: 1 }}>
       <View style={{ minHeight: 92, borderRadius: 18, backgroundColor: d.surface, alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 4 }}>
-        {coin ? <Coin size={22} /> : icon && <Ionicons name={icon} size={22} color={d.primary} />}
+        {coin ? <Coin size={22} /> : bean ? <Bean size={22} /> : icon && <Ionicons name={icon} size={22} color={d.primary} />}
         <Text variant="label" color={d.text} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
         <Text variant="caption" color={d.textFaint} numberOfLines={1}>{sub}</Text>
       </View>
