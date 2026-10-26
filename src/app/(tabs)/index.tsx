@@ -1,7 +1,7 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { RefreshControl, ScrollView, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { RefreshControl, ScrollView, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 
 import Ionicons from '@expo/vector-icons/Ionicons';
 
@@ -14,6 +14,7 @@ import { resolveState, StateView } from '@/components/StateView';
 import { glassShadow, IconButton, Row, Screen, Text } from '@/components/ui';
 import { hasFeature } from '@/lib/brand';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
+import { useContentWidth } from '@/lib/layout';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { fonts, useTheme } from '@/lib/theme';
@@ -47,11 +48,11 @@ export default function HomeScreen() {
   const { profile } = useProfile();
   const { c } = useTheme();
   const offline = useOffline();
-  const { width } = useWindowDimensions();
+  const width = useContentWidth();
   const [feed, setFeed] = useState<Feed>('popular');
   const [category, setCategory] = useState<(typeof CHIPS)[number]>('all');
-  // 2 columns on every phone width (compact through xlarge) — only widens past that on tablet/web.
-  const columns = width > 700 ? 4 : 2;
+  // 2 columns on every phone width (compact through xlarge); 4 on tablets, 5 on wide computer screens.
+  const columns = width > 1200 ? 5 : width > 700 ? 4 : 2;
   const cardWidth = (Math.min(width, 1100) - GRID_PAD * 2 - GRID_GAP * (columns - 1)) / columns;
 
   const { data, error, loading, reload } = useFocusedAsync<HomeData>(async () => {

@@ -1,11 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Animated, Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions, type GestureResponderEvent, type StyleProp, type ViewStyle } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Pop, PressScale } from '@/components/Motion';
-import { Button, Sheet, Text, type IconName } from '@/components/ui';
+import { Button, Sheet, Text, Wordmark, type IconName } from '@/components/ui';
+import { brand, U } from '@/lib/brand';
+import { SIDEBAR_WIDTH, useIsDesktop } from '@/lib/layout';
 import { useI18n } from '@/lib/i18n';
 import { useTheme } from '@/lib/theme';
 
@@ -206,7 +209,69 @@ export function TabBarGlass() {
 
 /** Height the floating dock covers at the bottom of a tab screen; add it to bottom padding. */
 export function useTabBarSpace(): number {
-  return DOCK_HEIGHT + DOCK_GAP + 8 + useSafeAreaInsets().bottom;
+  const bottom = useSafeAreaInsets().bottom;
+  // Computers have the sidebar on the left instead, so nothing covers the bottom.
+  return useIsDesktop() ? 24 : DOCK_HEIGHT + DOCK_GAP + 8 + bottom;
+}
+
+// Desktop sidebar ------------------------------------------------------------------------
+
+export type SidebarTab = { name: string; icon: IconName; activeIcon: IconName; label: string; useBadge?: () => boolean };
+/** The parts of the tab navigator's `tabBar` props the sidebar uses. */
+export type SidebarProps = { state: { index: number; routes: { key: string; name: string }[] }; navigation: { navigate: (name: string) => void } };
+
+/**
+ * Left sidebar for computers (web, 1024px and wider), in place of the floating phone dock: logo,
+ * the tabs with labels, a Go live button, and shortcuts to pages that phones reach from Me.
+ */
+export function DesktopSidebar({ state, navigation, tabs, goLive }: SidebarProps & { tabs: SidebarTab[]; goLive: { name: string; label: string } }) {
+  const { c } = useTheme();
+  const current = state.routes[state.index]?.name;
+  const links: MenuItem[] = [
+    { key: 'wallet', icon: 'diamond-outline', label: U.Spend, onPress: () => router.push('/wallet') },
+    { key: 'rankings', icon: 'trophy-outline', label: 'Rankings', onPress: () => router.push('/rankings') },
+    { key: 'settings', icon: 'settings-outline', label: 'Settings', onPress: () => router.push('/settings') },
+    { key: 'support', icon: 'help-circle-outline', label: 'Help & feedback', onPress: () => router.push('/support') },
+  ];
+  return (
+    <View accessibilityRole="tablist" style={[
+      { width: SIDEBAR_WIDTH, height: '100%', paddingHorizontal: 16, paddingVertical: 20, gap: 6, borderRightWidth: 1, borderColor: c.glassBorder, backgroundColor: 'rgba(255,255,255,0.6)' },
+      Platform.OS === 'web' ? ({ backdropFilter: 'blur(22px) saturate(170%)', WebkitBackdropFilter: 'blur(22px) saturate(170%)' } as object) : null,
+    ]}>
+      <Pressable onPress={() => navigation.navigate(state.routes[0].name)} accessibilityRole="link" accessibilityLabel={`${brand.name} home`} style={{ paddingHorizontal: 8, paddingBottom: 18 }}>
+        <Wordmark size={26} />
+      </Pressable>
+      {tabs.map((t) => <SidebarTabRow key={t.name} tab={t} focused={current === t.name} onPress={() => navigation.navigate(t.name)} />)}
+      <PressScale onPress={() => navigation.navigate(goLive.name)} accessibilityRole="button" accessibilityLabel={goLive.label} style={{ marginTop: 10, borderRadius: 16, overflow: 'hidden' }}>
+        <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <Ionicons name="videocam" size={20} color={c.primaryText} />
+          <Text variant="label" color={c.primaryText} style={{ fontSize: 16 }}>{goLive.label}</Text>
+        </LinearGradient>
+      </PressScale>
+      <View style={{ flex: 1 }} />
+      {links.map((l) => (
+        <Pressable key={l.key} onPress={l.onPress} accessibilityRole="link" style={({ hovered, pressed }: { hovered?: boolean; pressed: boolean }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, height: 40, borderRadius: 12, backgroundColor: hovered || pressed ? `${c.primary}14` : 'transparent' })}>
+          <Ionicons name={l.icon} size={18} color={c.textMuted} />
+          <Text muted style={{ fontSize: 14 }}>{l.label}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+function SidebarTabRow({ tab, focused, onPress }: { tab: SidebarTab; focused: boolean; onPress: () => void }) {
+  const { c } = useTheme();
+  const badge = (tab.useBadge ?? noBadge)();
+  return (
+    <Pressable onPress={onPress} accessibilityRole="tab" accessibilityState={{ selected: focused }} accessibilityLabel={badge ? `${tab.label}, unread` : tab.label}
+      style={({ hovered, pressed }: { hovered?: boolean; pressed: boolean }) => ({ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 12, height: 48, borderRadius: 14, backgroundColor: focused ? `${c.primary}24` : hovered || pressed ? `${c.primary}12` : 'transparent' })}>
+      <View>
+        <Ionicons name={focused ? tab.activeIcon : tab.icon} size={22} color={focused ? c.primary : c.textMuted} />
+        {badge && <View style={{ position: 'absolute', top: -2, right: -4, width: 9, height: 9, borderRadius: 5, backgroundColor: c.live, borderWidth: 1.5, borderColor: c.surfaceRaised }} />}
+      </View>
+      <Text variant="label" color={focused ? c.primary : c.text} style={{ fontSize: 16 }}>{tab.label}</Text>
+    </Pressable>
+  );
 }
 
 /** Static tab bar for previews and non-router screens. */

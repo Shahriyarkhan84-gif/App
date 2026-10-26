@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.87 — The app on computers
+
+- In a computer browser (web, 1024px and wider) the app gets a **left sidebar** instead of the phone's floating bottom bar: the Kitty logo and name, Home · Party · Messages (with the unread dot) · Me with labels, a **Go live** button, and shortcuts to Diamonds, Rankings, Settings and Help & feedback. Hover highlights the row under the mouse.
+- Home fills the space next to the sidebar: 5 columns of lives on wide screens (4 on tablets, 2 on phones). Phones and the Android app are unchanged.
+- `src/lib/layout.ts`: `useIsDesktop()`, `useContentWidth()` and `SIDEBAR_WIDTH`; `DesktopSidebar` in `src/components/Menus.tsx`.
+
 ## 0.9.86 — Website in the app's look
 
 - zynalive.com (all six pages) now matches the app: Glass & sky colours (sky background, frosted white cards, deep-blue buttons, navy text) instead of the old black site, the **Kitty** logo in the header and footer, and a light phone mock-up on the home page.
