@@ -100,7 +100,7 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
         <Text variant="h2" color={c.text}>Gifts</Text>
         <Row gap={6}>
           <Coin />
-          <Text variant="label" color={c.goldText} accessibilityLabel={`Balance ${units(balance)}`}>{balanceKnown ? balance.toLocaleString() : "…"}</Text>
+          <Text variant="label" color={c.primary} accessibilityLabel={`Balance ${units(balance)}`}>{balanceKnown ? balance.toLocaleString() : "…"}</Text>
           <Pressable onPress={() => { close(); router.push('/wallet'); }} accessibilityRole="link" hitSlop={10} style={{ marginLeft: 8 }}>
             <Text variant="bodySmall" color={c.gold} style={{ fontWeight: '700' }}>Recharge</Text>
           </Pressable>
@@ -123,7 +123,7 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
             >
               <Text style={{ fontSize: 28, lineHeight: 34 }}>{g.icon}</Text>
               <Text variant="caption" color={c.text}>{g.name}</Text>
-              <Text variant="caption" color={c.goldText} style={{ fontSize: 12, fontWeight: '700' }}>{g.coin_price.toLocaleString()}</Text>
+              <Text variant="caption" color={c.primary} style={{ fontSize: 12, fontWeight: '700' }}>{g.coin_price.toLocaleString()}</Text>
             </PressScale>
             </Pop>
           );

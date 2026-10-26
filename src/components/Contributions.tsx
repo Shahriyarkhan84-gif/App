@@ -43,7 +43,7 @@ export function ContributionsCard({ hostId }: { hostId: string }) {
         {top[0] ? (
           <Row gap={4}>
             <Text variant="caption" color={c.goldText} numberOfLines={1} style={{ flexShrink: 1 }}>Overall top 1 · {contributorName(top[0])}</Text>
-            <Coin size={10} /><Text variant="caption" color={c.goldText}>{compactNumber(top[0].coins)}</Text>
+            <Coin size={10} /><Text variant="caption" color={c.primary}>{compactNumber(top[0].coins)}</Text>
           </Row>
         ) : (
           <Text variant="caption" faint>Daily · Weekly · Monthly · Overall</Text>

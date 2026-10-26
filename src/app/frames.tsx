@@ -109,7 +109,7 @@ export default function FramesScreen() {
               <Text variant="h2">{sel.name}</Text>
               <Row gap={6}>
                 <Coin size={16} />
-                <Text variant="label" color={c.goldText}>{sel.coin_price.toLocaleString()}</Text>
+                <Text variant="label" color={c.primary}>{sel.coin_price.toLocaleString()}</Text>
                 <Text muted>· {frameDuration(sel)}</Text>
               </Row>
               {selOwned && <Text variant="caption" color={c.success}>{selOwned.expires_at ? `Yours · ${daysLeft(selOwned.expires_at)} days left` : 'Yours forever'}</Text>}
@@ -138,7 +138,7 @@ export default function FramesScreen() {
                   ) : owned ? (
                     <Text variant="caption" color={c.success} style={{ fontWeight: '700' }}>Owned</Text>
                   ) : (
-                    <Row gap={4}><Coin size={13} /><Text variant="caption" color={c.goldText} style={{ fontWeight: '700' }}>{f.coin_price.toLocaleString()}</Text><Text variant="caption" muted>· {frameDuration(f)}</Text></Row>
+                    <Row gap={4}><Coin size={13} /><Text variant="caption" color={c.primary} style={{ fontWeight: '700' }}>{f.coin_price.toLocaleString()}</Text><Text variant="caption" muted>· {frameDuration(f)}</Text></Row>
                   )}
                 </Pressable>
               );

@@ -217,7 +217,7 @@ export default function LiveRoomScreen() {
             <Text variant="label" color={c.text} numberOfLines={1} style={{ maxWidth: 120 }}>{displayName(r.host)}</Text>
             <Row gap={4}>
               <Coin size={12} />
-              <Text variant="caption" color={c.goldText} style={{ fontWeight: '700', fontVariant: ['tabular-nums'] }}>{coins.toLocaleString()}</Text>
+              <Text variant="caption" color={c.primary} style={{ fontWeight: '700', fontVariant: ['tabular-nums'] }}>{coins.toLocaleString()}</Text>
             </Row>
           </View>
         </Pressable>
