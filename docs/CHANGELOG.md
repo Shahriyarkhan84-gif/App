@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.68 — Glass & sky on every screen
+
+Figma pages "Batch B — Social", "Batch C — Host & money" and "Batch D — Events, videos & admin".
+
+- **Frosted cards everywhere**: every light-screen box (profile, party, contributions, wallet, host dashboard, earnings, frames, support, verify form, events, home banners, Me menu) is a frosted white card with a white edge and soft shadow (`glassBorder` token, `glassShadow`). Secondary buttons are white with a light-blue border; chips and segmented controls are frosted.
+- **Batch B**: user profile on a frosted card with a frosted Follow/Message bar; chat bubbles (yours blue, theirs frosted); Party search pill and room rows; Contributions podium card; Messages tiles, chats, fans, gifts and notifications as frosted rows (notifications get type icons and unread dots); the gift sheet is dark navy over live video (`Sheet tone="live"`); PK score bar is blue vs red.
+- **Batch C/D**: blue cards on Stream summary, Hosting and Earnings now use white text (readable on blue); Me card is frosted; events, videos and the command center use the frosted cards.
+
 ## 0.9.67 — Glass & sky look and white-label brands
 
 Designed in Figma (file ZzfRLqjtUyE7KjeeFYnpz7: "Design kit", "New look — sample", "Batch A").

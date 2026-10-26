@@ -95,12 +95,12 @@ export default function EarningsScreen() {
         {data && (
           <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
             <FadeIn>
-              <LinearGradient colors={['#4B32B8', '#1B1830']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, borderRadius: 22, gap: 10 }}>
-                <Text variant="bodySmall" color="#E7DBFF">Available diamonds</Text>
-                <Row gap={10}><Ionicons name="diamond" size={24} color="#CFC8FF" /><Text variant="display" color="#fff" accessibilityLiveRegion="polite">{data.earnings.balance.toLocaleString()}</Text></Row>
+              <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, borderRadius: 22, gap: 10 }}>
+                <Text variant="bodySmall" color="rgba(255,255,255,0.9)">Available diamonds</Text>
+                <Row gap={10}><Ionicons name="diamond" size={24} color="#FFFFFF" /><Text variant="display" color="#fff" accessibilityLiveRegion="polite">{data.earnings.balance.toLocaleString()}</Text></Row>
                 <Row gap={24}>
-                  <View><Text variant="label" color="#fff">{data.earnings.held.toLocaleString()}</Text><Text variant="caption" color="#E7DBFF">In review</Text></View>
-                  <View><Text variant="label" color="#fff">{data.earnings.lifetime.toLocaleString()}</Text><Text variant="caption" color="#E7DBFF">Lifetime</Text></View>
+                  <View><Text variant="label" color="#fff">{data.earnings.held.toLocaleString()}</Text><Text variant="caption" color="rgba(255,255,255,0.85)">In review</Text></View>
+                  <View><Text variant="label" color="#fff">{data.earnings.lifetime.toLocaleString()}</Text><Text variant="caption" color="rgba(255,255,255,0.85)">Lifetime</Text></View>
                 </Row>
               </LinearGradient>
             </FadeIn>

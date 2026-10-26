@@ -81,8 +81,8 @@ export default function ProfileScreen() {
             <IconButton icon="create-outline" label="Edit profile" color={d.text} bg={d.surface} onPress={() => router.push('/profile-edit')} />
           </Row>
 
-          {/* Redesign v2: photo, name, badges and the three counts sit on one soft purple-to-pink card. */}
-          <LinearGradient colors={['#F2EBFF', '#FFE4EF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 24, paddingVertical: 20, paddingHorizontal: 12, gap: 16 }}>
+          {/* Glass & sky: photo, name, badges and the three counts sit on one frosted card. */}
+          <LinearGradient colors={['rgba(255,255,255,0.85)', 'rgba(240,249,255,0.7)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[{ borderRadius: 28, paddingVertical: 20, paddingHorizontal: 12, gap: 16, borderWidth: 1, borderColor: d.glassBorder }, glassShadow]}>
           <FadeIn style={{ alignItems: 'center', gap: 8 }}>
             <Pressable onPress={() => router.push('/frames')} accessibilityRole="button" accessibilityLabel="Profile frames">
               <FramedAvatar uri={profile.avatar_url} name={displayName(profile)} size={116} ring={d.primary} frameId={profile.active_frame_id} />

@@ -70,13 +70,13 @@ export default function HostingScreen() {
               <Text variant="h1" color={c.primaryText}>Become a host</Text>
               {approved && <HostBadge />}
             </Row>
-            <Text color="rgba(0,19,31,0.78)">Anyone can go live. Verify your ID to become a host: withdraw your gift earnings, get the Host badge and join an agency.</Text>
+            <Text color="rgba(255,255,255,0.9)">Anyone can go live. Verify your ID to become a host: withdraw your gift earnings, get the Host badge and join an agency.</Text>
             <Row gap={6} style={{ marginTop: 4 }}>
               {STEPS.map((s, i) => (
-                <View key={s} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= stepIndex ? c.primaryText : 'rgba(0,19,31,0.2)' }} />
+                <View key={s} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= stepIndex ? c.primaryText : 'rgba(255,255,255,0.3)' }} />
               ))}
             </Row>
-            <Text variant="caption" color="rgba(0,19,31,0.7)">
+            <Text variant="caption" color="rgba(255,255,255,0.85)">
               {status === 'approved' ? 'Step 3 of 3 · Approved' : status === 'declined' ? 'Not approved · You can submit again' : status === 'unverified' ? 'Step 1 of 3 · Submit your ID' : 'Step 2 of 3 · Under review'}
             </Text>
           </LinearGradient>
