@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.77 — Profile frame button on Me
+
+- A **✨ Frame** button sits on your photo on Me and opens the frames shop (tapping the photo itself still opens your profile). "Profile frames" stays in the menu, and its divider is fixed now that Videos is off.
+
 ## 0.9.76 — Videos off for Zynalive
 
 - `brands/zynalive/brand.json` → `"videos": false`: no Videos row on Me, no Videos/Lives tabs on profiles (they show About only, without a tab bar), no video notifications, and the video screens can't be opened. The code stays for other brands.

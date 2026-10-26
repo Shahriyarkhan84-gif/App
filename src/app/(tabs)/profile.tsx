@@ -83,9 +83,19 @@ export default function ProfileScreen() {
           {/* Photo, name, badges and the three counts sit on one card in the brand's surface colour. */}
           <View style={[{ borderRadius: 28, paddingVertical: 20, paddingHorizontal: 12, gap: 16, backgroundColor: d.surface, borderWidth: 1, borderColor: d.glassBorder }, glassShadow]}>
           <FadeIn style={{ alignItems: 'center', gap: 8 }}>
-            <Pressable onPress={() => router.push({ pathname: '/user/[id]', params: { id: profile.id } })} accessibilityRole="button" accessibilityLabel="View your profile">
-              <FramedAvatar uri={profile.avatar_url} name={displayName(profile)} size={116} ring={d.primary} frameId={profile.active_frame_id} />
-            </Pressable>
+            <View>
+              <Pressable onPress={() => router.push({ pathname: '/user/[id]', params: { id: profile.id } })} accessibilityRole="button" accessibilityLabel="View your profile">
+                <FramedAvatar uri={profile.avatar_url} name={displayName(profile)} size={116} ring={d.primary} frameId={profile.active_frame_id} />
+              </Pressable>
+              {/* Profile frame button on the photo: opens the frames shop to pick or change a frame. */}
+              {hasFeature('frames') && (
+                <Pressable onPress={() => router.push('/frames')} accessibilityRole="button" accessibilityLabel="Profile frame" hitSlop={8}
+                  style={{ position: 'absolute', right: -2, bottom: -2, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, height: 32, borderRadius: 16, backgroundColor: d.primary, borderWidth: 2, borderColor: d.surfaceRaised }}>
+                  <Ionicons name="sparkles" size={14} color={d.primaryText} />
+                  <Text variant="caption" color={d.primaryText} style={{ fontWeight: '700' }}>Frame</Text>
+                </Pressable>
+              )}
+            </View>
             <Text variant="h1" color={d.text} style={{ textAlign: 'center', marginTop: 6 }} numberOfLines={1}>{displayName(profile)}</Text>
             <Pressable onPress={() => router.push({ pathname: '/user/[id]', params: { id: profile.id } })} accessibilityRole="link" hitSlop={8}>
               <Text variant="label" color={d.primary}>View profile ›</Text>
@@ -131,7 +141,7 @@ export default function ProfileScreen() {
 
           <FadeIn delay={240}>
             <Group>
-              {hasFeature('frames') && <DarkRow icon="sparkles-outline" label="Profile frames" onPress={() => router.push('/frames')} />}
+              {hasFeature('frames') && <DarkRow icon="sparkles-outline" label="Profile frames" onPress={() => router.push('/frames')} last={verified && !hasFeature('videos')} />}
               {hasFeature('videos') && <DarkRow icon="play-circle-outline" label={t('menu.videos')} onPress={() => router.push('/videos')} last={verified} />}
               {!verified && <DarkRow icon="shield-checkmark-outline" label={t('menu.hostingVerification')} onPress={() => router.push('/hosting')} last />}
             </Group>
