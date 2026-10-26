@@ -3,9 +3,10 @@ import { useAuth } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useRef, useState } from 'react';
-import { FlatList, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, FlatList, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 
+import { tapHaptic } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { Button, Row, Text } from '@/components/ui';
 import { U, units } from '@/lib/brand';
@@ -21,16 +22,21 @@ const MUTED = '#AEB8CC';
 const FAINT = '#7D879C';
 const GOLD = '#F2C48D';
 
-/** My VIP: swipe V1–V6, see what each level unlocks, and how far you are from it. */
+/** My VIP: swipe V1–V6 (everything follows the swipe), see what each level unlocks, and how far you are from it. */
 export default function SvipScreen() {
   const supabase = useSupabase();
   const { userId } = useAuth();
   const offline = useOffline();
   const { width } = useWindowDimensions();
   const cardW = Math.min(width, 520) - 56;
+  const step = cardW + 12;
   const list = useRef<FlatList<SvipLevel>>(null);
   const [index, setIndex] = useState<number | null>(null);
-  const [perk, setPerk] = useState(0);
+  const [perk, setPerk] = useState<number | null>(null);
+  const [dotsW, setDotsW] = useState(0);
+  // Follows the finger: cards scale, the dot slides and the panel switches while you swipe, not after.
+  const [scrollX] = useState(() => new Animated.Value(0));
+  const [fade] = useState(() => new Animated.Value(1));
 
   const { data, error, loading, reload } = useFocusedAsync(async () => {
     // Your own purchases only (RLS: own coin ledger). Refunds and chargebacks take diamonds back off.
@@ -44,13 +50,35 @@ export default function SvipScreen() {
   const shown = index ?? Math.max(0, p.level - 1);
   const lvl = SVIP_LEVELS[shown];
   const reached = p.level >= lvl.level;
-  const privilege = PRIVILEGES[perk];
+  // Each level opens on the privilege it adds; tapping an icon picks another.
+  const privilege = PRIVILEGES[perk ?? Math.max(0, PRIVILEGES.findIndex((x) => x.from === lvl.level))];
   const unlocked = privilege.from <= lvl.level;
 
+  const start = Math.max(0, p.level - 1);
+  // The list opens on your level (initialScrollIndex); start the swipe value there too.
+  useEffect(() => { scrollX.setValue(start * step); }, [scrollX, start, step]);
+
+  const show = (i: number) => {
+    const next = Math.min(SVIP_LEVELS.length - 1, Math.max(0, i));
+    if (next === shown) return;
+    setIndex(next);
+    setPerk(null);
+    tapHaptic();
+    fade.setValue(0.3);
+    Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+  };
+
   const goTo = (i: number) => {
-    setIndex(i);
+    show(i);
     list.current?.scrollToIndex({ index: i, animated: true });
   };
+
+  const onScroll = Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+    useNativeDriver: true,
+    listener: (e: { nativeEvent: { contentOffset: { x: number } } }) => show(Math.round(e.nativeEvent.contentOffset.x / step)),
+  });
+  const last = (SVIP_LEVELS.length - 1) * step;
+  const dotX = scrollX.interpolate({ inputRange: [0, last], outputRange: [0, Math.max(0, dotsW - 16)], extrapolate: 'clamp' });
 
   return (
     <LinearGradient colors={BG} style={{ flex: 1 }}>
@@ -59,30 +87,44 @@ export default function SvipScreen() {
       <StateView state={resolveState({ offline, loading, error, data, onRetry: reload })}>
         <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
           {/* Level cards, swiped sideways like a carousel. */}
-          <FlatList
+          <Animated.FlatList
             ref={list}
             data={SVIP_LEVELS}
             keyExtractor={(l) => String(l.level)}
             horizontal
             showsHorizontalScrollIndicator={false}
-            snapToInterval={cardW + 12}
+            snapToInterval={step}
             decelerationRate="fast"
-            initialScrollIndex={Math.max(0, p.level - 1)}
-            getItemLayout={(_, i) => ({ length: cardW + 12, offset: (cardW + 12) * i, index: i })}
+            initialScrollIndex={start}
+            getItemLayout={(_, i) => ({ length: step, offset: step * i, index: i })}
             contentContainerStyle={{ paddingHorizontal: 28, paddingTop: 16, gap: 12 }}
-            onMomentumScrollEnd={(e) => setIndex(Math.round(e.nativeEvent.contentOffset.x / (cardW + 12)))}
-            renderItem={({ item }) => <LevelCard level={item} width={cardW} current={p.level === item.level} reached={p.level >= item.level} />}
+            onScroll={onScroll}
+            scrollEventThrottle={16}
+            renderItem={({ item, index: i }) => {
+              const range = [(i - 1) * step, i * step, (i + 1) * step];
+              return (
+                <Animated.View style={{
+                  opacity: scrollX.interpolate({ inputRange: range, outputRange: [0.55, 1, 0.55], extrapolate: 'clamp' }),
+                  transform: [{ scale: scrollX.interpolate({ inputRange: range, outputRange: [0.9, 1, 0.9], extrapolate: 'clamp' }) }],
+                }}>
+                  <LevelCard level={item} width={cardW} current={p.level === item.level} reached={p.level >= item.level}
+                    gemShift={scrollX.interpolate({ inputRange: range, outputRange: [-36, 0, 36], extrapolate: 'clamp' })} />
+                </Animated.View>
+              );
+            }}
           />
 
           {/* V1 … V6 line: filled up to your level; tap to jump. */}
-          <View style={{ marginTop: 22, marginHorizontal: 28 }}>
+          <View style={{ marginTop: 22, marginHorizontal: 28 }} onLayout={(e) => setDotsW(e.nativeEvent.layout.width)}>
             <View style={{ position: 'absolute', top: 7, left: 8, right: 8, height: 2, backgroundColor: 'rgba(255,255,255,0.12)' }} />
+            {/* The highlight glides along the line as you swipe. */}
+            <Animated.View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, width: 16, height: 16, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.25)', transform: [{ translateX: dotX }] }} />
             <Row style={{ justifyContent: 'space-between' }}>
               {SVIP_LEVELS.map((l, i) => {
                 const on = i === shown;
                 return (
                   <Pressable key={l.level} onPress={() => goTo(i)} accessibilityRole="button" accessibilityLabel={`V${l.level}`} accessibilityState={{ selected: on }} hitSlop={10} style={{ alignItems: 'center', gap: 8 }}>
-                    <View style={{ width: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? 'rgba(255,255,255,0.25)' : 'transparent' }}>
+                    <View style={{ width: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
                       <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: p.level >= l.level ? l.gem : on ? INK : 'rgba(255,255,255,0.3)' }} />
                     </View>
                     <Text variant="label" color={on ? INK : FAINT}>V{l.level}</Text>
@@ -94,6 +136,7 @@ export default function SvipScreen() {
 
           {/* Privileges of the level on screen. */}
           <View style={{ marginTop: 26, marginHorizontal: 0, paddingTop: 22, paddingHorizontal: 20, borderTopLeftRadius: 30, borderTopRightRadius: 30, backgroundColor: 'rgba(255,255,255,0.04)', borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.08)', gap: 14, alignItems: 'center' }}>
+            <Animated.View style={{ opacity: fade, alignItems: 'center', gap: 14, alignSelf: 'stretch' }}>
             <Text variant="h2" color={GOLD}>V{lvl.level} privileges</Text>
             <View style={{ width: 150, height: 150, alignItems: 'center', justifyContent: 'center' }}>
               <View style={{ position: 'absolute', width: 150, height: 150, borderRadius: 75, backgroundColor: unlocked ? lvl.gem : '#FFFFFF', opacity: 0.12 }} />
@@ -103,10 +146,11 @@ export default function SvipScreen() {
             <Text variant="h3" color={GOLD}>◆  {privilege.title}  ◆</Text>
             <Text color={MUTED} style={{ textAlign: 'center' }}>{privilege.body}</Text>
             {!unlocked && <Text variant="caption" color={FAINT}>Unlocks at V{privilege.from}</Text>}
+            </Animated.View>
 
             <Row style={{ justifyContent: 'space-between', alignSelf: 'stretch', marginTop: 6 }}>
               {PRIVILEGES.map((pr, i) => {
-                const on = i === perk;
+                const on = pr.id === privilege.id;
                 const has = pr.from <= lvl.level;
                 return (
                   <Pressable key={pr.id} onPress={() => setPerk(i)} accessibilityRole="button" accessibilityLabel={`${pr.title}${has ? '' : `, unlocks at V${pr.from}`}`} accessibilityState={{ selected: on }}
@@ -136,7 +180,7 @@ export default function SvipScreen() {
   );
 }
 
-function LevelCard({ level, width, current, reached }: { level: SvipLevel; width: number; current: boolean; reached: boolean }) {
+function LevelCard({ level, width, current, reached, gemShift }: { level: SvipLevel; width: number; current: boolean; reached: boolean; gemShift: Animated.AnimatedInterpolation<number> }) {
   return (
     <LinearGradient colors={level.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
       style={{ width, height: 176, borderRadius: 26, padding: 18, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)' }}>
@@ -146,10 +190,10 @@ function LevelCard({ level, width, current, reached }: { level: SvipLevel; width
       <Text color={INK} style={{ fontFamily: fonts.brand, fontSize: 52, lineHeight: 60, marginTop: 6, fontStyle: 'italic' }}>V{level.level}</Text>
       <Text color={MUTED} numberOfLines={2} style={{ maxWidth: width * 0.58 }}>{level.tagline}</Text>
       {/* Our own gem: a large diamond in the level's metal, with a soft glow. */}
-      <View style={{ position: 'absolute', right: 12, top: 18, width: 130, height: 130, alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View style={{ position: 'absolute', right: 12, top: 18, width: 130, height: 130, alignItems: 'center', justifyContent: 'center', transform: [{ translateX: gemShift }] }}>
         <View style={{ position: 'absolute', width: 120, height: 120, borderRadius: 60, backgroundColor: level.gem, opacity: 0.18 }} />
         <Ionicons name="diamond" size={92} color={level.gem} />
-      </View>
+      </Animated.View>
     </LinearGradient>
   );
 }

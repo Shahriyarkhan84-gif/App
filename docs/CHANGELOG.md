@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.80 — My VIP swipes with the flow
+
+- The VIP level cards now follow your finger: the card in the middle grows while its neighbours shrink and fade, the gem drifts slightly against the swipe, and the highlight on the V1–V6 line slides along with it.
+- The level and its privileges switch as soon as you swipe past halfway (not after the swipe stops), with a short fade and a light tap on phones. Each level opens on the privilege it adds (V3 → Entrance effect).
+
 ## 0.9.79 — My VIP, V1–V6
 
 - The SVIP screen is now **My VIP**, a dark page in the style of other live apps: swipe level cards **V1–V6** (each in its own metal colour, opening on your level), a V1…V6 dot line to jump between them, and a **privileges** panel with a large icon, title, description and a row of six privilege icons (locked ones show which level unlocks them).
