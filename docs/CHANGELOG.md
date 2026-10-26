@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.78 — SVIP, Task center, My fans, Item bag; Help & feedback
+
+New rows on Me (after Hosting verification): **SVIP**, **Task center**, **My fans**, **Item bag**; "Help & support" is renamed **Help & feedback** (Me, Settings, screen title, all four languages).
+
+- **SVIP** (`/svip`, `src/lib/svip.ts`): your level from the diamonds you've bought (purchases minus refunds/chargebacks, from your own ledger), progress to the next level, and the perks of SVIP 1–6. Perks are marked "coming soon" — nothing is applied yet.
+- **Task center** (`/tasks`, `src/lib/tasks.ts`): today's tasks with real progress — follow someone, send 3 live-chat messages, send a gift, go live for 10 minutes — each with a shortcut. Rewards are "coming soon": diamonds only come from real payments, so tasks don't pay anything yet.
+- **My fans** (`/fans`): everyone who follows you (shared `FansList`, also used by Messages → Fans).
+- **Item bag** (`/item-bag`): the frames you own, days left, and Wear / Take off / Renew (uses the existing `equip_frame`). Hidden when a brand turns frames off.
+- Read-only: no new tables or server functions.
+
 ## 0.9.77 — Profile frame button on Me
 
 - A **✨ Frame** button sits on your photo on Me and opens the frames shop (tapping the photo itself still opens your profile). "Profile frames" stays in the menu, and its divider is fixed now that Videos is off.

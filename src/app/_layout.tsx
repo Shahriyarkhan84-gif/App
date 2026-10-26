@@ -156,7 +156,13 @@ function RootNavigator() {
         <Stack.Screen name="hosting" options={{ title: 'Hosting' }} />
         <Stack.Screen name="verify-form" options={{ title: 'Verify with Didit' }} />
         <Stack.Screen name="earnings" options={{ title: U.Earn }} />
-        <Stack.Screen name="support" options={{ title: 'Help & support' }} />
+        <Stack.Screen name="support" options={{ title: 'Help & feedback' }} />
+        <Stack.Screen name="svip" options={{ title: 'SVIP' }} />
+        <Stack.Screen name="tasks" options={{ title: 'Task center' }} />
+        <Stack.Screen name="fans" options={{ title: 'My fans' }} />
+        <Stack.Protected guard={hasFeature('frames')}>
+          <Stack.Screen name="item-bag" options={{ title: 'Item bag' }} />
+        </Stack.Protected>
         <Stack.Screen name="profile-edit" options={{ title: 'Edit profile', presentation: 'modal' }} />
         <Stack.Protected guard={hasFeature('agencies')}>
           <Stack.Screen name="agency" options={{ title: 'Agency portal' }} />

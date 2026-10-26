@@ -4,6 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { FlatList, Pressable, View } from 'react-native';
 
+import { FansList } from '@/components/FansList';
 import { useTabBarSpace } from '@/components/Menus';
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
@@ -30,6 +31,7 @@ const TILES: { id: Exclude<Tab, 'chats'>; label: string; icon: IconName }[] = [
 export default function MessagesScreen() {
   const params = useLocalSearchParams<{ tab?: string }>();
   const { c } = useTheme();
+  const tabSpace = useTabBarSpace();
   const [tab, setTab] = useState<Tab>(params.tab === 'notifications' ? 'notifications' : 'chats');
   // Tabs stay mounted, so a later link to ?tab=notifications must switch an already-open screen.
   const [seenParam, setSeenParam] = useState(params.tab);
@@ -69,7 +71,7 @@ export default function MessagesScreen() {
           </Pressable>
         )}
       </View>
-      {tab === 'chats' ? <Chats /> : tab === 'fans' ? <NewFans /> : tab === 'gifts' ? <GiftsReceived /> : <Notifications />}
+      {tab === 'chats' ? <Chats /> : tab === 'fans' ? <FansList bottomInset={tabSpace + 16} /> : tab === 'gifts' ? <GiftsReceived /> : <Notifications />}
     </Screen>
   );
 }
@@ -226,48 +228,6 @@ function notificationIcon(type: string): IconName {
   if (/verif/.test(type)) return 'shield-checkmark-outline';
   if (/support/.test(type)) return 'help-buoy-outline';
   return 'notifications-outline';
-}
-
-type Fan = { follower_id: string; created_at: string; profile: Pick<Profile, 'display_name' | 'username' | 'avatar_url'> | null };
-
-/** People who followed you, newest first. */
-function NewFans() {
-  const { c } = useTheme();
-  const tabSpace = useTabBarSpace();
-  const supabase = useSupabase();
-  const { userId } = useAuth();
-  const offline = useOffline();
-  const { data, error, loading, reload } = useFocusedAsync<Fan[]>(async () => {
-    const { data, error } = await supabase.from('follows').select('follower_id,created_at').eq('followee_id', userId!).order('created_at', { ascending: false }).limit(100);
-    if (error) throw error;
-    const ids = (data ?? []).map((f) => f.follower_id);
-    const { data: profiles } = ids.length ? await supabase.from('profiles').select('id,display_name,username,avatar_url').in('id', ids) : { data: [] };
-    const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
-    return (data ?? []).map((f) => ({ ...f, profile: byId.get(f.follower_id) ?? null }));
-  }, [userId], 'msg-fans');
-  return (
-    <StateView state={resolveState({ offline, loading, error, data, onRetry: reload, isEmpty: (d) => d.length === 0, empty: { title: 'No fans yet', body: 'Go live — people who follow you show up here.' } })}>
-      <FlatList
-        data={data ?? []}
-        keyExtractor={(f) => f.follower_id}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16, gap: 8 }}
-        renderItem={({ item, index }) => (
-          <FadeIn delay={stagger(index, 40)}>
-            <PressScale scaleTo={0.98} onPress={() => router.push({ pathname: '/user/[id]', params: { id: item.follower_id } })} accessibilityRole="button">
-              <Row style={{ padding: 12, borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
-                <Avatar uri={item.profile?.avatar_url} name={displayName(item.profile)} size={46} />
-                <View style={{ flex: 1, gap: 2 }}>
-                  <Text variant="label" numberOfLines={1}>{displayName(item.profile)}</Text>
-                  <Text variant="caption" faint>Started following you</Text>
-                </View>
-                <Text variant="caption" faint>{shortTime(item.created_at)}</Text>
-              </Row>
-            </PressScale>
-          </FadeIn>
-        )}
-      />
-    </StateView>
-  );
 }
 
 type GiftRow = { id: number; sender_id: string; quantity: number; coins_total: number; created_at: string; sender: Pick<Profile, 'display_name' | 'username' | 'avatar_url'> | null };

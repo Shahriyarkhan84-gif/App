@@ -54,7 +54,7 @@ export default function SettingsScreen() {
         <Section title="About">
           <ListRow icon="document-text-outline" label="Terms of Service" onPress={() => router.push('/terms')} />
           <ListRow icon="lock-closed-outline" label={t('settings.privacy')} onPress={() => router.push('/privacy')} />
-          <ListRow icon="help-circle-outline" label="Help & support" onPress={() => router.push('/support')} last />
+          <ListRow icon="help-circle-outline" label="Help & feedback" onPress={() => router.push('/support')} last />
         </Section>
 
         <Button title={t('settings.signOut')} variant="secondary" style={{ backgroundColor: c.surfaceRaised, borderColor: c.violetBorder }}

@@ -135,7 +135,11 @@ export default function ProfileScreen() {
             <Group>
               {isHost && <DarkRow icon="trending-up-outline" label="Creator Center" onPress={() => router.push('/host/dashboard')} />}
               {/* Hosting verification comes first, before Events. */}
-              {!verified && <DarkRow icon="shield-checkmark-outline" label={t('menu.hostingVerification')} onPress={() => router.push('/hosting')} last={!hasFeature('events') && !hasFeature('rankings')} />}
+              {!verified && <DarkRow icon="shield-checkmark-outline" label={t('menu.hostingVerification')} onPress={() => router.push('/hosting')} />}
+              <DarkRow icon="diamond-outline" label={t('menu.svip')} onPress={() => router.push('/svip')} />
+              <DarkRow icon="checkbox-outline" label={t('menu.tasks')} onPress={() => router.push('/tasks')} />
+              <DarkRow icon="people-outline" label={t('menu.fans')} onPress={() => router.push('/fans')} last={!hasFeature('frames') && !hasFeature('events') && !hasFeature('rankings')} />
+              {hasFeature('frames') && <DarkRow icon="briefcase-outline" label={t('menu.itemBag')} onPress={() => router.push('/item-bag')} last={!hasFeature('events') && !hasFeature('rankings')} />}
               {hasFeature('events') && <DarkRow icon="megaphone-outline" label={t('menu.events')} onPress={() => router.push('/events')} last={!hasFeature('rankings')} />}
               {hasFeature('rankings') && <DarkRow icon="trophy-outline" label={t('menu.rankings')} onPress={() => router.push('/rankings')} last />}
             </Group>
