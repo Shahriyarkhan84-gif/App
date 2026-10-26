@@ -521,8 +521,9 @@ reset role;
 -- Signed-out callers can't reach admin RPCs at all (security advisor 0028).
 select tests.ok(not exists (
   select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-  where n.nspname = 'public' and p.proname <> 'my_region' and has_function_privilege('anon', p.oid, 'execute')),
-  'anon can execute no public function except my_region()');
+  -- check_request_ip() is the IP-block check the API runs before every request, signed in or not.
+  where n.nspname = 'public' and p.proname not in ('my_region', 'check_request_ip') and has_function_privilege('anon', p.oid, 'execute')),
+  'anon can execute no public function except my_region() and check_request_ip()');
 
 ---------------------------------------------------------------------------------------
 -- Verified IDs pinned on Home: only the owner verifies and pins; everyone can read pins
@@ -912,5 +913,40 @@ select set_config('request.jwt.claims', '{"sub":"sec_host"}', false);
 set role authenticated;
 select tests.ok((select count(*) from public.stream_coaching) = 1, 'the host reads their own coaching');
 reset role;
+
+-- 2026-10-26 IP blocks
+-- Requests from a blocked address or range are refused; others pass; only admins edit the list.
+insert into private.blocked_ips (ip, reason) values ('162.128.44.156', 'test'), ('10.9.0.0/16', 'test range');
+select tests.ok(has_function_privilege('anon', 'public.check_request_ip()', 'execute'), 'the IP check runs for signed-out requests too');
+select set_config('request.headers', '{"cf-connecting-ip":"162.128.44.156"}', false);
+set role authenticated;
+select tests.fails($$select public.check_request_ip()$$, '%blocked%', 'a blocked IP is refused');
+select set_config('request.headers', '{"x-forwarded-for":"10.9.4.2, 172.16.0.1"}', false);
+select tests.fails($$select public.check_request_ip()$$, '%blocked%', 'an IP inside a blocked range is refused');
+select set_config('request.headers', '{"cf-connecting-ip":"162.128.44.157"}', false);
+select public.check_request_ip();
+select set_config('request.headers', '{"cf-connecting-ip":"not-an-ip"}', false);
+select public.check_request_ip();
+select set_config('request.headers', '', false);
+select public.check_request_ip();
+select tests.fails($$select count(*) from private.blocked_ips$$, '%permission denied%', 'clients cannot read the block list');
+reset role;
+insert into public.profiles (id, username, role) values ('ipb_owner', 'ipb_owner', 'OWNER_ADMIN'), ('ipb_user', 'ipb_user', 'USER');
+select set_config('request.jwt.claims', '{"sub":"ipb_user"}', false);
+set role authenticated;
+select tests.fails($$select public.block_ip('1.2.3.4')$$, '%forbidden%', 'a normal user cannot block IPs');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"ipb_owner"}', false);
+set role authenticated;
+select public.block_ip('1.2.3.4', 'spam', 'ipb_user');
+select tests.fails($$select public.block_ip('nope')$$, '%invalid_ip%', 'a bad IP is rejected');
+reset role;
+select tests.ok(exists (select 1 from private.blocked_ips where ip = '1.2.3.4' and created_by = 'ipb_owner'), 'an admin blocks an IP');
+select set_config('request.jwt.claims', '{"sub":"ipb_owner"}', false);
+set role authenticated;
+select public.unblock_ip('1.2.3.4');
+reset role;
+select tests.ok(not exists (select 1 from private.blocked_ips where ip = '1.2.3.4'), 'an admin unblocks an IP');
+select set_config('request.headers', '', false);
 
 drop schema tests cascade;

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.88 — IP blocks
+
+- New `private.blocked_ips` list (addresses or ranges) and `public.check_request_ip()`, run by the API before every request (`pgrst.db_pre_request`): a blocked IP gets HTTP 403 for the app, the website and the Android app. Admins use `block_ip(ip, reason, user)` / `unblock_ip(ip)` (audited); clients can't read the list. Migration `20261026010000_ip_blocks.sql`, tests in `10_must_pass.sql`.
+- The account of Zaib Alam (`user_3L1mGyFSqmHiNBGDLe1y4ZlkeLo`) is permanently banned; their IP 162.128.44.156 is to be blocked once the migration is applied.
+
 ## 0.9.87 — The app on computers
 
 - In a computer browser (web, 1024px and wider) the app gets a **left sidebar** instead of the phone's floating bottom bar: the Kitty logo and name, Home · Party · Messages (with the unread dot) · Me with labels, a **Go live** button, and shortcuts to Diamonds, Rankings, Settings and Help & feedback. Hover highlights the row under the mouse.
