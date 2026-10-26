@@ -1,9 +1,20 @@
-<!-- Zynalive "Live Z" mark (master). 100-unit grid: a round-capped Z, the red live dot and a signal wave.
-     All PNG icons in assets/ and public/ are rendered from this; the launch screen redraws it in code. -->
+<!-- Zynalive "Kitty" mascot (master). 100-unit grid: a white cat face whose nose is the red live dot.
+     All PNG icons in assets/ and public/ are rendered from this. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <g transform="translate(-2 3)">
-    <path d="M22 32 L66 32 L26 74 L74 74" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M75.52 6.06 A17 17 0 0 1 93.94 24.48" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round"/>
-    <circle cx="77" cy="23" r="7" fill="#E11D48"/>
+  <g transform="translate(0 3)">
+    <g id="face">
+      <path d="M23 42 L27 13 L47 30 Z M77 42 L73 13 L53 30 Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round"/>
+      <ellipse cx="50" cy="54" rx="33" ry="28.5" fill="#FFFFFF"/>
+    </g>
+    <path d="M30.5 34 L31 22 L40 30.5 Z M69.5 34 L69 22 L60 30.5 Z" fill="#FDA4AF" stroke="#FDA4AF" stroke-width="2" stroke-linejoin="round"/>
+    <ellipse cx="37.5" cy="52" rx="4.8" ry="5.8" fill="#0C2340"/>
+    <ellipse cx="62.5" cy="52" rx="4.8" ry="5.8" fill="#0C2340"/>
+    <circle cx="39.2" cy="49.8" r="1.7" fill="#FFFFFF"/>
+    <circle cx="64.2" cy="49.8" r="1.7" fill="#FFFFFF"/>
+    <ellipse cx="50" cy="61" rx="4.4" ry="3.3" fill="#E11D48"/>
+    <path d="M50 64 C48.5 68 44.5 68.5 43 66 M50 64 C51.5 68 55.5 68.5 57 66" fill="none" stroke="#0C2340" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M21 57 L33 59.5 M21 64.5 L33 63.5 M79 57 L67 59.5 M79 64.5 L67 63.5" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round"/>
+    <ellipse cx="31" cy="64" rx="4.2" ry="2.6" fill="#FB7185" opacity=".55"/>
+    <ellipse cx="69" cy="64" rx="4.2" ry="2.6" fill="#FB7185" opacity=".55"/>
   </g>
 </svg>

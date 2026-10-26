@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.85 — New logo: Kitty
+
+- The logo is now **Kitty**, a white cat face on the deep-blue tile whose nose is the red live dot (chosen over the Live Z and other ideas; Figma page "Logo — new", "Mascot ideas"). Master: `assets/logo-mark.svg`.
+- Every icon is re-made from it: app icon, Android adaptive icon (the themed/monochrome one is the cat's silhouette with its face cut out), splash, favicon, `assets/logo.png`, and the website's `logo.png` and `og-image.png`.
+- Launch screen: Kitty pops in with a little bounce and tilts its head, then "zynalive" is written out (no animation with Reduce Motion on).
+
 ## 0.9.84 — New logo: Live Z
 
 - New Zynalive logo, chosen from four ideas made with the Figma design kit (page "Logo — new"): a round-ended white **Z** on the deep-blue gradient, with the red **live dot** and a **signal wave**.
