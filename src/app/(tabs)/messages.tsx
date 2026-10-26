@@ -7,7 +7,7 @@ import { FlatList, Pressable, View } from 'react-native';
 import { useTabBarSpace } from '@/components/Menus';
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Coin, Row, Screen, Text } from '@/components/ui';
+import { Avatar, Coin, glassShadow, Row, Screen, Text } from '@/components/ui';
 import { hasFeature } from '@/lib/brand';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
@@ -40,7 +40,7 @@ export default function MessagesScreen() {
   return (
     <Screen>
       <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 12 }}>
-        <Text variant="h1">Messages</Text>
+        <Text variant="display">Messages</Text>
         <Row gap={8}>
           {TILES.map((t) => {
             const on = tab === t.id;
@@ -53,7 +53,7 @@ export default function MessagesScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
                 accessibilityLabel={t.label}
-                style={{ flex: 1, alignItems: 'center', gap: 6, paddingVertical: 14, borderRadius: 20, backgroundColor: on ? c.primary : c.surface }}
+                style={{ flex: 1, alignItems: 'center', gap: 6, paddingVertical: 14, borderRadius: 20, backgroundColor: on ? c.primary : c.surface, borderWidth: 1, borderColor: on ? c.primary : c.glassBorder, ...glassShadow }}
               >
                 <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? 'rgba(255,255,255,0.2)' : c.surfaceRaised }}>
                   <Ionicons name={t.icon} size={20} color={on ? '#fff' : c.primary} />
@@ -111,11 +111,11 @@ function Chats() {
       <FlatList
         data={data ?? []}
         keyExtractor={(t) => t.otherId}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16, gap: 8 }}
         renderItem={({ item, index }) => (
           <FadeIn delay={stagger(index, 50)}>
           <PressScale scaleTo={0.98} onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: item.otherId } })} accessibilityRole="button">
-            <Row style={{ paddingVertical: 10 }}>
+            <Row style={{ padding: 12, borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
               <Avatar uri={item.other?.avatar_url} name={displayName(item.other)} size={52} ring={item.unread > 0 ? c.primary : undefined} />
               <View style={{ flex: 1, gap: 3 }}>
                 <Row style={{ justifyContent: 'space-between' }}>
@@ -188,12 +188,18 @@ function Notifications() {
         renderItem={({ item, index }) => (
           <FadeIn delay={stagger(index, 50)}>
             <PressScale scaleTo={0.98} onPress={() => open(item)} accessibilityRole="button">
-              <Row style={{ alignItems: 'flex-start', paddingVertical: 12, paddingHorizontal: 14, borderRadius: 16, backgroundColor: item.read_at ? 'transparent' : c.surface }}>
+              <Row style={{ alignItems: 'flex-start', padding: 14, borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
+                <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: c.violetSurface, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name={notificationIcon(item.type)} size={19} color={c.primary} />
+                </View>
                 <View style={{ flex: 1, gap: 3 }}>
                   <Text variant="label" style={{ fontSize: 15 }}>{item.title}</Text>
                   {item.body && <Text variant="bodySmall" muted numberOfLines={3}>{item.body}</Text>}
                 </View>
-                <Text variant="caption" faint>{shortTime(item.created_at)}</Text>
+                <View style={{ alignItems: 'flex-end', gap: 6 }}>
+                  <Text variant="caption" faint>{shortTime(item.created_at)}</Text>
+                  {!item.read_at && <View accessibilityLabel="Unread" style={{ width: 9, height: 9, borderRadius: 5, backgroundColor: c.primary }} />}
+                </View>
               </Row>
             </PressScale>
           </FadeIn>
@@ -203,10 +209,23 @@ function Notifications() {
   );
 }
 
+/** Icon for a notification type (gifts, follows, lives, money, support…). */
+function notificationIcon(type: string): IconName {
+  if (/gift/.test(type)) return 'gift-outline';
+  if (/follow/.test(type)) return 'person-add-outline';
+  if (/live/.test(type)) return 'radio-outline';
+  if (/withdraw|payout|coins|refund|payment/.test(type)) return 'wallet-outline';
+  if (/media|video/.test(type)) return 'play-circle-outline';
+  if (/verif/.test(type)) return 'shield-checkmark-outline';
+  if (/support/.test(type)) return 'help-buoy-outline';
+  return 'notifications-outline';
+}
+
 type Fan = { follower_id: string; created_at: string; profile: Pick<Profile, 'display_name' | 'username' | 'avatar_url'> | null };
 
 /** People who followed you, newest first. */
 function NewFans() {
+  const { c } = useTheme();
   const tabSpace = useTabBarSpace();
   const supabase = useSupabase();
   const { userId } = useAuth();
@@ -224,11 +243,11 @@ function NewFans() {
       <FlatList
         data={data ?? []}
         keyExtractor={(f) => f.follower_id}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16, gap: 8 }}
         renderItem={({ item, index }) => (
           <FadeIn delay={stagger(index, 40)}>
             <PressScale scaleTo={0.98} onPress={() => router.push({ pathname: '/user/[id]', params: { id: item.follower_id } })} accessibilityRole="button">
-              <Row style={{ paddingVertical: 10 }}>
+              <Row style={{ padding: 12, borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
                 <Avatar uri={item.profile?.avatar_url} name={displayName(item.profile)} size={46} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text variant="label" numberOfLines={1}>{displayName(item.profile)}</Text>
@@ -248,6 +267,7 @@ type GiftRow = { id: number; sender_id: string; quantity: number; coins_total: n
 
 /** Gifts you received in your lives. */
 function GiftsReceived() {
+  const { c } = useTheme();
   const tabSpace = useTabBarSpace();
   const supabase = useSupabase();
   const { userId } = useAuth();
@@ -265,10 +285,10 @@ function GiftsReceived() {
       <FlatList
         data={data ?? []}
         keyExtractor={(g) => String(g.id)}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16, gap: 8 }}
         renderItem={({ item, index }) => (
           <FadeIn delay={stagger(index, 40)}>
-            <Row style={{ paddingVertical: 10 }}>
+            <Row style={{ padding: 12, borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
               <Avatar uri={item.sender?.avatar_url} name={displayName(item.sender)} size={46} />
               <View style={{ flex: 1, gap: 2 }}>
                 <Text variant="label" numberOfLines={1}>{displayName(item.sender)}</Text>

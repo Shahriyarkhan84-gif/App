@@ -11,7 +11,7 @@ import { FollowingLive, GoLiveBubble, LiveBell } from '@/components/FollowingLiv
 import { useTabBarSpace } from '@/components/Menus';
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { IconButton, Row, Screen, Text } from '@/components/ui';
+import { glassShadow, IconButton, Row, Screen, Text } from '@/components/ui';
 import { hasFeature } from '@/lib/brand';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
@@ -182,7 +182,7 @@ export default function HomeScreen() {
             </FadeIn>
           )}
           {rooms.length === 0 ? (
-            <View style={{ paddingVertical: 32, paddingHorizontal: 16, alignItems: 'center', gap: 6, borderRadius: 12, backgroundColor: c.surface }}>
+            <View style={{ paddingVertical: 32, paddingHorizontal: 16, alignItems: 'center', gap: 6, borderRadius: 12, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
               <Ionicons name="videocam-outline" size={28} color={c.textFaint} />
               <Text variant="label" style={{ textAlign: 'center' }}>{emptyState.title}</Text>
               {emptyState.body && <Text variant="bodySmall" muted style={{ textAlign: 'center' }}>{emptyState.body}</Text>}
@@ -224,7 +224,7 @@ function PkBattleBanner({ room }: { room: Room | null }) {
       accessibilityLabel={room ? 'Watch the live PK battle' : 'PK Battle Night. See the top hosts'}
       scaleTo={0.98}
     >
-      <Row style={{ padding: 14, borderRadius: radius[12], backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider }}>
+      <Row style={{ padding: 14, borderRadius: radius[12], backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
         <View style={{ width: 44, height: 44, borderRadius: 8, backgroundColor: c.goldSurface, borderWidth: 1, borderColor: c.goldBorder, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ fontFamily: fonts.bold, fontSize: 16, color: c.gold }}>PK</Text>
         </View>

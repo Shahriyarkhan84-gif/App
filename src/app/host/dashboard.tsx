@@ -6,7 +6,7 @@ import { ScrollView, View } from 'react-native';
 import { brand } from '@/lib/brand';
 import { FadeIn, PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Button, Coin, compactNumber, Row, Screen, Sheet, Text } from '@/components/ui';
+import { Avatar, Button, Coin, compactNumber, glassShadow, Row, Screen, Sheet, Text } from '@/components/ui';
 import { Alert, confirmAction } from '@/lib/alert';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -169,7 +169,7 @@ export default function HostDashboardScreen() {
               </View>
             </View>
 
-            <FadeIn style={{ padding: 16, borderRadius: 16, backgroundColor: c.surface, gap: 10 }}>
+            <FadeIn style={{ padding: 16, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow, gap: 10 }}>
               <Row style={{ justifyContent: 'space-between' }}>
                 <Text variant="label">Weekly live hours</Text>
                 <Text variant="label">{weekHours.toFixed(1)} / {WEEKLY_GOAL_HOURS} h</Text>
@@ -182,7 +182,7 @@ export default function HostDashboardScreen() {
               </Text>
             </FadeIn>
 
-            <FadeIn style={{ padding: 16, borderRadius: 16, backgroundColor: c.surface, gap: 10 }}>
+            <FadeIn style={{ padding: 16, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow, gap: 10 }}>
               <Row style={{ justifyContent: 'space-between' }}>
                 <Text variant="label">Room admins</Text>
                 <Text variant="caption" muted>{data.admins.length} of {MAX_ADMINS}</Text>
@@ -200,7 +200,7 @@ export default function HostDashboardScreen() {
               )}
             </FadeIn>
 
-            <Row gap={12} style={{ padding: 16, borderRadius: 16, backgroundColor: c.surface }}>
+            <Row gap={12} style={{ padding: 16, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
               <Ionicons name={data.warnings ? 'warning-outline' : 'shield-checkmark-outline'} size={26} color={data.warnings ? c.warning : c.success} />
               <View style={{ flex: 1, gap: 2 }}>
                 <Text variant="label">{data.warnings ? 'Warnings on your account' : 'Account in good standing'}</Text>
@@ -254,7 +254,7 @@ export default function HostDashboardScreen() {
 function Tile({ label, value, sub }: { label: string; value: string; sub: string }) {
   const { c } = useTheme();
   return (
-    <View style={{ width: '48.8%', padding: 14, borderRadius: 16, backgroundColor: c.surface, gap: 4 }}>
+    <View style={{ width: '48.8%', padding: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow, gap: 4 }}>
       <Text variant="caption" muted>{label}</Text>
       <Text style={{ fontFamily: fonts.display, fontSize: 24 }}>{value}</Text>
       <Text variant="caption" faint>{sub}</Text>

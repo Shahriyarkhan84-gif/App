@@ -8,7 +8,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View 
 
 import { brand } from '@/lib/brand';
 import { FadeIn, Pop } from '@/components/Motion';
-import { Button, Card, HostBadge, Row, Screen, Text } from '@/components/ui';
+import { Button, Card, glassShadow, HostBadge, Row, Screen, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { submitHostApplication, type HostApplicationResult } from '@/lib/api';
@@ -142,7 +142,7 @@ export default function VerifyFormScreen() {
   if (result) return <ResultView result={result} firstName={name.trim().split(/\s+/)[0] ?? ''} cnicLast={cnic.replace(/\D/g, '').slice(-4)} onRetry={() => setResult(null)} />;
 
   const inputStyle = (valid: boolean) => ({
-    height: 50, borderRadius: radius[12] + 2, borderWidth: 1, backgroundColor: c.surface, color: c.text, paddingHorizontal: 16, fontSize: 16, fontFamily: fonts.regular,
+    height: 50, borderRadius: radius[12] + 2, borderWidth: 1, backgroundColor: c.surfaceRaised, color: c.text, paddingHorizontal: 16, fontSize: 16, fontFamily: fonts.regular,
     borderColor: tried && !valid ? c.danger : valid ? c.success : c.border,
   });
 
@@ -164,7 +164,7 @@ export default function VerifyFormScreen() {
             </Field>
             <Field label="Phone number">
               <Row gap={8}>
-                <View style={{ height: 50, paddingHorizontal: 14, borderRadius: radius[12] + 2, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, justifyContent: 'center' }}>
+                <View style={{ height: 50, paddingHorizontal: 14, borderRadius: radius[12] + 2, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow, justifyContent: 'center' }}>
                   <Text>+92</Text>
                 </View>
                 <TextInput value={phone} onChangeText={(v) => setPhone(v.replace(/[^0-9 ]/g, '').slice(0, 12))} placeholder="300 1234567" placeholderTextColor={c.textFaint} keyboardType="phone-pad" autoComplete="tel" style={[inputStyle(ok.phone), { flex: 1 }]} accessibilityLabel="Phone number" />
@@ -188,7 +188,7 @@ export default function VerifyFormScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={`${p.title}. ${photo ? 'Photo added. Tap to retake.' : 'Tap to take photo.'}`}
                   style={({ pressed }) => ({
-                    flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: radius[16], backgroundColor: c.surface,
+                    flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: radius[16], backgroundColor: c.surface, ...glassShadow,
                     borderWidth: 1, borderStyle: photo ? 'solid' : 'dashed', borderColor: photo ? c.success : bad ? c.danger : c.border, opacity: pressed ? 0.8 : 1,
                   })}
                 >

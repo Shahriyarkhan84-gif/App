@@ -5,7 +5,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 
 import { FramedAvatar } from '@/components/FramedAvatar';
 import { StateView, type ViewState } from '@/components/StateView';
-import { Button, Coin, Row, Screen, Text } from '@/components/ui';
+import { Button, Coin, glassShadow, Row, Screen, Text } from '@/components/ui';
 import { Alert, confirmAction } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { idempotencyKey, rpc } from '@/lib/api';
@@ -103,7 +103,7 @@ export default function FramesScreen() {
       <StateView state={state}>
         <ScrollView contentContainerStyle={{ padding: 16, gap: 18, paddingBottom: 140, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
           {sel && profile && (
-            <View style={{ alignItems: 'center', gap: 10, paddingVertical: 12, borderRadius: 22, backgroundColor: c.surface }}>
+            <View style={{ alignItems: 'center', gap: 10, paddingVertical: 12, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
               <FramedAvatar uri={profile.avatar_url} name={displayName(profile)} size={112} frame={sel} />
               <Text variant="h2">{sel.name}</Text>
               <Row gap={6}>
@@ -129,7 +129,7 @@ export default function FramesScreen() {
               return (
                 <Pressable key={f.id} onPress={() => setPicked(f.id)} accessibilityRole="button" accessibilityState={{ selected: on }}
                   accessibilityLabel={`${f.name}, ${f.coin_price} coins, ${frameDuration(f)}${owned ? ', owned' : ''}${wearing === f.id ? ', wearing' : ''}`}
-                  style={{ flexBasis: '47%', flexGrow: 1, alignItems: 'center', gap: 8, padding: 14, borderRadius: 18, backgroundColor: c.surface, borderWidth: 2, borderColor: on ? c.primary : 'transparent' }}>
+                  style={{ flexBasis: '47%', flexGrow: 1, alignItems: 'center', gap: 8, padding: 14, borderRadius: 18, backgroundColor: c.surface, ...glassShadow, borderWidth: 2, borderColor: on ? c.primary : c.glassBorder }}>
                   <FramedAvatar uri={profile?.avatar_url} name={profile ? displayName(profile) : ''} size={64} frame={f} />
                   <Text variant="label" numberOfLines={1}>{f.name}</Text>
                   {wearing === f.id ? (

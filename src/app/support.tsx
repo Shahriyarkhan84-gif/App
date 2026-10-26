@@ -4,7 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
-import { Button, Card, Input, Row, Screen, Text } from '@/components/ui';
+import { Button, Card, glassShadow, Input, Row, Screen, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -69,7 +69,7 @@ export default function SupportScreen() {
 
         <View style={{ gap: 8 }}>
           <Text variant="h3">Popular questions</Text>
-          <View style={{ borderRadius: 18, backgroundColor: c.surface, overflow: 'hidden' }}>
+          <View style={{ borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow, overflow: 'hidden' }}>
             {FAQ.map((f, i) => (
               <Pressable
                 key={f.q}

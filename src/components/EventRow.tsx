@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { View } from 'react-native';
 
 import { PressScale } from '@/components/Motion';
-import { Row, Text } from '@/components/ui';
+import { glassShadow, Row, Text } from '@/components/ui';
 import { eventPhase, fetchEvents, fetchMyRegion, timeLeft, type AppEvent, type EventPhase } from '@/lib/events';
 import { useFocusedAsync } from '@/lib/hooks';
 import { useI18n } from '@/lib/i18n';
@@ -17,7 +17,7 @@ export function EventRow({ event, phase }: { event: AppEvent; phase: EventPhase 
     : phase === 'upcoming' ? t('events.startsIn', { time: timeLeft(event.starts_at) }) : t('events.ended');
   return (
     <PressScale onPress={() => router.push(`/events/${event.id}`)} accessibilityRole="button" accessibilityLabel={event.title} scaleTo={0.98}>
-      <Row style={{ padding: 14, borderRadius: radius[12], backgroundColor: c.surface, borderWidth: 1, borderColor: c.divider }}>
+      <Row style={{ padding: 14, borderRadius: radius[12], backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
         <View style={{ width: 44, height: 44, borderRadius: 8, backgroundColor: phase === 'live' ? c.goldSurface : c.surfaceRaised, borderWidth: 1, borderColor: phase === 'live' ? c.goldBorder : c.border, alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name={event.kind === 'pk_battle' ? 'flash' : 'gift'} size={22} color={phase === 'live' ? c.gold : c.textMuted} />
         </View>

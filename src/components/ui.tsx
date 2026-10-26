@@ -20,7 +20,7 @@ import {
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { brand } from '@/lib/brand';
-import { bodyFont, fonts, useTheme, type TypeVariant } from '@/lib/theme';
+import { bodyFont, fonts, liveColors, useTheme, type TypeVariant } from '@/lib/theme';
 
 import { PressScale, Pulse } from './Motion';
 
@@ -84,11 +84,11 @@ type ButtonProps = Omit<PressableProps, 'style'> & {
 
 export function Button({ title, variant = 'primary', size = 'md', loading, icon, disabled, style, ...rest }: ButtonProps) {
   const { c, radius } = useTheme();
-  const bg = { primary: c.primary, secondary: c.surface, ghost: 'transparent', danger: c.danger, gold: c.gold, outline: 'transparent' }[variant];
+  const bg = { primary: c.primary, secondary: c.surfaceRaised, ghost: 'transparent', danger: c.danger, gold: c.gold, outline: 'transparent' }[variant];
   const fg = {
     primary: c.primaryText, danger: c.primaryText, gold: c.onGold, secondary: c.text, ghost: c.textMuted, outline: c.violetText,
   }[variant];
-  const border = variant === 'secondary' ? c.border : variant === 'outline' ? c.violetBorder : 'transparent';
+  const border = variant === 'secondary' ? c.violetBorder : variant === 'outline' ? c.violetBorder : 'transparent';
   const button = (
     <PressScale
       accessibilityRole="button"
@@ -193,7 +193,7 @@ export function Chip({ label, selected, onPress }: { label: string; selected?: b
         borderRadius: radius.pill,
         backgroundColor: selected ? c.primary : c.surface,
         borderWidth: 1,
-        borderColor: selected ? c.primary : c.border,
+        borderColor: selected ? c.primary : c.glassBorder,
       }}
     >
       <Text variant="label" color={selected ? c.primaryText : c.textMuted} style={{ fontWeight: selected ? '700' : '500' }}>{label}</Text>
@@ -205,7 +205,7 @@ export function Chip({ label, selected, onPress }: { label: string; selected?: b
 export function Segmented<T extends string>({ options, value, onChange }: { options: readonly { id: T; label: string }[]; value: T; onChange: (id: T) => void }) {
   const { c, radius } = useTheme();
   return (
-    <View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: 6, padding: 4, borderRadius: radius.pill, backgroundColor: c.surface }}>
+    <View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: 6, padding: 4, borderRadius: radius.pill, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder }}>
       {options.map((o) => {
         const on = o.id === value;
         return (
@@ -363,14 +363,16 @@ export function ListRow({ icon, label, onPress, color, last }: { icon: IconName;
 }
 
 /** Bottom sheet built on Modal (no extra native deps). */
-export function Sheet({ visible, onClose, title, children }: { visible: boolean; onClose: () => void; title?: string; children: ReactNode }) {
-  const { c, radius } = useTheme();
+/** `tone="live"` gives the dark navy sheet used over live video (gifts). */
+export function Sheet({ visible, onClose, title, children, tone = 'light' }: { visible: boolean; onClose: () => void; title?: string; children: ReactNode; tone?: 'light' | 'live' }) {
+  const { c: light, radius } = useTheme();
+  const c = tone === 'live' ? liveColors : light;
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={{ flex: 1, backgroundColor: c.overlay }} onPress={onClose} accessibilityLabel="Close" />
-      <SafeAreaView edges={['bottom']} style={{ backgroundColor: c.tabBar, borderTopLeftRadius: radius[24], borderTopRightRadius: radius[24], padding: 20, gap: 12, maxHeight: '80%' }}>
+      <SafeAreaView edges={['bottom']} style={{ backgroundColor: tone === 'live' ? c.surface : c.tabBar, borderTopLeftRadius: radius[24] + 4, borderTopRightRadius: radius[24] + 4, borderWidth: tone === 'live' ? 1 : 0, borderColor: c.border, padding: 20, gap: 12, maxHeight: '80%' }}>
         <View style={{ alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: c.border }} />
-        {title && <Text variant="h2">{title}</Text>}
+        {title && <Text variant="h2" color={c.text}>{title}</Text>}
         {children}
       </SafeAreaView>
     </Modal>

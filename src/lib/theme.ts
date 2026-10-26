@@ -97,6 +97,8 @@ const dark = {
   glow: 'rgba(125,211,252,0.35)',
   /** Screen background, top to bottom. */
   sky: ['#0C4A6E', '#082F49', '#061826'] as Gradient,
+  /** Edge of a frosted card. */
+  glassBorder: '#1E4566',
 };
 
 // `surface` is frosted white over the sky; `surfaceRaised` is solid white (inputs, sheets).
@@ -131,6 +133,7 @@ const light: typeof dark = {
   gradient: ['#075985', '#0369A1', '#0279BB'] as Gradient,
   glow: 'rgba(3,105,161,0.28)',
   sky: ['#BAE6FD', '#E0F2FE', '#F0F9FF'] as Gradient,
+  glassBorder: 'rgba(255,255,255,0.9)',
 };
 
 export type Palette = typeof dark;

@@ -8,7 +8,7 @@ import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 
 import { Pop, PressScale } from './Motion';
-import { Avatar, Coin, compactNumber, Row, Text } from './ui';
+import { Avatar, Coin, compactNumber, glassShadow, Row, Text } from './ui';
 
 export type Period = 'day' | 'week' | 'month' | 'overall';
 export const PERIODS: { id: Period; label: string }[] = [
@@ -33,7 +33,7 @@ export function ContributionsCard({ hostId }: { hostId: string }) {
       scaleTo={0.98}
       accessibilityRole="button"
       accessibilityLabel={top[0] ? `Contributions. Overall top 1: ${contributorName(top[0])}` : 'Contributions'}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.goldBorder }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: c.surface, ...glassShadow, borderWidth: 1, borderColor: c.goldBorder }}
     >
       <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: c.goldSurface, alignItems: 'center', justifyContent: 'center' }}>
         <Ionicons name="gift-outline" size={20} color={c.gold} />

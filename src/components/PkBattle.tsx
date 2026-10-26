@@ -73,7 +73,7 @@ function OpponentPane({ opponentRoom }: { opponentRoom: Room }) {
 
   if (!token.data) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#1A1030' }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0C2338' }}>
         <Avatar uri={opponentRoom.host?.avatar_url} name={displayName(opponentRoom.host)} size={44} />
       </View>
     );
@@ -143,11 +143,11 @@ export function PkBattleBar({ battle, mySide, secondsLeft, timerBelow = true }: 
   return (
     <View style={{ zIndex: 2 }}>
       <View style={{ height: 22, flexDirection: 'row' }} accessibilityLabel={`Score ${scoreLeft} to ${scoreRight}`}>
-        <View style={{ width: `${pctLeft}%`, justifyContent: 'center', paddingLeft: 10, backgroundColor: '#87CEFA' }}>
+        <View style={{ width: `${pctLeft}%`, justifyContent: 'center', paddingLeft: 10, backgroundColor: '#7DD3FC' }}>
           <Text variant="caption" color="#00131F" style={{ fontWeight: '700', fontVariant: ['tabular-nums'] }}>{scoreLeft.toLocaleString()}</Text>
         </View>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-end', paddingRight: 10, backgroundColor: '#FFC24B' }}>
-          <Text variant="caption" color="#2A1A00" style={{ fontWeight: '700', fontVariant: ['tabular-nums'] }}>{scoreRight.toLocaleString()}</Text>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-end', paddingRight: 10, backgroundColor: '#E11D48' }}>
+          <Text variant="caption" color="#FFFFFF" style={{ fontWeight: '700', fontVariant: ['tabular-nums'] }}>{scoreRight.toLocaleString()}</Text>
         </View>
         <View style={{ position: 'absolute', left: `${pctLeft}%`, top: 0, width: 2, height: 22, marginLeft: -1, backgroundColor: '#000' }} />
       </View>

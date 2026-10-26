@@ -10,7 +10,7 @@ import { LiveAvatar } from '@/components/FollowingLive';
 import { PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { FramedAvatar } from '@/components/FramedAvatar';
-import { Button, compactNumber, RoleBadges, Row, Screen, Text } from '@/components/ui';
+import { Button, Card, compactNumber, glassShadow, RoleBadges, Row, Screen, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
@@ -145,7 +145,7 @@ export default function UserProfileScreen() {
       <StateView state={resolveState({ offline, loading, error, data, onRetry: reload, isEmpty: (d) => d === null, empty: { title: "This account doesn't exist", body: "It may have been deleted." } })}>
         {data && (
           <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
-            <View style={{ alignItems: 'center', gap: 8 }}>
+            <Card style={{ alignItems: 'center', gap: 8, padding: 20, borderRadius: 28 }}>
               {data.room?.status === 'live' ? (
                 <PressScale
                   scaleTo={0.94}
@@ -165,7 +165,7 @@ export default function UserProfileScreen() {
               </Row>
               <Text muted selectable>ID {data.profile.user_number}</Text>
               {data.profile.signup_country && (
-                <View accessibilityLabel={`Joined from ${countryName(data.profile.signup_country)}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
+                <View accessibilityLabel={`Joined from ${countryName(data.profile.signup_country)}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
                   <Ionicons name="location" size={13} color={c.primary} />
                   <Text variant="caption">{flag(data.profile.signup_country)} {countryName(data.profile.signup_country)}</Text>
                 </View>
@@ -183,10 +183,10 @@ export default function UserProfileScreen() {
                   </View>
                 ))}
               </Row>
-              {data.profile.bio && <Text style={{ textAlign: 'center' }}>{data.profile.bio}</Text>}
-            </View>
+              {data.profile.bio && <Text muted style={{ textAlign: 'center' }}>{data.profile.bio}</Text>}
+            </Card>
             {isPlatformAdmin && (
-              <View style={{ gap: 10, padding: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
+              <View style={{ gap: 10, padding: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
                 <Text variant="label">Owner tools</Text>
                 <Row>
                   <Button
@@ -216,7 +216,7 @@ export default function UserProfileScreen() {
         )}
         {data && !isMe && (
           // Pinned footer: Follow / Message stay in place while the profile scrolls.
-          <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, borderTopWidth: 1, borderTopColor: c.divider, backgroundColor: c.background }}>
+          <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, borderTopWidth: 1, borderTopColor: c.glassBorder, backgroundColor: c.surface }}>
             <Row style={{ maxWidth: 640, width: '100%', alignSelf: 'center' }}>
               <Button title={isFollowing ? 'Following' : 'Follow'} variant={isFollowing ? 'secondary' : 'primary'} onPress={toggleFollow} style={{ flex: 1, minHeight: 54 }} />
               <Button title="Message" variant="secondary" onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: id } })} style={{ flex: 1, minHeight: 54 }} />

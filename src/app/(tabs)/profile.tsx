@@ -11,7 +11,7 @@ import { useTabBarSpace } from '@/components/Menus';
 import { StateView } from '@/components/StateView';
 import { FadeIn, PressScale } from '@/components/Motion';
 import { FramedAvatar } from '@/components/FramedAvatar';
-import { AgencyOwnerBadge, Coin, compactNumber, HostBadge, IconButton, Row, Screen, Text, type IconName } from '@/components/ui';
+import { AgencyOwnerBadge, Coin, compactNumber, glassShadow, HostBadge, IconButton, Row, Screen, Text, type IconName } from '@/components/ui';
 import { hasFeature } from '@/lib/brand';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
@@ -167,7 +167,7 @@ function Tile({ icon, coin, label, sub, onPress }: { icon?: IconName; coin?: boo
 
 function Group({ children }: { children: ReactNode }) {
   const { c } = useTheme();
-  return <View style={{ borderRadius: 18, backgroundColor: c.surface, overflow: 'hidden' }}>{children}</View>;
+  return <View style={{ borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow, overflow: 'hidden' }}>{children}</View>;
 }
 
 /** Menu row: plain line icon, label, optional detail, chevron. */

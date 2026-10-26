@@ -6,7 +6,7 @@ import { FlatList, View } from 'react-native';
 import { type Contributor, PERIODS, type Period, contributorName, MEDALS } from '@/components/Contributions';
 import { FadeIn, GrowBar, Pop, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Coin, compactNumber, Row, Screen, Segmented, Text } from '@/components/ui';
+import { Avatar, Coin, compactNumber, glassShadow, Row, Screen, Segmented, Text } from '@/components/ui';
 import { rpc } from '@/lib/api';
 import { useAsync, useOffline } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
@@ -39,7 +39,7 @@ export default function ContributionsScreen() {
           keyExtractor={(r) => r.user_id}
           contentContainerStyle={{ padding: 16, paddingBottom: 40, gap: 6, maxWidth: 640, width: '100%', alignSelf: 'center' }}
           ListHeaderComponent={
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 22, paddingBottom: 14 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 22, paddingHorizontal: 12, marginBottom: 10, borderRadius: 28, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, overflow: 'hidden', ...glassShadow }}>
               {podium.map((r) => {
                 const first = r.rank === 1;
                 const size = first ? 84 : 64;
@@ -57,7 +57,7 @@ export default function ContributionsScreen() {
                       <Text variant="label" numberOfLines={1} style={{ marginTop: 6 }}>{contributorName(r)}</Text>
                       {first && <Text variant="caption" color={c.goldText}>{period === 'overall' ? 'Overall top 1' : 'Top 1'}</Text>}
                       <Row gap={4}><Coin size={12} /><Text variant="caption" color={c.goldText} style={{ fontWeight: '700' }}>{compactNumber(r.coins)}</Text></Row>
-                      <GrowBar height={first ? 64 : r.rank === 2 ? 44 : 30} delay={350 + r.rank * 100} style={{ alignSelf: 'stretch', borderTopLeftRadius: 12, borderTopRightRadius: 12, backgroundColor: first ? c.goldSurface : c.surface }} />
+                      <GrowBar height={first ? 64 : r.rank === 2 ? 44 : 30} delay={350 + r.rank * 100} style={{ alignSelf: 'stretch', borderTopLeftRadius: 12, borderTopRightRadius: 12, backgroundColor: first ? c.gold : c.violetSurface }} />
                     </PressScale>
                   </FadeIn>
                 );
@@ -67,7 +67,7 @@ export default function ContributionsScreen() {
           renderItem={({ item, index }) => (
             <FadeIn delay={stagger(index, 40)} from={10}>
               <PressScale onPress={() => open(item)} scaleTo={0.98} accessibilityRole="button" accessibilityLabel={`Rank ${item.rank}, ${contributorName(item)}, ${item.coins} coins`}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 16, backgroundColor: c.surface }}>
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
                 <Text variant="label" faint style={{ width: 26, textAlign: 'center' }}>{item.rank}</Text>
                 <Avatar uri={item.avatar_url} name={contributorName(item)} size={40} />
                 <View style={{ flex: 1 }}>

@@ -9,7 +9,7 @@ import { displayName } from '@/lib/types';
 
 import { LiveAvatar } from './FollowingLive';
 import { PressScale } from './Motion';
-import { Avatar, Row, Text } from './ui';
+import { Avatar, glassShadow, Row, Text } from './ui';
 
 export type Pinned = {
   id: string;
@@ -81,7 +81,7 @@ export function PinnedRow({ items }: { items: Pinned[] }) {
               onPress={() => open(p)}
               accessibilityRole="button"
               accessibilityLabel={`${name}, verified${p.room ? ', live now' : ''}`}
-              style={{ width: 112, alignItems: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 8, borderRadius: 16, backgroundColor: c.surface }}
+              style={{ width: 112, alignItems: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 8, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}
             >
               {p.room ? <LiveAvatar uri={p.avatar_url} name={name} size={64} /> : <Avatar uri={p.avatar_url} name={name} size={64} ring={c.primary} />}
               <Row gap={3} style={{ maxWidth: '100%', marginTop: p.room ? 4 : 0 }}>

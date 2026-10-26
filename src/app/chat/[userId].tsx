@@ -143,10 +143,12 @@ export default function ChatScreen() {
                   <View
                     style={{
                       maxWidth: '75%',
-                      backgroundColor: mine ? c.primary : c.surfaceRaised,
-                      borderRadius: radius[16],
-                      borderBottomRightRadius: mine ? 4 : radius[16],
-                      borderBottomLeftRadius: mine ? radius[16] : 4,
+                      backgroundColor: mine ? c.primary : c.surface,
+                      borderWidth: mine ? 0 : 1,
+                      borderColor: c.glassBorder,
+                      borderRadius: radius[20],
+                      borderBottomRightRadius: mine ? 6 : radius[20],
+                      borderBottomLeftRadius: mine ? radius[20] : 6,
                       paddingHorizontal: 14,
                       paddingVertical: 9,
                     }}
@@ -161,7 +163,7 @@ export default function ChatScreen() {
         {cantSend && <Text variant="bodySmall" muted style={{ paddingHorizontal: 16, paddingTop: 8 }}>{cantSend}</Text>}
         <Row style={{ padding: 12 }}>
           <View style={{ flex: 1 }}>
-            <Input editable={!cantSend} value={draft} onChangeText={setDraft} placeholder="Message" maxLength={1000} onSubmitEditing={send} />
+            <Input editable={!cantSend} value={draft} onChangeText={setDraft} placeholder="Message…" maxLength={1000} onSubmitEditing={send} />
           </View>
           <Button title="Send" onPress={send} loading={sending} disabled={!draft.trim() || offline || !!cantSend} />
         </Row>

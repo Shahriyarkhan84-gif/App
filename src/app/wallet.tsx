@@ -8,7 +8,7 @@ import { ActivityIndicator, Platform, ScrollView, View } from 'react-native';
 
 import { Pop, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { Button, Coin, Row, Screen, Segmented, Text } from '@/components/ui';
+import { Button, Coin, glassShadow, Row, Screen, Segmented, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { reconcilePayments, startCoinCheckout } from '@/lib/api';
@@ -140,12 +140,12 @@ export default function WalletScreen() {
               <View style={{ gap: 10 }}>
                 <Text variant="h3">Buy coins</Text>
                 {data.pricesFailed ? (
-                  <Row gap={10} style={{ padding: 14, borderRadius: 16, backgroundColor: c.surface }}>
+                  <Row gap={10} style={{ padding: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
                     <Text variant="bodySmall" muted style={{ flex: 1 }}>Couldn&apos;t load prices for your country.</Text>
                     <Button title="Try again" variant="secondary" onPress={reload} style={{ minHeight: 40, paddingHorizontal: 16 }} />
                   </Row>
                 ) : data.packages.length === 0 ? (
-                  <Text variant="bodySmall" muted style={{ padding: 14, borderRadius: 16, backgroundColor: c.surface }}>
+                  <Text variant="bodySmall" muted style={{ padding: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
                     Coins aren&apos;t on sale in your country yet. We&apos;ll add your country soon.
                   </Text>
                 ) : null}
@@ -203,7 +203,7 @@ export default function WalletScreen() {
                   onPress={() => buy(pick)}
                 />
               )}
-              <Row gap={8} style={{ padding: 14, borderRadius: 16, backgroundColor: c.surface }}>
+              <Row gap={8} style={{ padding: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
                 <Text style={{ flex: 1, fontSize: 15 }}>Pay with card</Text>
                 <Text variant="caption" faint>Secure checkout · Stripe</Text>
               </Row>

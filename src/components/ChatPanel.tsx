@@ -156,7 +156,7 @@ export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress, ac
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
         renderItem={({ item }) => (
           <Pressable onLongPress={() => setSelected(item)} onPress={() => onUserPress?.(item.sender_id)} accessibilityHint="Long press for options">
-            <View style={{ alignSelf: 'flex-start', backgroundColor: 'rgba(20,24,30,0.72)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 7, marginVertical: 3, maxWidth: '88%' }}>
+            <View style={{ alignSelf: 'flex-start', backgroundColor: 'rgba(6,24,38,0.62)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 7, marginVertical: 3, maxWidth: '88%' }}>
               <Text color={c.text} style={{ fontSize: 14, lineHeight: 19 }}>
                 <Text variant="label" color={item.sender_id === hostId ? c.gold : c.accent}>{displayName(item.sender)} </Text>
                 {translations[item.id] ?? item.body}
@@ -176,7 +176,7 @@ export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress, ac
           onSubmitEditing={send}
           returnKeyType="send"
           accessibilityLabel="Chat message"
-          style={{ flex: 1, minWidth: 0, height: 46, borderRadius: 23, paddingHorizontal: 18, backgroundColor: 'rgba(20,24,30,0.78)', color: c.text, fontFamily: fonts.regular, fontSize: 14 }}
+          style={{ flex: 1, minWidth: 0, height: 46, borderRadius: 23, paddingHorizontal: 18, backgroundColor: 'rgba(6,24,38,0.72)', color: c.text, fontFamily: fonts.regular, fontSize: 14 }}
         />
         {/* The send button appears once there's something to send; the keyboard's send key works too. */}
         {(draft.trim() || sending) && <Pressable
