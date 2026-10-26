@@ -146,16 +146,3 @@ export function LoopStrip({ me, rooms }: { me: { avatar_url?: string | null; nam
     </ScrollView>
   );
 }
-
-/** First bubble of the Home stories row: start your own live. */
-export function GoLiveBubble() {
-  const { c } = useTheme();
-  return (
-    <PressScale scaleTo={0.92} onPress={() => router.push('/create')} accessibilityRole="button" accessibilityLabel="Go live" style={{ width: 72, alignItems: 'center', gap: 10 }}>
-      <View style={{ width: SIZE, height: SIZE, borderRadius: SIZE / 2, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: c.violetBorder, borderStyle: 'dashed' }}>
-        <Ionicons name="add" size={28} color={c.primary} />
-      </View>
-      <Text variant="caption" color={c.primary} style={{ fontWeight: '700' }}>Go live</Text>
-    </PressScale>
-  );
-}

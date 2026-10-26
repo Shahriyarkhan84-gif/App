@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.72 — Simpler Home
+
+- Home goes straight from the topic chips to the grid of lives: the "following live" circles row and the big featured live card are gone (removed `GoLiveBubble` and `FeaturedRoomCard`). Going live stays on the + tab; followed hosts who are live are still on the bell.
+- Figma page "Main screens — Glass & sky": Home, Me, Social profile, Wallet and Rankings.
+
 ## 0.9.71 — Zynalive back on Glass & sky
 
 - The owner chose Glass & sky: `brands/zynalive/brand.json` → `"preset": "glass-sky"` (sky-blue screens, frosted cards, deep-blue buttons, navy live rooms, light status bar and splash). Midnight stays available for client brands.
