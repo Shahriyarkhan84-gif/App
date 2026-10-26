@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.76 — Videos off for Zynalive
+
+- `brands/zynalive/brand.json` → `"videos": false`: no Videos row on Me, no Videos/Lives tabs on profiles (they show About only, without a tab bar), no video notifications, and the video screens can't be opened. The code stays for other brands.
+
 ## 0.9.75 — Diamonds history at the top
 
 - On the Diamonds screen, history is no longer at the bottom of the page: a **History** button at the top right opens **Purchase history** in a sheet: only diamond purchases ("Bought 500 diamonds") and their refunds — gifts you sent are not listed, and the All / Purchases / Gifts filter is gone.

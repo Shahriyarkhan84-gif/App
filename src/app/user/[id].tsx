@@ -246,7 +246,8 @@ export default function UserProfileScreen() {
               </View>
             )}
 
-            <TextTabs options={tabs} value={activeTab} onChange={setTab} />
+            {/* With videos off (brand setting) there is only About, so no tab bar. */}
+            {tabs.length > 1 && <TextTabs options={tabs} value={activeTab} onChange={setTab} />}
             {activeTab === 'videos' && <ProfileMedia userId={id!} kind="upload" isMe={isMe} />}
             {activeTab === 'replays' && <ProfileMedia userId={id!} kind="live_recording" isMe={isMe} />}
             {activeTab === 'about' && (

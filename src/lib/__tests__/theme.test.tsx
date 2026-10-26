@@ -38,11 +38,12 @@ describe('useTheme', () => {
 });
 
 describe('brand', () => {
-  it('defaults to Zynalive on the Glass & sky preset with every feature on', () => {
+  it('defaults to Zynalive on the Glass & sky preset, with videos switched off', () => {
     expect(brand.name).toBe('Zynalive');
     expect(brand.theme.preset).toBe('glass-sky');
     expect(hasFeature('partyRooms')).toBe(true);
     expect(hasFeature('pkBattles')).toBe(true);
+    expect(hasFeature('videos')).toBe(false);
   });
 
   it('keeps Midnight available as a dark preset for other brands', () => {

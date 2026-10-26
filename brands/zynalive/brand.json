@@ -44,7 +44,7 @@
     "pkBattles": true,
     "agencies": true,
     "events": true,
-    "videos": true,
+    "videos": false,
     "rankings": true,
     "frames": true
   }
