@@ -9,7 +9,7 @@ import { ActivityIndicator, Platform, Pressable, ScrollView, View } from 'react-
 import { U, units } from '@/lib/brand';
 import { Pop, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { Button, Coin, glassShadow, Row, Screen, Segmented, Sheet, Text } from '@/components/ui';
+import { Button, Coin, glassShadow, Row, Screen, Sheet, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { reconcilePayments, startCoinCheckout } from '@/lib/api';
@@ -21,14 +21,10 @@ import { formatMoney, type CoinPackage } from '@/lib/types';
 
 type Tx = { id: number; delta: number; kind: string; created_at: string };
 
-const HISTORY_TABS = [
-  { id: 'all', label: 'All' },
-  { id: 'purchases', label: 'Purchases' },
-  { id: 'gifts', label: 'Gifts sent' },
-] as const;
-
+// History is purchases only (and their refunds/chargebacks): it never lists the gifts you sent.
+const PURCHASE_KINDS = ['purchase', 'refund', 'chargeback'];
 const KIND_LABEL: Record<string, string> = {
-  purchase: `${U.Spend} purchased`, gift_sent: 'Gift sent', refund: 'Refund reversal', chargeback: 'Chargeback reversal', adjustment: 'Adjustment',
+  purchase: `${U.Spend} purchased`, refund: 'Refund reversal', chargeback: 'Chargeback reversal',
 };
 
 export default function WalletScreen() {
@@ -44,13 +40,12 @@ export default function WalletScreen() {
   const [awaiting, setAwaiting] = useState<number | null>(null);
   // Set when Stripe sends the web app back here (?status=success|cancelled).
   const { status: returnStatus } = useLocalSearchParams<{ status?: string }>();
-  const [tab, setTab] = useState<(typeof HISTORY_TABS)[number]['id']>('all');
 
   const { data, error, loading, reload } = useFocusedAsync(async () => {
     const [wallet, packages, txs, region] = await Promise.all([
       supabase.from('wallets').select('coin_balance,frozen').eq('user_id', userId!).maybeSingle(),
       supabase.from('coin_packages').select('id,name,coins,price_minor,currency,region').eq('active', true).order('sort'),
-      supabase.from('coin_transactions').select('id,delta,kind,created_at').eq('user_id', userId!).order('created_at', { ascending: false }).limit(50),
+      supabase.from('coin_transactions').select('id,delta,kind,created_at').eq('user_id', userId!).in('kind', PURCHASE_KINDS).order('created_at', { ascending: false }).limit(50),
       // Prices follow the country the account was created in (locked); never show other countries'.
       supabase.rpc('my_region'),
     ]);
@@ -219,23 +214,20 @@ export default function WalletScreen() {
               <Text variant="caption" faint>{U.Spend} are added only after the payment is confirmed.</Text>
 
             </ScrollView>
-            <Sheet visible={historyOpen} onClose={() => setHistoryOpen(false)} title="History">
+            <Sheet visible={historyOpen} onClose={() => setHistoryOpen(false)} title="Purchase history">
               <View style={{ gap: 4, flexShrink: 1 }}>
-                <View style={{ paddingVertical: 6 }}>
-                  <Segmented options={HISTORY_TABS} value={tab} onChange={setTab} />
-                </View>
                 <ScrollView style={{ flexShrink: 1 }}>
                 {(() => {
-                  const txs = data.txs.filter((t) => tab === 'all' || (tab === 'purchases' ? t.kind === 'purchase' : t.kind === 'gift_sent'));
-                  return txs.length === 0 ? <Text muted style={{ paddingVertical: 12 }}>{tab === 'gifts' ? 'No gifts sent yet.' : tab === 'purchases' ? 'No purchases yet.' : 'No transactions yet.'}</Text> : txs.map((t) => {
+                  const txs = data.txs;
+                  return txs.length === 0 ? <Text muted style={{ paddingVertical: 12 }}>No purchases yet.</Text> : txs.map((t) => {
                   const credit = t.delta > 0;
                   return (
                     <Row key={t.id} style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.divider }}>
-                      <View style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: credit ? c.goldSurface : c.surfaceRaised }}>
-                        <Text variant="label" color={credit ? c.gold : c.textMuted} style={{ fontSize: 15 }}>{credit ? '+' : '−'}</Text>
+                      <View style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: c.violetSurface }}>
+                        <Coin size={18} />
                       </View>
                       <View style={{ flex: 1, gap: 2 }}>
-                        <Text style={{ fontWeight: '500', fontSize: 14 }}>{KIND_LABEL[t.kind] ?? t.kind}</Text>
+                        <Text style={{ fontWeight: '500', fontSize: 14 }}>{t.kind === 'purchase' ? `Bought ${units(t.delta)}` : KIND_LABEL[t.kind] ?? t.kind}</Text>
                         <Text variant="caption" faint>{new Date(t.created_at).toLocaleString()}</Text>
                       </View>
                       <View style={{ alignItems: 'flex-end', gap: 3 }}>
