@@ -96,11 +96,11 @@ export default function EarningsScreen() {
           <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
             <FadeIn>
               <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, borderRadius: 22, gap: 10 }}>
-                <Text variant="bodySmall" color="rgba(255,255,255,0.9)">Available diamonds</Text>
-                <Row gap={10}><Ionicons name="diamond" size={24} color="#FFFFFF" /><Text variant="display" color="#fff" accessibilityLiveRegion="polite">{data.earnings.balance.toLocaleString()}</Text></Row>
+                <Text variant="bodySmall" color={c.primaryText}>Available diamonds</Text>
+                <Row gap={10}><Ionicons name="diamond" size={24} color={c.primaryText} /><Text variant="display" color={c.primaryText} accessibilityLiveRegion="polite">{data.earnings.balance.toLocaleString()}</Text></Row>
                 <Row gap={24}>
-                  <View><Text variant="label" color="#fff">{data.earnings.held.toLocaleString()}</Text><Text variant="caption" color="rgba(255,255,255,0.85)">In review</Text></View>
-                  <View><Text variant="label" color="#fff">{data.earnings.lifetime.toLocaleString()}</Text><Text variant="caption" color="rgba(255,255,255,0.85)">Lifetime</Text></View>
+                  <View><Text variant="label" color={c.primaryText}>{data.earnings.held.toLocaleString()}</Text><Text variant="caption" color={c.primaryText}>In review</Text></View>
+                  <View><Text variant="label" color={c.primaryText}>{data.earnings.lifetime.toLocaleString()}</Text><Text variant="caption" color={c.primaryText}>Lifetime</Text></View>
                 </Row>
               </LinearGradient>
             </FadeIn>

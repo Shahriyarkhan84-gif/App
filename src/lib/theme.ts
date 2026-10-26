@@ -3,7 +3,7 @@ import { useWindowDimensions } from 'react-native';
 import { brand, type Brand, type ThemePreset } from './brand';
 
 // Design tokens. Colours come from the brand's theme preset (brands/<id>/brand.json); red LIVE
-// tags and gold coins are shared by every brand.
+// tags and gold coins are shared by every brand. No preset uses pink.
 // Chunky Bricolage Grotesque for big headings and the wordmark, DM Sans for everything else.
 export const spacing = { 4: 4, 8: 8, 12: 12, 16: 16, 20: 20, 24: 24, 32: 32, 40: 40, 48: 48, 64: 64 } as const;
 export const radius = { 8: 8, 12: 12, 16: 16, 20: 20, 24: 24, 32: 32, pill: 999 } as const;
@@ -138,7 +138,48 @@ const light: typeof dark = {
 
 export type Palette = typeof dark;
 
-const PRESETS: Record<ThemePreset, { light: Palette; dark: Palette }> = { 'glass-sky': { light, dark } };
+// Midnight: the whole app is dark, matching the Figma design — near-black screens, charcoal cards,
+// white text, light-violet actions with near-black text on them (5:1 or better), gold coins, red
+// LIVE. No pink. Live video screens use the same palette.
+const midnight: Palette = {
+  background: '#0E0E10',
+  surface: '#1C1C20',
+  surfaceRaised: '#26262B',
+  border: '#33333A',
+  divider: '#26262B',
+  tabBar: '#121214',
+  text: '#FFFFFF',
+  textMuted: '#B8B8C2',
+  textFaint: '#8C8C98',
+  primary: '#A78BFA',
+  primaryText: '#140A2E',
+  accent: '#A78BFA',
+  live: '#E11D48',
+  gold: '#FFC24B',
+  onGold: '#2A1A00',
+  goldSurface: '#241C0C',
+  goldBorder: '#4A3A18',
+  goldText: '#FFE3A3',
+  violet: '#A78BFA',
+  violetSurface: '#1E1633',
+  violetBorder: '#3B2E66',
+  violetText: '#E4DAFF',
+  success: '#34C789',
+  warning: '#FFC24B',
+  danger: '#FF5A61',
+  overlay: 'rgba(0,0,0,0.7)',
+  gradient: ['#B69CFB', '#A78BFA', '#9B7BF7'] as Gradient,
+  glow: 'rgba(167,139,250,0.35)',
+  sky: ['#16161A', '#111114', '#0E0E10'] as Gradient,
+  glassBorder: '#2A2A30',
+};
+
+/** `light` is the palette for everyday screens, `dark` for live video; `appearance` says which one everyday screens look like. */
+type Preset = { light: Palette; dark: Palette; appearance: 'light' | 'dark' };
+const PRESETS: Record<ThemePreset, Preset> = {
+  'glass-sky': { light, dark, appearance: 'light' },
+  midnight: { light: midnight, dark: midnight, appearance: 'dark' },
+};
 
 /** Mixes a #RRGGBB colour toward black (amount < 0) or white (amount > 0). */
 function shade(hex: string, amount: number) {
@@ -149,24 +190,32 @@ function shade(hex: string, amount: number) {
 }
 
 /** A brand's own main colour replaces the preset's primary family; everything else stays. */
-export function brandPalettes(theme: Brand['theme']): { light: Palette; dark: Palette } {
+export function brandPalettes(theme: Brand['theme']): Preset {
   const base = PRESETS[theme.preset] ?? PRESETS['glass-sky'];
   const p = theme.primary;
   if (!p || !/^#[0-9A-Fa-f]{6}$/.test(p)) return base;
   const night = shade(p, 0.55);
+  // On a dark palette the brand colour is lightened so near-black text on it stays readable.
+  const onDark = (pal: Palette): Palette => ({ ...pal, primary: night, violet: night, accent: night, gradient: [shade(p, 0.35), shade(p, 0.45), night], glow: `${night}59` });
   return {
-    light: { ...base.light, primary: p, violet: p, violetText: shade(p, -0.3), violetBorder: shade(p, 0.7), violetSurface: shade(p, 0.93), gradient: [shade(p, -0.2), p, shade(p, 0.12)], glow: `${p}47` },
-    dark: { ...base.dark, primary: night, violet: night, accent: night, gradient: [shade(p, 0.35), shade(p, 0.45), night], glow: `${night}59` },
+    appearance: base.appearance,
+    light: base.appearance === 'dark'
+      ? onDark(base.light)
+      : { ...base.light, primary: p, violet: p, violetText: shade(p, -0.3), violetBorder: shade(p, 0.7), violetSurface: shade(p, 0.93), gradient: [shade(p, -0.2), p, shade(p, 0.12)], glow: `${p}47` },
+    dark: onDark(base.dark),
   };
 }
 
 const palettes = brandPalettes(brand.theme);
 
-/** The app always uses the brand's light look, whatever the phone setting. */
+/** The app always uses the brand preset's everyday look (light for Glass & sky, dark for Midnight), whatever the phone setting. */
 export function useTheme() {
   const breakpoint = useBreakpoint();
-  return { c: palettes.light, scheme: 'light', spacing, radius, type, breakpoint, hPadding: H_PADDING[breakpoint] } as const;
+  return { c: palettes.light, scheme: palettes.appearance, spacing, radius, type, breakpoint, hPadding: H_PADDING[breakpoint] } as const;
 }
 
-// Live video screens (live rooms, party rooms, going live, PK battles) stay dark.
+/** Whether everyday screens are dark, for the status bar and other native chrome. */
+export const appIsDark = palettes.appearance === 'dark';
+
+// Live video screens (live rooms, party rooms, going live, PK battles) are always dark.
 export const liveColors = palettes.dark;

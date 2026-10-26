@@ -61,7 +61,7 @@ export default function StreamSummaryScreen() {
                 <Ionicons name="checkmark-circle" size={22} color={c.primaryText} />
                 <Text variant="h1" color={c.primaryText}>Stream ended</Text>
               </Row>
-              <Text color="rgba(255,255,255,0.9)">{s?.title ? `${s.title} · ` : ''}{minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes}m`}</Text>
+              <Text color={c.primaryText}>{s?.title ? `${s.title} · ` : ''}{minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes}m`}</Text>
             </LinearGradient>
           </FadeIn>
 

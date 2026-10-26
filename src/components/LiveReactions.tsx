@@ -3,13 +3,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, View } from 'react-native';
 
 import { useSupabase } from '@/lib/supabase';
+import { liveColors } from '@/lib/theme';
 
 import { Text } from './ui';
 
 // Likes (floating hearts) and "X joined" lines for a live room, sent over Supabase Realtime broadcast:
 // display only, nothing is stored and nothing counts towards money or rankings.
 
-const HEART_COLORS = ['#7DD3FC', '#38BDF8', '#E11D48', '#FFC24B', '#FF7AA2'];
+// Brand colour, red and gold — no pink.
+const HEART_COLORS = [liveColors.primary, liveColors.gradient[0], liveColors.live, liveColors.gold, liveColors.danger];
 const MAX_HEARTS = 14;
 
 type Heart = { id: number; color: string; drift: number };

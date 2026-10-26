@@ -153,7 +153,7 @@ export function IconButton({ icon, label, onPress, color, badge, bg }: { icon: I
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const { c, radius } = useTheme();
   return (
-    <View style={[{ backgroundColor: c.surface, borderRadius: radius[24], borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', padding: 16, gap: 8 }, glassShadow, style]}>
+    <View style={[{ backgroundColor: c.surface, borderRadius: radius[24], borderWidth: 1, borderColor: c.glassBorder, padding: 16, gap: 8 }, glassShadow, style]}>
       {children}
     </View>
   );

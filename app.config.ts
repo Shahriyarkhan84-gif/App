@@ -21,8 +21,14 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   // Permission prompts and other native strings in app.json say "Zynalive"; use the brand's name.
   const rename = <T,>(value: T): T => JSON.parse(JSON.stringify(value).replace(/Zynalive/g, brand.name.replace(/["\\]/g, '')));
 
+  // Dark presets get a dark splash, root background and native controls.
+  const dark = brand.theme.preset === 'midnight';
+  const backdrop = dark ? '#0E0E10' : (config.backgroundColor ?? '#FFFFFF');
+
   const plugins = rename(config.plugins ?? []).map((p): string | [string, unknown] =>
-    Array.isArray(p) && p[0] === 'expo-splash-screen' ? [p[0], { ...(p[1] as object), image: a.splash }] : (p as string | [string, unknown]),
+    Array.isArray(p) && p[0] === 'expo-splash-screen'
+      ? [p[0], { ...(p[1] as object), image: a.splash, ...(dark ? { backgroundColor: backdrop } : {}) }]
+      : (p as string | [string, unknown]),
   );
 
   return {
@@ -31,6 +37,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     slug: brand.app.slug,
     scheme: brand.app.scheme,
     icon: a.icon,
+    userInterfaceStyle: dark ? 'dark' : config.userInterfaceStyle,
+    backgroundColor: backdrop,
     owner: brand.app.easOwner,
     ios: { ...rename(config.ios), bundleIdentifier: brand.app.iosBundleId },
     android: {

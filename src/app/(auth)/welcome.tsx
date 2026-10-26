@@ -32,7 +32,7 @@ export default function WelcomeScreen() {
           <View style={{ gap: 14 }}>
             <FadeIn from={-16}>
               <Float>
-                <View style={{ width: 92, height: 92, borderRadius: 28, backgroundColor: c.surface, borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 92, height: 92, borderRadius: 28, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }}>
                   <Image source={require('../../../assets/splash-icon.png')} style={{ width: 72, height: 72 }} contentFit="contain" accessible={false} />
                 </View>
               </Float>
@@ -52,7 +52,7 @@ export default function WelcomeScreen() {
               <Button title="Create account" onPress={() => router.push('/sign-up')} style={{ minHeight: 56 }} />
             </FadeIn>
             <FadeIn delay={690}>
-              <Button title="I have an account" variant="secondary" onPress={() => router.push('/sign-in')} style={{ minHeight: 56, backgroundColor: c.surface, borderColor: 'rgba(255,255,255,0.9)' }} />
+              <Button title="I have an account" variant="secondary" onPress={() => router.push('/sign-in')} style={{ minHeight: 56, backgroundColor: c.surface, borderColor: c.border }} />
             </FadeIn>
             <FadeIn delay={780} style={{ gap: 12 }}>
               <SocialButtons onError={setError} divider={false} />

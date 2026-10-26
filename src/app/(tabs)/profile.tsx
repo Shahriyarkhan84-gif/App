@@ -1,6 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useIsFocused } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import type { ReactNode } from 'react';
 import * as WebBrowser from 'expo-web-browser';
@@ -81,8 +80,8 @@ export default function ProfileScreen() {
             <IconButton icon="create-outline" label="Edit profile" color={d.text} bg={d.surface} onPress={() => router.push('/profile-edit')} />
           </Row>
 
-          {/* Glass & sky: photo, name, badges and the three counts sit on one frosted card. */}
-          <LinearGradient colors={['rgba(255,255,255,0.85)', 'rgba(240,249,255,0.7)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[{ borderRadius: 28, paddingVertical: 20, paddingHorizontal: 12, gap: 16, borderWidth: 1, borderColor: d.glassBorder }, glassShadow]}>
+          {/* Photo, name, badges and the three counts sit on one card in the brand's surface colour. */}
+          <View style={[{ borderRadius: 28, paddingVertical: 20, paddingHorizontal: 12, gap: 16, backgroundColor: d.surface, borderWidth: 1, borderColor: d.glassBorder }, glassShadow]}>
           <FadeIn style={{ alignItems: 'center', gap: 8 }}>
             <Pressable onPress={() => router.push('/frames')} accessibilityRole="button" accessibilityLabel="Profile frames">
               <FramedAvatar uri={profile.avatar_url} name={displayName(profile)} size={116} ring={d.primary} frameId={profile.active_frame_id} />
@@ -110,7 +109,7 @@ export default function ProfileScreen() {
             <Stat label="Following" value={stats.data?.following} />
             <Stat label="Fans" value={stats.data?.followers} />
           </FadeIn>
-          </LinearGradient>
+          </View>
 
           <FadeIn delay={140} style={{ flexDirection: 'row', gap: 8 }}>
             <Tile coin label={stats.data ? compactNumber(stats.data.coins) : '–'} sub="Coins" onPress={() => router.push('/wallet')} />

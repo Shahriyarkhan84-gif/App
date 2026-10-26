@@ -1,12 +1,19 @@
 # Changelog
 
-## 0.9.68 — Glass & sky on every screen
+## 0.9.69 — Frosted cards and batches B–D on every screen
 
 Figma pages "Batch B — Social", "Batch C — Host & money" and "Batch D — Events, videos & admin".
 
+- Works with both looks (Midnight and Glass & sky): cards, edges and shadows come from the theme.
 - **Frosted cards everywhere**: every light-screen box (profile, party, contributions, wallet, host dashboard, earnings, frames, support, verify form, events, home banners, Me menu) is a frosted white card with a white edge and soft shadow (`glassBorder` token, `glassShadow`). Secondary buttons are white with a light-blue border; chips and segmented controls are frosted.
 - **Batch B**: user profile on a frosted card with a frosted Follow/Message bar; chat bubbles (yours blue, theirs frosted); Party search pill and room rows; Contributions podium card; Messages tiles, chats, fans, gifts and notifications as frosted rows (notifications get type icons and unread dots); the gift sheet is dark navy over live video (`Sheet tone="live"`); PK score bar is blue vs red.
 - **Batch C/D**: blue cards on Stream summary, Hosting and Earnings now use white text (readable on blue); Me card is frosted; events, videos and the command center use the frosted cards.
+
+## 0.9.68 — Dark theme (Midnight), no pink
+
+- **Zynalive is dark everywhere** (`brands/zynalive/brand.json` → `"preset": "midnight"`), matching the Figma design: near-black screens (`#0E0E10`), charcoal cards, white text, light-violet buttons with near-black text (5:1+), gold coins, red LIVE. Live rooms use the same palette.
+- New `midnight` preset in `src/lib/theme.ts`; presets now say whether everyday screens are light or dark (`appearance`). `useTheme().scheme` and the new `appIsDark` follow it; the status bar, splash and root background turn dark for dark presets (`src/app/_layout.tsx`, `app.config.ts`). A client's own colour is lightened on a dark preset so text on it stays readable. `glass-sky` stays available for other brands.
+- **No pink anywhere**: floating hearts now use the brand colour, red and gold; a test checks no preset contains pink. Bright white borders meant for frosted light cards (Welcome, sign-in back button) now use the theme border.
 
 ## 0.9.67 — Glass & sky look and white-label brands
 

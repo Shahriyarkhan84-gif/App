@@ -129,10 +129,10 @@ export default function WalletScreen() {
               <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                 style={{ padding: 22, borderRadius: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <View style={{ gap: 4 }}>
-                  <Text variant="bodySmall" color="#fff" style={{ opacity: 0.9 }}>Your coins</Text>
-                  <Row gap={8}><Coin size={28} /><Text variant="display" color="#fff" accessibilityLiveRegion="polite">{data.wallet.coin_balance.toLocaleString()}</Text></Row>
+                  <Text variant="bodySmall" color={c.primaryText} style={{ opacity: 0.9 }}>Your coins</Text>
+                  <Row gap={8}><Coin size={28} /><Text variant="display" color={c.primaryText} accessibilityLiveRegion="polite">{data.wallet.coin_balance.toLocaleString()}</Text></Row>
                 </View>
-                <Text variant="caption" color="#fff" style={{ maxWidth: 130, textAlign: 'right', opacity: 0.9 }}>
+                <Text variant="caption" color={c.primaryText} style={{ maxWidth: 130, textAlign: 'right', opacity: 0.9 }}>
                   {data.wallet.frozen ? 'On hold while a payment dispute is reviewed' : 'Used to send gifts in live rooms'}
                 </Text>
               </LinearGradient>
