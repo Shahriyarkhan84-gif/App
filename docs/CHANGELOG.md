@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.89 — Design clean-up from the Figma review
+
+- VIP cards 4–6 use ocean, deep-blue and night-navy instead of indigo/purple (`src/lib/svip.ts`); the website's PK tag is navy instead of purple.
+- Figma: the Kitty logo is one component ("Brand / Logo") used everywhere, including Welcome and the Home header (one swap re-brands a white-label copy); stale duplicate screens and the overflowing Me screen are gone; every LIVE red is bound to the kit's `live` colour; the VIP designs use DM Sans; Computer — Home and the Welcome button use Glass & sky colours.
+
 ## 0.9.88 — IP blocks
 
 - New `private.blocked_ips` list (addresses or ranges) and `public.check_request_ip()`, run by the API before every request (`pgrst.db_pre_request`): a blocked IP gets HTTP 403 for the app, the website and the Android app. Admins use `block_ip(ip, reason, user)` / `unblock_ip(ip)` (audited); clients can't read the list. Migration `20261026010000_ip_blocks.sql`, tests in `10_must_pass.sql`.

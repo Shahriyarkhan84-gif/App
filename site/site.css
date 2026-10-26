@@ -56,7 +56,7 @@ h1 em { font-style: normal; color: var(--accent); }
 .tile { border-radius: 14px; color: #FFFFFF; position: relative; overflow: hidden; }
 .tile::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.65), transparent 55%); }
 .tile .tag { position: absolute; top: 6px; left: 6px; z-index: 1; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 6px; background: var(--live); color: #FFFFFF; }
-.tile .tag.pk { background: #8B5CF6; } .tile .tag.party { background: #0284C7; color: #FFFFFF; }
+.tile .tag.pk { background: #0C4A6E; color: #FFFFFF; } .tile .tag.party { background: #0284C7; color: #FFFFFF; }
 .tile .name { position: absolute; left: 7px; bottom: 6px; z-index: 1; font-size: 10px; font-weight: 700; }
 .tile .views { position: absolute; right: 7px; bottom: 6px; z-index: 1; font-size: 9px; color: rgba(255,255,255,.8); }
 .t1 { background: linear-gradient(150deg, #38BDF8, #075985); } .t2 { background: linear-gradient(150deg, #818CF8, #312E81); }
