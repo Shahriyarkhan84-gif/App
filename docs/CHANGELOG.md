@@ -3,6 +3,7 @@
 ## 0.9.77 — Profile frame button on Me
 
 - A **✨ Frame** button sits on your photo on Me and opens the frames shop (tapping the photo itself still opens your profile). "Profile frames" stays in the menu, and its divider is fixed now that Videos is off.
+- On Me, **Hosting verification** is now the first menu row, above Events and Rankings (shown until you're verified).
 
 ## 0.9.76 — Videos off for Zynalive
 

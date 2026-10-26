@@ -134,18 +134,21 @@ export default function ProfileScreen() {
           <FadeIn delay={200}>
             <Group>
               {isHost && <DarkRow icon="trending-up-outline" label="Creator Center" onPress={() => router.push('/host/dashboard')} />}
+              {/* Hosting verification comes first, before Events. */}
+              {!verified && <DarkRow icon="shield-checkmark-outline" label={t('menu.hostingVerification')} onPress={() => router.push('/hosting')} last={!hasFeature('events') && !hasFeature('rankings')} />}
               {hasFeature('events') && <DarkRow icon="megaphone-outline" label={t('menu.events')} onPress={() => router.push('/events')} last={!hasFeature('rankings')} />}
               {hasFeature('rankings') && <DarkRow icon="trophy-outline" label={t('menu.rankings')} onPress={() => router.push('/rankings')} last />}
             </Group>
           </FadeIn>
 
-          <FadeIn delay={240}>
-            <Group>
-              {hasFeature('frames') && <DarkRow icon="sparkles-outline" label="Profile frames" onPress={() => router.push('/frames')} last={verified && !hasFeature('videos')} />}
-              {hasFeature('videos') && <DarkRow icon="play-circle-outline" label={t('menu.videos')} onPress={() => router.push('/videos')} last={verified} />}
-              {!verified && <DarkRow icon="shield-checkmark-outline" label={t('menu.hostingVerification')} onPress={() => router.push('/hosting')} last />}
-            </Group>
-          </FadeIn>
+          {(hasFeature('frames') || hasFeature('videos')) && (
+            <FadeIn delay={240}>
+              <Group>
+                {hasFeature('frames') && <DarkRow icon="sparkles-outline" label="Profile frames" onPress={() => router.push('/frames')} last={!hasFeature('videos')} />}
+                {hasFeature('videos') && <DarkRow icon="play-circle-outline" label={t('menu.videos')} onPress={() => router.push('/videos')} last />}
+              </Group>
+            </FadeIn>
+          )}
 
           <FadeIn delay={280}>
             <Group>
