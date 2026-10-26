@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.71 — Zynalive back on Glass & sky
+
+- The owner chose Glass & sky: `brands/zynalive/brand.json` → `"preset": "glass-sky"` (sky-blue screens, frosted cards, deep-blue buttons, navy live rooms, light status bar and splash). Midnight stays available for client brands.
+
 ## 0.9.70 — Social profile
 
 - Tapping someone (Home, Party, chat, live-room profile card, rankings…) opens their **social profile** (`src/app/user/[id].tsx`): brand-colour cover, photo (live ring when they're live), name and badges, ID, @username and country, bio, Followers / Following / Friends, Follow · Message · ••• (or Edit profile · Share on your own), a "Live now" card, then tabs **Videos** (uploads), **Lives** (replays) and **About** (ID, country, hours live, top contributors). Video grids are 3 across (`src/components/ProfileMedia.tsx`); Videos and Lives hide when a brand turns videos off.

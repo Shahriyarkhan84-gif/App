@@ -14,7 +14,7 @@ Everything brand-specific lives in `brands/<id>/brand.json` (types in `src/lib/b
 | `currency` | Default currency shown before the server's coin packs load. |
 | `app.*` | Store ids (`iosBundleId`, `androidPackage`), deep-link `scheme`, Expo `slug`, EAS owner and project id. |
 | `assets.*` | App icon, Android adaptive icon layers, splash image, web favicon. Put the files in `brands/<id>/` and point to them. |
-| `theme.preset` | The look. `midnight` (all dark: near-black screens, charcoal cards, light-violet buttons — Zynalive's default) or `glass-sky` (sky-blue background, frosted cards, deep-blue buttons; navy live rooms). |
+| `theme.preset` | The look. `glass-sky` (sky-blue background, frosted cards, deep-blue buttons; navy live rooms — Zynalive's default) or `midnight` (all dark: near-black screens, charcoal cards, light-violet buttons). |
 | `theme.primary` | Optional `#RRGGBB`. Replaces the main colour (buttons, links, selected states) and works out the lighter/darker shades; the rest of the preset stays. |
 | `features.*` | Turn off `partyRooms`, `pkBattles`, `agencies`, `events`, `videos`, `rankings`, `frames`. Off features disappear from tabs, menus, banners and notifications, and their screens can't be opened. |
 
