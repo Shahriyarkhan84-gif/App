@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.86 — Website in the app's look
+
+- zynalive.com (all six pages) now matches the app: Glass & sky colours (sky background, frosted white cards, deep-blue buttons, navy text) instead of the old black site, the **Kitty** logo in the header and footer, and a light phone mock-up on the home page.
+- Website wording uses the app's names: viewers buy **diamonds**, hosts get 90% of every gift as **beans**.
+
 ## 0.9.85 — New logo: Kitty
 
 - The logo is now **Kitty**, a white cat face on the deep-blue tile whose nose is the red live dot (chosen over the Live Z and other ideas; Figma page "Logo — new", "Mascot ideas"). Master: `assets/logo-mark.svg`.
