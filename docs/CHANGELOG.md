@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.70 — Social profile
+
+- Tapping someone (Home, Party, chat, live-room profile card, rankings…) opens their **social profile** (`src/app/user/[id].tsx`): brand-colour cover, photo (live ring when they're live), name and badges, ID, @username and country, bio, Followers / Following / Friends, Follow · Message · ••• (or Edit profile · Share on your own), a "Live now" card, then tabs **Videos** (uploads), **Lives** (replays) and **About** (ID, country, hours live, top contributors). Video grids are 3 across (`src/components/ProfileMedia.tsx`); Videos and Lives hide when a brand turns videos off.
+- On **Me**, tapping your photo or "View profile ›" opens your own social profile (frames are still under Frames).
+
 ## 0.9.69 — Frosted cards and batches B–D on every screen
 
 Figma pages "Batch B — Social", "Batch C — Host & money" and "Batch D — Events, videos & admin".

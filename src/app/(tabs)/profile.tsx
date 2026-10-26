@@ -83,10 +83,13 @@ export default function ProfileScreen() {
           {/* Photo, name, badges and the three counts sit on one card in the brand's surface colour. */}
           <View style={[{ borderRadius: 28, paddingVertical: 20, paddingHorizontal: 12, gap: 16, backgroundColor: d.surface, borderWidth: 1, borderColor: d.glassBorder }, glassShadow]}>
           <FadeIn style={{ alignItems: 'center', gap: 8 }}>
-            <Pressable onPress={() => router.push('/frames')} accessibilityRole="button" accessibilityLabel="Profile frames">
+            <Pressable onPress={() => router.push({ pathname: '/user/[id]', params: { id: profile.id } })} accessibilityRole="button" accessibilityLabel="View your profile">
               <FramedAvatar uri={profile.avatar_url} name={displayName(profile)} size={116} ring={d.primary} frameId={profile.active_frame_id} />
             </Pressable>
             <Text variant="h1" color={d.text} style={{ textAlign: 'center', marginTop: 6 }} numberOfLines={1}>{displayName(profile)}</Text>
+            <Pressable onPress={() => router.push({ pathname: '/user/[id]', params: { id: profile.id } })} accessibilityRole="link" hitSlop={8}>
+              <Text variant="label" color={d.primary}>View profile ›</Text>
+            </Pressable>
             <Text variant="bodySmall" color={d.textMuted} selectable accessibilityLabel={`Your ID ${String(profile.user_number).split('').join(' ')}`}>ID {profile.user_number}</Text>
             {(host || isAgencyOwner) && (
               <Row gap={6} style={{ flexWrap: 'wrap', justifyContent: 'center' }}>

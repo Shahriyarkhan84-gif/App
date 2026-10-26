@@ -1,16 +1,18 @@
 import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
-import { brand } from '@/lib/brand';
+import { brand, hasFeature } from '@/lib/brand';
 import { ContributionsCard } from '@/components/Contributions';
 import { LiveAvatar } from '@/components/FollowingLive';
 import { PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { FramedAvatar } from '@/components/FramedAvatar';
-import { Button, Card, compactNumber, glassShadow, RoleBadges, Row, Screen, Text } from '@/components/ui';
+import { Button, Card, compactNumber, glassShadow, LiveBadge, RoleBadges, Row, Screen, Text, TextTabs, type IconName } from '@/components/ui';
+import { ProfileMedia } from '@/components/ProfileMedia';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { rpc } from '@/lib/api';
@@ -31,6 +33,7 @@ export default function UserProfileScreen() {
   const track = useAnalytics();
   const offline = useOffline();
   const [following, setFollowing] = useState<boolean | null>(null);
+  const [tab, setTab] = useState<'videos' | 'replays' | 'about'>('videos');
 
   const { data, error, loading, reload } = useAsync(async () => {
     const [profile, host, room, followers, follow, followingList, pin] = await Promise.all([
@@ -130,11 +133,17 @@ export default function UserProfileScreen() {
       { text: 'Cancel', style: 'cancel' },
     ]);
 
+  const tabs = [
+    ...(hasFeature('videos') ? [{ id: 'videos' as const, label: 'Videos' }, { id: 'replays' as const, label: 'Lives' }] : []),
+    { id: 'about' as const, label: 'About' },
+  ];
+  const activeTab = tabs.some((t) => t.id === tab) ? tab : tabs[0].id;
+
   return (
     <Screen edges={['bottom']}>
       <Stack.Screen
         options={{
-          title: data ? displayName(data.profile) : '',
+          title: '',
           headerRight: data ? () => (
             <PressScale onPress={shareProfile} accessibilityRole="button" accessibilityLabel="Share this profile" hitSlop={12}>
               <Ionicons name="share-social-outline" size={21} color={c.text} />
@@ -144,47 +153,72 @@ export default function UserProfileScreen() {
       />
       <StateView state={resolveState({ offline, loading, error, data, onRetry: reload, isEmpty: (d) => d === null, empty: { title: "This account doesn't exist", body: "It may have been deleted." } })}>
         {data && (
-          <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
-            <Card style={{ alignItems: 'center', gap: 8, padding: 20, borderRadius: 28 }}>
-              {data.room?.status === 'live' ? (
-                <PressScale
-                  scaleTo={0.94}
-                  onPress={() => router.push({ pathname: '/live/[roomId]', params: { roomId: data.room!.id } })}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${displayName(data.profile)} is live, ${data.room.viewer_count} watching. Watch`}
-                  style={{ marginBottom: 8 }}
-                >
-                  <LiveAvatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={108} />
-                </PressScale>
-              ) : (
-                <FramedAvatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={96} frameId={data.profile.active_frame_id} />
-              )}
-              <Row gap={8}>
-                <Text variant="h2">{displayName(data.profile)}</Text>
-                <RoleBadges profile={data.profile} />
-              </Row>
-              <Text muted selectable>ID {data.profile.user_number}</Text>
-              {data.profile.signup_country && (
-                <View accessibilityLabel={`Joined from ${countryName(data.profile.signup_country)}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
-                  <Ionicons name="location" size={13} color={c.primary} />
-                  <Text variant="caption">{flag(data.profile.signup_country)} {countryName(data.profile.signup_country)}</Text>
-                </View>
-              )}
-              <Row gap={20} style={{ paddingVertical: 4 }}>
-                {[
-                  { label: 'Friends', value: data.friends },
-                  // Moves with the Follow button at once, before the refetch.
-                  { label: 'Followers', value: data.followers + (isFollowing === data.follows ? 0 : isFollowing ? 1 : -1) },
-                  { label: 'Following', value: data.following },
-                ].map((s) => (
-                  <View key={s.label} style={{ alignItems: 'center' }}>
-                    <Text variant="h3">{compactNumber(s.value)}</Text>
-                    <Text variant="caption" muted>{s.label}</Text>
-                  </View>
-                ))}
-              </Row>
-              {data.profile.bio && <Text muted style={{ textAlign: 'center' }}>{data.profile.bio}</Text>}
+          <ScrollView contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 32, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
+            {/* Social profile: cover, photo, name, counts, actions, then their videos, lives and about. */}
+            <Card style={{ padding: 0, gap: 0, borderRadius: 28, overflow: 'hidden' }}>
+              <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 96 }} />
+              <View style={{ alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 18, marginTop: -54 }}>
+                {data.room?.status === 'live' ? (
+                  <PressScale
+                    scaleTo={0.94}
+                    onPress={() => router.push({ pathname: '/live/[roomId]', params: { roomId: data.room!.id } })}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${displayName(data.profile)} is live, ${data.room.viewer_count} watching. Watch`}
+                  >
+                    <LiveAvatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={108} />
+                  </PressScale>
+                ) : (
+                  <FramedAvatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={100} ring={c.surfaceRaised} frameId={data.profile.active_frame_id} />
+                )}
+                <Row gap={8}>
+                  <Text variant="h2" numberOfLines={1} style={{ maxWidth: 260 }}>{displayName(data.profile)}</Text>
+                  <RoleBadges profile={data.profile} />
+                </Row>
+                <Text variant="caption" faint selectable>
+                  ID {data.profile.user_number}{data.profile.username ? ` · @${data.profile.username}` : ''}{data.profile.signup_country ? ` · ${flag(data.profile.signup_country)} ${countryName(data.profile.signup_country)}` : ''}
+                </Text>
+                {data.profile.bio && <Text muted style={{ textAlign: 'center' }}>{data.profile.bio}</Text>}
+                <Row gap={0} style={{ alignSelf: 'stretch', paddingVertical: 4 }}>
+                  {[
+                    // Moves with the Follow button at once, before the refetch.
+                    { label: 'Followers', value: data.followers + (isFollowing === data.follows ? 0 : isFollowing ? 1 : -1) },
+                    { label: 'Following', value: data.following },
+                    { label: 'Friends', value: data.friends },
+                  ].map((s) => (
+                    <View key={s.label} style={{ flex: 1, alignItems: 'center' }}>
+                      <Text variant="h2">{compactNumber(s.value)}</Text>
+                      <Text variant="caption" muted>{s.label}</Text>
+                    </View>
+                  ))}
+                </Row>
+                {isMe ? (
+                  <Row style={{ alignSelf: 'stretch' }}>
+                    <Button title="Edit profile" variant="secondary" onPress={() => router.push('/profile-edit')} style={{ flex: 1 }} />
+                    <Button title="Share" variant="secondary" onPress={shareProfile} style={{ flex: 1 }} />
+                  </Row>
+                ) : (
+                  <Row style={{ alignSelf: 'stretch' }}>
+                    <Button title={isFollowing ? 'Following' : 'Follow'} variant={isFollowing ? 'secondary' : 'primary'} onPress={toggleFollow} style={{ flex: 1 }} />
+                    <Button title="Message" variant="secondary" onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: id } })} style={{ flex: 1 }} />
+                    <Button title="•••" variant="secondary" onPress={moreActions} accessibilityLabel="More actions" style={{ paddingHorizontal: 16 }} />
+                  </Row>
+                )}
+              </View>
             </Card>
+
+            {data.room?.status === 'live' && (
+              <PressScale onPress={() => router.push({ pathname: '/live/[roomId]', params: { roomId: data.room!.id } })} accessibilityRole="button" scaleTo={0.98}>
+                <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}>
+                  <LiveBadge />
+                  <View style={{ flex: 1 }}>
+                    <Text variant="label" numberOfLines={1}>{data.room.title || 'Live now'}</Text>
+                    <Text variant="caption" faint>{compactNumber(data.room.viewer_count)} watching</Text>
+                  </View>
+                  <Text variant="label" color={c.primary}>Watch</Text>
+                </Card>
+              </PressScale>
+            )}
+
             {isPlatformAdmin && (
               <View style={{ gap: 10, padding: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
                 <Text variant="label">Owner tools</Text>
@@ -211,20 +245,35 @@ export default function UserProfileScreen() {
                 {!ownerVerified && <Text variant="caption" muted>Verify the ID first to pin it to Home.</Text>}
               </View>
             )}
-            {data.host && <ContributionsCard hostId={id} />}
+
+            <TextTabs options={tabs} value={activeTab} onChange={setTab} />
+            {activeTab === 'videos' && <ProfileMedia userId={id!} kind="upload" isMe={isMe} />}
+            {activeTab === 'replays' && <ProfileMedia userId={id!} kind="live_recording" isMe={isMe} />}
+            {activeTab === 'about' && (
+              <View style={{ gap: 12 }}>
+                <Card style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
+                  <AboutRow icon="finger-print-outline" label="ID" value={String(data.profile.user_number)} />
+                  {data.profile.signup_country && <AboutRow icon="location-outline" label="From" value={`${flag(data.profile.signup_country)} ${countryName(data.profile.signup_country)}`} />}
+                  {data.host && <AboutRow icon="radio-outline" label="Hosting" value={`${Math.round((data.host.total_live_seconds ?? 0) / 3600)} hours live`} />}
+                  <AboutRow icon="people-outline" label="Friends" value={compactNumber(data.friends)} last />
+                </Card>
+                {data.host && <ContributionsCard hostId={id} />}
+              </View>
+            )}
           </ScrollView>
-        )}
-        {data && !isMe && (
-          // Pinned footer: Follow / Message stay in place while the profile scrolls.
-          <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, borderTopWidth: 1, borderTopColor: c.glassBorder, backgroundColor: c.surface }}>
-            <Row style={{ maxWidth: 640, width: '100%', alignSelf: 'center' }}>
-              <Button title={isFollowing ? 'Following' : 'Follow'} variant={isFollowing ? 'secondary' : 'primary'} onPress={toggleFollow} style={{ flex: 1, minHeight: 54 }} />
-              <Button title="Message" variant="secondary" onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: id } })} style={{ flex: 1, minHeight: 54 }} />
-              <Button title="•••" variant="ghost" onPress={moreActions} accessibilityLabel="More actions" />
-            </Row>
-          </View>
         )}
       </StateView>
     </Screen>
+  );
+}
+
+function AboutRow({ icon, label, value, last }: { icon: IconName; label: string; value: string; last?: boolean }) {
+  const { c } = useTheme();
+  return (
+    <Row style={{ minHeight: 50, paddingHorizontal: 16, borderBottomWidth: last ? 0 : 1, borderBottomColor: c.divider }}>
+      <Ionicons name={icon} size={19} color={c.textMuted} />
+      <Text muted style={{ flex: 1 }}>{label}</Text>
+      <Text variant="label">{value}</Text>
+    </Row>
   );
 }
