@@ -359,13 +359,15 @@ export function Row({ children, gap = 12, style }: { children: ReactNode; gap?: 
 }
 
 /** Tappable list row with icon and chevron (settings / profile menus). */
-export function ListRow({ icon, label, onPress, color, last }: { icon: IconName; label: string; onPress: () => void; color?: string; last?: boolean }) {
+/** `value` shows the current setting on the right (e.g. "Everyone"). */
+export function ListRow({ icon, label, onPress, color, last, value }: { icon: IconName; label: string; onPress: () => void; color?: string; last?: boolean; value?: string }) {
   const { c } = useTheme();
   return (
-    <PressScale onPress={onPress} accessibilityRole="button" scaleTo={0.98}>
+    <PressScale onPress={onPress} accessibilityRole="button" accessibilityHint={value} scaleTo={0.98}>
       <Row style={{ minHeight: 52, paddingHorizontal: 16, borderBottomWidth: last ? 0 : 1, borderBottomColor: c.divider }}>
         <Ionicons name={icon} size={20} color={color ?? c.text} />
         <Text style={{ flex: 1 }} color={color}>{label}</Text>
+        {value ? <Text variant="caption" muted numberOfLines={1} style={{ maxWidth: 150 }}>{value}</Text> : null}
         <Ionicons name="chevron-forward" size={18} color={c.textFaint} />
       </Row>
     </PressScale>

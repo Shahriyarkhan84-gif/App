@@ -1,12 +1,18 @@
 import { useClerk } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import * as Application from 'expo-application';
+import Constants from 'expo-constants';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { ScrollView, View } from 'react-native';
 
 import { FramedAvatar } from '@/components/FramedAvatar';
 import { Button, Card, Chip, ListRow, Row, Screen, Text } from '@/components/ui';
 import { Alert, confirmAction } from '@/lib/alert';
+import { brand } from '@/lib/brand';
 import { flag } from '@/lib/country';
+import { clearSavedCache } from '@/lib/hooks';
 import { canInstallIosProfile, IOS_PROFILE_PATH, isIosSafari } from '@/lib/install';
 import { LANGUAGES, useI18n, type Language } from '@/lib/i18n';
 import { useProfile } from '@/lib/profile';
@@ -18,6 +24,17 @@ export default function SettingsScreen() {
   const { c } = useTheme();
   const { t, saved, setLanguage } = useI18n();
   const { profile } = useProfile();
+
+  const version = Application.nativeApplicationVersion ?? Constants.expoConfig?.version ?? '';
+  const build = Application.nativeBuildVersion;
+  const who = { everyone: 'Everyone', followers: 'People I follow', nobody: 'No one' }[profile?.who_can_message ?? 'everyone'];
+
+  // Clears screens saved on this phone and cached pictures; sign-in and settings are kept.
+  const cleanCache = () =>
+    confirmAction('Clean cache?', 'Saved screens and pictures are removed from this device and load again from the internet. You stay signed in.', 'Clean', async () => {
+      await Promise.all([clearSavedCache(), Image.clearDiskCache(), Image.clearMemoryCache()]).catch(() => {});
+      Alert.alert('Cache cleaned', 'Screens and pictures will load fresh.');
+    });
 
   const choose = async (code: Language | null) => {
     const needsRestart = await setLanguage(code);
@@ -61,7 +78,11 @@ export default function SettingsScreen() {
         )}
 
         <Section title="Account">
-          <ListRow icon="person-outline" label="Edit profile" onPress={() => router.push('/profile-edit')} last />
+          <ListRow icon="person-outline" label="Edit profile" onPress={() => router.push('/profile-edit')} />
+          <ListRow icon="shield-checkmark-outline" label="Account management" onPress={() => router.push('/account')} />
+          <ListRow icon="lock-closed-outline" label="Privacy" value={`Messages: ${who}`} onPress={() => router.push('/privacy-settings')} />
+          <ListRow icon="ban-outline" label="Blocked accounts" onPress={() => router.push('/blocked')} />
+          <ListRow icon="notifications-outline" label="Notifications" onPress={() => router.push('/notification-settings')} last />
         </Section>
 
         <View style={{ gap: 8 }}>
@@ -75,12 +96,15 @@ export default function SettingsScreen() {
         <Section title="About">
           <ListRow icon="document-text-outline" label="Terms of Service" onPress={() => router.push('/terms')} />
           <ListRow icon="lock-closed-outline" label={t('settings.privacy')} onPress={() => router.push('/privacy')} />
-          <ListRow icon="help-circle-outline" label="Help & feedback" onPress={() => router.push('/support')} last />
+          <ListRow icon="help-circle-outline" label="Help & feedback" onPress={() => router.push('/support')} />
+          <ListRow icon="information-circle-outline" label={`About ${brand.name}`} onPress={() => void WebBrowser.openBrowserAsync(`${brand.website.replace(/\/$/, '')}/about`)} />
+          <ListRow icon="trash-bin-outline" label="Clean cache" onPress={cleanCache} last />
         </Section>
 
         <Button title={t('settings.signOut')} variant="secondary" style={{ backgroundColor: c.surfaceRaised, borderColor: c.violetBorder }}
           onPress={() => confirmAction(t('settings.signOut'), 'You can sign back in any time.', t('settings.signOut'), () => void signOut().then(() => router.replace('/')))} />
         <Button title={t('settings.delete')} variant="ghost" onPress={() => router.push('/delete-account')} style={{ marginTop: -8 }} icon={<Ionicons name="trash-outline" size={16} color={c.danger} />} />
+        <Text variant="caption" faint style={{ textAlign: 'center' }}>{brand.name} {version}{build ? ` (${build})` : ''}</Text>
       </ScrollView>
     </Screen>
   );

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.91 — More settings
+
+Settings → Account now has **Account management**, **Privacy**, **Blocked accounts** and **Notifications**; About has **About Zynalive** and **Clean cache**, and the app version shows at the bottom.
+
+- **Account management** (`/account`): the email you sign in with, linked Google/Apple sign-ins, change or set a password (signs other devices out), Sign out and Delete account.
+- **Privacy** (`/privacy-settings`): who can message me (Everyone / People I follow / No one, enforced by the server) and *Hide my lives from Nearby*.
+- **Blocked accounts** (`/blocked`): everyone you've blocked, with Unblock (existing `unblock_user`).
+- **Notifications** (`/notification-settings`): switch off PK battle and Events & rewards notifications; payment, withdrawal, verification and account notices stay on.
+- **Clean cache**: clears screens saved on the phone and cached pictures; you stay signed in.
+- Needs migration `20261027010000_privacy_settings.sql` (with the other pending ones) before Privacy and Notifications can save; until then they show an error, and everything else works.
+
 ## 0.9.90 — Sign-in screens: Kitty logo, clearer "extra step" error
 
 - The sign-in, sign-up and password screens show the Kitty logo instead of the old "z" tile.

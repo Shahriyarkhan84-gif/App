@@ -949,4 +949,47 @@ reset role;
 select tests.ok(not exists (select 1 from private.blocked_ips where ip = '1.2.3.4'), 'an admin unblocks an IP');
 select set_config('request.headers', '', false);
 
+-- 2026-10-27 Privacy & notification settings
+insert into public.profiles (id, username) values ('pv_a', 'pv_a'), ('pv_b', 'pv_b'), ('pv_c', 'pv_c');
+insert into public.follows (follower_id, followee_id) values ('pv_b', 'pv_c');  -- pv_b follows pv_c
+-- "No one": nobody can start or continue a conversation.
+update public.profiles set who_can_message = 'nobody' where id = 'pv_b';
+select set_config('request.jwt.claims', '{"sub":"pv_a"}', false);
+set role authenticated;
+select tests.fails($$select public.send_direct_message('pv_b', 'hi')$$, '%messages_off%', 'no one can message someone who chose "No one"');
+reset role;
+-- "People you follow": only people the recipient follows.
+update public.profiles set who_can_message = 'followers' where id = 'pv_b';
+select set_config('request.jwt.claims', '{"sub":"pv_a"}', false);
+set role authenticated;
+select tests.fails($$select public.send_direct_message('pv_b', 'hi')$$, '%messages_followers_only%', 'a stranger cannot message a "People you follow" account');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"pv_c"}', false);
+set role authenticated;
+select tests.ok((select body from public.send_direct_message('pv_b', 'hello')) = 'hello', 'someone they follow can message them');
+-- People change only their own privacy settings.
+update public.profiles set who_can_message = 'nobody', hide_from_nearby = true where id = 'pv_c';
+update public.profiles set who_can_message = 'nobody' where id = 'pv_a';
+reset role;
+select tests.ok((select who_can_message = 'nobody' and hide_from_nearby from public.profiles where id = 'pv_c'), 'a person sets their own privacy');
+select tests.ok((select who_can_message = 'everyone' from public.profiles where id = 'pv_a'), 'nobody can change someone else''s privacy');
+-- Muted notification groups are skipped; account notices can't be muted.
+select set_config('request.jwt.claims', '{"sub":"pv_a"}', false);
+set role authenticated;
+select public.set_notification_muted('pk_battles', true);
+select tests.fails($$select public.set_notification_muted('withdrawal', true)$$, '%not_mutable%', 'account and payment notices cannot be muted');
+select tests.fails($$insert into public.notification_settings (user_id, muted) values ('pv_a', '{}')$$, '%permission denied%', 'settings change only through the function');
+reset role;
+select private.notify('pv_a', 'pk_battle_invite', 'PK', 'x');
+select private.notify('pv_a', 'withdrawal', 'Paid', 'x');
+select tests.ok((select count(*) from public.notifications where user_id = 'pv_a' and type = 'pk_battle_invite') = 0, 'a muted group is not delivered');
+select tests.ok((select count(*) from public.notifications where user_id = 'pv_a' and type = 'withdrawal') = 1, 'account notices still arrive');
+select set_config('request.jwt.claims', '{"sub":"pv_a"}', false);
+set role authenticated;
+select public.set_notification_muted('pk_battles', false);
+reset role;
+select private.notify('pv_a', 'pk_battle_invite', 'PK', 'x');
+select tests.ok((select count(*) from public.notifications where user_id = 'pv_a' and type = 'pk_battle_invite') = 1, 'unmuting brings it back');
+select set_config('request.headers', '', false);
+
 drop schema tests cascade;

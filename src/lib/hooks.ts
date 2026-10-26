@@ -25,6 +25,13 @@ export function clearAsyncCache() {
   cache.clear();
 }
 
+/** Settings → Clean cache: forget every screen kept in memory and saved on this phone. */
+export async function clearSavedCache() {
+  cache.clear();
+  const keys = await AsyncStorage.getAllKeys();
+  await AsyncStorage.multiRemove(keys.filter((k) => k.startsWith(STORE_PREFIX)));
+}
+
 // Saved copy on the phone -----------------------------------------------------------------------
 const STORE_PREFIX = 'zl-cache:v1:';
 /** Saved screens older than this are dropped on start (yesterday's live rooms aren't worth showing). */

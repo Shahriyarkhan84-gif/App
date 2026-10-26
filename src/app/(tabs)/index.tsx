@@ -39,7 +39,7 @@ const GRID_GAP = 6;
 
 // live: top 60 by viewers (Popular). Following and New load their own lists, so smaller and newer
 // rooms still show once more than 60 rooms are live.
-type HomeData = { all: Room[]; live: Room[]; followingLive: Room[]; newest: Room[]; followed: Set<string>; recommended: Map<string, { reason: string | null; score: number }> };
+type HomeData = { all: Room[]; live: Room[]; followingLive: Room[]; newest: Room[]; followed: Set<string>; recommended: Map<string, { reason: string | null; score: number }>; hiddenNearby: Set<string> };
 
 export default function HomeScreen() {
   const tabSpace = useTabBarSpace();
@@ -58,11 +58,15 @@ export default function HomeScreen() {
   const { data, error, loading, reload } = useFocusedAsync<HomeData>(async () => {
     // One round trip: the server is far away (us-east-1), so every sequential request adds ~0.5 s.
     // Popular, Following and New are all cut from the same list of live rooms.
-    const [live, follows, recs] = await Promise.all([
+    const [live, follows, recs, hidden] = await Promise.all([
       supabase.from('rooms').select(ROOM_SELECT).eq('status', 'live').order('viewer_count', { ascending: false }).limit(LIVE_LIMIT),
       supabase.from('follows').select('followee_id').eq('follower_id', userId!),
       // Written by the Recommendations agent (LangGraph worker).
       supabase.from('user_recommendations').select('room_id,reason,score').eq('user_id', userId!).order('score', { ascending: false }).limit(10),
+      // Hosts in your country who hid their lives from Nearby (Settings → Privacy). Ignored if it fails.
+      profile?.country
+        ? supabase.from('profiles').select('id').eq('country', profile.country).eq('hide_from_nearby', true).limit(1000)
+        : Promise.resolve({ data: [] as { id: string }[], error: null }),
     ]);
     if (live.error) throw live.error;
     if (follows.error) throw follows.error;
@@ -75,8 +79,9 @@ export default function HomeScreen() {
       newest: [...all].sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? '')).slice(0, 60),
       followed: followedIds,
       recommended: new Map((recs.data ?? []).map((r) => [r.room_id, { reason: r.reason, score: r.score }])),
+      hiddenNearby: new Set(hidden.error ? [] : (hidden.data ?? []).map((p) => p.id)),
     };
-  }, [userId], `home:${userId}`);
+  }, [userId, profile?.country], `home:${userId}`);
 
   // Rooms going live/offline update the feed in real time, without hearing every viewer-count change
   // (those update `rooms` many times a second while it stays 'live'): a new live inserts a `streams`
@@ -238,7 +243,7 @@ function pickFeed(data: HomeData, feed: Feed, country: string | null): Room[] {
     case 'nearby': {
       if (!country) return [];
       const seen = new Set<string>();
-      return [...data.live, ...data.newest].filter((r) => r.host?.country === country && !seen.has(r.id) && !!seen.add(r.id));
+      return [...data.live, ...data.newest].filter((r) => r.host?.country === country && !data.hiddenNearby?.has(r.host_id) && !seen.has(r.id) && !!seen.add(r.id));
     }
     case 'new':
       return data.newest;

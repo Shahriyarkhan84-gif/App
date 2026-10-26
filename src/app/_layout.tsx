@@ -160,6 +160,10 @@ function RootNavigator() {
         <Stack.Screen name="svip" options={{ title: 'SVIP' }} />
         <Stack.Screen name="tasks" options={{ title: 'Task center' }} />
         <Stack.Screen name="fans" options={{ title: 'My fans' }} />
+        <Stack.Screen name="account" options={{ title: 'Account management' }} />
+        <Stack.Screen name="privacy-settings" options={{ title: 'Privacy' }} />
+        <Stack.Screen name="blocked" options={{ title: 'Blocked accounts' }} />
+        <Stack.Screen name="notification-settings" options={{ title: 'Notifications' }} />
         <Stack.Protected guard={hasFeature('frames')}>
           <Stack.Screen name="item-bag" options={{ title: 'Item bag' }} />
         </Stack.Protected>
