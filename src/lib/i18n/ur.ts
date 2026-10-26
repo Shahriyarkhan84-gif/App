@@ -48,6 +48,11 @@ export const ur: Catalog = {
   'settings.language.device': 'ڈیوائس کی زبان',
   'settings.language.restart': 'لے آؤٹ کی سمت بدلنے کے لیے ایپ دوبارہ کھولیں۔',
   'settings.privacy': 'پرائیویسی پالیسی',
+  'settings.installIphone': 'آئی فون پر انسٹال کریں',
+  'settings.installIphone.body': 'ایپ کو ہوم اسکرین پر رکھیں، ایپ کی طرح پوری اسکرین پر۔',
+  'settings.installIphone.button': 'انسٹال',
+  'settings.installIphone.steps': 'Allow دبائیں۔ پھر Settings ایپ کھولیں، اوپر Profile Downloaded دبائیں اور Install دبائیں۔',
+  'settings.installIphone.safari': 'انسٹال کرنے کے لیے یہ صفحہ Safari میں کھولیں۔ آئی فون کے دوسرے براؤزر اسے انسٹال نہیں کر سکتے۔',
   'settings.signOut': 'سائن آؤٹ',
   'settings.delete': 'اکاؤنٹ ڈیلیٹ کریں',
 

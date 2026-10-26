@@ -70,3 +70,14 @@ Media adds `MEDIA_UPLOADS_BUCKET` (private S3 bucket for sources; clients get pr
 |---|---|
 | `SENTRY_AUTH_TOKEN` | EAS secret, uploads source maps |
 | `BRAND` | Which client brand to build (`brands/<id>/brand.json`); default `zynalive`. See `docs/WHITE_LABEL.md` |
+
+## iPhone install profile (`/ios.mobileconfig`)
+
+Built by `npm run build:web` from the brand (see `docs/WHITE_LABEL.md`) and served with
+`Content-Type: application/x-apple-aspen-config` (`vercel.json` and `public/_headers`). It holds one
+Web Clip: the brand icon on the Home Screen, opening the web app full screen. No secrets.
+
+It is **unsigned**, so iOS shows it as "Not Verified" (it still installs). To show "Verified", sign
+it after the build with a code-signing or TLS certificate for the brand's domain (owner action):
+`openssl smime -sign -signer cert.pem -inkey key.pem -certfile chain.pem -nodetach -outform der -in dist/ios.mobileconfig -out dist/ios.mobileconfig.signed && mv dist/ios.mobileconfig.signed dist/ios.mobileconfig`.
+Keep the key out of the repo (a CI secret).

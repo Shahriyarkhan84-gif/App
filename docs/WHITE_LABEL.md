@@ -30,6 +30,10 @@ edited in their Owner command center.
 - `src/lib/brand.ts` exports `brand` and `hasFeature()`; `src/lib/theme.ts` builds the colours from
   `brand.theme` (`brandPalettes()`).
 - Screens never hard-code the name or colours: use `brand.name` and `useTheme().c`.
+- `npm run build:web` also writes `dist/ios.mobileconfig` (`scripts/ios-profile.mjs`): the iPhone
+  install profile behind Settings → **Install on iPhone**. It uses the brand's name, icon,
+  `website` (opens `<website>/welcome`) and `iosBundleId` (profile id), so build the web app with
+  the same `BRAND`.
 
 ## Adding a client
 

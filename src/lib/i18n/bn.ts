@@ -48,6 +48,11 @@ export const bn: Catalog = {
   'settings.language.device': 'ডিভাইসের ভাষা',
   'settings.language.restart': 'লেআউটের দিক বদলাতে জাইনালাইভ আবার খুলুন।',
   'settings.privacy': 'প্রাইভেসি পলিসি',
+  'settings.installIphone': 'iPhone-এ ইনস্টল করুন',
+  'settings.installIphone.body': 'অ্যাপটি হোম স্ক্রিনে রাখুন, অ্যাপের মতো ফুল স্ক্রিনে।',
+  'settings.installIphone.button': 'ইনস্টল',
+  'settings.installIphone.steps': 'Allow চাপুন। তারপর Settings অ্যাপ খুলুন, উপরে Profile Downloaded চাপুন এবং Install চাপুন।',
+  'settings.installIphone.safari': 'ইনস্টল করতে এই পেজটি Safari-তে খুলুন। iPhone-এর অন্য ব্রাউজার এটি ইনস্টল করতে পারে না।',
   'settings.signOut': 'সাইন আউট',
   'settings.delete': 'অ্যাকাউন্ট মুছুন',
 

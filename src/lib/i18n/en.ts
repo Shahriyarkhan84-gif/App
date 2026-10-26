@@ -51,6 +51,11 @@ export const en = {
   'settings.language.device': 'Device language',
   'settings.language.restart': 'Restart the app to switch the layout direction.',
   'settings.privacy': 'Privacy policy',
+  'settings.installIphone': 'Install on iPhone',
+  'settings.installIphone.body': 'Put the app on your Home Screen, full screen like an app.',
+  'settings.installIphone.button': 'Install',
+  'settings.installIphone.steps': 'Tap Allow. Then open the Settings app, tap Profile Downloaded near the top and tap Install.',
+  'settings.installIphone.safari': 'Open this page in Safari to install. Other browsers on iPhone can\'t install it.',
   'settings.signOut': 'Sign out',
   'settings.delete': 'Delete account',
 

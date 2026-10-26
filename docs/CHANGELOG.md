@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.83 — Install on iPhone
+
+- **Settings → Install on iPhone** (only in Safari on iPhone/iPad, and hidden once opened from the Home Screen): downloads a configuration profile that puts the app's icon on the Home Screen and opens it full screen, like an app. iOS asks to **Allow**, then you finish in the Settings app (**Profile Downloaded → Install**); the app shows these steps. Other iPhone browsers are told to use Safari.
+- The profile (`/ios.mobileconfig`) is built per brand during `build:web` (`scripts/ios-profile.mjs`) with the brand's name, icon and website, and served with the type iOS needs (`vercel.json`, `public/_headers`). It only adds the Home Screen icon; it changes nothing else on the phone and can be removed in Settings → General → VPN & Device Management.
+- It's unsigned for now, so iOS labels it "Not Verified"; signing steps are in `docs/ENVIRONMENT.md`. The download page's iPhone answer links to it too.
+
 ## 0.9.82 — VIP as six cards
 
 - The VIP page is now just the six level cards, **V1 to V6**, swiped sideways (the card in the middle grows, the others shrink and fade; it opens on your level). The V1–V6 list is gone.

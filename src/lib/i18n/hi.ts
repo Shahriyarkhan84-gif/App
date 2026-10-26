@@ -50,6 +50,11 @@ export const hi: Catalog = {
   'settings.language.device': 'डिवाइस की भाषा',
   'settings.language.restart': 'लेआउट की दिशा बदलने के लिए ऐप फिर से खोलें।',
   'settings.privacy': 'प्राइवेसी पॉलिसी',
+  'settings.installIphone': 'iPhone पर इंस्टॉल करें',
+  'settings.installIphone.body': 'ऐप को होम स्क्रीन पर रखें, ऐप की तरह फ़ुल स्क्रीन।',
+  'settings.installIphone.button': 'इंस्टॉल',
+  'settings.installIphone.steps': 'Allow दबाएँ। फिर Settings ऐप खोलें, ऊपर Profile Downloaded दबाएँ और Install दबाएँ।',
+  'settings.installIphone.safari': 'इंस्टॉल करने के लिए यह पेज Safari में खोलें। iPhone के दूसरे ब्राउज़र इसे इंस्टॉल नहीं कर सकते।',
   'settings.signOut': 'साइन आउट',
   'settings.delete': 'अकाउंट डिलीट करें',
 

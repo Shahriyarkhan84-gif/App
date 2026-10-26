@@ -2,3 +2,9 @@
 # (same rule as "headers" in vercel.json). Expo copies public/ into dist/ on export.
 /_expo/static/*
   Cache-Control: public, max-age=31536000, immutable
+
+# iPhone install profile (Settings → Install on iPhone): iOS only offers to install it with this type.
+/ios.mobileconfig
+  Content-Type: application/x-apple-aspen-config
+  Content-Disposition: attachment; filename="install.mobileconfig"
+  Cache-Control: no-cache

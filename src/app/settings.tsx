@@ -7,6 +7,7 @@ import { FramedAvatar } from '@/components/FramedAvatar';
 import { Button, Card, Chip, ListRow, Row, Screen, Text } from '@/components/ui';
 import { Alert, confirmAction } from '@/lib/alert';
 import { flag } from '@/lib/country';
+import { canInstallIosProfile, IOS_PROFILE_PATH, isIosSafari } from '@/lib/install';
 import { LANGUAGES, useI18n, type Language } from '@/lib/i18n';
 import { useProfile } from '@/lib/profile';
 import { useTheme } from '@/lib/theme';
@@ -23,6 +24,13 @@ export default function SettingsScreen() {
     if (needsRestart) Alert.alert(t('settings.language'), t('settings.language.restart'));
   };
 
+  // Downloads the install profile; iOS then asks to allow it and to finish in Settings.
+  const installOnIphone = () => {
+    if (!isIosSafari()) return Alert.alert(t('settings.installIphone'), t('settings.installIphone.safari'));
+    window.location.href = IOS_PROFILE_PATH;
+    setTimeout(() => Alert.alert(t('settings.installIphone'), t('settings.installIphone.steps')), 800);
+  };
+
   return (
     <Screen edges={['bottom']}>
       <ScrollView contentContainerStyle={{ padding: 16, gap: 18, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
@@ -36,6 +44,19 @@ export default function SettingsScreen() {
               <Text variant="caption" faint>ID {profile.user_number}{profile.country ? ` · ${flag(profile.country)} ${profile.country}` : ''}</Text>
             </View>
             <Button title="Edit" variant="ghost" size="sm" onPress={() => router.push('/profile-edit')} />
+          </Card>
+        )}
+
+        {canInstallIosProfile() && (
+          <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}>
+            <View style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: c.violetSurface }}>
+              <Ionicons name="phone-portrait-outline" size={22} color={c.primary} />
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text variant="h3">{t('settings.installIphone')}</Text>
+              <Text variant="caption" muted>{t('settings.installIphone.body')}</Text>
+            </View>
+            <Button title={t('settings.installIphone.button')} size="sm" onPress={installOnIphone} />
           </Card>
         )}
 

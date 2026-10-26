@@ -8,6 +8,8 @@
 //   <!-- head -->…<!-- /head --> and <!-- scripts -->…<!-- /scripts --> blocks.
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 
+import { iosProfile } from './ios-profile.mjs';
+
 const dist = new URL('../dist/', import.meta.url);
 const site = new URL('../site/', import.meta.url);
 const at = (f) => new URL(f, dist);
@@ -57,4 +59,10 @@ for (const page of pages) {
   writeFileSync(at(out), html);
 }
 
-console.log(`Website: ${pages.map((p) => p.path).join(', ')}. App at every other path (dist/app.html, dist/404.html).`);
+// iPhone install profile (Settings → Install on iPhone), for the brand being built.
+const brandDir = new URL(`../brands/${process.env.BRAND || 'zynalive'}/`, import.meta.url);
+const brand = JSON.parse(readFileSync(new URL('brand.json', brandDir), 'utf8'));
+const icon = readFileSync(new URL(brand.assets.icon.replace(/^\.\//, '../../'), brandDir));
+writeFileSync(at('ios.mobileconfig'), iosProfile(brand, icon));
+
+console.log(`Website: ${pages.map((p) => p.path).join(', ')}. App at every other path (dist/app.html, dist/404.html). iPhone profile: /ios.mobileconfig.`);
