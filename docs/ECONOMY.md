@@ -14,7 +14,9 @@ brand's own names from `brand.json` → `units` (helpers `U` and `units()` in `s
 Server notification texts still say coins/diamonds; the app swaps the words when showing them.
 
 **SVIP and tasks (display only).** SVIP level = diamonds bought (purchases − refunds − chargebacks)
-against the thresholds in `src/lib/svip.ts` (1K, 5K, 20K, 50K, 100K, 300K). Daily tasks count today's
+against the thresholds in `src/lib/svip.ts` (V1–V6: 1K, 5K, 20K, 50K, 100K, 300K). Each level lists
+the privileges it would include (medal V1, coloured name V2, entrance V3, frame V4, VIP gifts V5,
+priority support V6); none is applied yet. Daily tasks count today's
 follows, chat messages, gifts and live minutes. Neither pays anything yet: rewards would need server
 functions, and diamonds may only come from real payments.
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.79 — My VIP, V1–V6
+
+- The SVIP screen is now **My VIP**, a dark page in the style of other live apps: swipe level cards **V1–V6** (each in its own metal colour, opening on your level), a V1…V6 dot line to jump between them, and a **privileges** panel with a large icon, title, description and a row of six privilege icons (locked ones show which level unlocks them).
+- At the bottom: **Buy diamonds** (opens Diamonds) when the level isn't reached yet, with how many diamonds are left; otherwise "You're V#". Privileges are still "coming soon" — nothing is applied, and levels still come only from diamonds bought.
+
 ## 0.9.78 — SVIP, Task center, My fans, Item bag; Help & feedback
 
 New rows on Me (after Hosting verification): **SVIP**, **Task center**, **My fans**, **Item bag**; "Help & support" is renamed **Help & feedback** (Me, Settings, screen title, all four languages).
