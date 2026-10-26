@@ -102,7 +102,7 @@ function LevelCard({ level, width, myLevel, bought }: { level: SvipLevel; width:
 
   return (
     <LinearGradient colors={level.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-      style={{ width, minHeight: 540, borderRadius: 30, padding: 20, gap: 14, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.45)' }}>
+      style={{ width, minHeight: 580, borderRadius: 30, padding: 20, gap: 14, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.45)' }}>
       {/* Soft sky glow */}
       <View style={{ position: 'absolute', right: -50, top: -50, width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(255,255,255,0.12)' }} />
       <View style={{ position: 'absolute', left: -30, bottom: -60, width: 160, height: 160, borderRadius: 80, backgroundColor: 'rgba(255,255,255,0.07)' }} />
