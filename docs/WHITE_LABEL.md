@@ -30,6 +30,8 @@ edited in their Owner command center.
 - `src/lib/brand.ts` exports `brand` and `hasFeature()`; `src/lib/theme.ts` builds the colours from
   `brand.theme` (`brandPalettes()`).
 - Screens never hard-code the name or colours: use `brand.name` and `useTheme().c`.
+- Zynalive's icons are rendered from `assets/logo-mark.svg`; a client brings its own PNGs in
+  `brand.assets` (same sizes as `assets/`).
 - `npm run build:web` also writes `dist/ios.mobileconfig` (`scripts/ios-profile.mjs`): the iPhone
   install profile behind Settings → **Install on iPhone**. It uses the brand's name, icon,
   `website` (opens `<website>/welcome`) and `iosBundleId` (profile id), so build the web app with

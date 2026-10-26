@@ -8,16 +8,19 @@ import { useTheme } from '@/lib/theme';
 import { FadeIn } from './Motion';
 import { Text, Wordmark } from './ui';
 
-// Logo geometry on a 512px grid, measured from assets/logo.png so the drawn
-// logo matches the app icon exactly.
+// Logo geometry on a 512px grid, from assets/logo-mark.svg (the "Live Z") so the drawn logo matches
+// the app icon: three round-ended bars, the red live dot and a signal wave.
 const GRID = 512;
-const TILE_RADIUS = 115;
-const TOP_BAR = { left: 136, top: 129, width: 208, height: 58 };
-const BOTTOM_BAR = { left: 131, top: 356, width: 218, height: 57 };
-// The diagonal is a rotated bar clipped to this box, which gives it the icon's flat ends.
-const DIAG_CLIP = { left: 131, top: 129, width: 213, height: 284 };
-const DIAG = { x: 216.4, y: 21, length: 320, thickness: 61.4, angle: '131.45deg' };
-const DOT = { left: 374, top: 49, size: 86 };
+const TILE_RADIUS = 119;
+const STROKE = 52;
+const TOP_BAR = { left: 110, top: 170, width: 228, height: STROKE };
+const BOTTOM_BAR = { left: 126, top: 338, width: 244, height: STROKE };
+// The diagonal turns about the top bar's right end (half a stroke in from its left edge, so its
+// rounded ends sit exactly on the joints) and runs to the bottom bar's left end.
+const DIAG = { left: 286, top: 170, length: 232 + STROKE, angle: '133.6deg' };
+const DOT = { left: 328, top: 132, size: 56 };
+// A quarter ring (top border, turned 45°) around the dot: the signal wave.
+const WAVE = { left: 279, top: 83, size: 154, width: 18 };
 const FEATHER = 18;
 
 type Strokes = Record<'tile' | 'top' | 'diag' | 'bottom' | 'dot' | 'word', Animated.Value>;
@@ -70,28 +73,38 @@ function WrittenLogo({ size, v }: { size: number; v: Strokes }) {
   const grow = (x: Animated.Value) => ({ transformOrigin: 'left center', transform: [{ scaleX: x }] });
   return (
     <Animated.View style={{ width: size, height: size, opacity: v.tile }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, borderRadius: TILE_RADIUS * k }} />
-      <Animated.View style={[box(TOP_BAR), { backgroundColor: '#fff' }, grow(v.top)]} />
-      <View style={[box(DIAG_CLIP), { overflow: 'hidden' }]}>
-        <Animated.View
-          style={{
-            position: 'absolute',
-            left: DIAG.x * k,
-            top: (DIAG.y - DIAG.thickness / 2) * k,
-            width: DIAG.length * k,
-            height: DIAG.thickness * k,
-            backgroundColor: '#fff',
-            transformOrigin: 'left center',
-            transform: [{ rotate: DIAG.angle }, { scaleX: v.diag }],
-          }}
-        />
-      </View>
-      <Animated.View style={[box(BOTTOM_BAR), { backgroundColor: '#fff' }, grow(v.bottom)]} />
+      <LinearGradient colors={['#075985', '#0369A1', '#0EA5E9']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1, borderRadius: TILE_RADIUS * k }} />
+      <Animated.View style={[box(TOP_BAR), { backgroundColor: '#fff', borderRadius: (STROKE / 2) * k }, grow(v.top)]} />
+      <Animated.View
+        style={{
+          position: 'absolute',
+          left: DIAG.left * k,
+          top: DIAG.top * k,
+          width: DIAG.length * k,
+          height: STROKE * k,
+          borderRadius: (STROKE / 2) * k,
+          backgroundColor: '#fff',
+          transformOrigin: [(STROKE / 2) * k, (STROKE / 2) * k, 0],
+          transform: [{ rotate: DIAG.angle }, { scaleX: v.diag }],
+        }}
+      />
+      <Animated.View style={[box(BOTTOM_BAR), { backgroundColor: '#fff', borderRadius: (STROKE / 2) * k }, grow(v.bottom)]} />
+      <Animated.View
+        style={{
+          ...box({ left: WAVE.left, top: WAVE.top, width: WAVE.size, height: WAVE.size }),
+          borderRadius: (WAVE.size / 2) * k,
+          borderWidth: WAVE.width * k,
+          borderColor: 'transparent',
+          borderTopColor: '#fff',
+          opacity: v.dot,
+          transform: [{ rotate: '45deg' }],
+        }}
+      />
       <Animated.View
         style={{
           ...box({ left: DOT.left, top: DOT.top, width: DOT.size, height: DOT.size }),
           borderRadius: (DOT.size / 2) * k,
-          backgroundColor: '#fff',
+          backgroundColor: c.live,
           opacity: v.dot.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1] }),
           transform: [{ scale: v.dot }],
         }}

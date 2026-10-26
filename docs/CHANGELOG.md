@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.84 — New logo: Live Z
+
+- New Zynalive logo, chosen from four ideas made with the Figma design kit (page "Logo — new"): a round-ended white **Z** on the deep-blue gradient, with the red **live dot** and a **signal wave**.
+- Replaced every icon from one master (`assets/logo-mark.svg`): app icon, Android adaptive icon (foreground, background, monochrome), splash, favicon, `assets/logo.png`, and the website's `logo.png` (Home Screen icon, download page, iPhone install profile) and `og-image.png` (link previews). The old purple icons are gone.
+- The launch screen draws the new logo stroke by stroke (Z, then the dot and wave), matching the icon.
+- Phones get the new app icon and splash with the next app build; the website and iPhone profile with the next web deploy.
+
 ## 0.9.83 — Install on iPhone
 
 - **Settings → Install on iPhone** (only in Safari on iPhone/iPad, and hidden once opened from the Home Screen): downloads a configuration profile that puts the app's icon on the Home Screen and opens it full screen, like an app. iOS asks to **Allow**, then you finish in the Settings app (**Profile Downloaded → Install**); the app shows these steps. Other iPhone browsers are told to use Safari.

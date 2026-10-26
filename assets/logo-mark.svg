@@ -1,0 +1,9 @@
+<!-- Zynalive "Live Z" mark (master). 100-unit grid: a round-capped Z, the red live dot and a signal wave.
+     All PNG icons in assets/ and public/ are rendered from this; the launch screen redraws it in code. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <g transform="translate(-2 3)">
+    <path d="M22 32 L66 32 L26 74 L74 74" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M75.52 6.06 A17 17 0 0 1 93.94 24.48" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round"/>
+    <circle cx="77" cy="23" r="7" fill="#E11D48"/>
+  </g>
+</svg>
