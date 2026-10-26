@@ -6,6 +6,7 @@ import { ActivityIndicator, Pressable, View } from 'react-native';
 import { Alert, confirmAction } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { enforceInRoom, rpc } from '@/lib/api';
+import { hidesLocation } from '@/lib/privacy';
 import { flag } from '@/lib/country';
 import { friendlyError } from '@/lib/errors';
 import { useAsync } from '@/lib/hooks';
@@ -38,14 +39,15 @@ export function ProfileCard({ userId, roomId, hostId, canModerate, isHost, onClo
 
   const data = useAsync(async () => {
     if (!userId) return null;
-    const [p, followers, followingCount, follow] = await Promise.all([
+    const [p, followers, followingCount, follow, hideLocation] = await Promise.all([
       supabase.from('profiles').select('id,user_number,username,display_name,avatar_url,country,role,verified_at,owner_verified_at,active_frame_id').eq('id', userId).maybeSingle(),
       supabase.from('follows').select('*', { count: 'exact', head: true }).eq('followee_id', userId),
       supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId),
       supabase.from('follows').select('followee_id').eq('follower_id', me!).eq('followee_id', userId).maybeSingle(),
+      userId === me ? Promise.resolve(false) : hidesLocation(supabase, userId),
     ]);
     if (p.error) throw p.error;
-    return { profile: p.data as CardProfile | null, followers: followers.count ?? 0, following: followingCount.count ?? 0, follows: !!follow.data };
+    return { profile: p.data as CardProfile | null, followers: followers.count ?? 0, following: followingCount.count ?? 0, follows: !!follow.data, hideLocation };
   }, [userId, me]);
 
   const close = () => {
@@ -131,7 +133,7 @@ export function ProfileCard({ userId, roomId, hostId, canModerate, isHost, onClo
             <RoleBadges profile={p} small />
           </Row>
           <Text variant="caption" faint>
-            {p.user_number ? `ID ${p.user_number}` : ''}{p.country ? ` · ${flag(p.country)} ${p.country}` : ''}{userId === hostId ? ' · Host' : ''}
+            {p.user_number ? `ID ${p.user_number}` : ''}{p.country && !data.data?.hideLocation ? ` · ${flag(p.country)} ${p.country}` : ''}{userId === hostId ? ' · Host' : ''}
           </Text>
           <Row gap={0} style={{ alignSelf: 'stretch' }}>
             {[[compactNumber(data.data?.followers ?? 0), 'Followers'], [compactNumber(data.data?.following ?? 0), 'Following']].map(([v, l]) => (

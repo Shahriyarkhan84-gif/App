@@ -20,6 +20,7 @@ import { countryName, flag } from '@/lib/country';
 import { friendlyError } from '@/lib/errors';
 import { useAsync, useOffline } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
+import { hidesLocation } from '@/lib/privacy';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 import { displayName, type Profile } from '@/lib/types';
@@ -36,7 +37,7 @@ export default function UserProfileScreen() {
   const [tab, setTab] = useState<'videos' | 'replays' | 'about'>('videos');
 
   const { data, error, loading, reload } = useAsync(async () => {
-    const [profile, host, room, followers, follow, followingList, pin] = await Promise.all([
+    const [profile, host, room, followers, follow, followingList, pin, hideLocation] = await Promise.all([
       supabase.from('profiles').select('id,user_number,verified_at,owner_verified_at,username,display_name,avatar_url,bio,country,signup_country,language,role,status,status_until,deleted_at,active_frame_id').eq('id', id).maybeSingle(),
       supabase.from('hosts').select('host_code,total_live_seconds').eq('user_id', id).maybeSingle(),
       supabase.from('rooms').select('id,status,title,viewer_count').eq('host_id', id).maybeSingle(),
@@ -44,6 +45,7 @@ export default function UserProfileScreen() {
       supabase.from('follows').select('followee_id').eq('follower_id', userId!).eq('followee_id', id).maybeSingle(),
       supabase.from('follows').select('followee_id', { count: 'exact' }).eq('follower_id', id).limit(1000),
       supabase.from('pinned_profiles').select('user_id').eq('user_id', id).maybeSingle(),
+      id === userId ? Promise.resolve(false) : hidesLocation(supabase, id),
     ]);
     if (profile.error) throw profile.error;
     if (!profile.data || (profile.data as { deleted_at?: string | null }).deleted_at) return null; // unknown or removed user
@@ -54,7 +56,7 @@ export default function UserProfileScreen() {
       : 0;
     return {
       profile: profile.data as Profile, host: host.data, room: room.data, followers: followers.count ?? 0, follows: !!follow.data,
-      following: followingList.count ?? 0, friends, pinned: !!pin.data,
+      following: followingList.count ?? 0, friends, pinned: !!pin.data, hideLocation,
     };
   }, [id, userId], `user:${id}`);
 
@@ -175,7 +177,7 @@ export default function UserProfileScreen() {
                   <RoleBadges profile={data.profile} />
                 </Row>
                 <Text variant="caption" faint selectable>
-                  ID {data.profile.user_number}{data.profile.username ? ` · @${data.profile.username}` : ''}{data.profile.signup_country ? ` · ${flag(data.profile.signup_country)} ${countryName(data.profile.signup_country)}` : ''}
+                  ID {data.profile.user_number}{data.profile.username ? ` · @${data.profile.username}` : ''}{data.profile.signup_country && !data.hideLocation ? ` · ${flag(data.profile.signup_country)} ${countryName(data.profile.signup_country)}` : ''}
                 </Text>
                 {data.profile.bio && <Text muted style={{ textAlign: 'center' }}>{data.profile.bio}</Text>}
                 <Row gap={0} style={{ alignSelf: 'stretch', paddingVertical: 4 }}>
@@ -254,7 +256,7 @@ export default function UserProfileScreen() {
               <View style={{ gap: 12 }}>
                 <Card style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
                   <AboutRow icon="finger-print-outline" label="ID" value={String(data.profile.user_number)} />
-                  {data.profile.signup_country && <AboutRow icon="location-outline" label="From" value={`${flag(data.profile.signup_country)} ${countryName(data.profile.signup_country)}`} />}
+                  {data.profile.signup_country && !data.hideLocation && <AboutRow icon="location-outline" label="From" value={`${flag(data.profile.signup_country)} ${countryName(data.profile.signup_country)}`} />}
                   {data.host && <AboutRow icon="radio-outline" label="Hosting" value={`${Math.round((data.host.total_live_seconds ?? 0) / 3600)} hours live`} />}
                   <AboutRow icon="people-outline" label="Friends" value={compactNumber(data.friends)} last />
                 </Card>

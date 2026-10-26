@@ -1,13 +1,19 @@
 -- Settings → Privacy and Settings → Notifications.
 -- who_can_message: everyone / people you follow / nobody, enforced in send_direct_message().
 -- hide_from_nearby: your lives don't appear in other people's Nearby feed.
+-- hide_location: the app doesn't show your country on your profile or live card.
+-- message_requests: messages from people you don't follow are collected under "Message requests".
+-- pk_invites_followers_only: only hosts you follow can invite you to a PK battle (invite_pk_battle).
 -- notification_settings.muted: optional notification groups a person switched off; account,
 -- payment and safety notices can't be muted.
 
 alter table public.profiles add column if not exists who_can_message text not null default 'everyone'
   check (who_can_message in ('everyone', 'followers', 'nobody'));
 alter table public.profiles add column if not exists hide_from_nearby boolean not null default false;
-grant update (who_can_message, hide_from_nearby) on public.profiles to authenticated;
+alter table public.profiles add column if not exists hide_location boolean not null default false;
+alter table public.profiles add column if not exists message_requests boolean not null default true;
+alter table public.profiles add column if not exists pk_invites_followers_only boolean not null default false;
+grant update (who_can_message, hide_from_nearby, hide_location, message_requests, pk_invites_followers_only) on public.profiles to authenticated;
 
 create table if not exists public.notification_settings (
   user_id text primary key references public.profiles(id) on delete cascade,
@@ -88,5 +94,47 @@ begin
   end if;
   insert into public.direct_messages (sender_id, recipient_id, body) values (uid, p_recipient, private.filter_text(v_body))
     returning * into v_row;
+  return v_row;
+end $$;
+
+-- PK battle invites respect the invited host's "only people I follow" choice.
+create or replace function public.invite_pk_battle(p_target_room_id uuid)
+returns public.pk_battles language plpgsql security definer set search_path = ''
+as $$
+declare
+  uid text := public.requesting_user_id();
+  v_my_room public.rooms;
+  v_target public.rooms;
+  v_row public.pk_battles;
+  v_my_id uuid;
+begin
+  if uid is null then raise exception 'not_authenticated'; end if;
+  if public.user_status(uid) <> 'active' then raise exception 'account_restricted'; end if;
+  if p_target_room_id is null then raise exception 'invalid_target'; end if;
+  select id into v_my_id from public.rooms where host_id = uid;
+  if v_my_id is null then raise exception 'not_live'; end if;
+  perform 1 from public.rooms where id in (v_my_id, p_target_room_id) order by id for update;
+
+  select * into v_my_room from public.rooms where id = v_my_id;
+  if v_my_room.status <> 'live' then raise exception 'not_live'; end if;
+  if v_my_room.mode <> 'live' then raise exception 'not_live'; end if;
+  if v_my_room.current_battle_id is not null then raise exception 'already_in_battle'; end if;
+
+  select * into v_target from public.rooms where id = p_target_room_id;
+  if not found or v_target.status <> 'live' or v_target.mode <> 'live' then raise exception 'target_not_live'; end if;
+  if v_target.host_id = uid then raise exception 'cannot_battle_self'; end if;
+  if v_target.current_battle_id is not null then raise exception 'target_already_in_battle'; end if;
+  if (select pk_invites_followers_only from public.profiles where id = v_target.host_id)
+     and not exists (select 1 from public.follows where follower_id = v_target.host_id and followee_id = uid) then
+    raise exception 'pk_invites_followers_only';
+  end if;
+
+  insert into public.pk_battles (room_a_id, room_b_id) values (v_my_room.id, v_target.id) returning * into v_row;
+  update public.rooms set current_battle_id = v_row.id where id in (v_my_room.id, v_target.id);
+
+  perform private.notify(v_target.host_id, 'pk_battle_invite', 'PK battle invite',
+    'A host wants to battle you live.', jsonb_build_object('battle_id', v_row.id, 'room_id', v_my_room.id));
+  perform private.audit('pk_battle_invited', 'pk_battle', v_row.id::text,
+    jsonb_build_object('room_a', v_my_room.id, 'room_b', v_target.id));
   return v_row;
 end $$;

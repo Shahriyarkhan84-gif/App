@@ -41,6 +41,7 @@ const MESSAGES: Record<string, string> = {
   messages_off: "This person isn't accepting messages.",
   messages_followers_only: 'This person only accepts messages from people they follow.',
   not_mutable: "These notices can't be switched off.",
+  pk_invites_followers_only: 'This host only accepts PK invites from people they follow.',
   payment_not_refundable: 'This purchase cannot be refunded.',
   not_configured: 'This feature is not configured yet.',
   verification_required: 'Verify your identity first (Go live tab → Verify identity).',

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.92 — More privacy, account sign-in methods
+
+- **Privacy** adds: *Hide my location* (no country on your profile or live card), *Message requests* (chats from people you don't follow wait in a "Message requests" folder in Messages until you reply or follow them; on by default), and *PK invites only from people I follow* (enforced in `invite_pk_battle`: `pk_invites_followers_only`).
+- **Account management** shows every sign-in method with partly hidden addresses: email, **add a phone number** (SMS code), **connect Google / Apple**, password; plus safety tips and an account-ownership note before Delete account.
+- The new columns are read in a way that keeps profiles and Messages working before migration `20261027010000_privacy_settings.sql` is applied.
+
 ## 0.9.91 — More settings
 
 Settings → Account now has **Account management**, **Privacy**, **Blocked accounts** and **Notifications**; About has **About Zynalive** and **Clean cache**, and the app version shows at the bottom.

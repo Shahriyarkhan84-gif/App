@@ -11,12 +11,13 @@ import { resolveState, StateView } from '@/components/StateView';
 import { Avatar, Coin, glassShadow, Row, Screen, Text } from '@/components/ui';
 import { hasFeature, U } from '@/lib/brand';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
+import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 import { shortTime } from '@/lib/time';
 import { displayName, type Profile } from '@/lib/types';
 
-type Thread = { otherId: string; other: Pick<Profile, 'display_name' | 'username' | 'avatar_url'> | null; last: string; at: string; unread: number };
+type Thread = { otherId: string; other: Pick<Profile, 'display_name' | 'username' | 'avatar_url'> | null; last: string; at: string; unread: number; iSent: boolean; followed: boolean };
 type Notification = { id: number; type: string; title: string; body: string | null; data: Record<string, string>; read_at: string | null; created_at: string };
 
 type Tab = 'chats' | 'fans' | 'gifts' | 'notifications';
@@ -82,20 +83,27 @@ function Chats() {
   const { userId } = useAuth();
   const { c } = useTheme();
   const offline = useOffline();
+  const { profile } = useProfile();
+  const [showRequests, setShowRequests] = useState(false);
 
   const { data, error, loading, reload } = useFocusedAsync<Thread[]>(async () => {
-    const { data, error } = await supabase
-      .from('direct_messages')
-      .select('sender_id,recipient_id,body,created_at,read_at')
-      .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
-      .order('created_at', { ascending: false })
-      .limit(300);
-    if (error) throw error;
+    const [msgs, follows] = await Promise.all([
+      supabase
+        .from('direct_messages')
+        .select('sender_id,recipient_id,body,created_at,read_at')
+        .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
+        .order('created_at', { ascending: false })
+        .limit(300),
+      supabase.from('follows').select('followee_id').eq('follower_id', userId!),
+    ]);
+    if (msgs.error) throw msgs.error;
+    const followed = new Set((follows.data ?? []).map((f) => f.followee_id));
     const threads = new Map<string, Thread>();
-    for (const m of data ?? []) {
+    for (const m of msgs.data ?? []) {
       const otherId = m.sender_id === userId ? m.recipient_id : m.sender_id;
-      const t = threads.get(otherId) ?? { otherId, other: null, last: m.body, at: m.created_at, unread: 0 };
+      const t = threads.get(otherId) ?? { otherId, other: null, last: m.body, at: m.created_at, unread: 0, iSent: false, followed: followed.has(otherId) };
       if (m.recipient_id === userId && !m.read_at) t.unread += 1;
+      if (m.sender_id === userId) t.iSent = true;
       threads.set(otherId, t);
     }
     const ids = [...threads.keys()];
@@ -108,10 +116,29 @@ function Chats() {
 
   useRealtime('direct_messages', `recipient_id=eq.${userId}`, () => reload());
 
+  // Settings → Privacy → Message requests: chats started by people you don't follow (and haven't
+  // answered) wait in their own folder instead of the main list.
+  const collapse = profile?.message_requests === true;
+  const isRequest = (t: Thread) => collapse && !t.followed && !t.iSent;
+  const requests = (data ?? []).filter(isRequest);
+  const viewing = showRequests && requests.length > 0;
+  const list = viewing ? requests : (data ?? []).filter((t) => !isRequest(t));
+  const requestUnread = requests.reduce((n, t) => n + t.unread, 0);
+
   return (
     <StateView state={resolveState({ offline, loading, error, data, onRetry: reload, isEmpty: (d) => d.length === 0, empty: { title: 'No conversations yet', body: 'Message someone from their profile.' } })}>
       <FlatList
-        data={data ?? []}
+        data={list}
+        ListHeaderComponent={requests.length > 0 ? (
+          <PressScale scaleTo={0.98} onPress={() => setShowRequests((v) => !v)} accessibilityRole="button" accessibilityLabel={viewing ? 'Back to chats' : `Message requests, ${requests.length}`}>
+            <Row style={{ padding: 14, marginBottom: 8, borderRadius: 18, backgroundColor: c.violetSurface, borderWidth: 1, borderColor: c.violetBorder }}>
+              <Ionicons name={viewing ? 'arrow-back' : 'mail-unread-outline'} size={20} color={c.primary} />
+              <Text variant="label" style={{ flex: 1 }}>{viewing ? 'Back to chats' : `Message requests (${requests.length})`}</Text>
+              {!viewing && requestUnread > 0 && <Text variant="caption" color={c.primary}>{requestUnread} new</Text>}
+              {!viewing && <Ionicons name="chevron-forward" size={18} color={c.textFaint} />}
+            </Row>
+          </PressScale>
+        ) : null}
         keyExtractor={(t) => t.otherId}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16, gap: 8 }}
         renderItem={({ item, index }) => (

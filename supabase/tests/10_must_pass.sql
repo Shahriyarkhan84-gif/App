@@ -992,4 +992,25 @@ select private.notify('pv_a', 'pk_battle_invite', 'PK', 'x');
 select tests.ok((select count(*) from public.notifications where user_id = 'pv_a' and type = 'pk_battle_invite') = 1, 'unmuting brings it back');
 select set_config('request.headers', '', false);
 
+-- PK invites "only from people I follow"; display privacy switches are the owner's own to change.
+insert into public.profiles (id, username) values ('pv_h1', 'pv_h1'), ('pv_h2', 'pv_h2');
+insert into public.hosts (user_id) values ('pv_h1'), ('pv_h2');
+insert into public.rooms (host_id, status, cover_url) values ('pv_h1', 'live', 'x'), ('pv_h2', 'live', 'x');
+update public.profiles set pk_invites_followers_only = true where id = 'pv_h2';
+select set_config('request.jwt.claims', '{"sub":"pv_h1"}', false);
+set role authenticated;
+select tests.fails($$select public.invite_pk_battle((select id from public.rooms where host_id = 'pv_h2'))$$, '%pk_invites_followers_only%', 'a stranger cannot send a PK invite to a followers-only host');
+reset role;
+insert into public.follows (follower_id, followee_id) values ('pv_h2', 'pv_h1');
+select set_config('request.jwt.claims', '{"sub":"pv_h1"}', false);
+set role authenticated;
+select tests.ok((select status from public.invite_pk_battle((select id from public.rooms where host_id = 'pv_h2'))) = 'invited', 'a host they follow can invite them');
+update public.profiles set hide_location = true, message_requests = false where id = 'pv_h1';
+reset role;
+select tests.ok((select hide_location and not message_requests from public.profiles where id = 'pv_h1'), 'a person sets their own display privacy');
+-- Leave no battle behind (later test files expect a clean pk_battles table).
+update public.rooms set current_battle_id = null where host_id in ('pv_h1', 'pv_h2');
+delete from public.pk_battles where room_a_id in (select id from public.rooms where host_id in ('pv_h1', 'pv_h2'));
+select set_config('request.headers', '', false);
+
 drop schema tests cascade;

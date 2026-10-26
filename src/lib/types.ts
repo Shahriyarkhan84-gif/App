@@ -26,6 +26,12 @@ export type Profile = {
   who_can_message?: 'everyone' | 'followers' | 'nobody';
   /** Settings → Privacy: keep this person's lives out of other people's Nearby feed. */
   hide_from_nearby?: boolean;
+  /** Settings → Privacy: don't show this person's country on their profile or live card. */
+  hide_location?: boolean;
+  /** Settings → Privacy: messages from people they don't follow go to "Message requests". */
+  message_requests?: boolean;
+  /** Settings → Privacy: only hosts they follow can invite them to a PK battle. */
+  pk_invites_followers_only?: boolean;
 };
 
 export type Room = {
