@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.74 — No more "Wallet"
+
+- The Wallet rows are gone from Me and Settings. The 💎 **Diamonds** button on Me opens the buy-diamonds screen (now titled "Diamonds"); the 🫘 **Beans** button opens your earnings (titled "Beans") — or Hosting if you aren't a host yet. Wording that said "wallet" now says diamonds.
+
 ## 0.9.73 — Diamonds and beans
 
 - What viewers buy and send as gifts is now called **Diamonds** (blue diamond icon); what hosts earn and withdraw is called **Beans** (golden bean icon). Wallet, gift sheet, frames, earnings, host live counter, host dashboard, Me, agency portal, admin withdrawal settings, Terms, Privacy, support answers, error messages (all four languages) and notifications use the new names.

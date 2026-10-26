@@ -11,7 +11,7 @@ import { StateView } from '@/components/StateView';
 import { FadeIn, PressScale } from '@/components/Motion';
 import { FramedAvatar } from '@/components/FramedAvatar';
 import { AgencyOwnerBadge, Bean, Coin, compactNumber, glassShadow, HostBadge, IconButton, Row, Screen, Text, type IconName } from '@/components/ui';
-import { hasFeature, U, units } from '@/lib/brand';
+import { hasFeature, U } from '@/lib/brand';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { env } from '@/lib/env';
@@ -118,7 +118,7 @@ export default function ProfileScreen() {
             <Tile coin label={stats.data ? compactNumber(stats.data.coins) : '–'} sub={U.Spend} onPress={() => router.push('/wallet')} />
             {hasFeature('frames') && <Tile icon="sparkles-outline" label="Frames" sub="Shop" onPress={() => router.push('/frames')} />}
             {hasFeature('agencies') && <Tile icon="business-outline" label="Agency" sub={isAgencyStaff ? 'Portal' : 'Join'} onPress={() => router.push(isAgencyStaff ? '/agency' : '/hosting')} />}
-            <Tile bean label={host && stats.data ? compactNumber(stats.data.earnings) : 'Earn'} sub={host ? U.Earn : 'Money'} onPress={() => router.push(host ? '/earnings' : '/hosting')} />
+            <Tile bean label={host && stats.data ? compactNumber(stats.data.earnings) : 'Earn'} sub={U.Earn} onPress={() => router.push(host ? '/earnings' : '/hosting')} />
           </FadeIn>
 
           <FadeIn delay={200}>
@@ -131,7 +131,6 @@ export default function ProfileScreen() {
 
           <FadeIn delay={240}>
             <Group>
-              <DarkRow icon="wallet-outline" label="Wallet" detail={stats.data ? units(stats.data.coins) : undefined} onPress={() => router.push('/wallet')} />
               {hasFeature('frames') && <DarkRow icon="sparkles-outline" label="Profile frames" onPress={() => router.push('/frames')} />}
               {hasFeature('videos') && <DarkRow icon="play-circle-outline" label={t('menu.videos')} onPress={() => router.push('/videos')} last={verified} />}
               {!verified && <DarkRow icon="shield-checkmark-outline" label={t('menu.hostingVerification')} onPress={() => router.push('/hosting')} last />}

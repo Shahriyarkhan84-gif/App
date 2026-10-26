@@ -19,7 +19,6 @@ export const ur: Catalog = {
   'menu.videos': 'ویڈیوز',
   'menu.rankings': 'رینکنگ',
   'menu.events': 'ایونٹس',
-  'menu.wallet': 'والٹ اور ہسٹری',
   'menu.support': 'مدد اور سپورٹ',
   'menu.feedback': 'رائے دیں',
   'menu.hostingVerification': 'ہوسٹنگ کے لیے تصدیق',

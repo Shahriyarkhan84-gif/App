@@ -19,7 +19,6 @@ export const bn: Catalog = {
   'menu.videos': 'ভিডিও',
   'menu.rankings': 'র‍্যাংকিং',
   'menu.events': 'ইভেন্ট',
-  'menu.wallet': 'ওয়ালেট ও ইতিহাস',
   'menu.support': 'সাহায্য ও সাপোর্ট',
   'menu.feedback': 'মতামত দিন',
   'menu.hostingVerification': 'হোস্টিংয়ের জন্য যাচাই',

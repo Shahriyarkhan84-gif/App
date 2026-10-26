@@ -3,7 +3,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 
-import { U } from '@/lib/brand';
 import { FramedAvatar } from '@/components/FramedAvatar';
 import { Button, Card, Chip, ListRow, Row, Screen, Text } from '@/components/ui';
 import { Alert, confirmAction } from '@/lib/alert';
@@ -41,8 +40,7 @@ export default function SettingsScreen() {
         )}
 
         <Section title="Account">
-          <ListRow icon="person-outline" label="Edit profile" onPress={() => router.push('/profile-edit')} />
-          <ListRow icon="wallet-outline" label={`Wallet & ${U.spend}`} onPress={() => router.push('/wallet')} last />
+          <ListRow icon="person-outline" label="Edit profile" onPress={() => router.push('/profile-edit')} last />
         </Section>
 
         <View style={{ gap: 8 }}>

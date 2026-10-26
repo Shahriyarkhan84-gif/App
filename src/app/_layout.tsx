@@ -17,7 +17,7 @@ import { Platform, View } from 'react-native';
 
 import { LaunchScreen } from '@/components/LaunchScreen';
 import { Text } from '@/components/ui';
-import { hasFeature } from '@/lib/brand';
+import { hasFeature, U } from '@/lib/brand';
 import { env, missingRequiredEnv } from '@/lib/env';
 import { loadCacheFor } from '@/lib/hooks';
 import { AppI18n } from '@/lib/i18n/AppI18n';
@@ -145,7 +145,7 @@ function RootNavigator() {
         <Stack.Screen name="host/dashboard" options={{ title: 'Host dashboard' }} />
         <Stack.Screen name="user/[id]" options={{ title: '' }} />
         <Stack.Screen name="chat/[userId]" options={{ title: 'Chat' }} />
-        <Stack.Screen name="wallet" options={{ title: 'Wallet' }} />
+        <Stack.Screen name="wallet" options={{ title: U.Spend }} />
         <Stack.Protected guard={hasFeature('frames')}>
           <Stack.Screen name="frames" options={{ title: 'Profile frames' }} />
         </Stack.Protected>
@@ -155,7 +155,7 @@ function RootNavigator() {
         <Stack.Screen name="delete-account" options={{ title: 'Delete account' }} />
         <Stack.Screen name="hosting" options={{ title: 'Hosting' }} />
         <Stack.Screen name="verify-form" options={{ title: 'Verify with Didit' }} />
-        <Stack.Screen name="earnings" options={{ title: 'Earnings' }} />
+        <Stack.Screen name="earnings" options={{ title: U.Earn }} />
         <Stack.Screen name="support" options={{ title: 'Help & support' }} />
         <Stack.Screen name="profile-edit" options={{ title: 'Edit profile', presentation: 'modal' }} />
         <Stack.Protected guard={hasFeature('agencies')}>

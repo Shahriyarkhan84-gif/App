@@ -137,7 +137,7 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
       {error && <Text color={c.danger}>{error}</Text>}
       {wallet.error && <Text color={c.danger}>Couldn&apos;t load your balance. Close and try again.</Text>}
       {wallet.data?.frozen ? (
-        <Text color={c.warning}>Your wallet is on hold while a payment is reviewed.</Text>
+        <Text color={c.warning}>Your {U.spend} are on hold while a payment is reviewed.</Text>
       ) : insufficient ? (
         <Button title={`Need ${(total - balance).toLocaleString()} more ${U.spend} — Recharge`} variant="gold" onPress={() => { close(); router.push('/wallet'); }} />
       ) : (

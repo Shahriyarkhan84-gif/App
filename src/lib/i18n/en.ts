@@ -21,7 +21,6 @@ export const en = {
   'menu.videos': 'Videos',
   'menu.rankings': 'Rankings',
   'menu.events': 'Events',
-  'menu.wallet': 'Wallet & history',
   'menu.support': 'Help & support',
   'menu.feedback': 'Share feedback',
   'menu.hostingVerification': 'Verification for hosting',

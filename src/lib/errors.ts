@@ -8,7 +8,7 @@ const MESSAGES: Record<string, string> = {
   forbidden: "You don't have permission to do that.",
   account_restricted: 'Your account is currently restricted.',
   insufficient_coins: `You don't have enough ${U.spend}.`,
-  wallet_frozen: 'Your wallet is on hold while a payment is reviewed.',
+  wallet_frozen: `Your ${U.spend} are on hold while a payment is reviewed.`,
   room_not_live: 'This room is no longer live.',
   banned_from_room: "You can't join this room.",
   cannot_gift_self: "You can't send gifts to yourself.",

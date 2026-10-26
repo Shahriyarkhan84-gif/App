@@ -21,7 +21,6 @@ export const hi: Catalog = {
   'menu.videos': 'वीडियो',
   'menu.rankings': 'रैंकिंग',
   'menu.events': 'इवेंट',
-  'menu.wallet': 'वॉलेट और इतिहास',
   'menu.support': 'मदद और सपोर्ट',
   'menu.feedback': 'फ़ीडबैक दें',
   'menu.hostingVerification': 'होस्टिंग के लिए सत्यापन',
