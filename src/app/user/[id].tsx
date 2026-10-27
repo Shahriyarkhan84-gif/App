@@ -147,9 +147,17 @@ export default function UserProfileScreen() {
         options={{
           title: '',
           headerRight: data ? () => (
-            <PressScale onPress={shareProfile} accessibilityRole="button" accessibilityLabel="Share this profile" hitSlop={12}>
-              <Ionicons name="share-social-outline" size={21} color={c.text} />
-            </PressScale>
+            <Row gap={18}>
+              <PressScale onPress={shareProfile} accessibilityRole="button" accessibilityLabel="Share this profile" hitSlop={12}>
+                <Ionicons name="share-social-outline" size={21} color={c.text} />
+              </PressScale>
+              {/* Your own profile: pencil in the top-right corner opens Edit profile. */}
+              {isMe && (
+                <PressScale onPress={() => router.push('/profile-edit')} accessibilityRole="button" accessibilityLabel="Edit profile" hitSlop={12}>
+                  <Ionicons name="create-outline" size={22} color={c.text} />
+                </PressScale>
+              )}
+            </Row>
           ) : undefined,
         }}
       />

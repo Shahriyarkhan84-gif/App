@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.97 — Edit icon on your profile
+
+- On your own profile, a pencil icon in the top-right corner (next to Share) opens Edit profile.
+
 ## 0.9.96 — Profile without the About box
 
 - Profiles no longer show the About box (ID, From, Hosting hours, Friends). The ID, country and Friends count are already in the header; hosts still show their Contribution card.
