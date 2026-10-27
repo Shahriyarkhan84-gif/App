@@ -80,6 +80,12 @@ Didit webhook, after re-reading the decision from Didit's API. Clients can't wri
 
 CNIC photos and the full CNIC number are sent to Didit and never stored by Zynalive. Decisions are written only by `internal_submit_host_application()` (service role, after Didit's responses) or `review_host_application()` (platform admins). Clients can read only their own applications and have no write grants.
 
+## Age check (18+)
+
+- Birth dates live in `private.birthdates` (no client access) and are set once through `set_birth_date()`; the client never decides adult or minor.
+- Minors are `restricted` in `user_status()`, so every action RPC that checks status refuses them, and `internal_create_payment` refuses them (`under_18`). The `/onboarding` screen only explains this.
+- Accounts created before the check are `unknown` until they answer; the app sends them to `/onboarding` on next open.
+
 ## Account deletion
 
 `internal_delete_account()` is service-role only (called by `delete-account` after verifying the Clerk JWT, and by `clerk-webhook` on `user.deleted`). It is idempotent, refuses while a withdrawal is pending, deletes follows/blocks/DMs/notifications, blanks chat and support text, and anonymises the profile. Payments, ledger, gifts, earnings, withdrawals, reports and audit logs are retained.

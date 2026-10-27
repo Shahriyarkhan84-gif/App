@@ -14,6 +14,8 @@ alter table public.profiles add column if not exists hide_location boolean not n
 alter table public.profiles add column if not exists message_requests boolean not null default true;
 alter table public.profiles add column if not exists pk_invites_followers_only boolean not null default false;
 grant update (who_can_message, hide_from_nearby, hide_location, message_requests, pk_invites_followers_only) on public.profiles to authenticated;
+-- Other people's screens read these two (Nearby leaves the host out, the profile hides the country).
+grant select (hide_from_nearby, hide_location) on public.profiles to authenticated;
 
 create table if not exists public.notification_settings (
   user_id text primary key references public.profiles(id) on delete cascade,

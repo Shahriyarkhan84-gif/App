@@ -106,7 +106,7 @@ export default function HomeScreen() {
     if (roomId && !liveIds.current.has(roomId) && liveIds.current.size < LIVE_LIMIT) refetchSoon();
   }, true, 'INSERT');
 
-  const allRooms = data ? pickFeed(data, feed, profile?.country ?? null).filter((r) => category === 'all' || r.category === category) : [];
+  const allRooms = data ? pickFeed(data, feed, profile?.country ?? null, profile?.interests).filter((r) => category === 'all' || r.category === category) : [];
   // How many cards are drawn; starts again at one page when the feed or category changes.
   const listKey = `${feed}:${category}`;
   const [shown, setShown] = useState({ key: listKey, n: PAGE });
@@ -236,7 +236,7 @@ function PkBattleBanner({ room }: { room: Room | null }) {
   );
 }
 
-function pickFeed(data: HomeData, feed: Feed, country: string | null): Room[] {
+function pickFeed(data: HomeData, feed: Feed, country: string | null, interests: string[] = []): Room[] {
   switch (feed) {
     case 'following':
       return data.followingLive;
@@ -248,9 +248,10 @@ function pickFeed(data: HomeData, feed: Feed, country: string | null): Room[] {
     case 'new':
       return data.newest;
     default: {
-      // Recommended rooms (AI) first, then by viewers.
+      // Recommended rooms (AI) first, then the topics picked at sign-up, then by viewers.
       const rec = (r: Room) => data.recommended.get(r.id)?.score ?? -1;
-      return [...data.live].sort((a, b) => rec(b) - rec(a) || b.viewer_count - a.viewer_count);
+      const liked = (r: Room) => (interests.includes(r.category) ? 1 : 0);
+      return [...data.live].sort((a, b) => rec(b) - rec(a) || liked(b) - liked(a) || b.viewer_count - a.viewer_count);
     }
   }
 }

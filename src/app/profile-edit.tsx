@@ -8,7 +8,7 @@ import { Linking, Platform, ScrollView, View } from 'react-native';
 import { brand } from '@/lib/brand';
 import { PressScale } from '@/components/Motion';
 import { StateView } from '@/components/StateView';
-import { Avatar, Button, Card, Input, Screen, Text } from '@/components/ui';
+import { Avatar, Button, Card, Chip, Input, Screen, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { env } from '@/lib/env';
 import { friendlyError } from '@/lib/errors';
@@ -16,7 +16,7 @@ import { useOffline } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
-import { displayName as nameOf } from '@/lib/types';
+import { CATEGORIES, categoryLabel, displayName as nameOf } from '@/lib/types';
 
 export default function EditProfileScreen() {
   const { profile, error, reload } = useProfile();
@@ -37,6 +37,8 @@ function EditProfileForm() {
   const [bio, setBio] = useState(profile?.bio ?? '');
   const [country, setCountry] = useState(profile?.country ?? '');
   const [avatar, setAvatar] = useState(profile?.avatar_url ?? null);
+  // Undefined until the interests column exists on the server; the row is hidden until then.
+  const [interests, setInterests] = useState<string[] | undefined>(profile?.interests);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +100,10 @@ function EditProfileForm() {
       bio: bio.trim() || null,
       country: country || null,
     }).eq('id', profile.id);
+    if (!error && interests && interests.join() !== profile.interests?.join()) {
+      // Separate write: a failure here mustn't lose the name and bio that already saved.
+      await supabase.from('profiles').update({ interests }).eq('id', profile.id);
+    }
     setSaving(false);
     if (error) {
       setError(error.code === '23505' ? 'That username is taken.' : 'Could not save your profile.');
@@ -125,6 +131,17 @@ function EditProfileForm() {
           <Input label="Username" value={username} onChangeText={(t) => setUsername(t.toLowerCase())} autoCapitalize="none" error={usernameValid ? (error === 'That username is taken.' ? error : null) : '3–24 letters, numbers, _ or .'} />
           <Input label="Bio" value={bio} onChangeText={setBio} maxLength={280} multiline style={{ minHeight: 80, paddingTop: 12 }} />
           <Input label="Country code" value={country} onChangeText={(t) => setCountry(t.toUpperCase().slice(0, 2))} placeholder="PK" autoCapitalize="characters" error={countryValid ? null : 'Two-letter code, e.g. PK, IN, BD'} />
+          {interests && (
+            <View style={{ gap: 8 }}>
+              <Text variant="label">Interests</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {CATEGORIES.map((cat) => (
+                  <Chip key={cat} label={categoryLabel(cat)} selected={interests.includes(cat)}
+                    onPress={() => setInterests(interests.includes(cat) ? interests.filter((x) => x !== cat) : [...interests, cat])} />
+                ))}
+              </View>
+            </View>
+          )}
           {offline && <Text variant="bodySmall" muted accessibilityRole="alert">You&apos;re offline. Connect to save changes.</Text>}
           {error && error !== 'That username is taken.' && <Text color={c.danger} accessibilityRole="alert">{error}</Text>}
           {/* Saving closes the screen, so wait for a photo upload to finish first. */}

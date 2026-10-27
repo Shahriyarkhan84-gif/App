@@ -8,7 +8,8 @@ import { FansList } from '@/components/FansList';
 import { useTabBarSpace } from '@/components/Menus';
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Coin, glassShadow, Row, Screen, Text } from '@/components/ui';
+import { Avatar, Button, Coin, glassShadow, Row, Screen, Sheet, Text } from '@/components/ui';
+import { confirmAction } from '@/lib/alert';
 import { hasFeature, U } from '@/lib/brand';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
@@ -17,7 +18,8 @@ import { useTheme } from '@/lib/theme';
 import { shortTime } from '@/lib/time';
 import { displayName, type Profile } from '@/lib/types';
 
-type Thread = { otherId: string; other: Pick<Profile, 'display_name' | 'username' | 'avatar_url'> | null; last: string; at: string; unread: number; iSent: boolean; followed: boolean };
+type Thread = { otherId: string; other: Pick<Profile, 'display_name' | 'username' | 'avatar_url'> | null; last: string; at: string; unread: number; iSent: boolean; followed: boolean; pinned: boolean; muted: boolean };
+type ThreadPrefs = { other_id: string; pinned: boolean; muted: boolean; cleared_at: string | null };
 type Notification = { id: number; type: string; title: string; body: string | null; data: Record<string, string>; read_at: string | null; created_at: string };
 
 type Tab = 'chats' | 'fans' | 'gifts' | 'notifications';
@@ -85,9 +87,12 @@ function Chats() {
   const offline = useOffline();
   const { profile } = useProfile();
   const [showRequests, setShowRequests] = useState(false);
+  // Long-press options (pin, mute, delete); only offered once the server has the table.
+  const [options, setOptions] = useState<Thread | null>(null);
+  const [prefsReady, setPrefsReady] = useState(false);
 
   const { data, error, loading, reload } = useFocusedAsync<Thread[]>(async () => {
-    const [msgs, follows] = await Promise.all([
+    const [msgs, follows, prefRows] = await Promise.all([
       supabase
         .from('direct_messages')
         .select('sender_id,recipient_id,body,created_at,read_at')
@@ -95,13 +100,19 @@ function Chats() {
         .order('created_at', { ascending: false })
         .limit(300),
       supabase.from('follows').select('followee_id').eq('follower_id', userId!),
+      supabase.from('dm_thread_prefs').select('other_id,pinned,muted,cleared_at').eq('user_id', userId!),
     ]);
     if (msgs.error) throw msgs.error;
+    setPrefsReady(!prefRows.error);
+    const prefs = new Map(((prefRows.error ? [] : prefRows.data) as ThreadPrefs[]).map((p) => [p.other_id, p]));
     const followed = new Set((follows.data ?? []).map((f) => f.followee_id));
     const threads = new Map<string, Thread>();
     for (const m of msgs.data ?? []) {
       const otherId = m.sender_id === userId ? m.recipient_id : m.sender_id;
-      const t = threads.get(otherId) ?? { otherId, other: null, last: m.body, at: m.created_at, unread: 0, iSent: false, followed: followed.has(otherId) };
+      const pref = prefs.get(otherId);
+      // "Delete chat" hides everything up to that moment, for you only.
+      if (pref?.cleared_at && m.created_at <= pref.cleared_at) continue;
+      const t = threads.get(otherId) ?? { otherId, other: null, last: m.body, at: m.created_at, unread: 0, iSent: false, followed: followed.has(otherId), pinned: !!pref?.pinned, muted: !!pref?.muted };
       if (m.recipient_id === userId && !m.read_at) t.unread += 1;
       if (m.sender_id === userId) t.iSent = true;
       threads.set(otherId, t);
@@ -111,8 +122,24 @@ function Chats() {
       const { data: profiles } = await supabase.from('profiles').select('id,display_name,username,avatar_url').in('id', ids);
       for (const p of profiles ?? []) threads.get(p.id)!.other = p;
     }
-    return [...threads.values()];
+    // Pinned chats stay on top; otherwise newest first (the order messages arrived in).
+    return [...threads.values()].sort((a, b) => Number(b.pinned) - Number(a.pinned));
   }, [userId], 'msg-threads');
+
+  const setPref = async (t: Thread, change: Partial<Omit<ThreadPrefs, 'other_id'>>) => {
+    setOptions(null);
+    await supabase.from('dm_thread_prefs').upsert({ user_id: userId!, other_id: t.otherId, ...change }, { onConflict: 'user_id,other_id' });
+    reload();
+  };
+  const deleteChat = (t: Thread) => {
+    setOptions(null);
+    confirmAction('Delete this chat?', `Messages with ${displayName(t.other)} are removed from your list. They still have their copy.`, 'Delete', () => {
+      void (async () => {
+        await supabase.from('direct_messages').update({ read_at: new Date().toISOString() }).eq('recipient_id', userId!).eq('sender_id', t.otherId).is('read_at', null);
+        await setPref(t, { cleared_at: new Date().toISOString() });
+      })();
+    });
+  };
 
   useRealtime('direct_messages', `recipient_id=eq.${userId}`, () => reload());
 
@@ -143,18 +170,24 @@ function Chats() {
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16, gap: 8 }}
         renderItem={({ item, index }) => (
           <FadeIn delay={stagger(index, 50)}>
-          <PressScale scaleTo={0.98} onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: item.otherId } })} accessibilityRole="button">
+          <PressScale scaleTo={0.98} onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: item.otherId } })}
+            onLongPress={prefsReady ? () => setOptions(item) : undefined} accessibilityRole="button"
+            accessibilityHint={prefsReady ? 'Long press for options' : undefined}>
             <Row style={{ padding: 12, borderRadius: 20, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
               <Avatar uri={item.other?.avatar_url} name={displayName(item.other)} size={52} ring={item.unread > 0 ? c.primary : undefined} />
               <View style={{ flex: 1, gap: 3 }}>
                 <Row style={{ justifyContent: 'space-between' }}>
-                  <Text variant="label" style={{ fontSize: 15 }} numberOfLines={1}>{displayName(item.other)}</Text>
+                  <Row gap={4} style={{ flex: 1 }}>
+                    <Text variant="label" style={{ fontSize: 15, flexShrink: 1 }} numberOfLines={1}>{displayName(item.other)}</Text>
+                    {item.pinned && <Ionicons name="pin" size={13} color={c.textFaint} accessibilityLabel="Pinned" />}
+                    {item.muted && <Ionicons name="notifications-off" size={13} color={c.textFaint} accessibilityLabel="Muted" />}
+                  </Row>
                   <Text variant="caption" faint>{shortTime(item.at)}</Text>
                 </Row>
                 <Text variant="bodySmall" muted={item.unread === 0} numberOfLines={1} style={{ fontSize: 14 }}>{item.last}</Text>
               </View>
               {item.unread > 0 && (
-                <View style={{ backgroundColor: c.primary, borderRadius: 10, minWidth: 20, height: 20, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ backgroundColor: item.muted ? c.textFaint : c.primary, borderRadius: 10, minWidth: 20, height: 20, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center' }}>
                   <Text variant="caption" color={c.primaryText} style={{ fontSize: 11, fontWeight: '700' }}>{item.unread}</Text>
                 </View>
               )}
@@ -163,6 +196,15 @@ function Chats() {
           </FadeIn>
         )}
       />
+      <Sheet visible={!!options} onClose={() => setOptions(null)} title={options ? displayName(options.other) : undefined}>
+        {options && (
+          <View style={{ gap: 8 }}>
+            <Button title={options.pinned ? 'Unpin chat' : 'Pin to top'} variant="secondary" onPress={() => void setPref(options, { pinned: !options.pinned })} />
+            <Button title={options.muted ? 'Unmute' : 'Mute'} variant="secondary" onPress={() => void setPref(options, { muted: !options.muted })} />
+            <Button title="Delete chat" variant="ghost" onPress={() => deleteChat(options)} />
+          </View>
+        )}
+      </Sheet>
     </StateView>
   );
 }

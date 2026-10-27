@@ -7,6 +7,7 @@ import { ScrollView, View } from 'react-native';
 
 import { brand, hasFeature } from '@/lib/brand';
 import { ContributionsCard } from '@/components/Contributions';
+import { FanClubCard } from '@/components/FanClub';
 import { LiveAvatar } from '@/components/FollowingLive';
 import { PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
@@ -261,6 +262,7 @@ export default function UserProfileScreen() {
             {activeTab === 'replays' && <ProfileMedia userId={id!} kind="live_recording" isMe={isMe} />}
             {activeTab === 'about' && (
               <View style={{ gap: 12 }}>
+                {data.host && <FanClubCard hostId={id} isFollowing={isFollowing} />}
                 {data.host && <ContributionsCard hostId={id} />}
               </View>
             )}

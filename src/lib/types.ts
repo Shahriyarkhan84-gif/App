@@ -32,6 +32,10 @@ export type Profile = {
   message_requests?: boolean;
   /** Settings → Privacy: only hosts they follow can invite them to a PK battle. */
   pk_invites_followers_only?: boolean;
+  /** Birthday check result (the date itself stays server-side). Under-18s are restricted. */
+  age_check?: 'unknown' | 'adult' | 'minor';
+  /** Topics picked after sign-up; Discover shows these first. */
+  interests?: string[];
 };
 
 export type Room = {

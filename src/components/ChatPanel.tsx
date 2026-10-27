@@ -12,6 +12,7 @@ import { useSupabase } from '@/lib/supabase';
 import { fonts, liveColors as c } from '@/lib/theme';
 import { displayName, type ChatMessage } from '@/lib/types';
 
+import { useFanClubMembers } from './FanClub';
 import { Button, Sheet, Text } from './ui';
 
 const SELECT = 'id,room_id,sender_id,body,status,created_at,sender:profiles!messages_sender_id_fkey(display_name,username,avatar_url)';
@@ -41,6 +42,7 @@ export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress, ac
   const [selected, setSelected] = useState<ChatMessage | null>(null);
   const senderCache = useRef(new Map<string, ChatMessage['sender']>());
   const listRef = useRef<FlatList<ChatMessage>>(null);
+  const fans = useFanClubMembers(hostId);
 
   const refresh = useCallback(async () => {
     const { data } = await supabase.from('messages').select(SELECT).eq('room_id', roomId).eq('status', 'visible')
@@ -158,6 +160,7 @@ export function ChatPanel({ roomId, hostId, canModerate, isHost, onUserPress, ac
           <Pressable onLongPress={() => setSelected(item)} onPress={() => onUserPress?.(item.sender_id)} accessibilityHint="Long press for options">
             <View style={{ alignSelf: 'flex-start', backgroundColor: 'rgba(6,24,38,0.62)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 7, marginVertical: 3, maxWidth: '88%' }}>
               <Text color={c.text} style={{ fontSize: 14, lineHeight: 19 }}>
+                {fans.has(item.sender_id) && <Text variant="caption" color={c.gold} style={{ fontSize: 11, fontWeight: '700' }}>♥ Fan </Text>}
                 <Text variant="label" color={item.sender_id === hostId ? c.gold : c.accent}>{displayName(item.sender)} </Text>
                 {translations[item.id] ?? item.body}
               </Text>

@@ -21,7 +21,7 @@ import { hasFeature, U } from '@/lib/brand';
 import { env, missingRequiredEnv } from '@/lib/env';
 import { loadCacheFor } from '@/lib/hooks';
 import { AppI18n } from '@/lib/i18n/AppI18n';
-import { ProfileProvider } from '@/lib/profile';
+import { ProfileProvider, useProfile } from '@/lib/profile';
 import { initSentry, Sentry } from '@/lib/sentry';
 import { subdomainHome } from '@/lib/subdomain';
 import { SupabaseProvider } from '@/lib/supabase';
@@ -118,6 +118,21 @@ function SubdomainHome() {
   return null;
 }
 
+/**
+ * Birthday check: an account without a birthday (or under 18) goes to /onboarding until it's done.
+ * Accounts on a database without the age column (age_check undefined) are never sent there.
+ */
+function AgeGate() {
+  const { isSignedIn } = useAuth();
+  const { profile } = useProfile();
+  const pathname = usePathname();
+  const needed = profile?.age_check === 'unknown' || profile?.age_check === 'minor';
+  useEffect(() => {
+    if (isSignedIn && needed && pathname !== '/onboarding') router.replace('/onboarding');
+  }, [isSignedIn, needed, pathname]);
+  return null;
+}
+
 function RootNavigator() {
   const { isSignedIn } = useAuth();
   const { c } = useTheme();
@@ -136,6 +151,7 @@ function RootNavigator() {
     >
       <Stack.Protected guard={!!isSignedIn}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false, animation: 'fade' }} />
         <Stack.Screen name="live/[roomId]" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Protected guard={hasFeature('partyRooms')}>
           <Stack.Screen name="party/[roomId]" options={{ headerShown: false, animation: 'fade' }} />
@@ -237,6 +253,7 @@ function RootLayout() {
               <Analytics>
                 <IdentityAndScreens />
                 <SubdomainHome />
+                <AgeGate />
                 <StatusBar style={appIsDark ? 'light' : 'dark'} />
                 <RootNavigator />
               </Analytics>

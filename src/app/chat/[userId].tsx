@@ -31,17 +31,21 @@ export default function ChatScreen() {
   const listRef = useRef<FlatList<DM>>(null);
 
   const { data, error, loading, reload } = useAsync(async () => {
-    const [msgs, other, block] = await Promise.all([
+    const [msgs, other, block, pref] = await Promise.all([
       supabase.from('direct_messages').select('*')
         .or(`and(sender_id.eq.${userId},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${userId})`)
         .order('created_at', { ascending: false }).limit(200),
       supabase.from('profiles').select('display_name,username,avatar_url').eq('id', otherId).maybeSingle(),
       // Only your own blocks are readable; being blocked by them is still found out on send.
       supabase.from('user_blocks').select('blocked_id').eq('blocker_id', userId!).eq('blocked_id', otherId).maybeSingle(),
+      // "Delete chat" in Messages hides older messages for you (ignored if it can't be read).
+      supabase.from('dm_thread_prefs').select('cleared_at').eq('user_id', userId!).eq('other_id', otherId).maybeSingle(),
     ]);
     if (msgs.error) throw msgs.error;
+    const clearedAt = (pref.data as { cleared_at?: string | null } | null)?.cleared_at ?? null;
     // Newest 200, shown oldest first.
-    return { messages: (msgs.data as DM[]).reverse(), other: other.data, iBlocked: !!block.data };
+    const messages = (msgs.data as DM[]).filter((m) => !clearedAt || m.created_at > clearedAt).reverse();
+    return { messages, other: other.data, iBlocked: !!block.data };
   }, [userId, otherId]);
 
   useRealtime('direct_messages', `recipient_id=eq.${userId}`, (p) => {
@@ -56,7 +60,7 @@ export default function ChatScreen() {
   }, [data, supabase, userId, otherId]);
 
   // Restricted or banned accounts, and people you blocked, can't be messaged: say so up front.
-  const cantSend = profile && profile.status !== 'active' ? 'Your account can’t send messages right now.'
+  const cantSend = profile && (profile.status !== 'active' || profile.age_check === 'minor') ? 'Your account can’t send messages right now.'
     : data?.iBlocked ? 'You blocked this person. Unblock them to send a message.' : null;
 
   const send = async () => {

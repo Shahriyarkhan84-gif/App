@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { brand, hasFeature, units } from '@/lib/brand';
 import { ChatPanel } from '@/components/ChatPanel';
-import { GiftToasts } from '@/components/GiftSheet';
+import { BigGiftBurst, GiftToasts } from '@/components/GiftSheet';
 import { ConnectionBadge, HostControlRail, LiveTimer, MicOffBanner } from '@/components/HostControls';
 import { FloatingHearts, JoinedLine, useLiveReactions } from '@/components/LiveReactions';
 import { LiveStage } from '@/components/LiveStage';
@@ -306,6 +306,7 @@ export default function HostLiveScreen() {
           </>
         )}
       </StateView>
+      <BigGiftBurst />
       {state.kind === 'error' && (
         // A live that can't connect must still be endable, or the room stays "live" for viewers.
         <View style={{ position: 'absolute', left: 24, right: 24, bottom: insets.bottom + 24 }}>

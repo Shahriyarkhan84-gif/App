@@ -15,8 +15,12 @@ export function useHasUnread(): boolean {
 
   const check = useCallback(async () => {
     if (!userId) return;
+    // Muted chats (Messages → long press → Mute) don't light the dot. Ignored if it can't be read.
+    const { data: muted } = await supabase.from('dm_thread_prefs').select('other_id').eq('user_id', userId).eq('muted', true);
+    let unreadDms = supabase.from('direct_messages').select('id', { count: 'exact', head: true }).eq('recipient_id', userId).is('read_at', null);
+    if (muted?.length) unreadDms = unreadDms.not('sender_id', 'in', `(${muted.map((m) => m.other_id).join(',')})`);
     const [dms, notes] = await Promise.all([
-      supabase.from('direct_messages').select('id', { count: 'exact', head: true }).eq('recipient_id', userId).is('read_at', null),
+      unreadDms,
       supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', userId).is('read_at', null),
     ]);
     setUnread((dms.count ?? 0) + (notes.count ?? 0) > 0);

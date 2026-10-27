@@ -1013,4 +1013,64 @@ update public.rooms set current_battle_id = null where host_id in ('pv_h1', 'pv_
 delete from public.pk_battles where room_a_id in (select id from public.rooms where host_id in ('pv_h1', 'pv_h2'));
 select set_config('request.headers', '', false);
 
+-- Birthday: set once; under-18s are restricted everywhere and can't buy diamonds.
+insert into public.profiles (id, username) values ('ag_adult', 'ag_adult'), ('ag_minor', 'ag_minor');
+select set_config('request.jwt.claims', '{"sub":"ag_adult"}', false);
+set role authenticated;
+select tests.fails($$select public.set_birth_date((current_date + 1))$$, '%invalid_birth_date%', 'a future birth date is refused');
+select tests.ok(public.set_birth_date(date '1990-05-01') = 'adult', 'an adult is marked adult');
+select tests.fails($$select public.set_birth_date(date '1980-01-01')$$, '%birth_date_already_set%', 'the birth date can be given only once');
+select tests.fails($$update public.profiles set age_check = 'adult' where id = 'ag_adult'$$, '%permission denied%', 'nobody can set their own age result');
+select tests.fails($$select * from private.birthdates$$, '%permission denied%', 'birth dates are private');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"ag_minor"}', false);
+set role authenticated;
+select tests.ok(public.set_birth_date((current_date - interval '15 years')::date) = 'minor', 'a 15-year-old is marked minor');
+select tests.fails($$select public.send_direct_message('ag_adult', 'hi')$$, '%account_restricted%', 'a minor cannot use messages');
+reset role;
+select tests.ok(public.user_status('ag_minor') = 'restricted' and public.user_status('ag_adult') = 'active', 'only the minor is restricted');
+select tests.fails($$select public.internal_create_payment('ag_minor', (select id from public.coin_packages where active and region = private.user_region('ag_minor') limit 1))$$, '%under_18%', 'a minor cannot buy diamonds');
+
+-- Interests: own profile only, known topics only.
+select set_config('request.jwt.claims', '{"sub":"ag_adult"}', false);
+set role authenticated;
+update public.profiles set interests = '{music,gaming}' where id = 'ag_adult';
+select tests.fails($$update public.profiles set interests = '{hacking}' where id = 'ag_adult'$$, '%check%', 'unknown interests are refused');
+update public.profiles set interests = '{chat}' where id = 'ag_minor';
+reset role;
+select tests.ok((select interests = '{music,gaming}' from public.profiles where id = 'ag_adult'), 'a person sets their own interests');
+select tests.ok((select interests = '{}' from public.profiles where id = 'ag_minor'), 'nobody sets someone else''s interests');
+
+-- Fan club: join only yourself, only a host you follow; leave only yourself.
+insert into public.profiles (id, username) values ('fc_host', 'fc_host'), ('fc_fan', 'fc_fan'), ('fc_other', 'fc_other');
+insert into public.hosts (user_id) values ('fc_host');
+select set_config('request.jwt.claims', '{"sub":"fc_fan"}', false);
+set role authenticated;
+select tests.fails($$insert into public.fan_club_members (host_id, user_id) values ('fc_host', 'fc_fan')$$, '%row-level security%', 'you must follow a host to join their fan club');
+insert into public.follows (follower_id, followee_id) values ('fc_fan', 'fc_host');
+insert into public.fan_club_members (host_id, user_id) values ('fc_host', 'fc_fan');
+select tests.fails($$insert into public.fan_club_members (host_id, user_id) values ('fc_host', 'fc_other')$$, '%row-level security%', 'nobody can add someone else to a fan club');
+select tests.fails($$insert into public.fan_club_members (host_id, user_id) values ('fc_other', 'fc_fan')$$, '%row-level security%', 'only hosts have fan clubs');
+reset role;
+insert into public.follows (follower_id, followee_id) values ('fc_other', 'fc_host');
+insert into public.fan_club_members (host_id, user_id) values ('fc_host', 'fc_other');
+select set_config('request.jwt.claims', '{"sub":"fc_fan"}', false);
+set role authenticated;
+delete from public.fan_club_members where user_id = 'fc_other';
+reset role;
+select tests.ok((select count(*) from public.fan_club_members where host_id = 'fc_host') = 2, 'nobody can remove someone else from a fan club');
+
+-- Chat list options are private to their owner.
+select set_config('request.jwt.claims', '{"sub":"fc_fan"}', false);
+set role authenticated;
+insert into public.dm_thread_prefs (user_id, other_id, pinned) values ('fc_fan', 'fc_host', true);
+select tests.fails($$insert into public.dm_thread_prefs (user_id, other_id, muted) values ('fc_other', 'fc_host', true)$$, '%row-level security%', 'nobody can change someone else''s chat options');
+reset role;
+insert into public.dm_thread_prefs (user_id, other_id, muted) values ('fc_other', 'fc_fan', true);
+select set_config('request.jwt.claims', '{"sub":"fc_fan"}', false);
+set role authenticated;
+select tests.ok((select count(*) from public.dm_thread_prefs) = 1, 'people see only their own chat options');
+reset role;
+select set_config('request.jwt.claims', '', false);
+
 drop schema tests cascade;

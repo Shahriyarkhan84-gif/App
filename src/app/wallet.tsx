@@ -22,9 +22,10 @@ import { formatMoney, type CoinPackage } from '@/lib/types';
 type Tx = { id: number; delta: number; kind: string; created_at: string };
 
 // History is purchases only (and their refunds/chargebacks): it never lists the gifts you sent.
-const PURCHASE_KINDS = ['purchase', 'refund', 'chargeback'];
+// Everything that moved diamonds: purchases, gifts sent, frames, refunds and adjustments.
 const KIND_LABEL: Record<string, string> = {
   purchase: `${U.Spend} purchased`, refund: 'Refund reversal', chargeback: 'Chargeback reversal',
+  gift_sent: 'Gift sent', frame_purchase: 'Profile frame', adjustment: 'Adjustment by support',
 };
 
 export default function WalletScreen() {
@@ -45,7 +46,7 @@ export default function WalletScreen() {
     const [wallet, packages, txs, region] = await Promise.all([
       supabase.from('wallets').select('coin_balance,frozen').eq('user_id', userId!).maybeSingle(),
       supabase.from('coin_packages').select('id,name,coins,price_minor,currency,region').eq('active', true).order('sort'),
-      supabase.from('coin_transactions').select('id,delta,kind,created_at').eq('user_id', userId!).in('kind', PURCHASE_KINDS).order('created_at', { ascending: false }).limit(50),
+      supabase.from('coin_transactions').select('id,delta,kind,created_at').eq('user_id', userId!).order('created_at', { ascending: false }).limit(100),
       // Prices follow the country the account was created in (locked); never show other countries'.
       supabase.rpc('my_region'),
     ]);
@@ -214,12 +215,12 @@ export default function WalletScreen() {
               <Text variant="caption" faint>{U.Spend} are added only after the payment is confirmed.</Text>
 
             </ScrollView>
-            <Sheet visible={historyOpen} onClose={() => setHistoryOpen(false)} title="Purchase history">
+            <Sheet visible={historyOpen} onClose={() => setHistoryOpen(false)} title={`${U.SpendOne} history`}>
               <View style={{ gap: 4, flexShrink: 1 }}>
                 <ScrollView style={{ flexShrink: 1 }}>
                 {(() => {
                   const txs = data.txs;
-                  return txs.length === 0 ? <Text muted style={{ paddingVertical: 12 }}>No purchases yet.</Text> : txs.map((t) => {
+                  return txs.length === 0 ? <Text muted style={{ paddingVertical: 12 }}>Nothing yet. Purchases and gifts you send show here.</Text> : txs.map((t) => {
                   const credit = t.delta > 0;
                   return (
                     <Row key={t.id} style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.divider }}>

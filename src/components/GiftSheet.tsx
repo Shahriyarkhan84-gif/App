@@ -1,7 +1,7 @@
 import { useAuth } from '@clerk/clerk-expo';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { U, units } from '@/lib/brand';
@@ -156,20 +156,31 @@ export function GiftSheet({ roomId, visible, onClose }: { roomId: string; visibl
 // 10 minutes) and each sender's name once, so a busy live doesn't cost every viewer two database
 // requests per gift.
 const TOAST_CATALOG_MS = 10 * 60_000;
-let toastCatalog: { at: number; byId: Map<number, { icon: string; name: string }> } | null = null;
+let toastCatalog: { at: number; byId: Map<number, { icon: string; name: string; coin_price: number }> } | null = null;
 let toastCatalogLoad: Promise<void> | null = null;
 const senderNames = new Map<string, string>();
 const MAX_SENDER_NAMES = 500;
 
-/** Floating toasts for gifts arriving in a room (realtime). */
+// Gifts worth this many diamonds or more (price × quantity) also play the full-screen effect.
+export const BIG_GIFT_COINS = 999;
+type BigGift = { id: string; sender: string; icon: string; name: string; count: number };
+const bigGiftListeners = new Set<(g: BigGift) => void>();
+
+/** Floating toasts for gifts arriving in a room (realtime). The same gift from the same sender
+ * within a few seconds adds up into one combo toast instead of a new one. */
 export function GiftToasts({ roomId }: { roomId: string }) {
   const supabase = useSupabase();
-  const [toasts, setToasts] = useState<{ id: string; sender: string; gift: string; count: number }[]>([]);
+  const [toasts, setToasts] = useState<{ id: string; key: string; sender: string; gift: string; count: number }[]>([]);
+  const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  useEffect(() => {
+    const t = timers.current;
+    return () => t.forEach(clearTimeout);
+  }, []);
   const giftFor = async (giftId: number) => {
     if (!toastCatalog?.byId.has(giftId) || Date.now() - toastCatalog.at > TOAST_CATALOG_MS) {
-      toastCatalogLoad ??= Promise.resolve(supabase.from('gift_catalog').select('id,icon,name'))
+      toastCatalogLoad ??= Promise.resolve(supabase.from('gift_catalog').select('id,icon,name,coin_price'))
         .then(({ data }) => {
-          if (data) toastCatalog = { at: Date.now(), byId: new Map(data.map((g) => [g.id as number, g as { icon: string; name: string }])) };
+          if (data) toastCatalog = { at: Date.now(), byId: new Map(data.map((g) => [g.id as number, g as { icon: string; name: string; coin_price: number }])) };
         })
         .catch(() => {})
         .finally(() => {
@@ -190,25 +201,71 @@ export function GiftToasts({ roomId }: { roomId: string }) {
   };
   useRealtime('gifts', `room_id=eq.${roomId}`, async (payload) => {
     if (payload.eventType !== 'INSERT') return;
-    const g = payload.new as { id: string; sender_id: string; gift_id: number; quantity: number };
+    const g = payload.new as { id: string; sender_id: string; gift_id: number; quantity: number; coins_total?: number };
     const [sender, gift] = await Promise.all([senderFor(g.sender_id), giftFor(g.gift_id)]);
-    const toast = { id: g.id, sender, gift: `${gift?.icon ?? '🎁'} ${gift?.name ?? 'a gift'}`, count: g.quantity };
-    setToasts((t) => [...t.slice(-2), toast]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== g.id)), 4000);
+    const key = `${g.sender_id}:${g.gift_id}`;
+    const label = `${gift?.icon ?? '🎁'} ${gift?.name ?? 'a gift'}`;
+    setToasts((all) => {
+      const combo = all.find((x) => x.key === key);
+      if (combo) return all.map((x) => (x.key === key ? { ...x, id: g.id, count: x.count + g.quantity } : x));
+      return [...all.slice(-2), { id: g.id, key, sender, gift: label, count: g.quantity }];
+    });
+    const old = timers.current.get(key);
+    if (old) clearTimeout(old);
+    timers.current.set(key, setTimeout(() => {
+      timers.current.delete(key);
+      setToasts((t) => t.filter((x) => x.key !== key));
+    }, 4000));
+    const coins = g.coins_total ?? (gift?.coin_price ?? 0) * g.quantity;
+    if (coins >= BIG_GIFT_COINS) bigGiftListeners.forEach((l) => l({ id: g.id, sender, icon: gift?.icon ?? '🎁', name: gift?.name ?? 'a gift', count: g.quantity }));
   });
   return (
     <View pointerEvents="none" style={{ gap: 8 }}>
       {toasts.map((t) => (
-        <FadeIn key={t.id} from={0} style={{ alignSelf: 'flex-start' }}>
+        <FadeIn key={t.key} from={0} style={{ alignSelf: 'flex-start' }}>
         <SlideIn style={{ flexDirection: 'row', alignItems: 'center', gap: 8, height: 46, paddingLeft: 14, paddingRight: 14, borderRadius: 23, backgroundColor: 'rgba(6,24,38,0.85)', borderWidth: 1, borderColor: '#FFC24B' }}>
           <View>
             <Text variant="label" color="#fff" style={{ fontSize: 13 }}>{t.sender}</Text>
             <Text variant="caption" color="#D6F0FF">sent {t.gift}</Text>
           </View>
-          {t.count > 1 && <Pop delay={250} from={2}><Text variant="display" color="#FFC24B" style={{ fontSize: 24, lineHeight: 28, fontStyle: 'italic' }}>×{t.count}</Text></Pop>}
+          {t.count > 1 && <Pop key={t.count} delay={250} from={2}><Text variant="display" color="#FFC24B" style={{ fontSize: 24, lineHeight: 28, fontStyle: 'italic' }}>×{t.count}</Text></Pop>}
         </SlideIn>
         </FadeIn>
       ))}
+    </View>
+  );
+}
+
+/**
+ * Full-screen moment for a big gift (see BIG_GIFT_COINS), fed by the room's <GiftToasts>.
+ * Put it last in the screen so it draws over the video; it never takes touches.
+ */
+export function BigGiftBurst() {
+  const [queue, setQueue] = useState<BigGift[]>([]);
+  useEffect(() => {
+    const add = (g: BigGift) => setQueue((q) => (q.length >= 3 ? q : [...q, g]));
+    bigGiftListeners.add(add);
+    return () => {
+      bigGiftListeners.delete(add);
+    };
+  }, []);
+  const current = queue[0];
+  useEffect(() => {
+    if (!current) return;
+    const t = setTimeout(() => setQueue((q) => q.slice(1)), 3200);
+    return () => clearTimeout(t);
+  }, [current]);
+  if (!current) return null;
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(6,24,38,0.35)' }}
+      accessibilityLiveRegion="polite" accessibilityLabel={`${current.sender} sent ${current.name}`}>
+      <Pop key={current.id} from={0.2} style={{ alignItems: 'center', gap: 10 }}>
+        <Text style={{ fontSize: 120, lineHeight: 140 }}>{current.icon}</Text>
+        <View style={{ alignItems: 'center', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 22, backgroundColor: 'rgba(6,24,38,0.8)', borderWidth: 1, borderColor: '#FFC24B' }}>
+          <Text variant="label" color="#fff">{current.sender}</Text>
+          <Text variant="h3" color="#FFC24B">sent {current.name}{current.count > 1 ? ` ×${current.count}` : ''}</Text>
+        </View>
+      </Pop>
     </View>
   );
 }

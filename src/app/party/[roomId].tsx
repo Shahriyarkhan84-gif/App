@@ -7,7 +7,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChatPanel } from '@/components/ChatPanel';
-import { GiftSheet, GiftToasts } from '@/components/GiftSheet';
+import { BigGiftBurst, GiftSheet, GiftToasts } from '@/components/GiftSheet';
 import type { PartyMode, Seat } from '@/components/PartySeats';
 import { PartyStage } from '@/components/PartyStage';
 import { StateView, type ViewState } from '@/components/StateView';
@@ -328,6 +328,7 @@ export default function PartyRoomScreen() {
         )}
       </Sheet>
       <GiftSheet roomId={roomId} visible={giftOpen} onClose={() => setGiftOpen(false)} />
+      <BigGiftBurst />
     </View>
   );
 }

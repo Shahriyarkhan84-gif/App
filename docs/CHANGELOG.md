@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.10.0 — Ideas from the iOS/Android page set (our look, not theirs)
+
+- **Birthday check** (`/onboarding`): every account gives its birthday once (new sign-ups and, on next open, existing accounts). Under-18s see "Zynalive is for adults" and the server restricts them everywhere: `user_status()` reports them `restricted` (no live, gifts, messages, PK) and `internal_create_payment` refuses them (`under_18`). The date is private (`private.birthdates`); it can be set only once.
+- **Interests**: after the birthday, people pick topics (Chat, Music, Gaming…); Popular shows those lives first after AI picks. Editable in Edit profile.
+- **Big gifts**: gifts worth 999+ diamonds play a full-screen moment over the live (viewer, host and party rooms). The same gift sent again by the same person within 4 seconds adds up in one combo toast (×N).
+- **Fan club**: a host's followers can join their fan club for free (card on the host's profile); members wear a ♥ Fan badge in that host's live chat.
+- **Chat list options**: long-press a conversation in Messages to pin it to the top, mute it (no unread dot), or delete it for yourself (the other person keeps their copy).
+- **Diamond history** in Wallet now lists everything that moved diamonds (gifts sent, frames, refunds, adjustments), not only purchases.
+- Fix (unapplied migration `20261027010000_privacy_settings.sql`): other people's screens can now read `hide_from_nearby` and `hide_location`, so Nearby and the profile country actually respect them.
+- Already in the app, so not rebuilt: search (Party tab), viewer mini profile, host live controls, End live / Log out confirms, live-ended summary, recharge result messages, withdrawal history, party guest seats. Not built: request-to-join in solo lives and no-face detection (bigger LiveKit / AI-worker projects).
+
 ## 0.9.99 — VIP tile on Me
 
 - On Me, the Frames · Shop tile next to Diamonds is replaced by **VIP · Levels**, which opens the VIP cards. Frames are still reachable from the Frame badge on your photo, Profile frames and Item bag.

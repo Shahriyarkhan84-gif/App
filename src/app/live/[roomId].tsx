@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { brand, units } from '@/lib/brand';
 import { ChatPanel } from '@/components/ChatPanel';
-import { GiftSheet, GiftToasts } from '@/components/GiftSheet';
+import { BigGiftBurst, GiftSheet, GiftToasts } from '@/components/GiftSheet';
 import { LiveStage } from '@/components/LiveStage';
 import { FloatingHearts, JoinedLine, useLiveReactions } from '@/components/LiveReactions';
 import { ProfileCard } from '@/components/ProfileCard';
@@ -325,6 +325,7 @@ export default function LiveRoomScreen() {
           )}
         </Sheet>
       </StateView>
+      <BigGiftBurst />
     </View>
   );
 }
