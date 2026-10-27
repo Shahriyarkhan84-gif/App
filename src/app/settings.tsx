@@ -1,4 +1,3 @@
-import { useClerk } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
@@ -20,7 +19,6 @@ import { useTheme } from '@/lib/theme';
 import { displayName } from '@/lib/types';
 
 export default function SettingsScreen() {
-  const { signOut } = useClerk();
   const { c } = useTheme();
   const { t, saved, setLanguage } = useI18n();
   const { profile } = useProfile();
@@ -101,9 +99,6 @@ export default function SettingsScreen() {
           <ListRow icon="trash-bin-outline" label="Clean cache" onPress={cleanCache} last />
         </Section>
 
-        <Button title={t('settings.signOut')} variant="secondary" style={{ backgroundColor: c.surfaceRaised, borderColor: c.violetBorder }}
-          onPress={() => confirmAction(t('settings.signOut'), 'You can sign back in any time.', t('settings.signOut'), () => void signOut().then(() => router.replace('/')))} />
-        <Button title={t('settings.delete')} variant="ghost" onPress={() => router.push('/delete-account')} style={{ marginTop: -8 }} icon={<Ionicons name="trash-outline" size={16} color={c.danger} />} />
         <Text variant="caption" faint style={{ textAlign: 'center' }}>{brand.name} {version}{build ? ` (${build})` : ''}</Text>
       </ScrollView>
     </Screen>

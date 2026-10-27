@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.93 — Sign out and Delete account live in Account management
+
+- Settings no longer repeats Sign out / Delete account at the bottom (it ends with the version number); both are in Settings → Account management, and Sign out asks to confirm there.
+
 ## 0.9.92 — More privacy, account sign-in methods
 
 - **Privacy** adds: *Hide my location* (no country on your profile or live card), *Message requests* (chats from people you don't follow wait in a "Message requests" folder in Messages until you reply or follow them; on by default), and *PK invites only from people I follow* (enforced in `invite_pk_battle`: `pk_invites_followers_only`).

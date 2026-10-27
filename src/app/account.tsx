@@ -8,7 +8,7 @@ import { Platform, ScrollView, View } from 'react-native';
 
 import { clerkErrorMessage } from '@/components/AuthForm';
 import { Button, Card, Input, ListRow, Row, Screen, Text, type IconName } from '@/components/ui';
-import { Alert } from '@/lib/alert';
+import { Alert, confirmAction } from '@/lib/alert';
 import { brand } from '@/lib/brand';
 import { useProfile } from '@/lib/profile';
 import { useTheme } from '@/lib/theme';
@@ -196,7 +196,7 @@ export default function AccountScreen() {
             </Text>
           </Card>
           <Card style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
-            <ListRow icon="log-out-outline" label="Sign out" onPress={() => void signOut().then(() => router.replace('/'))} />
+            <ListRow icon="log-out-outline" label="Sign out" onPress={() => confirmAction('Sign out', 'You can sign back in any time.', 'Sign out', () => void signOut().then(() => router.replace('/')))} />
             <ListRow icon="trash-outline" label="Delete account" color={c.danger} onPress={() => router.push('/delete-account')} last />
           </Card>
         </View>
