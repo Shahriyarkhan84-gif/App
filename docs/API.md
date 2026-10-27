@@ -7,7 +7,7 @@ All return `{ error: { code, message } }` on failure. User-facing functions requ
 
 | Function | Body | Returns | Notes |
 |---|---|---|---|
-| `livekit-token` | `{ roomId, as: 'viewer' \| 'host' }` | `{ token, url }` | 2h token; hosts publish camera+mic in their own live room only; viewers subscribe-only; bans enforced. 30/min. |
+| `livekit-token` | `{ roomId, as: 'viewer' \| 'host' \| 'guest' }` | `{ token, url }` | 2h token; hosts publish in their own room only; a seated guest publishes (mic in voice parties, camera+mic in video parties and as the one guest of a solo live); viewers subscribe-only; bans enforced. 30/min. |
 | `smart-search` | `{ q }` (2–100 chars, any language) or `{ similarTo: roomId }`, optional `limit` (≤50) | `{ results: [{ id, score }] }` | Live rooms by meaning from Pinecone; the app loads the rooms through RLS. `503 not_configured` without `PINECONE_API_KEY`. 30/min. |
 | `coins-checkout` | `{ packageId, returnTo? }` | `{ url }` | Checkout session; price from `coin_packages`. `url` is Zynalive's own page (zynalive.com/pay#…) when `STRIPE_PUBLISHABLE_KEY` is set, otherwise Stripe's hosted page. 5/min. A retry within 30 min returns the same Stripe page. 409 `payment_processing` (already paid, being credited), 409 `checkout_in_progress` (started elsewhere). |
 | `stripe-webhook` | Stripe event | — | Signature-verified; credits coins, closes expired/failed checkouts, refunds, disputes. |

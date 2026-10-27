@@ -77,7 +77,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "test": "jest",
-    "check:duplicates": "node scripts/check-duplicates.mjs"
+    "check:duplicates": "node scripts/check-duplicates.mjs",
+    "store:screenshots": "node scripts/store-screenshots.mjs"
   },
   "private": true,
   "jest": {

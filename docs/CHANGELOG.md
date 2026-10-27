@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.1 — Guests in solo lives, the no-face rule, store screenshots
+
+- **Request to join a live**: viewers ask from the live's menu (Request to join live / Cancel / Leave guest spot). The host taps **Guests** on the right rail to accept, decline, swap or remove. One guest at a time; they appear in a corner tile with camera and mic, and every viewer sees both. Uses the party-room seats (`request_seat` / `approve_seat`, now one seat in a normal live); no requests during a PK battle, and a battle starting ends the guest's turn. `livekit-token` lets the seated guest publish camera + mic (**needs redeploy**).
+- **No-face rule** (web/computer hosts): the browser checks the host's own camera on the device (MediaPipe face detector from the CDN; no video is sent anywhere). No face for 15 s shows a warning with a countdown; 45 s turns the camera off and pauses the live (`set_live_paused`, audited). Viewers see "<host> will be right back"; the host taps "I'm back, resume". The Android/iPhone apps don't detect faces yet (needs a native module in a new build); the pause screens work there too.
+- **Store screenshots**: `npm run store:screenshots [brand]` draws 5 screenshots from the brand file (live, PK, party, gifts, safety) into `store/screenshots/<brand>/ios` (1320×2868) and `/android` (1080×1920). Illustrations with sample names and the mascot, no real people.
+
 ## 0.10.0 — Ideas from the iOS/Android page set (our look, not theirs)
 
 - **Birthday check** (`/onboarding`): every account gives its birthday once (new sign-ups and, on next open, existing accounts). Under-18s see "Zynalive is for adults" and the server restricts them everywhere: `user_status()` reports them `restricted` (no live, gifts, messages, PK) and `internal_create_payment` refuses them (`under_18`). The date is private (`private.birthdates`); it can be set only once.
