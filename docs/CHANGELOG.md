@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.99 — VIP tile on Me
+
+- On Me, the Frames · Shop tile next to Diamonds is replaced by **VIP · Levels**, which opens the VIP cards. Frames are still reachable from the Frame badge on your photo, Profile frames and Item bag.
+
 ## 0.9.98 — Beans screen without the gift split
 
 - The Beans (earnings) screen no longer shows the "Where each gift goes" box (host 90% / stream pool 5% / platform 5%). The split itself is unchanged (`platform_settings.gift_split`).

@@ -126,7 +126,7 @@ export default function ProfileScreen() {
 
           <FadeIn delay={140} style={{ flexDirection: 'row', gap: 8 }}>
             <Tile coin label={stats.data ? compactNumber(stats.data.coins) : '–'} sub={U.Spend} onPress={() => router.push('/wallet')} />
-            {hasFeature('frames') && <Tile icon="sparkles-outline" label="Frames" sub="Shop" onPress={() => router.push('/frames')} />}
+            <Tile icon="diamond-outline" label="VIP" sub="Levels" onPress={() => router.push('/svip')} />
             {hasFeature('agencies') && <Tile icon="business-outline" label="Agency" sub={isAgencyStaff ? 'Portal' : 'Join'} onPress={() => router.push(isAgencyStaff ? '/agency' : '/hosting')} />}
             <Tile bean label={host && stats.data ? compactNumber(stats.data.earnings) : 'Earn'} sub={U.Earn} onPress={() => router.push(host ? '/earnings' : '/hosting')} />
           </FadeIn>
