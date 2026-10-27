@@ -35,6 +35,7 @@ export default function AccountScreen() {
   const { c } = useTheme();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -109,6 +110,7 @@ export default function AccountScreen() {
       await user.updatePassword({ newPassword: next, ...(hasPassword ? { currentPassword: current } : {}), signOutOfOtherSessions: true });
       setCurrent('');
       setNext('');
+      setShowPassword(false);
       Alert.alert(hasPassword ? 'Password changed' : 'Password set', 'Other devices have been signed out.');
     } catch (e) {
       setError(clerkErrorMessage(e));
@@ -166,18 +168,20 @@ export default function AccountScreen() {
                 a ? status(a.emailAddress ? maskEmail(a.emailAddress) : 'Connected')
                   : <Button title="Connect" size="sm" variant="secondary" loading={busy === p.id} onPress={() => void connect(p.id)} />, false);
             })}
-            {methodRow('key-outline', 'Password', status(hasPassword ? 'Set' : 'Not set', hasPassword), true)}
+            {methodRow('key-outline', 'Password',
+              <Button title={showPassword ? 'Cancel' : hasPassword ? 'Change' : 'Set'} size="sm" variant="secondary" onPress={() => { setShowPassword((v) => !v); setError(null); }} />,
+              !showPassword)}
+            {showPassword && (
+              <View style={{ padding: 16, gap: 10, backgroundColor: c.violetSurface }}>
+                {!hasPassword && <Text variant="caption" muted>Add a password so you can also sign in with your email.</Text>}
+                {hasPassword && <Input label="Current password" secureTextEntry autoComplete="current-password" value={current} onChangeText={setCurrent} />}
+                <Input label="New password" secureTextEntry autoComplete="new-password" value={next} onChangeText={setNext} />
+                {error && <Text variant="caption" color={c.danger}>{error}</Text>}
+                <Button title={hasPassword ? 'Change password' : 'Set password'} size="sm" onPress={() => void savePassword()} loading={saving} disabled={!next || (hasPassword && !current)} />
+              </View>
+            )}
           </Card>
         </View>
-
-        <Card style={{ padding: 16, gap: 10 }}>
-          <Text variant="h3">{hasPassword ? 'Change password' : 'Set a password'}</Text>
-          {!hasPassword && <Text variant="caption" muted>Add a password so you can also sign in with your email.</Text>}
-          {hasPassword && <Input label="Current password" secureTextEntry autoComplete="current-password" value={current} onChangeText={setCurrent} />}
-          <Input label="New password" secureTextEntry autoComplete="new-password" value={next} onChangeText={setNext} />
-          {error && <Text variant="caption" color={c.danger}>{error}</Text>}
-          <Button title={hasPassword ? 'Change password' : 'Set password'} onPress={() => void savePassword()} loading={saving} disabled={!next || (hasPassword && !current)} />
-        </Card>
 
         <Card style={{ padding: 16, gap: 8 }}>
           <Row gap={8}><Ionicons name="shield-checkmark-outline" size={18} color={c.primary} /><Text variant="h3">Keep your account safe</Text></Row>

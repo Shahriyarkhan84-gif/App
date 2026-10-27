@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.95 — Change password on the Password row
+
+- Account management: the separate Change password box is gone. The Password row has a **Change** (or **Set**) button that opens the form right under it; Cancel closes it, and it closes itself after saving.
+
 ## 0.9.94 — Simpler settings pages
 
 - Settings: the Language chips are removed (the app follows the phone's language; a choice saved earlier still applies).
