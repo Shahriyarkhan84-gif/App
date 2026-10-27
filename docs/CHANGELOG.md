@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.98 — Beans screen without the gift split
+
+- The Beans (earnings) screen no longer shows the "Where each gift goes" box (host 90% / stream pool 5% / platform 5%). The split itself is unchanged (`platform_settings.gift_split`).
+
 ## 0.9.97 — Edit icon on your profile
 
 - On your own profile, a pencil icon in the top-right corner (next to Share) opens Edit profile; the Edit profile button under your name is gone (Share stays).

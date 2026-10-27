@@ -43,11 +43,10 @@ export default function EarningsScreen() {
     // Gifts land as tallies first (so a busy host's gifts don't queue); fold ours in for an exact balance.
     // Best-effort: an older server without this RPC still shows the stored balance.
     await supabase.rpc('settle_my_earnings');
-    const [earnings, withdrawals, settings, split, withdrawable] = await Promise.all([
+    const [earnings, withdrawals, settings, withdrawable] = await Promise.all([
       supabase.from('creator_earnings').select('balance,held,lifetime').eq('host_id', userId!).maybeSingle(),
       supabase.from('withdrawals').select('*').eq('host_id', userId!).order('created_at', { ascending: false }).limit(30),
       supabase.from('platform_settings').select('value').eq('key', 'withdrawal').single(),
-      supabase.from('platform_settings').select('value').eq('key', 'gift_split').maybeSingle(),
       // Gifts still inside the hold window can't be withdrawn yet; the server enforces this too.
       supabase.rpc('my_withdrawable_coins'),
     ]);
@@ -61,7 +60,6 @@ export default function EarningsScreen() {
       rate: cfg?.pkr_per_coin ?? null,
       minCoins: cfg?.min_coins ?? 0,
       withdrawable: withdrawable.error ? null : Number(withdrawable.data ?? 0),
-      split: (split.data?.value as { host_pct: number; stream_pct: number; owner_pct: number } | undefined) ?? null,
     };
   }, [userId], 'earnings');
 
@@ -104,28 +102,6 @@ export default function EarningsScreen() {
                 </Row>
               </LinearGradient>
             </FadeIn>
-
-            {data.split && (
-              <Card>
-                <Text variant="h3">Where each gift goes</Text>
-                <Text muted>For every 100 {U.spend} a viewer gifts you:</Text>
-                {[
-                  { label: 'You (host)', pct: data.split.host_pct, color: c.primary },
-                  { label: 'Stream pool', pct: data.split.stream_pct, color: c.gold },
-                  { label: 'Platform', pct: data.split.owner_pct, color: c.textFaint },
-                ].map((r) => (
-                  <View key={r.label} style={{ gap: 4 }}>
-                    <Row style={{ justifyContent: 'space-between' }}>
-                      <Text>{r.label}</Text>
-                      <Text variant="label">{r.pct}%</Text>
-                    </Row>
-                    <View style={{ height: 6, borderRadius: 3, backgroundColor: c.surfaceRaised, overflow: 'hidden' }}>
-                      <View style={{ width: `${r.pct}%`, height: '100%', backgroundColor: r.color }} />
-                    </View>
-                  </View>
-                ))}
-              </Card>
-            )}
 
             <Card>
               <Text variant="h3">Withdraw</Text>
