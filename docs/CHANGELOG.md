@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.96 — Profile without the About box
+
+- Profiles no longer show the About box (ID, From, Hosting hours, Friends). The ID, country and Friends count are already in the header; hosts still show their Contribution card.
+
 ## 0.9.95 — Change password on the Password row
 
 - Account management: the separate Change password box is gone. The Password row has a **Change** (or **Set**) button that opens the form right under it; Cancel closes it, and it closes itself after saving.

@@ -11,7 +11,7 @@ import { LiveAvatar } from '@/components/FollowingLive';
 import { PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { FramedAvatar } from '@/components/FramedAvatar';
-import { Button, Card, compactNumber, glassShadow, LiveBadge, RoleBadges, Row, Screen, Text, TextTabs, type IconName } from '@/components/ui';
+import { Button, Card, compactNumber, glassShadow, LiveBadge, RoleBadges, Row, Screen, Text, TextTabs } from '@/components/ui';
 import { ProfileMedia } from '@/components/ProfileMedia';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
@@ -248,18 +248,12 @@ export default function UserProfileScreen() {
               </View>
             )}
 
-            {/* With videos off (brand setting) there is only About, so no tab bar. */}
+            {/* With videos off (brand setting) there is only the About tab (host contributions), so no tab bar. */}
             {tabs.length > 1 && <TextTabs options={tabs} value={activeTab} onChange={setTab} />}
             {activeTab === 'videos' && <ProfileMedia userId={id!} kind="upload" isMe={isMe} />}
             {activeTab === 'replays' && <ProfileMedia userId={id!} kind="live_recording" isMe={isMe} />}
             {activeTab === 'about' && (
               <View style={{ gap: 12 }}>
-                <Card style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
-                  <AboutRow icon="finger-print-outline" label="ID" value={String(data.profile.user_number)} />
-                  {data.profile.signup_country && !data.hideLocation && <AboutRow icon="location-outline" label="From" value={`${flag(data.profile.signup_country)} ${countryName(data.profile.signup_country)}`} />}
-                  {data.host && <AboutRow icon="radio-outline" label="Hosting" value={`${Math.round((data.host.total_live_seconds ?? 0) / 3600)} hours live`} />}
-                  <AboutRow icon="people-outline" label="Friends" value={compactNumber(data.friends)} last />
-                </Card>
                 {data.host && <ContributionsCard hostId={id} />}
               </View>
             )}
@@ -267,16 +261,5 @@ export default function UserProfileScreen() {
         )}
       </StateView>
     </Screen>
-  );
-}
-
-function AboutRow({ icon, label, value, last }: { icon: IconName; label: string; value: string; last?: boolean }) {
-  const { c } = useTheme();
-  return (
-    <Row style={{ minHeight: 50, paddingHorizontal: 16, borderBottomWidth: last ? 0 : 1, borderBottomColor: c.divider }}>
-      <Ionicons name={icon} size={19} color={c.textMuted} />
-      <Text muted style={{ flex: 1 }}>{label}</Text>
-      <Text variant="label">{value}</Text>
-    </Row>
   );
 }
