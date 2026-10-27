@@ -8,13 +8,13 @@ import * as WebBrowser from 'expo-web-browser';
 import { ScrollView, View } from 'react-native';
 
 import { FramedAvatar } from '@/components/FramedAvatar';
-import { Button, Card, Chip, ListRow, Row, Screen, Text } from '@/components/ui';
+import { Button, Card, ListRow, Screen, Text } from '@/components/ui';
 import { Alert, confirmAction } from '@/lib/alert';
 import { brand } from '@/lib/brand';
 import { flag } from '@/lib/country';
 import { clearSavedCache } from '@/lib/hooks';
 import { canInstallIosProfile, IOS_PROFILE_PATH, isIosSafari } from '@/lib/install';
-import { LANGUAGES, useI18n, type Language } from '@/lib/i18n';
+import { useI18n } from '@/lib/i18n';
 import { useProfile } from '@/lib/profile';
 import { useTheme } from '@/lib/theme';
 import { displayName } from '@/lib/types';
@@ -22,7 +22,7 @@ import { displayName } from '@/lib/types';
 export default function SettingsScreen() {
   const { signOut } = useClerk();
   const { c } = useTheme();
-  const { t, saved, setLanguage } = useI18n();
+  const { t } = useI18n();
   const { profile } = useProfile();
 
   const version = Application.nativeApplicationVersion ?? Constants.expoConfig?.version ?? '';
@@ -36,10 +36,6 @@ export default function SettingsScreen() {
       Alert.alert('Cache cleaned', 'Screens and pictures will load fresh.');
     });
 
-  const choose = async (code: Language | null) => {
-    const needsRestart = await setLanguage(code);
-    if (needsRestart) Alert.alert(t('settings.language'), t('settings.language.restart'));
-  };
 
   // Downloads the install profile; iOS then asks to allow it and to finish in Settings.
   const installOnIphone = () => {
@@ -84,14 +80,6 @@ export default function SettingsScreen() {
           <ListRow icon="ban-outline" label="Blocked accounts" onPress={() => router.push('/blocked')} />
           <ListRow icon="notifications-outline" label="Notifications" onPress={() => router.push('/notification-settings')} last />
         </Section>
-
-        <View style={{ gap: 8 }}>
-          <SectionTitle>{t('settings.language')}</SectionTitle>
-          <Row gap={8} style={{ flexWrap: 'wrap' }}>
-            <Chip label={t('settings.language.device')} selected={saved === null} onPress={() => void choose(null)} />
-            {LANGUAGES.map((l) => <Chip key={l.code} label={l.name} selected={saved === l.code} onPress={() => void choose(l.code)} />)}
-          </Row>
-        </View>
 
         <Section title="About">
           <ListRow icon="document-text-outline" label="Terms of Service" onPress={() => router.push('/terms')} />

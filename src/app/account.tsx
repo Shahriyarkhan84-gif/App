@@ -1,13 +1,12 @@
-import { useClerk, useUser } from '@clerk/clerk-expo';
+import { useUser } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as AuthSession from 'expo-auth-session';
-import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Platform, ScrollView, View } from 'react-native';
 
 import { clerkErrorMessage } from '@/components/AuthForm';
-import { Button, Card, Input, ListRow, Row, Screen, Text, type IconName } from '@/components/ui';
+import { Button, Card, Input, Row, Screen, Text, type IconName } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { brand } from '@/lib/brand';
 import { useProfile } from '@/lib/profile';
@@ -32,7 +31,6 @@ function maskPhone(phone: string) {
 /** Settings → Account management: sign-in methods (email, phone, Google, Apple), password, and ownership. */
 export default function AccountScreen() {
   const { user } = useUser();
-  const { signOut } = useClerk();
   const { profile } = useProfile();
   const { c } = useTheme();
   const [current, setCurrent] = useState('');
@@ -194,10 +192,6 @@ export default function AccountScreen() {
             <Text variant="caption" muted>
               {`This account and everything in it belong to you. Deleting it is permanent: your profile, messages, followers and frames are removed and can't be brought back. Withdraw any beans first, because unwithdrawn earnings are lost.`}
             </Text>
-          </Card>
-          <Card style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
-            <ListRow icon="log-out-outline" label="Sign out" onPress={() => void signOut().then(() => router.replace('/'))} />
-            <ListRow icon="trash-outline" label="Delete account" color={c.danger} onPress={() => router.push('/delete-account')} last />
           </Card>
         </View>
       </ScrollView>

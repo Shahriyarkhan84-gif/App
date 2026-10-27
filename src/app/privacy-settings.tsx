@@ -1,10 +1,8 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Switch, View } from 'react-native';
 
-import { Card, ListRow, Row, Screen, Segmented, Text } from '@/components/ui';
+import { Card, Row, Screen, Segmented, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
-import { brand } from '@/lib/brand';
 import { friendlyError } from '@/lib/errors';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
@@ -67,10 +65,6 @@ export default function PrivacySettingsScreen() {
           ))}
         </Card>
 
-        <Card style={{ padding: 0, gap: 0, overflow: 'hidden' }}>
-          <ListRow icon="ban-outline" label="Blocked accounts" onPress={() => router.push('/blocked')} last />
-        </Card>
-        <Text variant="caption" faint>{`Blocked people can't message you or see you in Following on ${brand.name}.`}</Text>
       </ScrollView>
     </Screen>
   );

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.94 — Simpler settings pages
+
+- Settings: the Language chips are removed (the app follows the phone's language; a choice saved earlier still applies).
+- Privacy: the Blocked accounts row is removed there (it stays in Settings → Account).
+- Account management: the Sign out / Delete account rows are removed there (they stay at the bottom of Settings).
+
 ## 0.9.92 — More privacy, account sign-in methods
 
 - **Privacy** adds: *Hide my location* (no country on your profile or live card), *Message requests* (chats from people you don't follow wait in a "Message requests" folder in Messages until you reply or follow them; on by default), and *PK invites only from people I follow* (enforced in `invite_pk_battle`: `pk_invites_followers_only`).
