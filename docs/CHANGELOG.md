@@ -2,7 +2,7 @@
 
 ## 0.9.97 — Edit icon on your profile
 
-- On your own profile, a pencil icon in the top-right corner (next to Share) opens Edit profile.
+- On your own profile, a pencil icon in the top-right corner (next to Share) opens Edit profile; the Edit profile button under your name is gone (Share stays).
 
 ## 0.9.96 — Profile without the About box
 

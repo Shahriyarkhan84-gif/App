@@ -203,7 +203,6 @@ export default function UserProfileScreen() {
                 </Row>
                 {isMe ? (
                   <Row style={{ alignSelf: 'stretch' }}>
-                    <Button title="Edit profile" variant="secondary" onPress={() => router.push('/profile-edit')} style={{ flex: 1 }} />
                     <Button title="Share" variant="secondary" onPress={shareProfile} style={{ flex: 1 }} />
                   </Row>
                 ) : (
