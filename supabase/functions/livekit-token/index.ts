@@ -1,7 +1,7 @@
 // Issues a LiveKit access token. LIVEKIT_API_SECRET never leaves the backend.
 // Hosts may publish only in their own room after calling go_live(); party guests
 // may publish only while they hold a seat (mic in voice parties, camera + mic in
-// video parties); viewers may only subscribe, and are refused if banned or
+// video parties and as the one guest of a solo live); viewers may only subscribe, and are refused if banned or
 // kicked/blocked in the room.
 import { AccessToken, TrackSource } from 'npm:livekit-server-sdk@2';
 
@@ -51,9 +51,9 @@ Deno.serve(
     let guestSources: TrackSource[] = [];
     if (as === 'guest') {
       if (isHost) throw new HttpError(400, 'host_has_seat');
-      if (room.mode !== 'voice' && room.mode !== 'video') throw new HttpError(409, 'not_a_party');
       if (!seat) throw new HttpError(403, 'not_seated');
-      guestSources = room.mode === 'video' ? [TrackSource.CAMERA, TrackSource.MICROPHONE] : [TrackSource.MICROPHONE];
+      // Video parties and the one guest of a solo live use camera + mic; voice parties mic only.
+      guestSources = room.mode === 'voice' ? [TrackSource.MICROPHONE] : [TrackSource.CAMERA, TrackSource.MICROPHONE];
     }
     const hostSources = room.mode === 'voice' ? [TrackSource.MICROPHONE] : [TrackSource.CAMERA, TrackSource.MICROPHONE];
     const sources = as === 'host' ? hostSources : as === 'guest' ? guestSources : [];

@@ -27,10 +27,10 @@ insert into public.room_bans (room_id, user_id, kind, created_by) select id, 'pt
 create temp table party as select id from public.rooms where host_id = 'pt_host';
 grant select on party to authenticated;
 
--- A normal live has no seats.
+-- No seats before the room is live.
 select set_config('request.jwt.claims', '{"sub":"pt_g1"}', false);
 set role authenticated;
-select tests.fails($$select public.request_seat((select id from party))$$, '%not_a_party%', 'no seats in a normal live');
+select tests.fails($$select public.request_seat((select id from party))$$, '%not_a_party%', 'no seats while the room is offline');
 -- Only the host sets the mode.
 select tests.fails($$select public.set_room_mode('video')$$, '%not_a_host%', 'viewer cannot set mode');
 reset role;
@@ -148,6 +148,39 @@ select public.approve_seat((select id from party), 'pt_g7');
 reset role;
 update public.rooms set status = 'offline' where host_id = 'pt_host';
 select tests.ok(not exists (select 1 from public.room_seats where room_id = (select id from party)), 'seats cleared when the live ends');
+
+-- Solo lives: one guest seat through the same request → approve flow; none during a PK battle.
+select set_config('request.jwt.claims', '{"sub":"pt_host"}', false);
+set role authenticated;
+select public.set_room_mode('live');
+reset role;
+update public.rooms set status = 'live' where host_id = 'pt_host';
+select set_config('request.jwt.claims', '{"sub":"pt_g1"}', false);
+set role authenticated;
+select public.request_seat((select id from party));
+reset role;
+select set_config('request.jwt.claims', '{"sub":"pt_g2"}', false);
+set role authenticated;
+select public.request_seat((select id from party));
+select tests.fails($$select public.approve_seat((select id from party), 'pt_g2')$$, '%forbidden%', 'a viewer cannot bring someone on as guest');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"pt_host"}', false);
+set role authenticated;
+select tests.ok(public.approve_seat((select id from party), 'pt_g1') = 1, 'the host brings a viewer on as guest');
+select tests.fails($$select public.approve_seat((select id from party), 'pt_g2')$$, '%seats_full%', 'a solo live has one guest at a time');
+reset role;
+insert into public.profiles (id, username) values ('pt_rival', 'pt_rival');
+insert into public.hosts (user_id) values ('pt_rival');
+insert into public.rooms (host_id, status, cover_url) values ('pt_rival', 'live', 'x');
+insert into public.pk_battles (room_a_id, room_b_id) select (select id from party), id from public.rooms where host_id = 'pt_rival';
+update public.rooms set current_battle_id = (select id from public.pk_battles where room_a_id = (select id from party)) where id in (select id from party);
+select tests.ok(not exists (select 1 from public.room_seats where room_id = (select id from party)), 'a PK battle ends the guest''s turn');
+select set_config('request.jwt.claims', '{"sub":"pt_g3"}', false);
+set role authenticated;
+select tests.fails($$select public.request_seat((select id from party))$$, '%in_pk_battle%', 'no guest requests during a PK battle');
+reset role;
+update public.rooms set current_battle_id = null, status = 'offline' where host_id in ('pt_host', 'pt_rival');
+delete from public.pk_battles where room_a_id = (select id from party);
 
 drop table party;
 drop schema tests cascade;

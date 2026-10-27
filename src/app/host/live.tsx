@@ -8,7 +8,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { brand, hasFeature, units } from '@/lib/brand';
 import { ChatPanel } from '@/components/ChatPanel';
 import { BigGiftBurst, GiftToasts } from '@/components/GiftSheet';
-import { ConnectionBadge, HostControlRail, LiveTimer, MicOffBanner } from '@/components/HostControls';
+import { FaceCheck } from '@/components/FaceCheck';
+import { ConnectionBadge, HostControlRail, LivePausedCard, LiveTimer, MicOffBanner } from '@/components/HostControls';
+import { GuestRequestsSheet, useLiveGuest } from '@/components/LiveGuest';
 import { FloatingHearts, JoinedLine, useLiveReactions } from '@/components/LiveReactions';
 import { LiveStage } from '@/components/LiveStage';
 import { endBattleIfExpired, PkBattleBar, PkBattleStage, usePkBattleState } from '@/components/PkBattle';
@@ -43,6 +45,7 @@ export default function HostLiveScreen() {
   const [ending, setEnding] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviting, setInviting] = useState<string | null>(null);
+  const [guestsOpen, setGuestsOpen] = useState(false);
 
   const offline = useOffline();
   const session = useAsync(async () => {
@@ -67,6 +70,21 @@ export default function HostLiveScreen() {
 
 
   const roomId = session.data?.room.id;
+  const liveGuest = useLiveGuest(roomId, userId);
+  // No-face rule: the face check pauses the live; the host resumes it. Opening this screen means
+  // the host is here, so a pause left over from a crash is cleared.
+  const [paused, setPaused] = useState(false);
+  useEffect(() => {
+    if (roomId) void rpc(supabase, 'set_live_paused', { p_paused: false }).catch(() => {});
+  }, [roomId, supabase]);
+  const pauseLive = useCallback(() => {
+    setPaused(true);
+    void rpc(supabase, 'set_live_paused', { p_paused: true, p_reason: 'no_face' }).catch(() => {});
+  }, [supabase]);
+  const resumeLive = () => {
+    setPaused(false);
+    void rpc(supabase, 'set_live_paused', { p_paused: false }).catch(() => {});
+  };
   // Set once the live is ending, so the summary opens once and Back no longer asks.
   const leaving = useRef(false);
   const endRef = useRef(endNow);
@@ -270,10 +288,13 @@ export default function HostLiveScreen() {
                 {topBar(false)}
               </>
             ) : (
-              <LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" facing={facing} onError={onStageError} onDisconnected={onStageDisconnected}>
+              <LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" hostId={userId!} facing={facing} onError={onStageError} onDisconnected={onStageDisconnected}>
                 {/* Inside the LiveKit room: these read the host's own mic, camera and connection. */}
                 {topBar(true)}
-                <HostControlRail top={insets.top + 120} onShare={shareRoom} onBattle={!battle && hasFeature('pkBattles') ? () => setInviteOpen(true) : undefined} />
+                <HostControlRail top={insets.top + 120} onShare={shareRoom} onBattle={!battle && hasFeature('pkBattles') ? () => setInviteOpen(true) : undefined}
+                  onGuests={() => setGuestsOpen(true)} guestRequests={liveGuest.requests.length} />
+                <FaceCheck paused={paused} onPause={pauseLive} />
+                {paused && <LivePausedCard onResume={resumeLive} />}
               </LiveStage>
             )}
 
@@ -314,6 +335,10 @@ export default function HostLiveScreen() {
         </View>
       )}
 
+      {roomId && (
+        <GuestRequestsSheet roomId={roomId} visible={guestsOpen} onClose={() => setGuestsOpen(false)}
+          guest={liveGuest.guest} requests={liveGuest.requests} onChange={liveGuest.reload} />
+      )}
       <Sheet visible={inviteOpen} onClose={() => setInviteOpen(false)} title="PK battle a live host">
         <FlatList
           data={opponents.data ?? []}

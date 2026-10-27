@@ -8,7 +8,7 @@ import { Alert } from '@/lib/alert';
 import { liveColors as c } from '@/lib/theme';
 
 import { useFacing } from './liveFacing';
-import { Text } from './ui';
+import { Button, Text } from './ui';
 
 // Host controls that act on the LiveKit room, so they must render inside <LiveStage> (its children).
 
@@ -30,7 +30,7 @@ function RailButton({ icon, label, onPress, active, warn, disabled }: { icon: Ic
  * Right-side control rail (Bigo/TikTok style): flip camera, mic, camera, then the screen's own
  * actions (battle, share). Mic/camera state comes from LiveKit, so it is always what viewers get.
  */
-export function HostControlRail({ top, onBattle, battleLabel, onShare, compact }: { top: number; onBattle?: () => void; battleLabel?: string; onShare: () => void; compact?: boolean }) {
+export function HostControlRail({ top, onBattle, battleLabel, onShare, onGuests, guestRequests = 0, compact }: { top: number; onBattle?: () => void; battleLabel?: string; onShare: () => void; onGuests?: () => void; guestRequests?: number; compact?: boolean }) {
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled, cameraTrack } = useLocalParticipant();
   const { facing, setFacing } = useFacing();
   const [busy, setBusy] = useState(false);
@@ -62,6 +62,7 @@ export function HostControlRail({ top, onBattle, battleLabel, onShare, compact }
         onPress={() => run(() => localParticipant.setCameraEnabled(!isCameraEnabled), "Couldn't change the camera")} disabled={busy} />
       {/* In a PK battle the rail sits in the host's half of the split: camera and mic only. */}
       {!compact && onBattle && <RailButton icon="flash-outline" label={battleLabel ?? 'Battle'} onPress={onBattle} />}
+      {!compact && onGuests && <RailButton icon="people-outline" label={guestRequests ? `Guests ${guestRequests}` : 'Guests'} active={guestRequests > 0} onPress={onGuests} />}
       {!compact && <RailButton icon="share-social-outline" label="Share" onPress={onShare} />}
     </View>
   );
@@ -111,6 +112,34 @@ export function LiveTimer({ since }: { since: string | null | undefined }) {
   return (
     <View accessibilityLabel={`Live for ${Math.floor(s / 60)} minutes`} style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, backgroundColor: 'rgba(0,0,0,0.5)' }}>
       <Text variant="caption" color="#fff" style={{ fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{pad(Math.floor(s / 3600))}:{pad(Math.floor(s / 60) % 60)}:{pad(s % 60)}</Text>
+    </View>
+  );
+}
+
+/**
+ * The live is paused by the no-face rule (camera off; viewers see "Host will be right back").
+ * Resume turns the camera back on. Must render inside <LiveStage>.
+ */
+export function LivePausedCard({ onResume }: { onResume: () => void }) {
+  const { localParticipant } = useLocalParticipant();
+  const [busy, setBusy] = useState(false);
+  const resume = async () => {
+    setBusy(true);
+    try {
+      await localParticipant.setCameraEnabled(true);
+      onResume();
+    } catch {
+      Alert.alert("Couldn't turn the camera on", 'Check camera permission and try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <View style={{ position: 'absolute', left: 24, right: 24, top: '30%', gap: 10, padding: 18, borderRadius: 20, backgroundColor: 'rgba(6,24,38,0.92)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' }}>
+      <Ionicons name="pause-circle" size={34} color="#fff" />
+      <Text variant="h3" color="#fff">Live paused</Text>
+      <Text variant="bodySmall" color="#D6F0FF">We couldn&apos;t see your face for a while. Hosts must be on camera while live. Viewers see &quot;Host will be right back&quot;.</Text>
+      <Button title="I'm back, resume" onPress={() => void resume()} loading={busy} />
     </View>
   );
 }

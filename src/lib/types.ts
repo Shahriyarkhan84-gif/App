@@ -49,6 +49,8 @@ export type Room = {
   viewer_count: number;
   current_stream_id: string | null;
   current_battle_id: string | null;
+  /** No-face rule paused the live (not in ROOM_SELECT: read separately, arrives with realtime). */
+  host_paused?: boolean;
   /** 'live' (solo) or a 'voice' / 'video' party. */
   mode?: string | null;
   host?: Pick<Profile, 'id' | 'display_name' | 'username' | 'avatar_url' | 'country' | 'verified_at' | 'owner_verified_at' | 'role'> | null;

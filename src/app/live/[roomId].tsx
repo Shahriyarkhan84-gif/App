@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { brand, units } from '@/lib/brand';
 import { ChatPanel } from '@/components/ChatPanel';
 import { BigGiftBurst, GiftSheet, GiftToasts } from '@/components/GiftSheet';
+import { useLiveGuest } from '@/components/LiveGuest';
 import { LiveStage } from '@/components/LiveStage';
 import { FloatingHearts, JoinedLine, useLiveReactions } from '@/components/LiveReactions';
 import { ProfileCard } from '@/components/ProfileCard';
@@ -74,16 +75,44 @@ export default function LiveRoomScreen() {
   // isn't live, and it's only used once the room is loaded and isn't your own.
   const liveStatus = live.status ?? room.data?.room.status;
   const mayBeLive = liveStatus === undefined || liveStatus === 'live';
+  // Brought on as the host's guest: a guest token (camera + mic); back to a viewer token when it ends.
+  const liveGuest = useLiveGuest(room.data && !ownRoom ? roomId : undefined, userId);
+  const stageRole = liveGuest.isGuest ? 'guest' : 'viewer';
   const token = useAsync(async () => {
     if (!mayBeLive) return null;
-    return getLiveKitToken(supabase, roomId, 'viewer');
-  }, [roomId, mayBeLive]);
+    return getLiveKitToken(supabase, roomId, stageRole);
+  }, [roomId, mayBeLive, stageRole]);
+  // Tell the guest they're on; leaving the screen gives the spot (or the request) back.
+  const wasGuest = useRef(false);
+  useEffect(() => {
+    if (liveGuest.isGuest && !wasGuest.current) Alert.alert("You're on!", 'Your camera and mic are live with the host. Leave any time from the menu.');
+    wasGuest.current = liveGuest.isGuest;
+  }, [liveGuest.isGuest]);
+  const holdsSpot = useRef(false);
+  useEffect(() => {
+    holdsSpot.current = liveGuest.isGuest || liveGuest.requested;
+  }, [liveGuest.isGuest, liveGuest.requested]);
+  useEffect(() => () => {
+    if (holdsSpot.current) void rpc(supabase, 'leave_seat', { p_room: roomId }).catch(() => {});
+  }, [supabase, roomId]);
+  const guestAction = async (fn: 'request_seat' | 'leave_seat') => {
+    try {
+      await rpc(supabase, fn, { p_room: roomId });
+      if (fn === 'request_seat') Alert.alert('Request sent', 'The host will see it. You go on with camera and mic if they accept.');
+    } catch (e) {
+      Alert.alert(fn === 'request_seat' ? "Couldn't send the request" : "Couldn't leave", friendlyError(e));
+    }
+    liveGuest.reload();
+  };
   // The token says the room isn't live (we missed the end event): refresh the room → "ended" screen.
   const tokenCode = token.error ? errorCode(token.error) : null;
   const reloadRoom = room.reload;
+  const reloadGuest = liveGuest.reload;
   useEffect(() => {
     if (tokenCode === 'room_not_live') reloadRoom();
-  }, [tokenCode, reloadRoom]);
+    // Taken off the guest spot just as the token was asked for: fall back to watching.
+    if (tokenCode === 'not_seated') reloadGuest();
+  }, [tokenCode, reloadRoom, reloadGuest]);
   // Removed or blocked by the host while watching: show it and drop the connection.
   const [removed, setRemoved] = useState(false);
   useRealtime('room_bans', userId ? `user_id=eq.${userId}` : undefined, (p) => {
@@ -107,7 +136,13 @@ export default function LiveRoomScreen() {
   // Viewer count + end-of-stream in real time.
   useRealtime('rooms', `id=eq.${roomId}`, (p) => setLive(p.new as Partial<Room>));
 
+  // Paused by the no-face rule: a separate read so a server without the column still works.
+  const pausedAtOpen = useAsync(async () => {
+    const { data, error } = await supabase.from('rooms').select('host_paused').eq('id', roomId).maybeSingle();
+    return !error && !!(data as { host_paused?: boolean } | null)?.host_paused;
+  }, [roomId]);
   const r = room.data ? { ...room.data.room, ...live } : null;
+  const hostPaused = live.host_paused ?? pausedAtOpen.data ?? false;
   const isFollowing = following ?? followRow.data ?? false;
   const { battle, opponentRoom, mySide, secondsLeft } = usePkBattleState(r?.id, r?.current_battle_id);
   const battleLive = battle?.status === 'live' && !!opponentRoom;
@@ -256,7 +291,7 @@ export default function LiveRoomScreen() {
       onUserPress={setCardUser}
       actions={
         <>
-          <Pressable onPress={() => setMenuOpen(true)} accessibilityRole="button" accessibilityLabel="More: message, share, report" style={roundButton('rgba(20,24,30,0.78)')}>
+          <Pressable onPress={() => setMenuOpen(true)} accessibilityRole="button" accessibilityLabel="More: message, share, join, report" style={roundButton('rgba(20,24,30,0.78)')}>
             <Ionicons name="menu" size={24} color={c.text} />
           </Pressable>
           <Pressable onPress={reactions.like} accessibilityRole="button" accessibilityLabel="Send a heart" style={roundButton('rgba(56,189,248,0.92)')}>
@@ -285,7 +320,7 @@ export default function LiveRoomScreen() {
               <PkBattleStage
                 height={Math.round(windowHeight * 0.42)}
                 mySide={mySide}
-                myStage={<LiveStage token={token.data.token} url={token.data.url} role="viewer" onError={onStageError} onDisconnected={onStageDisconnected} />}
+                myStage={<LiveStage token={token.data.token} url={token.data.url} role={stageRole} hostId={r.host_id} onError={onStageError} onDisconnected={onStageDisconnected} />}
                 opponentRoom={opponentRoom!}
                 mySideLabel={displayName(r.host)}
                 opponentSideLabel={displayName(opponentRoom!.host)}
@@ -298,7 +333,14 @@ export default function LiveRoomScreen() {
             </View>
           ) : (
             <>
-              <LiveStage token={token.data.token} url={token.data.url} role="viewer" onError={onStageError} onDisconnected={onStageDisconnected} />
+              <LiveStage token={token.data.token} url={token.data.url} role={stageRole} hostId={r.host_id} onError={onStageError} onDisconnected={onStageDisconnected} />
+              {hostPaused && (
+                <View accessibilityLiveRegion="polite" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#061826' }}>
+                  <Avatar uri={r.host?.avatar_url} name={displayName(r.host)} size={84} />
+                  <Text variant="h3" color={c.text}>{displayName(r.host)} will be right back</Text>
+                  <Text variant="bodySmall" color={c.textMuted}>The live is paused. Stay here, it carries on when they return.</Text>
+                </View>
+              )}
               <View style={{ position: 'absolute', top: insets.top + 6, left: 0, right: 0, gap: 10 }}>
                 {topBar}
                 <Row gap={6} style={{ paddingHorizontal: 12 }}><LiveBadge /></Row>
@@ -319,6 +361,13 @@ export default function LiveRoomScreen() {
             <View style={{ gap: 8 }}>
               <Button title={`Message ${displayName(r.host)}`} variant="secondary" onPress={() => { setMenuOpen(false); router.push({ pathname: '/chat/[userId]', params: { userId: r.host_id } }); }} />
               <Button title="Share this live" variant="secondary" onPress={() => { setMenuOpen(false); shareRoom(); }} />
+              {liveGuest.isGuest ? (
+                <Button title="Leave guest spot" variant="secondary" onPress={() => { setMenuOpen(false); void guestAction('leave_seat'); }} />
+              ) : liveGuest.requested ? (
+                <Button title="Cancel join request" variant="secondary" onPress={() => { setMenuOpen(false); void guestAction('leave_seat'); }} />
+              ) : !battleLive && (
+                <Button title="Request to join live" variant="secondary" onPress={() => { setMenuOpen(false); void guestAction('request_seat'); }} />
+              )}
               {r.host_id !== userId && isFollowing && <Button title={`Unfollow ${displayName(r.host)}`} variant="ghost" onPress={() => { setMenuOpen(false); void toggleFollow(); }} />}
               <Button title="Report this live" variant="ghost" onPress={() => { setMenuOpen(false); reportRoom(); }} />
             </View>

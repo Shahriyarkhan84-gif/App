@@ -45,6 +45,7 @@ const MESSAGES: Record<string, string> = {
   invalid_birth_date: 'Enter your real date of birth.',
   birth_date_already_set: 'Your birthday is already saved. Contact support to correct it.',
   under_18: 'You need to be 18 or older.',
+  in_pk_battle: "The host is in a PK battle. Try again when it ends.",
   payment_not_refundable: 'This purchase cannot be refunded.',
   not_configured: 'This feature is not configured yet.',
   verification_required: 'Verify your identity first (Go live tab → Verify identity).',

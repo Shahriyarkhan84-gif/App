@@ -1073,4 +1073,22 @@ select tests.ok((select count(*) from public.dm_thread_prefs) = 1, 'people see o
 reset role;
 select set_config('request.jwt.claims', '', false);
 
+-- Live pause (no-face rule): only the host pauses their own live; it ends with the live.
+insert into public.profiles (id, username) values ('lp_host', 'lp_host'), ('lp_viewer', 'lp_viewer');
+insert into public.hosts (user_id) values ('lp_host');
+insert into public.rooms (host_id, status, cover_url) values ('lp_host', 'live', 'x');
+select set_config('request.jwt.claims', '{"sub":"lp_viewer"}', false);
+set role authenticated;
+select tests.fails($$select public.set_live_paused(true, 'no_face')$$, '%not_a_host%', 'a viewer cannot pause a live');
+select tests.fails($$update public.rooms set host_paused = true where host_id = 'lp_host'$$, '%permission denied%', 'nobody writes the pause flag directly');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"lp_host"}', false);
+set role authenticated;
+select public.set_live_paused(true, 'no_face');
+reset role;
+select tests.ok((select host_paused from public.rooms where host_id = 'lp_host'), 'the host pauses their own live');
+update public.rooms set status = 'offline' where host_id = 'lp_host';
+select tests.ok((select not host_paused from public.rooms where host_id = 'lp_host'), 'ending the live clears the pause');
+select set_config('request.jwt.claims', '', false);
+
 drop schema tests cascade;
