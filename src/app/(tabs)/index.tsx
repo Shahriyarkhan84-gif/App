@@ -39,7 +39,7 @@ const GRID_GAP = 6;
 
 // live: top 60 by viewers (Popular). Following and New load their own lists, so smaller and newer
 // rooms still show once more than 60 rooms are live.
-type HomeData = { all: Room[]; live: Room[]; followingLive: Room[]; newest: Room[]; followed: Set<string>; recommended: Map<string, { reason: string | null; score: number }>; hiddenNearby: Set<string> };
+type HomeData = { all: Room[]; live: Room[]; followingLive: Room[]; newest: Room[]; followed: Set<string>; recommended: Map<string, { reason: string | null; score: number }>; hiddenNearby: Set<string>; promoted: Set<string> };
 
 export default function HomeScreen() {
   const tabSpace = useTabBarSpace();
@@ -58,7 +58,7 @@ export default function HomeScreen() {
   const { data, error, loading, reload } = useFocusedAsync<HomeData>(async () => {
     // One round trip: the server is far away (us-east-1), so every sequential request adds ~0.5 s.
     // Popular, Following and New are all cut from the same list of live rooms.
-    const [live, follows, recs, hidden] = await Promise.all([
+    const [live, follows, recs, hidden, promo] = await Promise.all([
       supabase.from('rooms').select(ROOM_SELECT).eq('status', 'live').order('viewer_count', { ascending: false }).limit(LIVE_LIMIT),
       supabase.from('follows').select('followee_id').eq('follower_id', userId!),
       // Written by the Recommendations agent (LangGraph worker).
@@ -67,6 +67,8 @@ export default function HomeScreen() {
       profile?.country
         ? supabase.from('profiles').select('id').eq('country', profile.country).eq('hide_from_nearby', true).limit(1000)
         : Promise.resolve({ data: [] as { id: string }[], error: null }),
+      // Lives the host paid to promote (Host tools → Promote) go first in Popular. Ignored if it fails.
+      supabase.from('rooms').select('id').eq('status', 'live').gt('promoted_until', new Date().toISOString()).limit(20),
     ]);
     if (live.error) throw live.error;
     if (follows.error) throw follows.error;
@@ -80,6 +82,7 @@ export default function HomeScreen() {
       followed: followedIds,
       recommended: new Map((recs.data ?? []).map((r) => [r.room_id, { reason: r.reason, score: r.score }])),
       hiddenNearby: new Set(hidden.error ? [] : (hidden.data ?? []).map((p) => p.id)),
+      promoted: new Set(promo.error ? [] : (promo.data ?? []).map((p) => p.id as string)),
     };
   }, [userId, profile?.country], `home:${userId}`);
 
@@ -248,10 +251,11 @@ function pickFeed(data: HomeData, feed: Feed, country: string | null, interests:
     case 'new':
       return data.newest;
     default: {
-      // Recommended rooms (AI) first, then the topics picked at sign-up, then by viewers.
+      // Promoted lives first, then recommended rooms (AI), then the topics picked at sign-up, then by viewers.
+      const promo = (r: Room) => (data.promoted.has(r.id) ? 1 : 0);
       const rec = (r: Room) => data.recommended.get(r.id)?.score ?? -1;
       const liked = (r: Room) => (interests.includes(r.category) ? 1 : 0);
-      return [...data.live].sort((a, b) => rec(b) - rec(a) || liked(b) - liked(a) || b.viewer_count - a.viewer_count);
+      return [...data.live].sort((a, b) => promo(b) - promo(a) || rec(b) - rec(a) || liked(b) - liked(a) || b.viewer_count - a.viewer_count);
     }
   }
 }

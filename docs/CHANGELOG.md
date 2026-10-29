@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.10.4 — Host tools sheet
+
+- The host's side rail is replaced by one **tools button** next to the chat box (red badge = people asking to join). It opens a sheet with **Room tools** (Share, Mirror, Flip, HD, Sticker, Mic, PK) and **Other tools** (Guests, Comments, Recorder, Newcomers, Promote).
+- **Mirror**: mirror or un-mirror your own front-camera preview (viewers always see the camera as it is).
+- **HD**: switch your camera between 1080p and 720p (720p saves data on a weak connection).
+- **Sticker**: put one of 12 emoji stickers in the corner of your live, seen by everyone; removed when the live ends.
+- **Comments**: who can comment (everyone / followers / off) and slow mode (5, 10 or 30 s); enforced on the server; the host and room admins can always comment.
+- **Recorder**: start or stop saving your live as a replay (`live-record` function; needs the storage keys).
+- **Newcomers**: people watching you for the first time, with a one-tap **Welcome** message in chat.
+- **Promote**: pay 100 / 300 / 600 diamonds to be shown first on Discover for 10 / 30 / 60 minutes.
+- Not built yet: Beauty (face filters), Sounds and Music, which need native video/audio processing in a new app build.
+
 ## 0.10.3 — Project values out of GitHub, no Quick start
 
 - No real project values are written in the repository any more: `eas.json` and the preview-update workflow read the `EXPO_PUBLIC_*` values from EAS environment variables, `render.yaml` asks for `SUPABASE_URL`, the website's `/pay` and `/download` pages get the Supabase address at build time, and the docs use placeholders (`<project-ref>`). No secret keys were ever in the repository; these were the public app values. Older commits still contain them until the repository is private.

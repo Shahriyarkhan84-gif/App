@@ -39,3 +39,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.pay-session]
 verify_jwt = false
+[functions.live-record]
+verify_jwt = false

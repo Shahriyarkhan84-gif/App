@@ -1,72 +1,16 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useConnectionQualityIndicator, useConnectionState, useLocalParticipant } from '@livekit/components-react';
-import { ConnectionQuality, ConnectionState, type LocalVideoTrack } from 'livekit-client';
-import { useEffect, useState, type ComponentProps } from 'react';
-import { Pressable, View } from 'react-native';
+import { ConnectionQuality, ConnectionState } from 'livekit-client';
+import { useEffect, useState } from 'react';
+import { View } from 'react-native';
 
 import { Alert } from '@/lib/alert';
 import { liveColors as c } from '@/lib/theme';
 
-import { useFacing } from './liveFacing';
 import { Button, Text } from './ui';
 
 // Host controls that act on the LiveKit room, so they must render inside <LiveStage> (its children).
-
-type Icon = ComponentProps<typeof Ionicons>['name'];
-
-function RailButton({ icon, label, onPress, active, warn, disabled }: { icon: Icon; label: string; onPress: () => void; active?: boolean; warn?: boolean; disabled?: boolean }) {
-  return (
-    <Pressable onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: active, disabled }} hitSlop={4}
-      style={{ alignItems: 'center', gap: 3, opacity: disabled ? 0.45 : 1 }}>
-      <View style={{ width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: warn ? 'rgba(255,90,97,0.92)' : 'rgba(255,255,255,0.16)' }}>
-        <Ionicons name={icon} size={21} color="#fff" />
-      </View>
-      <Text variant="caption" color="#fff" style={{ fontSize: 10, lineHeight: 12 }}>{label}</Text>
-    </Pressable>
-  );
-}
-
-/**
- * Right-side control rail (Bigo/TikTok style): flip camera, mic, camera, then the screen's own
- * actions (battle, share). Mic/camera state comes from LiveKit, so it is always what viewers get.
- */
-export function HostControlRail({ top, onBattle, battleLabel, onShare, onGuests, guestRequests = 0, compact }: { top: number; onBattle?: () => void; battleLabel?: string; onShare: () => void; onGuests?: () => void; guestRequests?: number; compact?: boolean }) {
-  const { localParticipant, isMicrophoneEnabled, isCameraEnabled, cameraTrack } = useLocalParticipant();
-  const { facing, setFacing } = useFacing();
-  const [busy, setBusy] = useState(false);
-
-  const run = async (fn: () => Promise<unknown>, failed: string) => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await fn();
-    } catch {
-      Alert.alert(failed, 'Please try again.');
-    } finally {
-      setBusy(false);
-    }
-  };
-  const flip = () => run(async () => {
-    const next = facing === 'user' ? 'environment' : 'user';
-    const track = cameraTrack?.track as LocalVideoTrack | undefined;
-    if (track) await track.restartTrack({ facingMode: next });
-    setFacing(next);
-  }, "Couldn't switch camera");
-
-  return (
-    <View style={{ position: 'absolute', right: 10, top, gap: 12, paddingVertical: 12, paddingHorizontal: 6, borderRadius: 30, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center' }}>
-      <RailButton icon="camera-reverse-outline" label="Flip" onPress={flip} disabled={!isCameraEnabled || busy} />
-      <RailButton icon={isMicrophoneEnabled ? 'mic-outline' : 'mic-off'} label={isMicrophoneEnabled ? 'Mic' : 'Mic off'} warn={!isMicrophoneEnabled}
-        onPress={() => run(() => localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled), "Couldn't change the mic")} disabled={busy} />
-      <RailButton icon={isCameraEnabled ? 'videocam-outline' : 'videocam-off'} label={isCameraEnabled ? 'Camera' : 'Cam off'} warn={!isCameraEnabled}
-        onPress={() => run(() => localParticipant.setCameraEnabled(!isCameraEnabled), "Couldn't change the camera")} disabled={busy} />
-      {/* In a PK battle the rail sits in the host's half of the split: camera and mic only. */}
-      {!compact && onBattle && <RailButton icon="flash-outline" label={battleLabel ?? 'Battle'} onPress={onBattle} />}
-      {!compact && onGuests && <RailButton icon="people-outline" label={guestRequests ? `Guests ${guestRequests}` : 'Guests'} active={guestRequests > 0} onPress={onGuests} />}
-      {!compact && <RailButton icon="share-social-outline" label="Share" onPress={onShare} />}
-    </View>
-  );
-}
+// The camera and room tools themselves are in HostToolsSheet.
 
 /** "Your mic is off" reminder, so the host doesn't talk to viewers who can't hear them. */
 export function MicOffBanner() {

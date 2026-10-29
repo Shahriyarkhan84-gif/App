@@ -130,6 +130,16 @@ has no client write grant. Clients can only read the catalog and ownership. Cove
 Frames aren't refundable; if coins used for a frame are charged back, the normal chargeback path
 records the shortfall and flags the account.
 
+## Live promotion (Host tools → Promote)
+
+- A live host spends diamonds to be shown first in Discover → Popular for 10, 30 or 60 minutes.
+- Price: `platform_settings.promotion.coins_per_10_min` (default 100), so 100 / 300 / 600 diamonds.
+- `promote_live(minutes, idempotency_key)` in one transaction: wallet lock, `live_promotions` row,
+  `coin_transactions` (`kind = 'promotion'`), `rooms.promoted_until` extended, and
+  `platform_ledger` (`promotion_sales`). One charge per idempotency key; restricted accounts and
+  frozen wallets are refused. Ending the live clears the promotion.
+- Promotion diamonds are platform revenue (no host or agency share).
+
 ## Withdrawals
 
 `request_withdrawal(coins, payout_method)` moves coins from

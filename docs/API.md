@@ -17,6 +17,7 @@ All return `{ error: { code, message } }` on failure. User-facing functions requ
 | `pay-session` | `{ cs }` (Checkout client secret) | `{ pk }` | zynalive.com/pay asks it for the Stripe publishable key; answered only for a pending session Zynalive created, so the page can't be used with someone else's Stripe session. Public, 30/min per IP. |
 | `config-status` | GET | `{ features: { <name>: { ready, missing[] } }, stripe_mode, site_url }` | Setup check: which secrets are set (names and yes/no only, never values). Public. |
 | `livekit-webhook` | LiveKit event | — | Viewer counts, viewer records, stream end; with `media.record_live` on, starts participant egress when the host joins and files `egress_ended` recordings into the media pipeline. |
+| `live-record` | `{ on: boolean }` | `{ recording }` | Host tools → Recorder: starts or stops a participant egress of the caller's own live into the uploads bucket (then the media pipeline, as a replay). Only the live host; needs the `STORAGE_S3_*` secrets (`not_configured` otherwise). 10/min. |
 | `clerk-webhook` | Svix event | — | Profile sync + welcome email. Never sets roles. |
 | `delete-account` | `{}` | `{ deleted }` | Deletes the signed-in account: `internal_delete_account()` then the Clerk user. `withdrawal_pending` (409) if a payout is in progress. 3/hour. |
 | `host-application` | multipart: `full_name`, `phone`, `cnic`, `agency_code`, files `cnic_front`, `cnic_back`, `selfie` | `{ id, status, reasons }` | Didit ID verification + face match; photos not stored. 5/day. |

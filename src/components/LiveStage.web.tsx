@@ -13,6 +13,7 @@ import { Text } from './ui';
 /** Web LiveKit stage (browser WebRTC); same behaviour as the native stage. */
 export function LiveStage({ token, url, role, hostId, facing: initialFacing = 'user', onDisconnected, onError, children }: LiveStageProps) {
   const [facing, setFacing] = useState<Facing>(initialFacing);
+  const [mirror, setMirror] = useState(true);
   return (
     <LiveKitRoom
       serverUrl={url}
@@ -29,7 +30,7 @@ export function LiveStage({ token, url, role, hostId, facing: initialFacing = 'u
       onError={onError}
       style={{ position: 'absolute', inset: 0 }}
     >
-      <FacingContext.Provider value={{ facing, setFacing }}>
+      <FacingContext.Provider value={{ facing, setFacing, mirror, setMirror }}>
         <Stage role={role} hostId={hostId} />
         <GuestTile role={role} hostId={hostId} />
         {children}
@@ -41,7 +42,7 @@ export function LiveStage({ token, url, role, hostId, facing: initialFacing = 'u
 
 function Stage({ role, hostId }: { role: LiveStageProps['role']; hostId?: string }) {
   const tracks = useTracks([Track.Source.Camera]);
-  const { facing } = useFacing();
+  const { facing, mirror } = useFacing();
   const { isCameraEnabled } = useLocalParticipant();
   // The host's own camera, or (watching) the host's: never a guest's, whoever published first.
   const trackRef = tracks.find((t) => isTrackReference(t) && (role === 'host' ? t.participant.isLocal
@@ -65,7 +66,7 @@ function Stage({ role, hostId }: { role: LiveStageProps['role']; hostId?: string
   return (
     <VideoTrack
       trackRef={trackRef}
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transform: role === 'host' && facing === 'user' ? 'scaleX(-1)' : undefined }}
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transform: role === 'host' && facing === 'user' && mirror ? 'scaleX(-1)' : undefined }}
     />
   );
 }

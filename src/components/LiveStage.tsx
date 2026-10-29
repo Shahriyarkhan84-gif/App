@@ -19,6 +19,7 @@ import { Text } from './ui';
 export function LiveStage({ token, url, role, hostId, facing: initialFacing = 'user', onDisconnected, onError, children }: LiveStageProps) {
   // The camera chosen before going live; the Flip control changes it while live.
   const [facing, setFacing] = useState<Facing>(initialFacing);
+  const [mirror, setMirror] = useState(true);
   useEffect(() => {
     void AudioSession.startAudioSession();
     return () => {
@@ -41,7 +42,7 @@ export function LiveStage({ token, url, role, hostId, facing: initialFacing = 'u
       onDisconnected={onDisconnected}
       onError={onError}
     >
-      <FacingContext.Provider value={{ facing, setFacing }}>
+      <FacingContext.Provider value={{ facing, setFacing, mirror, setMirror }}>
         <Stage role={role} hostId={hostId} />
         <GuestTile role={role} hostId={hostId} />
         {children}
@@ -52,7 +53,7 @@ export function LiveStage({ token, url, role, hostId, facing: initialFacing = 'u
 
 export function Stage({ role, hostId }: { role: LiveStageProps['role']; hostId?: string }) {
   const tracks = useTracks([Track.Source.Camera]);
-  const { facing } = useFacing();
+  const { facing, mirror } = useFacing();
   const { isCameraEnabled } = useLocalParticipant();
   // The host's own camera, or (watching) the host's: never a guest's, whoever published first.
   const trackRef = tracks.find((t) => isTrackReference(t) && (role === 'host' ? t.participant.isLocal
@@ -76,7 +77,7 @@ export function Stage({ role, hostId }: { role: LiveStageProps['role']; hostId?:
     );
   }
   // Only the front camera is mirrored for the host (like a mirror); the back camera shows the room as it is.
-  return <VideoTrack trackRef={trackRef} style={StyleSheet.absoluteFill} objectFit="cover" mirror={role === 'host' && facing === 'user'} />;
+  return <VideoTrack trackRef={trackRef} style={StyleSheet.absoluteFill} objectFit="cover" mirror={role === 'host' && facing === 'user' && mirror} />;
 }
 
 /** The guest's camera in the top-left corner (the host's controls sit on the right) (solo lives with a guest on). */

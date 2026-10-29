@@ -2,14 +2,17 @@ import { useAuth } from '@clerk/clerk-expo';
 import { router, useLocalSearchParams, useNavigation } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FlatList, View } from 'react-native';
+import { FlatList, Pressable, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { brand, hasFeature, units } from '@/lib/brand';
 import { ChatPanel } from '@/components/ChatPanel';
 import { BigGiftBurst, GiftToasts } from '@/components/GiftSheet';
 import { FaceCheck } from '@/components/FaceCheck';
-import { ConnectionBadge, HostControlRail, LivePausedCard, LiveTimer, MicOffBanner } from '@/components/HostControls';
+import { ConnectionBadge, LivePausedCard, LiveTimer, MicOffBanner } from '@/components/HostControls';
+import { HostToolsSheet } from '@/components/HostToolsSheet';
+import { LiveSticker, useLiveSticker } from '@/components/LiveSticker';
 import { GuestRequestsSheet, useLiveGuest } from '@/components/LiveGuest';
 import { FloatingHearts, JoinedLine, useLiveReactions } from '@/components/LiveReactions';
 import { LiveStage } from '@/components/LiveStage';
@@ -46,6 +49,7 @@ export default function HostLiveScreen() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviting, setInviting] = useState<string | null>(null);
   const [guestsOpen, setGuestsOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
 
   const offline = useOffline();
   const session = useAsync(async () => {
@@ -71,6 +75,7 @@ export default function HostLiveScreen() {
 
   const roomId = session.data?.room.id;
   const liveGuest = useLiveGuest(roomId, userId);
+  const sticker = useLiveSticker(roomId);
   // No-face rule: the face check pauses the live; the host resumes it. Opening this screen means
   // the host is here, so a pause left over from a crash is cleared.
   const [paused, setPaused] = useState(false);
@@ -277,7 +282,9 @@ export default function HostLiveScreen() {
                   mySide={mySide}
                   myStage={
                     <LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" facing={facing} onError={onStageError} onDisconnected={onStageDisconnected}>
-                      <HostControlRail top={8} compact onShare={shareRoom} />
+                      <LiveSticker sticker={sticker} top={8} />
+                      <HostToolsSheet visible={toolsOpen} onClose={() => setToolsOpen(false)} roomId={roomId} sticker={sticker} onShare={shareRoom}
+                        onGuests={() => setGuestsOpen(true)} guestRequests={liveGuest.requests.length} />
                     </LiveStage>
                   }
                   opponentRoom={opponentRoom!}
@@ -291,7 +298,9 @@ export default function HostLiveScreen() {
               <LiveStage key={session.data.token.token} token={session.data.token.token} url={session.data.token.url} role="host" hostId={userId!} facing={facing} onError={onStageError} onDisconnected={onStageDisconnected}>
                 {/* Inside the LiveKit room: these read the host's own mic, camera and connection. */}
                 {topBar(true)}
-                <HostControlRail top={insets.top + 120} onShare={shareRoom} onBattle={!battle && hasFeature('pkBattles') ? () => setInviteOpen(true) : undefined}
+                <LiveSticker sticker={sticker} top={insets.top + 110} />
+                <HostToolsSheet visible={toolsOpen} onClose={() => setToolsOpen(false)} roomId={roomId} sticker={sticker} onShare={shareRoom}
+                  onPk={!battle && hasFeature('pkBattles') ? () => setInviteOpen(true) : undefined}
                   onGuests={() => setGuestsOpen(true)} guestRequests={liveGuest.requests.length} />
                 <FaceCheck paused={paused} onPause={pauseLive} />
                 {paused && <LivePausedCard onResume={resumeLive} />}
@@ -321,7 +330,19 @@ export default function HostLiveScreen() {
             <View style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + 12, gap: 10 }}>
               <GiftToasts roomId={roomId} />
               <JoinedLine joined={reactions.joined} />
-              <ChatPanel roomId={roomId} hostId={userId!} isHost canModerate onUserPress={setCardUser} />
+              <ChatPanel roomId={roomId} hostId={userId!} isHost canModerate onUserPress={setCardUser}
+                actions={
+                  // Host tools (Room tools / Other tools); the red dot means someone asked to join.
+                  <Pressable onPress={() => setToolsOpen(true)} accessibilityRole="button" accessibilityLabel={liveGuest.requests.length ? `Host tools, ${liveGuest.requests.length} asking to join` : 'Host tools'}
+                    style={{ width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: c.primary }}>
+                    <Ionicons name="options-outline" size={22} color={c.primaryText} />
+                    {liveGuest.requests.length > 0 && (
+                      <View style={{ position: 'absolute', top: -2, right: -2, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center', backgroundColor: c.danger, borderWidth: 1.5, borderColor: '#fff' }}>
+                        <Text variant="caption" color="#fff" style={{ fontSize: 10, fontWeight: '700' }}>{liveGuest.requests.length}</Text>
+                      </View>
+                    )}
+                  </Pressable>
+                } />
             </View>
             <ProfileCard userId={cardUser} roomId={roomId} hostId={userId!} canModerate isHost onClose={() => setCardUser(null)} />
           </>

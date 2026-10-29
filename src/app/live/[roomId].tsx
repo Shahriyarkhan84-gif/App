@@ -10,6 +10,7 @@ import { brand, units } from '@/lib/brand';
 import { ChatPanel } from '@/components/ChatPanel';
 import { BigGiftBurst, GiftSheet, GiftToasts } from '@/components/GiftSheet';
 import { useLiveGuest } from '@/components/LiveGuest';
+import { LiveSticker, useLiveSticker } from '@/components/LiveSticker';
 import { LiveStage } from '@/components/LiveStage';
 import { FloatingHearts, JoinedLine, useLiveReactions } from '@/components/LiveReactions';
 import { ProfileCard } from '@/components/ProfileCard';
@@ -78,6 +79,7 @@ export default function LiveRoomScreen() {
   // Brought on as the host's guest: a guest token (camera + mic); back to a viewer token when it ends.
   const liveGuest = useLiveGuest(room.data && !ownRoom ? roomId : undefined, userId);
   const stageRole = liveGuest.isGuest ? 'guest' : 'viewer';
+  const sticker = useLiveSticker(room.data && !ownRoom ? roomId : undefined);
   const token = useAsync(async () => {
     if (!mayBeLive) return null;
     return getLiveKitToken(supabase, roomId, stageRole);
@@ -334,6 +336,7 @@ export default function LiveRoomScreen() {
           ) : (
             <>
               <LiveStage token={token.data.token} url={token.data.url} role={stageRole} hostId={r.host_id} onError={onStageError} onDisconnected={onStageDisconnected} />
+              <LiveSticker sticker={sticker} top={insets.top + 130} />
               {hostPaused && (
                 <View accessibilityLiveRegion="polite" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#061826' }}>
                   <Avatar uri={r.host?.avatar_url} name={displayName(r.host)} size={84} />
