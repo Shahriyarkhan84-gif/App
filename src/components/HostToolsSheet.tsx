@@ -1,4 +1,3 @@
-import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalParticipant } from '@livekit/components-react';
 import { type LocalVideoTrack, VideoPresets } from 'livekit-client';
@@ -6,8 +5,7 @@ import { useState, type ComponentProps } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { Alert } from '@/lib/alert';
-import { idempotencyKey, invokeFn, rpc } from '@/lib/api';
-import { U, units } from '@/lib/brand';
+import { invokeFn, rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useAsync } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
@@ -15,10 +13,10 @@ import { liveColors as c } from '@/lib/theme';
 import { displayName } from '@/lib/types';
 
 import { useFacing } from './liveFacing';
-import { Avatar, Button, Coin, Row, Sheet, Text } from './ui';
+import { Avatar, Button, Row, Sheet, Text } from './ui';
 
 type Icon = ComponentProps<typeof Ionicons>['name'];
-type Panel = 'main' | 'sticker' | 'comments' | 'newcomers' | 'promote';
+type Panel = 'main' | 'sticker' | 'comments' | 'newcomers';
 
 export const LIVE_STICKERS = ['🌸', '✨', '💖', '🎉', '👑', '🔥', '🎵', '☕', '🌙', '🌈', '🎂', '🇵🇰'] as const;
 
@@ -118,20 +116,18 @@ export function HostToolsSheet({ visible, onClose, roomId, sticker, onShare, onP
             <Tool icon="chatbox-ellipses-outline" label="Comments" onPress={() => setPanel('comments')} />
             <Tool icon="videocam-outline" label={recording ? 'Recording' : 'Recorder'} active={recording} onPress={toggleRecorder} disabled={busy !== null} />
             <Tool icon="person-add-outline" label="Newcomers" onPress={() => setPanel('newcomers')} />
-            <Tool icon="megaphone-outline" label="Promote" onPress={() => setPanel('promote')} />
           </View>
         </ScrollView>
       )}
       {panel === 'sticker' && <StickerPanel roomId={roomId} current={sticker} onDone={close} />}
       {panel === 'comments' && <CommentsPanel roomId={roomId} onDone={close} />}
       {panel === 'newcomers' && <NewcomersPanel roomId={roomId} />}
-      {panel === 'promote' && <PromotePanel onDone={close} />}
     </Sheet>
   );
 }
 
 const PANEL_TITLE: Record<Exclude<Panel, 'main'>, string> = {
-  sticker: 'Sticker', comments: 'Comments', newcomers: 'Newcomers', promote: 'Promote your live',
+  sticker: 'Sticker', comments: 'Comments', newcomers: 'Newcomers',
 };
 
 function StickerPanel({ roomId, current, onDone }: { roomId: string; current: string | null; onDone: () => void }) {
@@ -231,58 +227,6 @@ function NewcomersPanel({ roomId }: { roomId: string }) {
             ))}
           </ScrollView>
         )}
-    </View>
-  );
-}
-
-const PROMO_MINUTES = [10, 30, 60] as const;
-
-function PromotePanel({ onDone }: { onDone: () => void }) {
-  const supabase = useSupabase();
-  const { userId } = useAuth();
-  const info = useAsync(async () => {
-    const [setting, wallet] = await Promise.all([
-      supabase.from('platform_settings').select('value').eq('key', 'promotion').maybeSingle(),
-      supabase.from('wallets').select('coin_balance').eq('user_id', userId!).maybeSingle(),
-    ]);
-    const per10 = Number((setting.data?.value as { coins_per_10_min?: number } | undefined)?.coins_per_10_min ?? 100);
-    return { per10, balance: Number((wallet.data as { coin_balance?: number } | null)?.coin_balance ?? 0) };
-  }, [userId]);
-  const [minutes, setMinutes] = useState<number>(30);
-  // One key per choice, so a retry after a network error can't charge twice.
-  const [key, setKey] = useState(idempotencyKey);
-  const [busy, setBusy] = useState(false);
-  const price = (info.data?.per10 ?? 100) * (minutes / 10);
-  const buy = async () => {
-    setBusy(true);
-    try {
-      await rpc(supabase, 'promote_live', { p_minutes: minutes, p_idempotency_key: key });
-      setKey(idempotencyKey());
-      Alert.alert('Promoted', `Your live shows first on Discover for ${minutes} minutes.`);
-      onDone();
-    } catch (e) {
-      Alert.alert("Couldn't promote", friendlyError(e));
-      setKey(idempotencyKey());
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <View style={{ gap: 12 }}>
-      <Text variant="caption" color={c.textMuted}>Your live is shown first on Discover (Popular) so more people find it.</Text>
-      <Row gap={8}>
-        {PROMO_MINUTES.map((m) => (
-          <Pressable key={m} onPress={() => { setMinutes(m); setKey(idempotencyKey()); }} accessibilityRole="button" accessibilityState={{ selected: minutes === m }}
-            style={{ flex: 1, alignItems: 'center', gap: 4, paddingVertical: 12, borderRadius: 16, backgroundColor: minutes === m ? 'rgba(125,211,252,0.16)' : c.surfaceRaised, borderWidth: minutes === m ? 1.5 : 0, borderColor: c.primary }}>
-            <Text variant="label" color={c.text}>{m} min</Text>
-            <Row gap={4}><Coin size={12} /><Text variant="caption" color={c.primary} style={{ fontWeight: '700' }}>{((info.data?.per10 ?? 100) * (m / 10)).toLocaleString()}</Text></Row>
-          </Pressable>
-        ))}
-      </Row>
-      <Text variant="caption" color={c.textFaint}>Your balance: {info.data ? units(info.data.balance) : '…'}</Text>
-      <Button title={`Promote · ${units(price)}`} variant="gold" loading={busy} disabled={!info.data || info.data.balance < price}
-        onPress={() => void buy()} />
-      {info.data && info.data.balance < price && <Text variant="caption" color={c.warning}>Not enough {U.spend}. Recharge in Wallet after your live.</Text>}
     </View>
   );
 }

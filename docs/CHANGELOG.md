@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.5 — Promote removed from the live room
+
+- The **Promote** tool is gone from the host tools sheet (Other tools is now Guests, Comments, Recorder, Newcomers). No diamonds can be spent on promotion from the app; the unused server function `promote_live` stays so the tool can come back without a database change.
+
 ## 0.10.4 — Host tools sheet
 
 - The host's side rail is replaced by one **tools button** next to the chat box (red badge = people asking to join). It opens a sheet with **Room tools** (Share, Mirror, Flip, HD, Sticker, Mic, PK) and **Other tools** (Guests, Comments, Recorder, Newcomers, Promote).

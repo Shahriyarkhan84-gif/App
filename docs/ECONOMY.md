@@ -130,8 +130,10 @@ has no client write grant. Clients can only read the catalog and ownership. Cove
 Frames aren't refundable; if coins used for a frame are charged back, the normal chargeback path
 records the shortfall and flags the account.
 
-## Live promotion (Host tools → Promote)
+## Live promotion (not offered in the app)
 
+- Removed from the host tools in 0.10.5: the app has no Promote button. The server function below
+  stays so it can come back without a database change; no one can buy a promotion from the app.
 - A live host spends diamonds to be shown first in Discover → Popular for 10, 30 or 60 minutes.
 - Price: `platform_settings.promotion.coins_per_10_min` (default 100), so 100 / 300 / 600 diamonds.
 - `promote_live(minutes, idempotency_key)` in one transaction: wallet lock, `live_promotions` row,
