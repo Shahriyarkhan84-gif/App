@@ -7,7 +7,7 @@ nav: Download
 <!-- scripts -->
 <script>
   // Shows the size and date of the APK that is on offer (written by the apk-publish function).
-  fetch('https://mdfjbhzriuwxafeagnwo.supabase.co/storage/v1/object/public/downloads/android/latest.json', { cache: 'no-store' })
+  fetch('%SUPABASE_URL%/storage/v1/object/public/downloads/android/latest.json', { cache: 'no-store' })
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (m) {
       if (!m || !m.bytes) return;

@@ -4,7 +4,7 @@ Everything runs on managed services: no servers to look after.
 
 | Piece | Where | Status |
 |---|---|---|
-| Database, login checks, server functions, file storage, realtime | Supabase (`mdfjbhzriuwxafeagnwo`, us-east-1) | Running. Server functions deployed (incl. `smart-search`, `clerk-webhook`). Database up to date (12 Oct 2026). |
+| Database, login checks, server functions, file storage, realtime | Supabase (`<project-ref>`, us-east-1) | Running. Server functions deployed (incl. `smart-search`, `clerk-webhook`). Database up to date (12 Oct 2026). |
 | Sign-in | Clerk | Running on a development key (`pk_test_…`). |
 | Live video | LiveKit Cloud | Needs its secrets in Supabase (step 2). |
 | Website (zynalive.com) | Vercel (`vercel.json`) or Cloudflare Pages (`public/_headers`), static Expo web export | Not created yet (step 3 or 3b). |
@@ -29,7 +29,7 @@ Supabase → **Edge Functions → Secrets**: `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `
 webhook at `/functions/v1/clerk-webhook` (secret: `CLERK_WEBHOOK_SECRET`).
 `didit-session` / `didit-webhook` are not deployed: host sign-up uses `host-application` instead.
 Never paste these into chat or the repository. To see which are set (names only), open
-`https://mdfjbhzriuwxafeagnwo.supabase.co/functions/v1/config-status`.
+`https://<project-ref>.supabase.co/functions/v1/config-status`.
 
 ## 3. Website (Vercel) — about 5 minutes
 
@@ -41,8 +41,8 @@ Never paste these into chat or the repository. To see which are set (names only)
 
    | Name | Value |
    |---|---|
-   | `EXPO_PUBLIC_SUPABASE_URL` | `https://mdfjbhzriuwxafeagnwo.supabase.co` |
-   | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | `sb_publishable_ym0AC5kxr0NywW26w3Bp_g_hsD28utt` |
+   | `EXPO_PUBLIC_SUPABASE_URL` | `https://<project-ref>.supabase.co` |
+   | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | `<Supabase publishable key>` |
    | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | the Clerk publishable key (`pk_test_…` today, `pk_live_…` for launch) |
    | `EXPO_PUBLIC_SITE_URL` | `https://zynalive.com` |
 
@@ -124,11 +124,11 @@ coach stop (the app still works).
   50 MB and the APK is 64 MB, so the copy fails with "Payload too large" until the project is on
   Pro (then raise Storage → Settings → upload file size limit above 300 MB). After that, per build:
   1. Save the build's APK link: `update platform_settings set value = jsonb_build_object('source', '<link>') where key = 'android_apk';`
-  2. Open `https://mdfjbhzriuwxafeagnwo.supabase.co/functions/v1/apk-publish` once. It answers
+  2. Open `https://<project-ref>.supabase.co/functions/v1/apk-publish` once. It answers
      `started`, then `up_to_date` when the copy is done (a minute or two). `/download` shows the
      size and date from `downloads/android/latest.json`.
   3. The first time only: point the `vercel.json` redirect at
-     `https://mdfjbhzriuwxafeagnwo.supabase.co/storage/v1/object/public/downloads/android/zynalive.apk?download=Zynalive.apk`.
+     `https://<project-ref>.supabase.co/storage/v1/object/public/downloads/android/zynalive.apk?download=Zynalive.apk`.
   Point the redirect at the Play Store once the app is published there.
 
 ## Accounts checklist (the $20/month stack)

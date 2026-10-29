@@ -63,7 +63,7 @@
 
 <script>
 (function () {
-  var PAY_SESSION_URL = 'https://mdfjbhzriuwxafeagnwo.supabase.co/functions/v1/pay-session';
+  var PAY_SESSION_URL = '%SUPABASE_URL%/functions/v1/pay-session';
   // coins-checkout sends everything in the URL fragment (never sent to a server). Read it, then
   // take it out of the address bar so the client secret isn't left in history.
   var p = new URLSearchParams(location.hash.slice(1));

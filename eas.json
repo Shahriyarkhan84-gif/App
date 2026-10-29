@@ -9,11 +9,7 @@
       "distribution": "internal",
       "environment": "development",
       "env": {
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
-        "EXPO_PUBLIC_SUPABASE_URL": "https://mdfjbhzriuwxafeagnwo.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_ym0AC5kxr0NywW26w3Bp_g_hsD28utt",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_cGVhY2VmdWwtYXBoaWQtODQzMC5jbGVyay5hY2NvdW50cy5kZXYk",
-        "EXPO_PUBLIC_SITE_URL": "https://zynalive.com"
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       },
       "android": {
         "image": "latest"
@@ -31,11 +27,7 @@
         "image": "latest"
       },
       "env": {
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
-        "EXPO_PUBLIC_SUPABASE_URL": "https://mdfjbhzriuwxafeagnwo.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_ym0AC5kxr0NywW26w3Bp_g_hsD28utt",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_cGVhY2VmdWwtYXBoaWQtODQzMC5jbGVyay5hY2NvdW50cy5kZXYk",
-        "EXPO_PUBLIC_SITE_URL": "https://zynalive.com"
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       },
       "ios": {
         "image": "latest"
@@ -50,11 +42,7 @@
         "image": "latest"
       },
       "env": {
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
-        "EXPO_PUBLIC_SUPABASE_URL": "https://mdfjbhzriuwxafeagnwo.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_ym0AC5kxr0NywW26w3Bp_g_hsD28utt",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_cGVhY2VmdWwtYXBoaWQtODQzMC5jbGVyay5hY2NvdW50cy5kZXYk",
-        "EXPO_PUBLIC_SITE_URL": "https://zynalive.com"
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       },
       "ios": {
         "image": "latest"

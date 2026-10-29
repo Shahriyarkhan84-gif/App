@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.3 — Project values out of GitHub, no Quick start
+
+- No real project values are written in the repository any more: `eas.json` and the preview-update workflow read the `EXPO_PUBLIC_*` values from EAS environment variables, `render.yaml` asks for `SUPABASE_URL`, the website's `/pay` and `/download` pages get the Supabase address at build time, and the docs use placeholders (`<project-ref>`). No secret keys were ever in the repository; these were the public app values. Older commits still contain them until the repository is private.
+- README: the Quick start section is removed (setup lives in docs/HOSTING.md).
+
 ## 0.10.2 — Database and server functions live
 
 - All 8 pending database updates are applied on the live project (bug, analysis and security fixes, IP blocks, privacy, onboarding + fan club, solo-live guests, live pause). IP 162.128.44.156 is blocked (linked to the banned account).
@@ -668,8 +673,8 @@ Six AI reviewers audited sign-in, browsing, live/party rooms, money, host/agency
 
 ## 0.8.11 — App points at the live Supabase project
 
-- `eas.json` (all build profiles) and the preview-update workflow pointed `EXPO_PUBLIC_SUPABASE_URL` at `rnlokiphyleoqtjwztdw`, a project that no longer exists, so every screen showed "Something went wrong" after sign-in. They now use the `zynalive` project (`mdfjbhzriuwxafeagnwo`, all 25 migrations applied) and its publishable key.
-- Still needed on the servers (not code): Supabase → Authentication → Third-party auth → add Clerk (`peaceful-aphid-8430.clerk.accounts.dev`), Clerk → Integrations → Supabase activated, and the edge functions (`livekit-token`, `coins-checkout`, webhooks…) deployed with their secrets — none are deployed yet.
+- `eas.json` (all build profiles) and the preview-update workflow pointed `EXPO_PUBLIC_SUPABASE_URL` at `<old project-ref>`, a project that no longer exists, so every screen showed "Something went wrong" after sign-in. They now use the `zynalive` project (`<project-ref>`, all 25 migrations applied) and its publishable key.
+- Still needed on the servers (not code): Supabase → Authentication → Third-party auth → add Clerk (`<your Clerk domain>`), Clerk → Integrations → Supabase activated, and the edge functions (`livekit-token`, `coins-checkout`, webhooks…) deployed with their secrets — none are deployed yet.
 
 ## 0.8.10 — Google sign-in finishes in the app
 

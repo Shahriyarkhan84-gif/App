@@ -59,6 +59,15 @@ for (const page of pages) {
   writeFileSync(at(out), html);
 }
 
+// The Supabase address isn't written in the repository: pages that call it say %SUPABASE_URL%,
+// filled in here from the build's EXPO_PUBLIC_SUPABASE_URL (set in Vercel).
+const supabaseUrl = (process.env.EXPO_PUBLIC_SUPABASE_URL ?? '').replace(/\/$/, '');
+if (!supabaseUrl) console.warn('EXPO_PUBLIC_SUPABASE_URL is not set: /pay and /download will not reach the server.');
+for (const f of ['pay/index.html', 'download/index.html']) {
+  if (!existsSync(at(f))) continue;
+  writeFileSync(at(f), readFileSync(at(f), 'utf8').replaceAll('%SUPABASE_URL%', supabaseUrl));
+}
+
 // iPhone install profile (Settings → Install on iPhone), for the brand being built.
 const brandDir = new URL(`../brands/${process.env.BRAND || 'zynalive'}/`, import.meta.url);
 const brand = JSON.parse(readFileSync(new URL('brand.json', brandDir), 'utf8'));

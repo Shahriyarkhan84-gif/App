@@ -13,7 +13,7 @@ Never commit real values. `.env` is git-ignored; `.env.example` files list names
 | `EXPO_PUBLIC_PRODUCTBRIDGE_URL` | Feedback board (optional) |
 | `EXPO_PUBLIC_SITE_URL` | Public web URL (Vercel / custom domain) |
 
-The public Supabase URL and publishable key for the `zynalive` project are set in `eas.json` `env` so EAS builds pick them up. Clerk's publishable key goes in EAS environment variables (or `eas.json`) once the Clerk app exists.
+No project values are written in the repository. App builds read `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` and `EXPO_PUBLIC_SITE_URL` from the EAS environment named by each `eas.json` profile (expo.dev → project → Environment variables: development, preview, production); the website build reads the same names from Vercel. The website's `/pay` and `/download` pages get the Supabase address filled in at build time (`%SUPABASE_URL%` in `scripts/web-landing.mjs`).
 
 The app never receives `LIVEKIT_API_SECRET`; `livekit-token` returns a short-lived
 token plus `LIVEKIT_URL`.
