@@ -37,6 +37,7 @@ const RPC_ERRORS: Record<string, number> = {
   invalid_agency_code: 400,
   agency_code_required: 400,
   already_reviewed: 409,
+  under_18: 403,
 };
 
 /** Converts a Supabase RPC error into an HttpError (known codes) or rethrows. */

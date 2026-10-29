@@ -1,7 +1,7 @@
 import { FlatList, View } from 'react-native';
 
 import { Alert } from '@/lib/alert';
-import { rpc } from '@/lib/api';
+import { enforceInRoom, rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useAsync, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
@@ -61,6 +61,8 @@ export function GuestRequestsSheet({ roomId, visible, onClose, guest, requests, 
   const act = async (fn: 'approve_seat' | 'remove_from_seat', user: string) => {
     try {
       await rpc(supabase, fn, { p_room: roomId, p_user: user });
+      // A removed guest's camera and mic are switched off in LiveKit at once (their token lasts 2 h).
+      if (fn === 'remove_from_seat') void enforceInRoom(supabase, roomId, user);
     } catch (e) {
       Alert.alert(fn === 'approve_seat' ? "Couldn't bring them on" : "Couldn't remove them", friendlyError(e));
     }
@@ -92,7 +94,10 @@ export function GuestRequestsSheet({ roomId, visible, onClose, guest, requests, 
               <Button title="Decline" size="sm" variant="ghost" onPress={() => void act('remove_from_seat', item.id)} />
               <Button title={guest ? 'Swap in' : 'Accept'} size="sm" onPress={() => void (async () => {
                 // One guest at a time: accepting someone new replaces the current guest.
-                if (guest) await rpc(supabase, 'remove_from_seat', { p_room: roomId, p_user: guest.id }).catch(() => {});
+                if (guest) {
+                  await rpc(supabase, 'remove_from_seat', { p_room: roomId, p_user: guest.id }).catch(() => {});
+                  void enforceInRoom(supabase, roomId, guest.id);
+                }
                 await act('approve_seat', item.id);
               })()} />
             </Row>

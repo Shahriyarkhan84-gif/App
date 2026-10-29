@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.2 — Database and server functions live
+
+- All 8 pending database updates are applied on the live project (bug, analysis and security fixes, IP blocks, privacy, onboarding + fan club, solo-live guests, live pause). IP 162.128.44.156 is blocked (linked to the banned account).
+- Deployed: livekit-token, livekit-webhook, livekit-enforce, coins-checkout, stripe-webhook, pay-session, host-application, didit-session, didit-webhook, config-status.
+- Edge functions show the under-18 checkout refusal as `under_18` (403) instead of a generic error.
+- Removing or swapping a solo-live guest also switches off their camera and mic in LiveKit at once (`livekit-enforce`).
+
 ## 0.10.1 — Guests in solo lives, the no-face rule, store screenshots
 
 - **Request to join a live**: viewers ask from the live's menu (Request to join live / Cancel / Leave guest spot). The host taps **Guests** on the right rail to accept, decline, swap or remove. One guest at a time; they appear in a corner tile with camera and mic, and every viewer sees both. Uses the party-room seats (`request_seat` / `approve_seat`, now one seat in a normal live); no requests during a PK battle, and a battle starting ends the guest's turn. `livekit-token` lets the seated guest publish camera + mic (**needs redeploy**).
