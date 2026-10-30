@@ -163,6 +163,15 @@ records the shortfall and flags the account.
 `my_withdrawable_coins()` shows hosts what they can withdraw now (gifts newer than
 `withdrawal.hold_days` stay on hold).
 
+**Automatic payouts** (`20261030040000_auto_payouts.sql`, off until a payout provider is connected):
+a withdrawal is approved and sent with no owner when it is at most `payouts.max_auto_pkr`
+(Rs 25,000), keeps the host within `payouts.daily_auto_pkr` (Rs 100,000 per 24 h), goes to an
+account that was already paid once, the host has no `account_review` in the last 30 days and their
+wallet isn't frozen. Anything else waits for the owner as before. `payouts-send` asks the provider;
+a temporary failure is retried (up to `max_attempts`), a refusal or repeated failure goes to the
+owner (Retry payout, or reject / pay by hand if the provider never got it). Hosts see "Sending",
+then "Paid".
+
 **Open question (from the architecture):** the coin → PKR rate that bridges
 the gift tree and the PKR revenue tree is not defined. It is a setting
 (`platform_settings.withdrawal.pkr_per_coin`, editable in the command center)

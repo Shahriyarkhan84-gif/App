@@ -42,6 +42,13 @@
   locks, unique ledger idempotency keys).
 - Prices come from `coin_packages` / `gift_catalog`; amount + currency are
   re-checked against the Stripe session before crediting.
+- Automatic payouts: the database alone decides which withdrawal is paid without review
+  (`private.auto_payout_block`: under the per-payout and daily limits, an account that was already
+  paid once, no `account_review` in 30 days, wallet not frozen). `payouts-send` takes only what
+  `internal_claim_payouts` hands it (database secret, or the signed-in host's own) and records the
+  provider's answer with `internal_payout_result`; the provider is always called with the withdrawal
+  id as its idempotency key. A payout the provider was asked about can only be retried, never paid
+  by hand or rejected (no double payment). Provider keys are Edge Function secrets.
 
 ## Media uploads
 

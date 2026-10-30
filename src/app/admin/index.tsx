@@ -297,7 +297,10 @@ function AgenciesSection() {
   );
 }
 
-type Withdrawal = { id: string; host_id: string; coins: number; amount_minor: number; currency: string; payout_method: { type: string; account?: string }; status: string; created_at: string };
+type Withdrawal = {
+  id: string; host_id: string; coins: number; amount_minor: number; currency: string; payout_method: { type: string; account?: string };
+  status: string; auto: boolean; payout_attempts: number; payout_error: string | null; created_at: string;
+};
 
 function WithdrawalsSection() {
   const supabase = useSupabase();
@@ -305,7 +308,7 @@ function WithdrawalsSection() {
   const act = useAct();
   const [refs, setRefs] = useState<Record<string, string>>({});
   const { data, error, loading, reload } = useFocusedAsync(async () => {
-    const { data, error } = await supabase.from('withdrawals').select('*').in('status', ['requested', 'approved']).order('created_at').limit(100);
+    const { data, error } = await supabase.from('withdrawals').select('*').in('status', ['requested', 'approved', 'sending']).order('created_at').limit(100);
     if (error) throw error;
     return data as Withdrawal[];
   }, []);
@@ -315,8 +318,19 @@ function WithdrawalsSection() {
         {(data ?? []).map((w) => (
           <Card key={w.id}>
             <Text variant="h3">{formatMoney(w.amount_minor, w.currency)} · {w.coins.toLocaleString()} coins</Text>
-            <Text muted>Host {w.host_id} · {w.payout_method.type} {w.payout_method.account ?? ''} · {w.status}</Text>
-            {w.status === 'requested' ? (
+            <Text muted>Host {w.host_id} · {w.payout_method.type} {w.payout_method.account ?? ''} · {w.auto ? 'automatic · ' : ''}{w.status}</Text>
+            {w.payout_error && <Text variant="caption" muted>Payout failed: {w.payout_error}</Text>}
+            {w.status === 'sending' || (w.auto && w.payout_attempts > 0) ? (
+              <Text variant="caption" muted>Being sent automatically.</Text>
+            ) : w.payout_error ? (
+              <Row>
+                <Button title="Retry payout" size="sm" onPress={() => act('retry_payout', { p_withdrawal_id: w.id }, reload)} />
+                {/* After unanswered tries the provider may still pay it: only a retry (same id) is safe. */}
+                {w.payout_attempts === 0 && (
+                  <Button title="Reject" size="sm" variant="secondary" onPress={() => confirmThen('Reject withdrawal?', `The ${U.earn} go back to the host's balance.`, 'Reject', () => act('review_withdrawal', { p_withdrawal_id: w.id, p_approve: false, p_note: 'Payout account refused' }, reload))} />
+                )}
+              </Row>
+            ) : w.status === 'requested' ? (
               <Row>
                 <Button title="Approve" size="sm" onPress={() => confirmThen('Approve withdrawal?', `${formatMoney(w.amount_minor, w.currency)} to ${w.payout_method.type} ${w.payout_method.account ?? ''}. Send the payout, then mark it paid.`, 'Approve', () => act('review_withdrawal', { p_withdrawal_id: w.id, p_approve: true }, reload))} />
                 <Button title="Reject" size="sm" variant="secondary" onPress={() => confirmThen('Reject withdrawal?', `The ${U.earn} go back to the host's balance.`, 'Reject', () => act('review_withdrawal', { p_withdrawal_id: w.id, p_approve: false, p_note: 'Rejected by owner' }, reload))} />
@@ -377,6 +391,7 @@ function SettingsSection() {
             }
           />
         </Card>
+        <AutoPayoutsCard value={data?.payouts as unknown as AutoPayouts | undefined} onSaved={reload} />
         <Card>
           <Text variant="h3">Splits</Text>
           <Text muted>Gift split: {JSON.stringify(data?.gift_split)}</Text>
@@ -384,6 +399,47 @@ function SettingsSection() {
         </Card>
       </ScrollView>
     </StateView>
+  );
+}
+
+type AutoPayouts = { auto: boolean; provider: string | null; max_auto_pkr: number; daily_auto_pkr: number; max_attempts: number };
+
+/** Hosts cash out with no review when the payout is small and goes to an account paid once before. */
+function AutoPayoutsCard({ value, onSaved }: { value: AutoPayouts | undefined; onSaved: () => void }) {
+  const { c } = useTheme();
+  const act = useAct();
+  const [provider, setProvider] = useState('');
+  const [max, setMax] = useState('');
+  const [daily, setDaily] = useState('');
+  if (!value) return null;
+  const maxNum = max ? Number(max) : value.max_auto_pkr;
+  const dailyNum = daily ? Number(daily) : value.daily_auto_pkr;
+  const providerName = (provider || value.provider || '').trim().toLowerCase();
+  const err = !Number.isFinite(maxNum) || maxNum < 0 || !Number.isFinite(dailyNum) || dailyNum < maxNum ? 'The daily limit must be at least the per-payout limit' : null;
+  const save = (auto: boolean) =>
+    act('set_platform_setting', {
+      p_key: 'payouts',
+      p_value: { ...value, auto, provider: providerName || null, max_auto_pkr: maxNum, daily_auto_pkr: dailyNum },
+    }, () => { setProvider(''); setMax(''); setDaily(''); onSaved(); });
+  return (
+    <Card>
+      <Text variant="h3">Automatic payouts</Text>
+      <Text muted>
+        {value.auto ? 'On' : 'Off'}{value.provider ? ` · ${value.provider}` : ' · no payout provider connected'}. Withdrawals up to Rs {value.max_auto_pkr.toLocaleString()}
+        {' '}(Rs {value.daily_auto_pkr.toLocaleString()} a day per host) to an account that was paid before are sent with no review.
+        New accounts, hosts under review and frozen wallets always wait for you.
+      </Text>
+      <Input label="Payout provider" value={provider} onChangeText={setProvider} autoCapitalize="none" placeholder={value.provider ?? 'name set as PAYOUT_PROVIDER'} />
+      <Input label="Up to (Rs per payout)" value={max} onChangeText={(t) => setMax(t.replace(/\D/g, ''))} keyboardType="number-pad" placeholder={String(value.max_auto_pkr)} />
+      <Input label="Daily limit per host (Rs)" value={daily} onChangeText={(t) => setDaily(t.replace(/\D/g, ''))} keyboardType="number-pad" placeholder={String(value.daily_auto_pkr)} />
+      {err && <Text variant="caption" color={c.danger}>{err}</Text>}
+      <Row>
+        {value.auto
+          ? <Button title="Turn off" variant="secondary" onPress={() => save(false)} />
+          : <Button title="Turn on" disabled={!providerName || !!err} onPress={() => confirmThen('Turn on automatic payouts?', `Hosts will be paid up to Rs ${maxNum.toLocaleString()} without your review.`, 'Turn on', () => save(true))} />}
+        <Button title="Save limits" variant="secondary" disabled={(!max && !daily && !provider) || !!err} onPress={() => save(value.auto)} />
+      </Row>
+    </Card>
   );
 }
 

@@ -10,7 +10,7 @@ import { FadeIn } from '@/components/Motion';
 import { Bean, Button, Card, Chip, Input, Row, Screen, Text } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
-import { rpc } from '@/lib/api';
+import { rpc, sendMyPayouts } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
@@ -24,7 +24,14 @@ const METHODS = [
   { id: 'bank', label: 'Bank (IBAN)' },
 ] as const;
 
-type Withdrawal = { id: string; coins: number; amount_minor: number; currency: string; status: string; review_note: string | null; created_at: string };
+type Withdrawal = { id: string; coins: number; amount_minor: number; currency: string; status: string; auto: boolean; review_note: string | null; created_at: string };
+
+/** What the host sees for each withdrawal; automatic payouts read "Sending" until they're paid. */
+function statusLabel(w: Withdrawal) {
+  if (w.status === 'sending' || (w.status === 'approved' && w.auto)) return 'Sending';
+  if (w.status === 'requested') return 'In review';
+  return w.status === 'approved' ? 'Approved' : w.status === 'paid' ? 'Paid' : 'Rejected';
+}
 
 export default function EarningsScreen() {
   const supabase = useSupabase();
@@ -53,6 +60,8 @@ export default function EarningsScreen() {
     // A failed load must show an error, not a zero balance.
     if (earnings.error) throw earnings.error;
     if (withdrawals.error) throw withdrawals.error;
+    // An automatic payout still waiting to go out: wake the sender (the server only sends this host's own).
+    if ((withdrawals.data ?? []).some((w) => w.auto && (w.status === 'approved' || w.status === 'sending'))) void sendMyPayouts(supabase);
     const cfg = settings.data?.value as { pkr_per_coin: number | null; min_coins: number } | undefined;
     return {
       earnings: earnings.data ?? { balance: 0, held: 0, lifetime: 0 },
@@ -75,10 +84,11 @@ export default function EarningsScreen() {
   const withdraw = async () => {
     setSubmitting(true);
     try {
-      await rpc(supabase, 'request_withdrawal', { p_coins: amount, p_payout_method: { type: method, account: account.trim() } });
-      track('withdrawal_requested', { coins: amount });
+      const w = await rpc<Withdrawal>(supabase, 'request_withdrawal', { p_coins: amount, p_payout_method: { type: method, account: account.trim() } });
+      track('withdrawal_requested', { coins: amount, auto: !!w?.auto });
       setCoins('');
-      Alert.alert('Requested', "We'll review your withdrawal and notify you.");
+      if (w?.auto) Alert.alert('On its way', "Your payout is being sent. We'll notify you when it arrives.");
+      else Alert.alert('Requested', "We'll review your withdrawal and notify you. After your first payout to this account, small withdrawals are sent automatically.");
       reload();
     } catch (e) {
       Alert.alert('Withdrawal failed', friendlyError(e));
@@ -136,7 +146,7 @@ export default function EarningsScreen() {
                   <Text>{w.coins.toLocaleString()} coins · {formatMoney(w.amount_minor, w.currency)}</Text>
                   <Text variant="caption" muted>{new Date(w.created_at).toLocaleDateString()}{w.review_note ? ` · ${w.review_note}` : ''}</Text>
                 </View>
-                <Text variant="label" color={w.status === 'rejected' ? c.danger : w.status === 'paid' ? c.success : c.warning}>{w.status}</Text>
+                <Text variant="label" color={w.status === 'rejected' ? c.danger : w.status === 'paid' ? c.success : c.warning}>{statusLabel(w)}</Text>
               </Row>
             ))}
           </ScrollView>

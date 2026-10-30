@@ -12,7 +12,7 @@ type AnalyticsEvent =
   | { name: 'coin_checkout_started'; props: { package_id: number } }
   | { name: 'coin_store_purchase_started'; props: { package_id: number } }
   | { name: 'coin_store_purchase_credited'; props: Record<string, never> }
-  | { name: 'withdrawal_requested'; props: { coins: number } }
+  | { name: 'withdrawal_requested'; props: { coins: number; auto: boolean } }
   | { name: 'report_submitted'; props: { target_type: string } }
   | { name: 'became_host'; props: Record<string, never> }
   | { name: 'feedback_opened'; props: Record<string, never> }

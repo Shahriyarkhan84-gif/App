@@ -440,6 +440,107 @@ reset role;
 select tests.ok((select balance = 5000 and held = 0 from public.creator_earnings where host_id = 'bob'), 'failed payout returned to the host');
 
 ---------------------------------------------------------------------------------------
+-- Automatic payouts: small withdrawals to an already-paid account are approved and sent with no
+-- admin; only payouts-send (service role + the database's secret) can take and settle them.
+---------------------------------------------------------------------------------------
+insert into private.payout_config (url, secret) values ('http://payouts.invalid', 'test-payout-secret-0123456789abcdef');
+create function tests.bob_w(p_status text) returns uuid language sql security definer
+as $$ select id from public.withdrawals where host_id = 'bob' and status = p_status order by created_at desc limit 1 $$;
+grant execute on function tests.bob_w(text) to authenticated, service_role;
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select public.set_platform_setting('payouts', '{"auto": true, "provider": "test", "max_auto_pkr": 25000, "daily_auto_pkr": 1500, "max_attempts": 2}');
+reset role;
+-- First payout to an account: a person checks it.
+select set_config('request.jwt.claims', '{"sub":"bob"}', false);
+set role authenticated;
+select tests.ok((public.request_withdrawal(1000, '{"type":"easypaisa","account":"03001234567"}')).status = 'requested', 'a new payout account waits for an owner');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select public.review_withdrawal(tests.bob_w('requested'), true);
+select public.mark_withdrawal_paid(tests.bob_w('approved'), 'manual-1');
+reset role;
+-- Same account again: approved automatically, beans leave the balance at once.
+select set_config('request.jwt.claims', '{"sub":"bob"}', false);
+set role authenticated;
+select tests.ok((select status = 'approved' and auto from public.request_withdrawal(1000, '{"type":"easypaisa","account":"03001234567"}')), 'a known account is approved automatically');
+select tests.ok((select balance = 3000 and held = 0 from public.creator_earnings where host_id = 'bob'), 'auto-approved beans leave the balance');
+select tests.fails($$select public.internal_claim_payouts(null, 'bob')$$, '%permission denied%', 'hosts cannot take payouts');
+select tests.fails($$select public.internal_payout_result(tests.bob_w('approved'), true, 'x', null, false)$$, '%permission denied%', 'hosts cannot mark payouts sent');
+reset role;
+set role service_role;
+select tests.fails($$select public.internal_claim_payouts('wrong-secret-wrong-secret-0000', null)$$, '%forbidden%', 'the wrong secret takes nothing');
+select tests.fails($$select public.internal_claim_payouts(null, null)$$, '%forbidden%', 'no secret and no host takes nothing');
+select tests.ok((select count(*) from public.internal_claim_payouts('test-payout-secret-0123456789abcdef', null)) = 1, 'payouts-send takes the queued payout');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select tests.fails($$select public.review_withdrawal(tests.bob_w('sending'), false)$$, '%not_found%', 'a payout being sent cannot be rejected');
+select tests.fails($$select public.mark_withdrawal_paid(tests.bob_w('sending'), 'x')$$, '%not_found%', 'a payout being sent cannot be marked paid by hand');
+reset role;
+set role service_role;
+select public.internal_payout_result(tests.bob_w('sending'), false, null, 'timeout', true);
+reset role;
+select tests.ok((select status = 'approved' and auto and payout_attempts = 1 from public.withdrawals where id = tests.bob_w('approved')), 'a temporary failure goes back in the queue');
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select tests.fails($$select public.review_withdrawal(tests.bob_w('approved'), false)$$, '%not_found%', 'a payout the provider was asked about cannot be rejected');
+reset role;
+set role service_role;
+select tests.ok((select count(*) from public.internal_claim_payouts(null, 'bob')) = 1, 'the host''s Earnings screen can wake its own payout');
+select public.internal_payout_result(tests.bob_w('sending'), false, null, 'timeout', true);
+reset role;
+select tests.ok((select not auto and payout_error = 'timeout' from public.withdrawals where id = tests.bob_w('approved')), 'out of tries: handed to the owner');
+select tests.ok(exists (select 1 from public.notifications where user_id = 'bob' and title = 'Withdrawal delayed'), 'the host is told about the delay');
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select tests.fails($$select public.mark_withdrawal_paid(tests.bob_w('approved'), 'x')$$, '%not_found%', 'an unanswered payout is only retried, never paid twice by hand');
+select public.retry_payout(tests.bob_w('approved'));
+reset role;
+set role service_role;
+select tests.ok((select count(*) from public.internal_claim_payouts('test-payout-secret-0123456789abcdef', null)) = 1, 'a retried payout is taken again');
+select tests.fails($$select public.internal_payout_result(tests.bob_w('sending'), true, '', null, false)$$, '%invalid_ref%', 'a sent payout needs the provider''s reference');
+select public.internal_payout_result(tests.bob_w('sending'), true, 'prov-1', null, false);
+reset role;
+select tests.ok((select payout_ref = 'prov-1' from public.withdrawals where id = tests.bob_w('paid')), 'paid with the provider''s reference');
+-- Daily limit (1,500 PKR): 500 already sent automatically today, 1,001 more waits for an owner.
+select set_config('request.jwt.claims', '{"sub":"bob"}', false);
+set role authenticated;
+select tests.ok((public.request_withdrawal(2002, '{"type":"easypaisa","account":"03001234567"}')).status = 'requested', 'over the daily automatic limit waits for an owner');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select public.review_withdrawal(tests.bob_w('requested'), false, 'test');
+reset role;
+-- A refusal (nothing sent) lets the owner reject it and return the beans.
+select set_config('request.jwt.claims', '{"sub":"bob"}', false);
+set role authenticated;
+select tests.ok((public.request_withdrawal(1000, '{"type":"easypaisa","account":"03001234567"}')).auto, 'queued automatically');
+reset role;
+set role service_role;
+select count(*) from public.internal_claim_payouts('test-payout-secret-0123456789abcdef', null);
+select public.internal_payout_result(tests.bob_w('sending'), false, null, 'invalid_account', false);
+reset role;
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select public.review_withdrawal(tests.bob_w('approved'), false, 'Account refused');
+reset role;
+select tests.ok((select balance = 3000 and held = 0 from public.creator_earnings where host_id = 'bob'), 'refused payout returned to the host');
+-- A host under review is never paid automatically.
+insert into public.moderation_actions (target_user_id, action, reason, source) values ('bob', 'account_review', 'test', 'system');
+select set_config('request.jwt.claims', '{"sub":"bob"}', false);
+set role authenticated;
+select tests.ok((public.request_withdrawal(1000, '{"type":"easypaisa","account":"03001234567"}')).status = 'requested', 'a host under review waits for an owner');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select public.review_withdrawal(tests.bob_w('requested'), false, 'test');
+select public.set_platform_setting('payouts', '{"auto": false, "provider": null, "max_auto_pkr": 25000, "daily_auto_pkr": 100000, "max_attempts": 3}');
+reset role;
+delete from public.moderation_actions where target_user_id = 'bob' and reason = 'test';
+
+---------------------------------------------------------------------------------------
 -- AI trust boundary: proposals need owner approval
 ---------------------------------------------------------------------------------------
 select set_config('request.jwt.claims', '{"sub":"alice"}', false);

@@ -58,6 +58,11 @@ export function reconcilePayments(supabase: SupabaseClient) {
   return invokeFn<{ credited: number; failed: number; pending: number }>(supabase, 'payments-reconcile', {});
 }
 
+/** Wakes the host's own automatic payouts (safety net if the database's wake-up was missed). Best effort. */
+export function sendMyPayouts(supabase: SupabaseClient) {
+  return invokeFn<{ sent: number; failed: number }>(supabase, 'payouts-send', {}).catch(() => null);
+}
+
 /** Starts Didit identity verification for the signed-in host; returns the hosted URL. */
 export function startHostVerification(supabase: SupabaseClient, returnTo: string, language?: string) {
   return invokeFn<{ url: string }>(supabase, 'didit-session', { returnTo, language });

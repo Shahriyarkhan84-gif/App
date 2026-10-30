@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.3 — Hosts cash out on their own
+
+- **Automatic payouts**: a host's withdrawal is approved and sent with no admin when it's small (up to Rs 25,000, Rs 100,000 a day), goes to a JazzCash / Easypaisa / bank account that was already paid once, and the host isn't under review. The Earnings screen shows "Sending" then "Paid"; the first payout to a new account is still checked by the owner.
+- Admin → Settings → **Automatic payouts**: turn on/off, payout provider, limits. Admin → Withdrawals shows automatic payouts and failed ones with **Retry payout**.
+- New: `payouts-send` Edge Function and `_shared/payouts.ts` (provider interface, tested), `20261030040000_auto_payouts.sql`, must-pass tests (only the server can take or settle payouts; no double payment; limits, new accounts and hosts under review wait for the owner).
+- **Not live yet**: no payout provider is connected (needs a business account with one, e.g. dLocal, Rafiki or Simpaisa), so it stays off. Apply the migration, deploy `payouts-send`, set `private.payout_config`.
+
 ## 0.11.2 — Recharge link for agency resellers
 
 - **zynalive.com/recharge**: anyone pays by card (Stripe) for any Zynalive ID: enter the ID, check the name and photo, choose an amount, pay on the card page, done. `?id=<8 digits>` opens straight at the amount.
