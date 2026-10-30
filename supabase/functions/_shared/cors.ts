@@ -41,6 +41,7 @@ const RPC_ERRORS: Record<string, number> = {
   invalid_purchase: 400,
   invalid_provider: 400,
   purchase_not_yours: 403,
+  user_not_found: 404,
 };
 
 /** Converts a Supabase RPC error into an HttpError (known codes) or rethrows. */

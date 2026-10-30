@@ -44,6 +44,8 @@ export default function AgencyPortalScreen() {
 
   const shareCode = (p: Portal) =>
     shareMessage(`Join ${p.agency.name} on ${brand.name}! When you verify for hosting, enter agency code ${p.agency.code}.`);
+  // Reseller link: customers pay by card for any ID on the website; those sales carry the agency.
+  const rechargeLink = (p: Portal) => `${brand.website.replace(/\/$/, '')}/recharge?a=${encodeURIComponent(p.agency.code)}`;
 
   return (
     <Screen edges={['bottom']}>
@@ -84,6 +86,25 @@ export default function AgencyPortalScreen() {
                 )}
               </LinearGradient>
             </FadeIn>
+
+            {data.agency.status === 'active' && (
+              <FadeIn delay={90}>
+                <Card style={{ gap: 10 }}>
+                  <Row style={{ justifyContent: 'space-between' }}>
+                    <Text variant="label">Recharge link</Text>
+                    <Ionicons name="link-outline" size={18} color={c.primary} />
+                  </Row>
+                  <Text variant="bodySmall" selectable color={c.primary}>{rechargeLink(data)}</Text>
+                  <Text variant="caption" muted>Send this to your customers. They pay by card for any {brand.name} ID, and every sale through it counts for your agency.</Text>
+                  <PressScale onPress={() => void shareMessage(`Recharge ${brand.name} ${U.spend} with ${data.agency.name}: ${rechargeLink(data)}`)}
+                    accessibilityRole="button" accessibilityLabel="Share recharge link"
+                    style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, minHeight: 40, borderRadius: 999, backgroundColor: c.violetSurface }}>
+                    <Ionicons name="share-social-outline" size={16} color={c.primary} />
+                    <Text variant="label" color={c.primary}>Share link</Text>
+                  </PressScale>
+                </Card>
+              </FadeIn>
+            )}
 
             <FadeIn delay={120} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
               <Stat label="Hosts" value={data.stats.hosts} />

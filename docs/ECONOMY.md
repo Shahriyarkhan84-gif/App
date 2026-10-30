@@ -130,6 +130,11 @@ has no client write grant. Clients can only read the catalog and ownership. Cove
 Frames aren't refundable; if coins used for a frame are charged back, the normal chargeback path
 records the shortfall and flags the account.
 
+## Recharge link and agency resellers
+
+- `zynalive.com/recharge` sells the same region packages by card for any Zynalive ID (the recipient's region decides the packages and prices).
+- An agency's link (`?a=<agency code>`, shown in the Agency portal) puts the agency on the payment, so the purchase split records its margin (`agency_margin` bucket, `purchase_split.agency_margin_bps`, 13.33% today) before the platform's share. How that margin is paid out to agencies is still a manual step.
+
 ## In-app purchases (Google Play, App Store)
 
 - Inside the Android and iPhone apps, diamonds are sold through Google Play Billing and the App Store (store rules); the website keeps Stripe. Same packages, matched by `coin_packages.store_product_id` (`zynalive_diamonds_140`, `_350`, `_700`, `_2000`, `_7000`); the store sets each country's price.

@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recharge · Zynalive</title>
+<meta name="description" content="Recharge Zynalive diamonds with a card. Enter a Zynalive ID, choose an amount and pay securely with Stripe.">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#BAE6FD">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<link rel="stylesheet" href="/site.css">
+<style>
+.rc { max-width: 480px; margin: 0 auto; padding: 22px 20px 48px; display: grid; gap: 18px; }
+.rc section { padding-block: 0; }
+.rc .card { background: var(--raised); border: 1px solid var(--line); border-radius: 16px; padding: 18px; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.rc .card p.hint { margin-top: 10px; color: var(--faint); font-size: 13px; }
+.rc .card p.msg { color: #B42318; font-size: 14px; margin: 8px 0; }
+.rc h1 { font: 800 30px/1.1 var(--brand); letter-spacing: -.02em; margin: 0; }
+.rc .lead { color: var(--muted); margin: 6px 0 0; }
+.steps { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--faint); }
+.steps b { color: var(--sky); }
+.steps i { width: 18px; height: 1.5px; background: var(--line); display: inline-block; }
+.steps i.on { background: var(--sky); }
+.card { background: var(--raised); border: 1px solid var(--line); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
+.field { display: grid; gap: 6px; }
+.field label { color: var(--muted); font-size: 13px; font-weight: 500; }
+.field input { min-height: 52px; border-radius: 10px; border: 2px solid var(--line); background: #fff; color: var(--text); padding: 0 14px; font: 500 20px var(--body); letter-spacing: .06em; }
+.field input:focus { outline: none; border-color: var(--sky); }
+.hint { color: var(--faint); font-size: 13px; margin: 10px 0 0; }
+.who { display: flex; align-items: center; gap: 12px; }
+.who img, .who .ph { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; background: #E0F2FE; flex: none; }
+.who .name { font-weight: 700; }
+.who .acct-sub { color: var(--muted); font-size: 13px; }
+.who .grow { flex: 1; min-width: 0; }
+.who button { background: none; border: 0; color: var(--sky); font: 700 14px var(--body); cursor: pointer; padding: 6px; }
+.via { display: inline-flex; align-items: center; gap: 6px; background: #E0F2FE; color: var(--sky); font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; justify-self: start; }
+.pkgs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pkg { position: relative; text-align: left; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px; cursor: pointer; font: inherit; color: inherit; }
+.pkg[aria-checked="true"] { background: var(--pale); border: 2px solid var(--sky); padding: 13px; }
+.pkg .n { font: 800 22px/1.1 var(--brand); }
+.pkg .p { color: var(--muted); font-size: 14px; }
+.pkg .tag { position: absolute; top: -9px; right: 10px; background: var(--live); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 6px; }
+.total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.total .t { font: 800 24px/1 var(--brand); color: var(--sky); }
+.rc .btn { width: 100%; border: 0; cursor: pointer; }
+.rc .btn[disabled] { opacity: .6; cursor: default; }
+.msg { color: #B42318; min-height: 1.2em; margin: 0; font-size: 14px; }
+.done { text-align: center; display: grid; gap: 12px; justify-items: center; padding-top: 24px; }
+.done .check { width: 76px; height: 76px; border-radius: 50%; background: var(--gradient); display: grid; place-items: center; box-shadow: var(--shadow); }
+.secure { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--faint); font-size: 13px; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <a class="wordmark" href="/"><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#87CEFA"/><path d="M9 10h11v2.6L13.2 20H21v3H9v-2.6L15.8 13H9z" fill="#00131F"/><circle cx="24.5" cy="8" r="2.6" fill="#00131F"/></svg><span>zyna<span style="color:var(--sky)">live</span></span></a>
+  </div>
+</header>
+<main class="rc">
+  <span class="via" id="via" hidden></span>
+
+  <!-- 1 · Enter Zynalive ID -->
+  <section id="s-id" aria-labelledby="h-id">
+    <div class="steps" aria-hidden="true"><b>1 Account</b><i></i><span>2 Amount</span><i></i><span>3 Pay</span></div>
+    <h1 id="h-id" style="margin-top:14px">Recharge diamonds</h1>
+    <p class="lead">Top up any Zynalive account with a card. Diamonds arrive in seconds.</p>
+    <form class="card" id="f-id" novalidate style="margin-top:18px">
+      <div class="field">
+        <label for="id">Zynalive ID</label>
+        <input id="id" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="4821 7730" required>
+      </div>
+      <p class="hint">Find it in the app under your name on the Me tab. It is 8 digits.</p>
+      <p class="msg" id="msg-id" role="alert"></p>
+      <button class="btn primary" id="go-id" type="submit">Continue</button>
+    </form>
+    <p class="fine">Paying for someone else? Use their ID. Diamonds can't be moved to another account later, so check the name on the next step.</p>
+  </section>
+
+  <!-- 2 · Choose amount -->
+  <section id="s-amount" hidden aria-labelledby="h-amount">
+    <div class="steps" aria-hidden="true"><b>1 Account</b><i class="on"></i><b>2 Amount</b><i></i><span>3 Pay</span></div>
+    <div class="card who" style="margin-top:14px">
+      <img id="avatar" alt="" hidden><span class="ph" id="avatar-ph"></span>
+      <div class="grow"><div class="name" id="name"></div><div class="acct-sub" id="sub"></div></div>
+      <button type="button" id="change">Change</button>
+    </div>
+    <h2 id="h-amount" style="font-size:18px;margin:18px 0 10px">Choose an amount</h2>
+    <div class="pkgs" id="pkgs" role="radiogroup" aria-labelledby="h-amount"></div>
+    <div class="total" style="margin-top:18px"><span id="for" style="color:var(--muted)"></span><span class="t" id="total"></span></div>
+    <p class="msg" id="msg-amount" role="alert"></p>
+    <button class="btn primary" id="go-pay" type="button" style="margin-top:8px">Continue to payment</button>
+    <p class="secure" style="margin-top:14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Card payment by Stripe. Zynalive never sees your card number.</p>
+  </section>
+
+  <!-- Paid -->
+  <section id="s-done" class="done" hidden aria-live="polite">
+    <span class="check"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+    <h1>Payment received</h1>
+    <p class="lead" id="done-text">Diamonds are added as soon as the payment is confirmed, usually within a few seconds.</p>
+    <a class="btn primary" href="/app" style="margin-top:8px">Open Zynalive</a>
+    <a class="btn ghost" id="again" href="/recharge">Recharge again</a>
+  </section>
+</main>
+
+<script>
+(function () {
+  var FN = '%SUPABASE_URL%/functions/v1/recharge';
+  var q = new URLSearchParams(location.search);
+  var agency = (q.get('a') || '').trim();
+  var state = { id: '', pkg: null, data: null };
+  var $ = function (id) { return document.getElementById(id); };
+
+  function call(body) {
+    if (agency) body.agency = agency;
+    return fetch(FN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw (j && j.error && j.error.code) || 'unknown'; return j; }); });
+  }
+  var ERR = {
+    user_not_found: 'No Zynalive account has that ID. Check the 8 digits.',
+    under_18: 'This account can’t be recharged.',
+    invalid_agency_code: 'This recharge link is not valid any more. Ask your agency for a new one.',
+    invalid_package: 'That amount isn’t available for this account. Choose another.',
+    rate_limited: 'Too many tries. Wait a few minutes and try again.',
+    payment_processing: 'A payment for this account is already being confirmed. Check again in a minute.',
+    checkout_in_progress: 'A payment for this is already open. Finish it there, or try again in 30 minutes.'
+  };
+  function errText(code) { return ERR[code] || 'Something went wrong. Please try again.'; }
+  function money(minor, cur) {
+    var v = minor / 100;
+    if (cur.toLowerCase() === 'pkr') return 'Rs ' + v.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: cur.toUpperCase() }).format(v); } catch (e) { return v + ' ' + cur.toUpperCase(); }
+  }
+  function spaced(n) { var s = String(n); return s.slice(0, 4) + ' ' + s.slice(4); }
+  function show(id) { ['s-id', 's-amount', 's-done'].forEach(function (s) { $(s).hidden = s !== id; }); window.scrollTo(0, 0); }
+
+  function lookup(id) {
+    $('msg-id').textContent = '';
+    $('go-id').disabled = true; $('go-id').textContent = 'Checking…';
+    return call({ action: 'lookup', id: id }).then(function (d) {
+      state.id = id; state.data = d;
+      if (d.agency) { $('via').textContent = 'Recharge via ' + d.agency; $('via').hidden = false; }
+      $('name').textContent = d.name;
+      $('sub').textContent = 'ID ' + spaced(d.user_number);
+      if (d.avatar_url && /^https:\/\//.test(d.avatar_url)) { $('avatar').src = d.avatar_url; $('avatar').hidden = false; $('avatar-ph').hidden = true; }
+      renderPackages(d.packages || []);
+      show('s-amount');
+    }).catch(function (code) { $('msg-id').textContent = errText(code); })
+      .then(function () { $('go-id').disabled = false; $('go-id').textContent = 'Continue'; });
+  }
+
+  function renderPackages(list) {
+    var box = $('pkgs'); box.textContent = '';
+    if (!list.length) { $('msg-amount').textContent = 'Diamonds aren’t on sale in this account’s country yet.'; $('go-pay').disabled = true; return; }
+    var popular = list.length >= 3 ? list[1].id : null, best = list.length >= 4 ? list[list.length - 1].id : null;
+    state.pkg = list.find(function (p) { return p.id === popular; }) || list[0];
+    list.forEach(function (p) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'pkg'; b.setAttribute('role', 'radio');
+      var n = document.createElement('div'); n.className = 'n'; n.textContent = p.coins.toLocaleString('en-US');
+      var pr = document.createElement('div'); pr.className = 'p'; pr.textContent = money(p.price_minor, p.currency);
+      b.appendChild(n); b.appendChild(pr);
+      if (p.id === popular || p.id === best) { var t = document.createElement('span'); t.className = 'tag'; t.textContent = p.id === popular ? 'Popular' : 'Best value'; b.appendChild(t); }
+      b.addEventListener('click', function () { state.pkg = p; select(); });
+      b.dataset.id = p.id;
+      box.appendChild(b);
+    });
+    select();
+  }
+  function select() {
+    Array.prototype.forEach.call($('pkgs').children, function (b) { b.setAttribute('aria-checked', String(Number(b.dataset.id) === state.pkg.id)); });
+    $('for').textContent = state.pkg.coins.toLocaleString('en-US') + ' diamonds for ' + state.data.name.split(' ')[0];
+    $('total').textContent = money(state.pkg.price_minor, state.pkg.currency);
+    $('go-pay').textContent = 'Pay ' + money(state.pkg.price_minor, state.pkg.currency);
+  }
+
+  $('f-id').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var id = $('id').value.replace(/\s+/g, '');
+    if (!/^\d{8}$/.test(id)) { $('msg-id').textContent = 'A Zynalive ID is 8 digits.'; return; }
+    lookup(id);
+  });
+  $('change').addEventListener('click', function () { show('s-id'); $('id').focus(); });
+  $('go-pay').addEventListener('click', function () {
+    $('msg-amount').textContent = '';
+    $('go-pay').disabled = true; $('go-pay').textContent = 'Opening payment…';
+    call({ action: 'checkout', id: state.id, packageId: state.pkg.id })
+      .then(function (r) { location.assign(r.url); })
+      .catch(function (code) { $('msg-amount').textContent = errText(code); $('go-pay').disabled = false; select(); });
+  });
+
+  // Back from the card page: show the confirmation for that account.
+  var id = (q.get('id') || '').replace(/\s+/g, '');
+  if (q.get('status') === 'success') {
+    var again = new URL('/recharge', location.origin);
+    if (agency) again.searchParams.set('a', agency);
+    $('again').href = again.pathname + again.search;
+    show('s-done');
+    if (/^\d{8}$/.test(id)) call({ action: 'lookup', id: id }).then(function (d) {
+      $('done-text').textContent = 'Diamonds are being added to ' + d.name + '’s account. They usually arrive within a few seconds.';
+    }).catch(function () {});
+    history.replaceState(null, '', location.pathname + (agency ? '?a=' + encodeURIComponent(agency) : ''));
+  } else if (/^\d{8}$/.test(id)) {
+    // A link with the ID already in it (e.g. opened from the app): go straight to the amount.
+    $('id').value = spaced(id);
+    lookup(id);
+  }
+})();
+</script>
+</body>
+</html>

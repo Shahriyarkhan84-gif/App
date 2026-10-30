@@ -1210,4 +1210,33 @@ select set_config('request.jwt.claims', '', false);
 select tests.ok((select count(*) from public.direct_messages where sender_id = 'pn_host') = 1, 'a push failure never blocks the message');
 delete from private.push_config;
 
+-- Recharge link (web, optionally an agency's): only the server function can look up or start a
+-- payment; a payment through an agency's link carries the agency, so its margin is recorded.
+insert into public.profiles (id, username, display_name, signup_country) values ('rc_buyer', 'rc_buyer', 'Recharge Buyer', 'PK'), ('rc_banned', 'rc_banned', 'Gone', 'PK'), ('rc_minor', 'rc_minor', 'Kid', 'PK');
+update public.profiles set age_check = 'minor' where id = 'rc_minor';
+insert into public.agencies (name, status) values ('Reseller Agency', 'active');
+update public.profiles set status = 'banned' where id = 'rc_banned';
+create temp table rc as select (select user_number from public.profiles where id = 'rc_buyer') as num,
+  (select code from public.agencies where name = 'Reseller Agency') as code,
+  (select id from public.coin_packages where region = 'PK' and active order by sort limit 1) as pkg;
+grant select on rc to authenticated, service_role;
+set role authenticated;
+select tests.fails($$select public.internal_recharge_lookup((select num from rc))$$, '%permission denied%', 'clients cannot look up accounts for recharge');
+select tests.fails($$select public.internal_create_recharge_payment((select num from rc), (select pkg from rc))$$, '%permission denied%', 'clients cannot start a recharge payment');
+reset role;
+set role service_role;
+select tests.ok((public.internal_recharge_lookup((select num from rc), (select code from rc)) ->> 'agency') = 'Reseller Agency', 'the link shows which agency it belongs to');
+select tests.ok((public.internal_recharge_lookup((select num from rc)) ->> 'name') = 'Recharge Buyer' and not (public.internal_recharge_lookup((select num from rc)) ? 'id'), 'lookup shows the name, never the account id');
+select tests.fails($$select public.internal_recharge_lookup((select user_number from public.profiles where id = 'rc_banned'))$$, '%user_not_found%', 'banned accounts cannot be recharged');
+select tests.fails($$select public.internal_recharge_lookup((select user_number from public.profiles where id = 'rc_minor'))$$, '%under_18%', 'minors cannot be recharged');
+select tests.fails($$select public.internal_create_recharge_payment((select num from rc), (select pkg from rc), 'NOPE')$$, '%invalid_agency_code%', 'unknown agency codes are refused');
+select public.internal_attach_payment_ref((public.internal_create_recharge_payment((select num from rc), (select pkg from rc), (select code from rc))).id, 'cs_recharge_1');
+select tests.ok((select (public.internal_create_recharge_payment((select num from rc), (select pkg from rc), (select code from rc))).provider_ref) = 'cs_recharge_1', 'a retry returns the same payment');
+select tests.ok((select agency_id = (select id from public.agencies where name = 'Reseller Agency') from public.payments where provider_ref = 'cs_recharge_1'), 'the payment carries the agency');
+select tests.ok(((select public.internal_credit_payment('cs_recharge_1', 'pi_recharge_1', amount_minor, currency) from public.payments where provider_ref = 'cs_recharge_1') ->> 'credited')::boolean, 'Stripe''s confirmation credits it');
+reset role;
+select tests.ok(tests.balance('rc_buyer') = (select coins from public.coin_packages where id = (select pkg from rc)), 'the diamonds go to the ID that was paid for');
+select tests.ok((select amount > 0 from public.platform_ledger l join public.payments p on l.ref_id = p.id::text where p.provider_ref = 'cs_recharge_1' and l.bucket = 'agency_margin'), 'the agency''s margin is recorded');
+drop table rc;
+
 drop schema tests cascade;

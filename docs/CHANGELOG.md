@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.2 — Recharge link for agency resellers
+
+- **zynalive.com/recharge**: anyone pays by card (Stripe) for any Zynalive ID: enter the ID, check the name and photo, choose an amount, pay on the card page, done. `?id=<8 digits>` opens straight at the amount.
+- **Agency reseller link** `zynalive.com/recharge?a=<agency code>`: shows "Recharge via <agency>" and every payment through it carries the agency, so the agency's margin (`purchase_split.agency_margin_bps`) is recorded. The Agency portal shows the link with a Share button.
+- New `recharge` Edge Function (lookup + checkout, 15 lookups / 10 checkouts per visitor per 10 minutes) and `20261030030000_recharge_link.sql` (`internal_recharge_lookup`, `internal_create_recharge_payment`; banned and under-18 accounts can't be recharged). The Stripe page code is shared with `coins-checkout` (`_shared/checkout.ts`).
+
 ## 0.11.1 — Push notifications (app version 1.2.0)
 
 - **Phone notifications** (`expo-notifications`, Expo push service): every in-app notification, new private messages, and **"<host> is live now"** for followers. Tapping one opens the live room, the chat or the notifications list.
