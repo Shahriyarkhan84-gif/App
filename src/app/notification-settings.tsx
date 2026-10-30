@@ -13,6 +13,8 @@ import { useTheme } from '@/lib/theme';
 
 /** Groups people may switch off (the server decides; see set_notification_muted). */
 const GROUPS = [
+  { id: 'lives', title: 'Lives', body: 'When someone you follow goes live.' },
+  { id: 'messages', title: 'Messages', body: 'New private messages.' },
   { id: 'pk_battles', title: 'PK battles', body: 'Battle invites, accepted invites and results.' },
   { id: 'events', title: 'Events & rewards', body: 'Rewards from events you took part in.' },
 ] as const;
@@ -62,7 +64,7 @@ export default function NotificationSettingsScreen() {
               );
             })}
           </Card>
-          <Text variant="caption" faint>Payments, withdrawals, verification and account notices are always on. Phone alerts arrive with a future app update.</Text>
+          <Text variant="caption" faint>Payments, withdrawals, verification and account notices are always on. These switches cover the app and phone alerts; to stop all phone alerts, turn notifications off for Zynalive in your phone&apos;s settings.</Text>
         </ScrollView>
       </StateView>
     </Screen>

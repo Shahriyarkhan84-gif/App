@@ -24,7 +24,8 @@ import { AppI18n } from '@/lib/i18n/AppI18n';
 import { ProfileProvider, useProfile } from '@/lib/profile';
 import { initSentry, Sentry } from '@/lib/sentry';
 import { subdomainHome } from '@/lib/subdomain';
-import { SupabaseProvider } from '@/lib/supabase';
+import { usePushNotifications } from '@/lib/push';
+import { SupabaseProvider, useSupabase } from '@/lib/supabase';
 import { appIsDark, fonts, useTheme } from '@/lib/theme';
 
 initSentry();
@@ -122,6 +123,13 @@ function SubdomainHome() {
  * Birthday check: an account without a birthday (or under 18) goes to /onboarding until it's done.
  * Accounts on a database without the age column (age_check undefined) are never sent there.
  */
+/** Phone notifications for the signed-in account (no-op on the website). */
+function PushNotifications() {
+  const { isSignedIn } = useAuth();
+  usePushNotifications(useSupabase(), !!isSignedIn);
+  return null;
+}
+
 function AgeGate() {
   const { isSignedIn } = useAuth();
   const { profile } = useProfile();
@@ -254,6 +262,7 @@ function RootLayout() {
                 <IdentityAndScreens />
                 <SubdomainHome />
                 <AgeGate />
+                <PushNotifications />
                 <StatusBar style={appIsDark ? 'light' : 'dark'} />
                 <RootNavigator />
               </Analytics>

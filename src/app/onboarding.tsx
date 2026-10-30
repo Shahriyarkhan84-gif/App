@@ -12,6 +12,7 @@ import { parseBirthDate } from '@/lib/age';
 import { brand, U } from '@/lib/brand';
 import { friendlyError } from '@/lib/errors';
 import { useProfile } from '@/lib/profile';
+import { unregisterPush } from '@/lib/push';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 import { CATEGORIES, categoryLabel, type Category } from '@/lib/types';
@@ -82,7 +83,7 @@ export default function OnboardingScreen() {
                 <Text variant="h2" accessibilityRole="header">{`${brand.name} is for adults`}</Text>
                 <Text muted>{`You need to be 18 or older to use ${brand.name}. Your account can't go live, send gifts, message or buy ${U.spend}.`}</Text>
                 <Text variant="caption" faint>If you entered the wrong date, contact support from the website.</Text>
-                <Button title="Sign out" variant="secondary" onPress={() => void signOut().then(() => router.replace('/'))} />
+                <Button title="Sign out" variant="secondary" onPress={() => void unregisterPush(supabase).then(() => signOut()).then(() => router.replace('/'))} />
               </Card>
             ) : step === 'birthday' ? (
               <Card style={{ padding: 22, gap: 14, borderRadius: 28 }}>

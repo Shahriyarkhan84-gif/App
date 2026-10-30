@@ -82,6 +82,7 @@
       ],
       "expo-video",
       "expo-iap",
+      "expo-notifications",
       [
         "expo-localization",
         {

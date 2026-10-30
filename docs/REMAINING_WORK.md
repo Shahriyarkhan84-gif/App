@@ -18,7 +18,7 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 | 11 | Safety + moderation | ✅ | AI moderation, reports, room admin, action ladder, audit logs |
 | 12 | AI platform | ✅ | AI CEO + all 7 branches incl. **subtitles** (Whisper + Claude translation, VOD and live replays). Live captions during a stream not built |
 | 13 | Marketing + SEO | ⬜ | AI Growth Manager / SEO AI not started |
-| 14 | Notifications | 🟡 | In-app (DB + realtime) and email (welcome). **Missing: push (expo-notifications), SMS** |
+| 14 | Notifications | 🟡 | In-app (DB + realtime), email (welcome) and **push (0.11.1: all notifications, messages, "is live now"; needs FCM/APNs credentials in EAS and `private.push_config`)**. **Missing: SMS** |
 | 15 | Analytics | 🟡 | PostHog events; DAU/MAU/D7 retention/revenue in AI CEO KPIs. **Missing: ARPU/LTV/CPA/ROAS dashboards (need marketing spend data)** |
 
 ## Also pending

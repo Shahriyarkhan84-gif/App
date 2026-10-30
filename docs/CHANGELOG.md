@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.1 — Push notifications (app version 1.2.0)
+
+- **Phone notifications** (`expo-notifications`, Expo push service): every in-app notification, new private messages, and **"<host> is live now"** for followers. Tapping one opens the live room, the chat or the notifications list.
+- Followers get one "is live now" per host every 30 minutes at most (no spam on reconnects); followers who muted Lives or blocked the host get nothing.
+- Settings → Notifications: new **Lives** and **Messages** switches (with PK battles and Events).
+- The phone is unregistered on sign-out; dead tokens are removed automatically.
+- New: `push-send` Edge Function, `20261030020000_push_notifications.sql` (push tokens, delivery through pg_net, `live_started` notifications), must-pass tests.
+
 ## 0.11.0 — In-app purchases (app version 1.2.0)
 
 - **Buy diamonds with Google Play and the App Store** inside the Android and iPhone apps (`expo-iap`). The Wallet shows the store's own price in the buyer's currency; the website keeps Stripe. Purchases made while the app was closed or offline are credited the next time the Wallet opens.

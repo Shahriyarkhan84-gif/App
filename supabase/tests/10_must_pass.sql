@@ -1171,4 +1171,43 @@ select tests.ok((public.internal_refund_payment('gp:GPA.1') ->> 'reversed')::boo
 reset role;
 select tests.ok(tests.balance('iap_buyer') = 140, 'refunded diamonds are taken back');
 
+-- Push notifications: tokens only through RPCs; only the database decides who gets what.
+insert into public.profiles (id, username, display_name) values ('pn_host', 'pn_host', 'Ayesha'), ('pn_fan', 'pn_fan', 'Fan'), ('pn_muted', 'pn_muted', 'Muted'), ('pn_blocker', 'pn_blocker', 'Blocker');
+insert into public.hosts (user_id) values ('pn_host');
+insert into public.rooms (host_id, status, cover_url, title) values ('pn_host', 'offline', 'x', 'Chai & chat');
+insert into public.follows (follower_id, followee_id) values ('pn_fan', 'pn_host'), ('pn_muted', 'pn_host'), ('pn_blocker', 'pn_host');
+insert into public.user_blocks (blocker_id, blocked_id) values ('pn_blocker', 'pn_host');
+select set_config('request.jwt.claims', '{"sub":"pn_fan"}', false);
+set role authenticated;
+select public.register_push_token('ExponentPushToken[fan-token-0001]', 'android');
+select tests.fails($$select public.register_push_token('not-a-token', 'android')$$, '%invalid_push_token%', 'only Expo push tokens are stored');
+select tests.fails($$select count(*) from public.push_tokens$$, '%permission denied%', 'nobody reads push tokens directly');
+select tests.fails($$select public.internal_push_messages('notification', '1', 'x')$$, '%permission denied%', 'clients cannot read push messages');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"pn_muted"}', false);
+set role authenticated;
+select public.set_notification_muted('lives', true);
+reset role;
+select set_config('request.jwt.claims', '', false);
+update public.rooms set status = 'live' where host_id = 'pn_host';
+select tests.ok((select count(*) from public.notifications where type = 'live_started' and user_id = 'pn_fan') = 1, 'followers are told the host is live');
+select tests.ok((select count(*) from public.notifications where type = 'live_started' and user_id in ('pn_muted', 'pn_blocker')) = 0, 'muted and blocking followers are not told');
+update public.rooms set status = 'offline' where host_id = 'pn_host';
+update public.rooms set status = 'live' where host_id = 'pn_host';
+select tests.ok((select count(*) from public.notifications where type = 'live_started' and user_id = 'pn_fan') = 1, 'a quick restart does not notify again');
+insert into private.push_config (url, secret) values ('http://localhost/push-send', 'test-secret-test-secret-123');
+set role service_role;
+select tests.fails($$select public.internal_push_messages('live', (select id::text from public.rooms where host_id = 'pn_host'), 'wrong-secret')$$, '%forbidden%', 'push messages need the database secret');
+select tests.ok((select jsonb_array_length(public.internal_push_messages('live', (select id::text from public.rooms where host_id = 'pn_host'), 'test-secret-test-secret-123'))) = 1, 'the live push goes to followers with a phone');
+select tests.ok((select public.internal_push_messages('live', (select id::text from public.rooms where host_id = 'pn_host'), 'test-secret-test-secret-123') -> 0 ->> 'title') = 'Ayesha is live now', 'the push names the host');
+reset role;
+-- a DM still works with delivery configured (pg_net missing in tests: the push is skipped, the message is not)
+select set_config('request.jwt.claims', '{"sub":"pn_host"}', false);
+set role authenticated;
+select public.send_direct_message('pn_fan', 'see you in my live');
+reset role;
+select set_config('request.jwt.claims', '', false);
+select tests.ok((select count(*) from public.direct_messages where sender_id = 'pn_host') = 1, 'a push failure never blocks the message');
+delete from private.push_config;
+
 drop schema tests cascade;
