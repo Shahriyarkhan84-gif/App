@@ -10,6 +10,8 @@ type AnalyticsEvent =
   | { name: 'chat_sent'; props: { room_id: string } }
   | { name: 'follow_toggled'; props: { user_id: string; following: boolean } }
   | { name: 'coin_checkout_started'; props: { package_id: number } }
+  | { name: 'coin_store_purchase_started'; props: { package_id: number } }
+  | { name: 'coin_store_purchase_credited'; props: Record<string, never> }
   | { name: 'withdrawal_requested'; props: { coins: number } }
   | { name: 'report_submitted'; props: { target_type: string } }
   | { name: 'became_host'; props: Record<string, never> }

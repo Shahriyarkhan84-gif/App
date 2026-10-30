@@ -38,6 +38,9 @@ const RPC_ERRORS: Record<string, number> = {
   agency_code_required: 400,
   already_reviewed: 409,
   under_18: 403,
+  invalid_purchase: 400,
+  invalid_provider: 400,
+  purchase_not_yours: 403,
 };
 
 /** Converts a Supabase RPC error into an HttpError (known codes) or rethrows. */

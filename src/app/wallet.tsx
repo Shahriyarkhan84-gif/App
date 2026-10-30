@@ -13,6 +13,7 @@ import { Button, Coin, glassShadow, Row, Screen, Sheet, Text } from '@/component
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { reconcilePayments, startCoinCheckout } from '@/lib/api';
+import { useStoreBilling } from '@/lib/storeBilling';
 import { errorDetail, friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useSupabase } from '@/lib/supabase';
@@ -45,7 +46,7 @@ export default function WalletScreen() {
   const { data, error, loading, reload } = useFocusedAsync(async () => {
     const [wallet, packages, txs, region] = await Promise.all([
       supabase.from('wallets').select('coin_balance,frozen').eq('user_id', userId!).maybeSingle(),
-      supabase.from('coin_packages').select('id,name,coins,price_minor,currency,region').eq('active', true).order('sort'),
+      supabase.from('coin_packages').select('id,name,coins,price_minor,currency,region,store_product_id').eq('active', true).order('sort'),
       supabase.from('coin_transactions').select('id,delta,kind,created_at').eq('user_id', userId!).order('created_at', { ascending: false }).limit(100),
       // Prices follow the country the account was created in (locked); never show other countries'.
       supabase.rpc('my_region'),
@@ -84,7 +85,29 @@ export default function WalletScreen() {
     }, [checkPayments, returnStatus]),
   );
 
+  // Inside the Android/iPhone app, diamonds are sold through Google Play / the App Store (store
+  // rules); the server checks each purchase with the store before crediting. The web uses Stripe.
+  const showError = (e: unknown) => {
+    const detail = errorDetail(e);
+    Alert.alert('Purchase not completed', detail ? `${friendlyError(e)}\n\n${detail}` : friendlyError(e));
+  };
+  const store = useStoreBilling({
+    supabase,
+    userId,
+    productIds: (data?.packages ?? []).map((p) => p.store_product_id).filter((id): id is string => !!id),
+    onCredited: () => { track('coin_store_purchase_credited', {}); reload(); },
+    onError: showError,
+  });
+  const storePkg = (p: CoinPackage) => (store.available && p.store_product_id && store.prices[p.store_product_id] ? p.store_product_id : null);
+  const priceLabel = (p: CoinPackage) => { const id = storePkg(p); return id ? store.prices[id] : formatMoney(p.price_minor, p.currency); };
+
   const buy = async (pkg: CoinPackage) => {
+    const productId = storePkg(pkg);
+    if (productId) {
+      track('coin_store_purchase_started', { package_id: pkg.id });
+      await store.buy(productId);
+      return;
+    }
     setBuying(pkg.id);
     track('coin_checkout_started', { package_id: pkg.id });
     try {
@@ -107,8 +130,7 @@ export default function WalletScreen() {
       }
       reload();
     } catch (e) {
-      const detail = errorDetail(e);
-      Alert.alert('Checkout unavailable', detail ? `${friendlyError(e)}\n\n${detail}` : friendlyError(e));
+      showError(e);
     } finally {
       setBuying(null);
     }
@@ -161,7 +183,7 @@ export default function WalletScreen() {
                       <Pop key={p.id} delay={stagger(i, 50)} from={0.85} style={{ width: '48.5%' }}>
                       <PressScale
                         scaleTo={0.96}
-                        disabled={buying !== null}
+                        disabled={buying !== null || store.busy !== null}
                         onPress={() => setSelected(p.id)}
                         accessibilityRole="radio"
                         accessibilityState={{ checked: on }}
@@ -176,7 +198,7 @@ export default function WalletScreen() {
                           </View>
                         )}
                         <Row gap={6}><Coin size={14} /><Text variant="h3" style={{ fontSize: 18 }}>{p.coins.toLocaleString()}</Text></Row>
-                        <Text variant="bodySmall" muted>{formatMoney(p.price_minor, p.currency)} · {p.name}</Text>
+                        <Text variant="bodySmall" muted>{priceLabel(p)} · {p.name}</Text>
                       </PressScale>
                       </Pop>
                     );
@@ -196,21 +218,24 @@ export default function WalletScreen() {
               {awaiting === null && returnStatus === 'success' && (
                 <Text variant="label" accessibilityRole="alert">Payment received — your {U.spend} appear here as soon as it&apos;s confirmed. Don&apos;t pay again.</Text>
               )}
+              {store.pending && (
+                <Text variant="caption" muted accessibilityRole="alert">Your store payment is still processing. {U.Spend} are added as soon as it completes. Don&apos;t pay again.</Text>
+              )}
               {returnStatus === 'cancelled' && <Text variant="caption" muted accessibilityRole="alert">Checkout cancelled — you weren&apos;t charged.</Text>}
               {awaiting !== null && data.wallet.coin_balance > awaiting && (
                 <Text variant="label" color={c.success} accessibilityRole="alert">Payment confirmed — {U.spend} added.</Text>
               )}
               {pick && (
                 <Button
-                  title={buying ? 'Opening checkout…' : `Buy ${units(pick.coins)} · ${formatMoney(pick.price_minor, pick.currency)}`}
-                  loading={buying !== null}
+                  title={buying ? 'Opening checkout…' : store.busy ? 'Confirming…' : `Buy ${units(pick.coins)} · ${priceLabel(pick)}`}
+                  loading={buying !== null || store.busy !== null}
                   disabled={offline}
                   onPress={() => buy(pick)}
                 />
               )}
               <Row gap={8} style={{ padding: 14, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder, ...glassShadow }}>
-                <Text style={{ flex: 1, fontSize: 15 }}>Pay with card</Text>
-                <Text variant="caption" faint>Secure checkout · Stripe</Text>
+                <Text style={{ flex: 1, fontSize: 15 }}>{store.available ? (Platform.OS === 'ios' ? 'Pay with the App Store' : 'Pay with Google Play') : 'Pay with card'}</Text>
+                <Text variant="caption" faint>{store.available ? 'Your store account · receipt by email' : 'Secure checkout · Stripe'}</Text>
               </Row>
               <Text variant="caption" faint>{U.Spend} are added only after the payment is confirmed.</Text>
 

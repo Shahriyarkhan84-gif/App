@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.0 — In-app purchases (app version 1.2.0)
+
+- **Buy diamonds with Google Play and the App Store** inside the Android and iPhone apps (`expo-iap`). The Wallet shows the store's own price in the buyer's currency; the website keeps Stripe. Purchases made while the app was closed or offline are credited the next time the Wallet opens.
+- New Edge Functions: `iap-verify` (checks each purchase with Google or Apple before crediting, then consumes it on Play) and `store-notifications` (store refunds, confirmed with the store before diamonds are taken back).
+- Database: `20261030010000_store_purchases.sql` (store product ids, store fee setting, `internal_credit_store_purchase`), with must-pass tests: credited once, can't be claimed by another account, minors refused, refunds reverse.
+- App version 1.2.0 (new native module): older installs keep receiving 1.1.0 updates until they install the new build.
+- Needs before it works: products `zynalive_diamonds_140/350/700/2000/7000` in Play Console and App Store Connect, and the store secrets in docs/ENVIRONMENT.md.
+
 ## 0.10.5 — Promote removed
 
 - The **Promote** tool is gone from the host tools sheet (Other tools is now Guests, Comments, Recorder, Newcomers). No diamonds can be spent on promotion from the app; the unused server function `promote_live` stays so the tool can come back without a database change.

@@ -130,6 +130,13 @@ has no client write grant. Clients can only read the catalog and ownership. Cove
 Frames aren't refundable; if coins used for a frame are charged back, the normal chargeback path
 records the shortfall and flags the account.
 
+## In-app purchases (Google Play, App Store)
+
+- Inside the Android and iPhone apps, diamonds are sold through Google Play Billing and the App Store (store rules); the website keeps Stripe. Same packages, matched by `coin_packages.store_product_id` (`zynalive_diamonds_140`, `_350`, `_700`, `_2000`, `_7000`); the store sets each country's price.
+- The app tags each purchase with the buyer's account. `iap-verify` asks Google or Apple, and `internal_credit_store_purchase()` credits once per purchase. A purchase can't be credited to another account.
+- Ledger: the store's fee first (`store_fee`, `platform_settings.store_fees`, 15%), then coin reserve / LiveKit / owner revenue as for card purchases (no agency margin). The amount recorded is the buyer's region package price; the store's local price can differ slightly.
+- Refunds: `store-notifications` confirms the refund with the store, then `internal_refund_payment` takes the diamonds back (shortfall rules as for card refunds). Unconsumed Play purchases are auto-refunded by Google after 3 days, so `iap-verify` consumes right after crediting.
+
 ## Live promotion (not offered in the app)
 
 - Removed from the host tools in 0.10.5: the app has no Promote button. The server function below

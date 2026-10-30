@@ -12,7 +12,7 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 | 5 | Owner/admin platform | 🟡 | Owner command center (AI CEO briefing, AI proposals, reports, withdrawals, settings). **Missing: users/hosts/agencies/rooms/coins/gifts/transactions/audit-log screens (~28 owner screens)** |
 | 6 | Live streaming infra | ✅ | LiveKit tokens/webhooks, adaptive stream, dynacast, 1080p simulcast. **Upload/VOD pipeline + HDR detection → HDR10/HLG → 4K HDR · 1080p HDR · SDR fallback → adaptive HLS** (media worker), live recordings → replays. Limit: live WebRTC is SDR; HDR *live* would need an HEVC/HDR ingest (RTMP/SRT) |
 | 7 | Coin + gift economy | ✅ | Ledger, 90/5/5 gift engine, purchase money path, idempotency, concurrency-tested |
-| 8 | Payment + withdrawal | 🟡 | Stripe purchases, refunds, chargebacks, withdrawal review. **Missing: local rails (JazzCash/Easypaisa collection), automated payouts; coin→PKR rate decision** |
+| 8 | Payment + withdrawal | 🟡 | Stripe purchases (web), **Google Play / App Store in-app purchases (app, needs store products + secrets)**, refunds, chargebacks, withdrawal review. **Missing: local rails (JazzCash/Easypaisa collection), automated payouts; coin→PKR rate decision** |
 | 9 | Chat + social | ✅ | Room chat, DMs, follows, blocks, word filters, anti-spam |
 | 10 | Ranking + events | ✅ | Rankings, PK battles, **events** (gifting races, PK battle leagues, per region, leaderboards, rewards, auto-finalize). Coin prizes are paid by an owner, not automatically |
 | 11 | Safety + moderation | ✅ | AI moderation, reports, room admin, action ladder, audit logs |
@@ -40,5 +40,5 @@ labels, which describe the design). ✅ built & tested · 🟡 partial · ⬜ no
 - NestJS stack: the media worker still talks to Supabase; pointing it at `apps/api` means calling the `/internal/media/*` endpoints and reading IVS recordings from S3.
 - Web dashboards for Agency (9 sections) and Owner (14 sections) beyond the command center.
 - End-to-end tests for mobile flows (viewer join→chat→gift→leave; host go-live→end→summary) — needs a dev build on a device farm (e.g. Maestro on EAS). Component tests exist (`npm test`, jest-expo + React Native Testing Library) for shared UI, the tab bar, theme and time formatting; extend them as screens change.
-- Store review: Google Play requires Play Billing for coins bought inside the Android app (Stripe is fine on the web). Plan: RevenueCat or `react-native-iap` + a server-side receipt check that credits coins through the same ledger path.
+- Store review: in-app purchases are built (0.11.0). To switch them on: create the five `zynalive_diamonds_*` consumable products in Play Console and App Store Connect, set the store secrets (docs/ENVIRONMENT.md), deploy `iap-verify` and `store-notifications`, point Apple's App Store Server Notifications (v2) and a Google Pub/Sub push subscription for Real-time developer notifications at `/functions/v1/store-notifications`, then build app 1.2.0.
 - Store listing: publish the web build so `/privacy` and `/account-deletion` have public URLs (their placeholders are filled).

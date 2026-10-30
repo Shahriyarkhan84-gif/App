@@ -82,7 +82,7 @@ export type ChatMessage = {
 
 export type GiftItem = { id: number; name: string; icon: string; coin_price: number };
 
-export type CoinPackage = { id: number; name: string; coins: number; price_minor: number; currency: string };
+export type CoinPackage = { id: number; name: string; coins: number; price_minor: number; currency: string; store_product_id?: string | null };
 
 // rooms.host_id -> hosts.user_id -> profiles.id
 export const ROOM_SELECT =

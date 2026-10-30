@@ -1147,4 +1147,28 @@ update public.rooms set status = 'offline' where host_id = 'ht_host';
 select tests.ok((select sticker is null and promoted_until is null from public.rooms where host_id = 'ht_host'), 'ending the live clears sticker and promotion');
 select set_config('request.jwt.claims', '', false);
 
+-- In-app purchases (Google Play / App Store): only the server, with the store's answer, credits.
+insert into public.profiles (id, username, country) values ('iap_buyer', 'iap_buyer', 'PK'), ('iap_other', 'iap_other', 'PK'), ('iap_minor', 'iap_minor', 'PK');
+update public.profiles set age_check = 'minor' where id = 'iap_minor';
+select set_config('request.jwt.claims', '{"sub":"iap_buyer"}', false);
+set role authenticated;
+select tests.fails($$select public.internal_credit_store_purchase('iap_buyer', 'google_play', 'zynalive_diamonds_350', 'tok-1', 'GPA.1')$$, '%permission denied%', 'a client cannot credit a store purchase');
+reset role;
+select set_config('request.jwt.claims', '', false);
+set role service_role;
+select tests.ok((public.internal_credit_store_purchase('iap_buyer', 'google_play', 'zynalive_diamonds_350', 'tok-1', 'GPA.1') ->> 'credited')::boolean, 'a verified Play purchase credits');
+select tests.ok(not (public.internal_credit_store_purchase('iap_buyer', 'google_play', 'zynalive_diamonds_350', 'tok-1', 'GPA.1') ->> 'credited')::boolean, 'the same purchase never credits twice');
+select tests.fails($$select public.internal_credit_store_purchase('iap_other', 'google_play', 'zynalive_diamonds_350', 'tok-1', 'GPA.1')$$, '%purchase_not_yours%', 'another account cannot claim someone''s purchase');
+select tests.fails($$select public.internal_credit_store_purchase('iap_buyer', 'google_play', 'not_a_product', 'tok-2', 'GPA.2')$$, '%invalid_package%', 'unknown store products are refused');
+select tests.fails($$select public.internal_credit_store_purchase('iap_minor', 'app_store', 'zynalive_diamonds_140', '2000001', '2000001')$$, '%under_18%', 'minors are refused');
+select tests.ok((public.internal_credit_store_purchase('iap_buyer', 'app_store', 'zynalive_diamonds_140', '2000002', '2000002') ->> 'credited')::boolean, 'a verified App Store purchase credits');
+reset role;
+select tests.ok(tests.balance('iap_buyer') = 490, 'store purchases add exactly the package diamonds');
+select tests.ok((select count(*) = 2 from public.platform_ledger l join public.payments p on l.ref_id = p.id::text
+  where l.bucket = 'store_fee' and p.user_id = 'iap_buyer'), 'the store fee is recorded');
+set role service_role;
+select tests.ok((public.internal_refund_payment('gp:GPA.1') ->> 'reversed')::boolean, 'a store refund reverses the purchase');
+reset role;
+select tests.ok(tests.balance('iap_buyer') = 140, 'refunded diamonds are taken back');
+
 drop schema tests cascade;

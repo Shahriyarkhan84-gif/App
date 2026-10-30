@@ -27,6 +27,10 @@ token plus `LIVEKIT_URL`.
 | `CLERK_SECRET_KEY` | `delete-account` (deletes the Clerk user). Server-side only. |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | `livekit-token`, `livekit-webhook` |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | `coins-checkout`, `stripe-webhook` |
+| `GOOGLE_PLAY_SERVICE_ACCOUNT` (the service account's JSON key, whole file as one value), `GOOGLE_PLAY_PACKAGE_NAME` (`com.zynalive.app`) | `iap-verify`, `store-notifications` (Play purchases, consume, voided purchases). In Play Console → Users and permissions, give the service account "View financial data" and "Manage orders" |
+| `APPLE_BUNDLE_ID` (`com.zynalive.app`), `APPLE_IAP_ISSUER_ID`, `APPLE_IAP_KEY_ID`, `APPLE_IAP_PRIVATE_KEY` (the .p8 key text) | `iap-verify`, `store-notifications` (App Store Server API key: App Store Connect → Users and Access → Integrations → In-App Purchase) |
+| `STORE_NOTIFY_TOKEN` (random string) | `store-notifications`: Google's Pub/Sub push URL ends with `?token=<this>` |
+| `IAP_ALLOW_TEST_PURCHASES` (`true` only on a test project) | Credit Play licence-tester and App Store sandbox purchases. Leave unset in production |
 | `STRIPE_PUBLISHABLE_KEY` (`pk_test_…`/`pk_live_…`, same mode as the secret key; public, safe to share) | `coins-checkout`: turns on Zynalive's own payment page (zynalive.com/pay); without it buyers use Stripe's hosted page |
 | `SITE_URL` | Stripe return URLs |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | rate limiting (optional; limits off without it) |

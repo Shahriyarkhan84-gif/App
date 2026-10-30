@@ -41,3 +41,7 @@ verify_jwt = false
 verify_jwt = false
 [functions.live-record]
 verify_jwt = false
+[functions.iap-verify]
+verify_jwt = false
+[functions.store-notifications]
+verify_jwt = false
