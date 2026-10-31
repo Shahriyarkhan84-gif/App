@@ -1,9 +1,10 @@
 import { useAuth } from '@clerk/clerk-expo';
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { brand, hasFeature } from '@/lib/brand';
 import { ContributionsCard } from '@/components/Contributions';
@@ -12,7 +13,7 @@ import { LiveAvatar } from '@/components/FollowingLive';
 import { PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
 import { FramedAvatar } from '@/components/FramedAvatar';
-import { Button, Card, compactNumber, glassShadow, LiveBadge, RoleBadges, Row, Screen, Text, TextTabs } from '@/components/ui';
+import { Button, Card, compactNumber, glassShadow, IconButton, LiveBadge, RoleBadges, Row, Screen, Segmented, Text } from '@/components/ui';
 import { ProfileMedia } from '@/components/ProfileMedia';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
@@ -36,6 +37,7 @@ export default function UserProfileScreen() {
   const offline = useOffline();
   const [following, setFollowing] = useState<boolean | null>(null);
   const [tab, setTab] = useState<'videos' | 'replays' | 'about'>('videos');
+  const insets = useSafeAreaInsets();
 
   const { data, error, loading, reload } = useAsync(async () => {
     const [profile, host, room, followers, follow, followingList, pin, hideLocation] = await Promise.all([
@@ -143,32 +145,23 @@ export default function UserProfileScreen() {
   const activeTab = tabs.some((t) => t.id === tab) ? tab : tabs[0].id;
 
   return (
-    <Screen edges={['bottom']}>
-      <Stack.Screen
-        options={{
-          title: '',
-          headerRight: data ? () => (
-            <Row gap={18}>
-              <PressScale onPress={shareProfile} accessibilityRole="button" accessibilityLabel="Share this profile" hitSlop={12}>
-                <Ionicons name="share-social-outline" size={21} color={c.text} />
-              </PressScale>
-              {/* Your own profile: pencil in the top-right corner opens Edit profile. */}
-              {isMe && (
-                <PressScale onPress={() => router.push('/profile-edit')} accessibilityRole="button" accessibilityLabel="Edit profile" hitSlop={12}>
-                  <Ionicons name="create-outline" size={22} color={c.text} />
-                </PressScale>
-              )}
-            </Row>
-          ) : undefined,
-        }}
-      />
+    <Screen edges={[]}>
+      {/* No system header: glass buttons float over the cover photo (Figma: App glass kit → Public profile). */}
+      <Stack.Screen options={{ headerShown: false }} />
       <StateView state={resolveState({ offline, loading, error, data, onRetry: reload, isEmpty: (d) => d === null, empty: { title: "This account doesn't exist", body: "It may have been deleted." } })}>
         {data && (
-          <ScrollView contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 32, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
-            {/* Social profile: cover, photo, name, counts, actions, then their videos, lives and about. */}
-            <Card style={{ padding: 0, gap: 0, borderRadius: 28, overflow: 'hidden' }}>
-              <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ height: 96 }} />
-              <View style={{ alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingBottom: 18, marginTop: -54 }}>
+          <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
+            {/* Cover: their own photo, blurred, fading into the sky. */}
+            <View style={{ height: insets.top + 150 }}>
+              {data.profile.avatar_url
+                ? <Image source={data.profile.avatar_url} blurRadius={40} contentFit="cover" style={StyleSheet.absoluteFill} />
+                : <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />}
+              <LinearGradient colors={['rgba(12,35,64,0.18)', 'rgba(186,230,253,0.35)', c.sky[0]]} locations={[0, 0.55, 1]} style={[StyleSheet.absoluteFill, { top: 0, bottom: -1 }]} />
+            </View>
+          <View style={{ paddingHorizontal: 16, gap: 16, marginTop: -40, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
+            {/* Social profile: photo, name, counts, actions, then their videos, lives and about. */}
+            <Card style={{ paddingTop: 0, paddingHorizontal: 16, paddingBottom: 18, gap: 8, borderRadius: 28, alignItems: 'center', marginTop: 54 }}>
+              <View style={{ marginTop: -54, alignItems: 'center' }}>
                 {data.room?.status === 'live' ? (
                   <PressScale
                     scaleTo={0.94}
@@ -181,39 +174,39 @@ export default function UserProfileScreen() {
                 ) : (
                   <FramedAvatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={100} ring={c.surfaceRaised} frameId={data.profile.active_frame_id} />
                 )}
-                <Row gap={8}>
-                  <Text variant="h2" numberOfLines={1} style={{ maxWidth: 260 }}>{displayName(data.profile)}</Text>
-                  <RoleBadges profile={data.profile} />
-                </Row>
-                <Text variant="caption" faint selectable>
-                  ID {data.profile.user_number}{data.profile.username ? ` · @${data.profile.username}` : ''}{data.profile.signup_country && !data.hideLocation ? ` · ${flag(data.profile.signup_country)} ${countryName(data.profile.signup_country)}` : ''}
-                </Text>
-                {data.profile.bio && <Text muted style={{ textAlign: 'center' }}>{data.profile.bio}</Text>}
-                <Row gap={0} style={{ alignSelf: 'stretch', paddingVertical: 4 }}>
-                  {[
-                    // Moves with the Follow button at once, before the refetch.
-                    { label: 'Followers', value: data.followers + (isFollowing === data.follows ? 0 : isFollowing ? 1 : -1) },
-                    { label: 'Following', value: data.following },
-                    { label: 'Friends', value: data.friends },
-                  ].map((s) => (
-                    <View key={s.label} style={{ flex: 1, alignItems: 'center' }}>
-                      <Text variant="h2">{compactNumber(s.value)}</Text>
-                      <Text variant="caption" muted>{s.label}</Text>
-                    </View>
-                  ))}
-                </Row>
-                {isMe ? (
-                  <Row style={{ alignSelf: 'stretch' }}>
-                    <Button title="Share" variant="secondary" onPress={shareProfile} style={{ flex: 1 }} />
-                  </Row>
-                ) : (
-                  <Row style={{ alignSelf: 'stretch' }}>
-                    <Button title={isFollowing ? 'Following' : 'Follow'} variant={isFollowing ? 'secondary' : 'primary'} onPress={toggleFollow} style={{ flex: 1 }} />
-                    <Button title="Message" variant="secondary" onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: id } })} style={{ flex: 1 }} />
-                    <Button title="•••" variant="secondary" onPress={moreActions} accessibilityLabel="More actions" style={{ paddingHorizontal: 16 }} />
-                  </Row>
-                )}
               </View>
+              <Row gap={6}>
+                <Text variant="h1" numberOfLines={1} style={{ maxWidth: 260 }}>{displayName(data.profile)}</Text>
+                <RoleBadges profile={data.profile} />
+              </Row>
+              <Text variant="caption" faint selectable style={{ textAlign: 'center' }}>
+                ID {data.profile.user_number}{data.profile.username ? ` · @${data.profile.username}` : ''}{data.profile.signup_country && !data.hideLocation ? ` · ${flag(data.profile.signup_country)} ${countryName(data.profile.signup_country)}` : ''}
+              </Text>
+              {data.profile.bio && <Text muted style={{ textAlign: 'center' }}>{data.profile.bio}</Text>}
+              <Row gap={0} style={{ alignSelf: 'stretch', paddingVertical: 6 }}>
+                {[
+                  // Moves with the Follow button at once, before the refetch.
+                  { label: 'Followers', value: data.followers + (isFollowing === data.follows ? 0 : isFollowing ? 1 : -1) },
+                  { label: 'Following', value: data.following },
+                  { label: 'Friends', value: data.friends },
+                ].map((s, i) => (
+                  <View key={s.label} style={{ flex: 1, alignItems: 'center', borderLeftWidth: i ? 1 : 0, borderLeftColor: c.divider }}>
+                    <Text variant="h2">{compactNumber(s.value)}</Text>
+                    <Text variant="caption" muted>{s.label}</Text>
+                  </View>
+                ))}
+              </Row>
+              {isMe ? (
+                <Row style={{ alignSelf: 'stretch' }}>
+                  <Button title="Edit profile" variant="secondary" onPress={() => router.push('/profile-edit')} style={{ flex: 1 }} />
+                  <Button title="Share" variant="secondary" onPress={shareProfile} style={{ flex: 1 }} />
+                </Row>
+              ) : (
+                <Row style={{ alignSelf: 'stretch' }}>
+                  <Button title={isFollowing ? 'Following' : 'Follow'} variant={isFollowing ? 'secondary' : 'primary'} onPress={toggleFollow} style={{ flex: 1.2 }} />
+                  <Button title="Message" variant="secondary" onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: id } })} style={{ flex: 1 }} />
+                </Row>
+              )}
             </Card>
 
             {data.room?.status === 'live' && (
@@ -257,7 +250,7 @@ export default function UserProfileScreen() {
             )}
 
             {/* With videos off (brand setting) there is only the About tab (host contributions), so no tab bar. */}
-            {tabs.length > 1 && <TextTabs options={tabs} value={activeTab} onChange={setTab} />}
+            {tabs.length > 1 && <Segmented options={tabs} value={activeTab} onChange={setTab} />}
             {activeTab === 'videos' && <ProfileMedia userId={id!} kind="upload" isMe={isMe} />}
             {activeTab === 'replays' && <ProfileMedia userId={id!} kind="live_recording" isMe={isMe} />}
             {activeTab === 'about' && (
@@ -266,9 +259,22 @@ export default function UserProfileScreen() {
                 {data.host && <ContributionsCard hostId={id} />}
               </View>
             )}
+          </View>
           </ScrollView>
         )}
       </StateView>
+      {/* Floating glass buttons over the cover. */}
+      <View pointerEvents="box-none" style={{ position: 'absolute', top: insets.top + 8, left: 16, right: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <IconButton icon="chevron-back" label="Back" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+        {data && (
+          <Row gap={10}>
+            <IconButton icon="share-outline" label="Share this profile" onPress={shareProfile} />
+            {isMe
+              ? <IconButton icon="create-outline" label="Edit profile" onPress={() => router.push('/profile-edit')} />
+              : <IconButton icon="ellipsis-horizontal" label="More actions" onPress={moreActions} />}
+          </Row>
+        )}
+      </View>
     </Screen>
   );
 }

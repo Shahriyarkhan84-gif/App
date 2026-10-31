@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.3 — Public profile in glass
+
+- The profile others see: their own photo, blurred, as the cover fading into the sky; floating glass Back, Share and More (or Edit, on your own) buttons instead of the system header.
+- Glass profile card with the photo (red live ring while live) overlapping the top, name with the blue tick, ID · @username · country, bio, Followers / Following / Friends, and Follow + Message (Edit profile + Share on your own).
+- "Live now" banner, Videos / Lives / About as a glass segmented control, then the video grid. Block and Report stay under More.
+- Figma App glass kit → "Public profile" preview.
+
 ## 0.12.2 — New Me tab
 
 - Edit profile on the top left, Settings on the top right (glass icon buttons).
