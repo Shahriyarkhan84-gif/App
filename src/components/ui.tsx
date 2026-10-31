@@ -301,20 +301,33 @@ export function ViewerCount({ count }: { count: number }) {
   );
 }
 
-/** Earned by passing host identity verification. */
-export function HostBadge({ small }: { small?: boolean }) {
+/** Blue verified tick: a blue seal with a white check (verified hosts, and accounts the owner verified). */
+export function VerifiedTick({ size = 18, label = 'Verified' }: { size?: number; label?: string }) {
   const { c } = useTheme();
   return (
     <LinearGradient
-      colors={c.accentGradient}
+      colors={['#38BDF8', '#1D9BF0', '#0369A1']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      accessibilityLabel="Verified host"
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: 7, paddingHorizontal: small ? 5 : 8, paddingVertical: small ? 1 : 3 }}
+      accessibilityRole="image"
+      accessibilityLabel={label}
+      style={{ width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center', borderWidth: Math.max(1, size / 12), borderColor: c.surfaceRaised }}
     >
-      <Ionicons name="shield-checkmark" size={small ? 10 : 12} color={c.primaryText} />
-      <Text variant="caption" color={c.primaryText} style={{ fontSize: small ? 10 : 11, fontWeight: '700' }}>Host</Text>
+      <Ionicons name="checkmark" size={size * 0.62} color="#FFFFFF" />
     </LinearGradient>
+  );
+}
+
+/** Earned by passing host identity verification: the blue tick, with "Verified host" beside it when `withText`. */
+export function HostBadge({ small, withText }: { small?: boolean; withText?: boolean }) {
+  const { c } = useTheme();
+  const tick = <VerifiedTick size={small ? 14 : 18} label="Verified host" />;
+  if (!withText) return tick;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+      {tick}
+      <Text variant="caption" color={c.primary} style={{ fontSize: small ? 11 : 12, fontWeight: '700' }}>Verified host</Text>
+    </View>
   );
 }
 
@@ -335,17 +348,15 @@ export function AgencyOwnerBadge({ small }: { small?: boolean }) {
   );
 }
 
-/** Host and/or Agency owner tags for a profile; renders nothing when neither applies. */
+/** Blue tick (verified host or owner-verified account) and/or the Agency owner tag; nothing when neither applies. */
 export function RoleBadges({ profile, small }: { profile?: { verified_at?: string | null; owner_verified_at?: string | null; role?: string | null } | null; small?: boolean }) {
-  const { c } = useTheme();
   const host = !!profile?.verified_at;
-  const ticked = !!profile?.owner_verified_at;
+  const ticked = host || !!profile?.owner_verified_at;
   const owner = profile?.role === 'AGENCY_ADMIN';
-  if (!host && !owner && !ticked) return null;
+  if (!ticked && !owner) return null;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-      {ticked && <Ionicons name="checkmark-circle" size={small ? 14 : 18} color={c.primary} accessibilityLabel="Verified account" />}
-      {host && <HostBadge small={small} />}
+      {ticked && <VerifiedTick size={small ? 14 : 18} label={host ? 'Verified host' : 'Verified account'} />}
       {owner && <AgencyOwnerBadge small={small} />}
     </View>
   );

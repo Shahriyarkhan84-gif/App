@@ -263,7 +263,7 @@ function ResultView({ result, firstName, cnicLast, onRetry }: { result: HostAppl
         <FadeIn delay={150} style={{ alignItems: 'center', gap: 8 }}>
           <Row gap={8}>
             <Text variant="h2" style={{ textAlign: 'center' }}>{copy.title}</Text>
-            {result.status === 'approved' && <Pop delay={600} from={0.2}><HostBadge /></Pop>}
+            {result.status === 'approved' && <Pop delay={600} from={0.2}><HostBadge withText /></Pop>}
           </Row>
           <Text muted style={{ textAlign: 'center', maxWidth: 320 }}>{copy.body}</Text>
         </FadeIn>

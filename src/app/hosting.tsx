@@ -68,7 +68,7 @@ export default function HostingScreen() {
             <Row gap={8}>
               <Ionicons name="shield-checkmark" size={22} color={c.primaryText} />
               <Text variant="h1" color={c.primaryText}>Become a host</Text>
-              {approved && <HostBadge />}
+              {approved && <HostBadge withText />}
             </Row>
             <Text color={c.primaryText}>Anyone can go live. Verify your ID to become a host: withdraw your gift earnings, get the Host badge and join an agency.</Text>
             <Row gap={6} style={{ marginTop: 4 }}>

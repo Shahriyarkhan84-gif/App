@@ -9,7 +9,7 @@ import { displayName } from '@/lib/types';
 
 import { LiveAvatar } from './FollowingLive';
 import { PressScale } from './Motion';
-import { Avatar, glassShadow, Row, Text } from './ui';
+import { Avatar, glassShadow, Row, Text, VerifiedTick } from './ui';
 
 export type Pinned = {
   id: string;
@@ -86,7 +86,7 @@ export function PinnedRow({ items }: { items: Pinned[] }) {
               {p.room ? <LiveAvatar uri={p.avatar_url} name={name} size={64} /> : <Avatar uri={p.avatar_url} name={name} size={64} ring={c.primary} />}
               <Row gap={3} style={{ maxWidth: '100%', marginTop: p.room ? 4 : 0 }}>
                 <Text variant="label" numberOfLines={1} style={{ flexShrink: 1, fontSize: 13 }}>{name}</Text>
-                <Ionicons name="checkmark-circle" size={14} color={c.primary} accessibilityLabel="Verified" />
+                <VerifiedTick size={14} />
               </Row>
               {p.user_number != null && <Text variant="caption" faint>ID {p.user_number}</Text>}
             </PressScale>

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.1 — Blue tick for verified hosts
+
+- A host who passed the ID check (Didit) now shows a **blue verified tick** next to their name instead of the "Host" pill: profiles, room cards, party rooms, the profile card, agency host lists and pinned profiles. The Hosting, verification-result and Me screens show the tick with "Verified host".
+- One tick only: a verified host and an account the owner verified (`owner_verified_at`) show the same blue tick (screen readers say "Verified host" or "Verified account"). The Agency owner tag is unchanged.
+- New `VerifiedTick` component; the Figma App glass kit's host badge is now the tick too.
+
 ## 0.12.0 — Glass components (needs app build 1.2.0)
 
 - New Figma page **App glass kit**: buttons (Primary, Glass, Gold, Danger, Ghost × md/sm), icon buttons, chips, segmented control, inputs (default / focus / error), toggles, LIVE / viewers / Host / Agency owner / balance badges, card, list row + group, room card, diamond pack tiles, gift tiles, floating tab dock, bottom sheet, avatar ring, 16 icons, plus Wallet and Me screens built only from the kit.

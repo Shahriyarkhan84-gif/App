@@ -103,7 +103,7 @@ export default function ProfileScreen() {
             <Text variant="bodySmall" color={d.textMuted} selectable accessibilityLabel={`Your ID ${String(profile.user_number).split('').join(' ')}`}>ID {profile.user_number}</Text>
             {(host || isAgencyOwner) && (
               <Row gap={6} style={{ flexWrap: 'wrap', justifyContent: 'center' }}>
-                {host && (verified ? <HostBadge /> : <Badge label={host.verification_status === 'declined' ? 'Verification declined' : host.verification_status === 'unverified' ? 'Not verified' : 'Verification pending'} />)}
+                {host && (verified ? <HostBadge withText /> : <Badge label={host.verification_status === 'declined' ? 'Verification declined' : host.verification_status === 'unverified' ? 'Not verified' : 'Verification pending'} />)}
                 {isAgencyOwner && <AgencyOwnerBadge />}
               </Row>
             )}

@@ -1,9 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import { ScrollView, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Button, Card, Row, Screen, Text } from '@/components/ui';
+import { Avatar, Button, Card, Row, Screen, Text, VerifiedTick } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { U } from '@/lib/brand';
 import { showResellers } from '@/lib/env';
@@ -73,7 +72,7 @@ export default function ResellersScreen() {
                 <View style={{ flex: 1, gap: 2 }}>
                   <Row gap={6}>
                     <Text variant="label" style={{ flexShrink: 1 }}>{r.display_name}</Text>
-                    <Ionicons name="checkmark-circle" size={16} color={c.primary} accessibilityLabel="Official reseller" />
+                    <VerifiedTick size={16} label="Official reseller" />
                   </Row>
                   <Text variant="caption" muted>ID {r.user_number}{r.note ? ` · ${r.note}` : ''}</Text>
                 </View>
