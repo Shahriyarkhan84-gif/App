@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.12.5 — Spotlight profile
+
+- The public profile uses the chosen **Spotlight** design (Figma: Components → Option 3 · Spotlight), with no boxes: their photo blurred behind, a big centred photo with a glowing ring (red with "LIVE · viewers" while live; tap to watch), dots and tap-to-switch for gallery photos.
+- Name with the blue tick, ID · @username · country, bio, then one row of chips: VIP level, Host, the agency name ("Zentro agency"), visitors.
+- Fans · Following · Beans · Diamonds straight on the background with thin dividers; Contributions as a plain row.
+- Videos · Lives · About as text tabs; About has basic information and the fan club.
+- Follow, Chat and (while live) a gold Gift button float at the bottom with no bar behind them. Your own profile shows Edit profile and Share instead.
+
 ## 0.12.4 — Social profile
 
 - **Photo gallery**: up to 6 profile photos (Edit profile → Profile photos; tap one to make it the cover or remove it). The first fills the top of the profile; thumbnails switch between them.

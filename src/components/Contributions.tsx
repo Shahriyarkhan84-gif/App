@@ -22,7 +22,8 @@ export const MEDALS = ['#FFC24B', '#C0C6D4', '#C98A5A'];
 export const contributorName = (r: Contributor) => r.display_name ?? r.username ?? `ID ${r.user_number}`;
 
 /** Profile entry to a host's Contributions page: overall top 3 and the overall top 1. */
-export function ContributionsCard({ hostId }: { hostId: string }) {
+/** `plain`: no box, straight on the background (the Spotlight profile). */
+export function ContributionsCard({ hostId, plain }: { hostId: string; plain?: boolean }) {
   const supabase = useSupabase();
   const { c } = useTheme();
   const { data } = useAsync(() => rpc<Contributor[]>(supabase, 'host_contributions', { p_host: hostId, p_period: 'overall' }), [hostId]);
@@ -33,7 +34,9 @@ export function ContributionsCard({ hostId }: { hostId: string }) {
       scaleTo={0.98}
       accessibilityRole="button"
       accessibilityLabel={top[0] ? `Contributions. Overall top 1: ${contributorName(top[0])}` : 'Contributions'}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: c.surface, ...glassShadow, borderWidth: 1, borderColor: c.goldBorder }}
+      style={plain
+        ? { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 }
+        : { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: c.surface, ...glassShadow, borderWidth: 1, borderColor: c.goldBorder }}
     >
       <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: c.goldSurface, alignItems: 'center', justifyContent: 'center' }}>
         <Ionicons name="gift-outline" size={20} color={c.gold} />
