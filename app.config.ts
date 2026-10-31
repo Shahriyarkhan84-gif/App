@@ -22,8 +22,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   const rename = <T,>(value: T): T => JSON.parse(JSON.stringify(value).replace(/Zynalive/g, brand.name.replace(/["\\]/g, '')));
 
   // Dark presets get a dark splash, root background and native controls.
-  const dark = brand.theme.preset === 'midnight';
-  const backdrop = dark ? '#0E0E10' : (config.backgroundColor ?? '#FFFFFF');
+  const darkBackdrops: Partial<Record<Brand['theme']['preset'], string>> = { midnight: '#0E0E10', aurora: '#070B14' };
+  const dark = brand.theme.preset in darkBackdrops;
+  const backdrop = darkBackdrops[brand.theme.preset] ?? config.backgroundColor ?? '#FFFFFF';
 
   const plugins = rename(config.plugins ?? []).map((p): string | [string, unknown] =>
     Array.isArray(p) && p[0] === 'expo-splash-screen'

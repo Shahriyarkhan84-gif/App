@@ -216,7 +216,7 @@ export default function VerifyFormScreen() {
 
           <Pressable onPress={() => setAgreed((a) => !a)} accessibilityRole="checkbox" accessibilityState={{ checked: agreed }} style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
             <View style={{ width: 24, height: 24, borderRadius: 7, borderWidth: 2, borderColor: agreed ? c.primary : tried ? c.danger : c.border, backgroundColor: agreed ? c.primary : 'transparent', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
-              {agreed && <Ionicons name="checkmark" size={16} color="#fff" />}
+              {agreed && <Ionicons name="checkmark" size={16} color={c.primaryText} />}
             </View>
             <Text variant="bodySmall" style={{ flex: 1 }}>
               I agree to Didit checking my CNIC and face photo to verify my identity for hosting.{' '}

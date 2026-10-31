@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.13.0 — Aurora dark
+
+- The whole app now uses the chosen **Aurora dark** look (Figma: Page options → option B). A deep night background with cyan, violet and teal glows; frosted glass cards with bright edges; cyan-to-violet buttons with near-black text. It's a new theme preset, `aurora`, now Zynalive's default. Glass & sky and Midnight stay available for other brands.
+- Home: a row of who's live, each photo in a glowing ring (tap to watch), above the two-column grid. Category chips are now glass pills.
+- Me: a centred photo in a glowing cyan-to-violet ring, with the name and ID under it, then the glass menu groups.
+- Live room: the gift button glows with the cyan-to-violet gradient, and the heart button is glass.
+- Party: taken seats glow in cyan-to-violet rings that brighten while that person talks. The host's ring is gold.
+- Text on cyan buttons and chips uses the theme's near-black, never hard-coded white. This affects Messages tiles, the quick menu, the verify-form checkbox and the dashboard Live pill.
+- The splash and native controls are dark (`#070B14`).
+
 ## 0.12.5 — Spotlight profile
 
 - The public profile uses the chosen **Spotlight** design (Figma: Components → Option 3 · Spotlight), with no boxes: their photo blurred behind, a big centred photo with a glowing ring (red with "LIVE · viewers" while live; tap to watch), dots and tap-to-switch for gallery photos.

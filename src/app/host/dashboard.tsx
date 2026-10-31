@@ -148,8 +148,8 @@ export default function HostDashboardScreen() {
                 <Text variant="caption" muted>HOST-{host?.host_code ?? profile.user_number}</Text>
               </View>
               <Row gap={6} style={{ paddingHorizontal: 10, height: 26, borderRadius: 13, backgroundColor: data.live ? c.primary : c.surfaceRaised }}>
-                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: data.live ? '#fff' : c.textFaint }} />
-                <Text variant="caption" color={data.live ? '#fff' : c.textMuted} style={{ fontWeight: '700' }}>{data.live ? 'Live' : 'Offline'}</Text>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: data.live ? c.primaryText : c.textFaint }} />
+                <Text variant="caption" color={data.live ? c.primaryText : c.textMuted} style={{ fontWeight: '700' }}>{data.live ? 'Live' : 'Offline'}</Text>
               </Row>
             </Row>
 

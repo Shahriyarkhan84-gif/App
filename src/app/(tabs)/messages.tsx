@@ -61,9 +61,9 @@ export default function MessagesScreen() {
                 style={{ flex: 1, alignItems: 'center', gap: 6, paddingVertical: 14, borderRadius: 20, backgroundColor: on ? c.primary : c.surface, borderWidth: 1, borderColor: on ? c.primary : c.glassBorder, ...glassShadow }}
               >
                 <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? 'rgba(255,255,255,0.2)' : c.surfaceRaised }}>
-                  <Ionicons name={t.icon} size={20} color={on ? '#fff' : c.primary} />
+                  <Ionicons name={t.icon} size={20} color={on ? c.primaryText : c.primary} />
                 </View>
-                <Text variant="caption" color={on ? '#fff' : c.text} style={{ fontWeight: '700' }}>{t.label}</Text>
+                <Text variant="caption" color={on ? c.primaryText : c.text} style={{ fontWeight: '700' }}>{t.label}</Text>
               </PressScale>
             );
           })}

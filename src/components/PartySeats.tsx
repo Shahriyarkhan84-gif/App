@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
@@ -86,9 +87,15 @@ function VoiceSeat({ seat, big, talking, onPress }: { seat: Seat; big?: boolean;
       accessibilityLabel={seat.user ? `${seat.user.name}${big ? ', host' : ''}${talking ? ', speaking' : ''}` : `Empty seat ${seat.seat}`}
       style={{ alignItems: 'center', gap: 6, width: size + 16 }}
     >
-      <View style={{ width: size + 8, height: size + 8, borderRadius: (size + 8) / 2, borderWidth: 3, borderColor: talking ? c.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+      {/* Aurora dark: a taken seat glows in a cyan-to-violet ring; brighter while that person talks. */}
+      <View style={{ width: size + 8, height: size + 8, borderRadius: (size + 8) / 2, alignItems: 'center', justifyContent: 'center',
+        shadowColor: c.primary, shadowOpacity: seat.user ? (talking ? 0.8 : 0.35) : 0, shadowRadius: talking ? 14 : 8, shadowOffset: { width: 0, height: 0 } }}>
+        {seat.user && (
+          <LinearGradient colors={big ? c.goldGradient : c.accentGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={{ position: 'absolute', width: size + 8, height: size + 8, borderRadius: (size + 8) / 2, opacity: talking || big ? 1 : 0.75 }} />
+        )}
         {seat.user ? (
-          <Avatar uri={seat.user.avatar_url} name={seat.user.name} size={size} ring={big ? c.gold : undefined} />
+          <Avatar uri={seat.user.avatar_url} name={seat.user.name} size={size} ring={c.background} />
         ) : (
           <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.surfaceRaised, borderWidth: 1, borderColor: c.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' }}>
             <Ionicons name="add" size={22} color={c.textMuted} />

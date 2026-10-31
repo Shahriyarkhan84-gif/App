@@ -15,7 +15,7 @@ Everything brand-specific lives in `brands/<id>/brand.json` (types in `src/lib/b
 | `units` | Names of the two in-app units, `[singular, plural]`: `spend` (what viewers buy and send — Zynalive: diamond/diamonds) and `earn` (what hosts earn and withdraw — Zynalive: bean/beans). |
 | `app.*` | Store ids (`iosBundleId`, `androidPackage`), deep-link `scheme`, Expo `slug`, EAS owner and project id. |
 | `assets.*` | App icon, Android adaptive icon layers, splash image, web favicon. Put the files in `brands/<id>/` and point to them. |
-| `theme.preset` | The look. `glass-sky` (sky-blue background, frosted cards, deep-blue buttons; navy live rooms — Zynalive's default) or `midnight` (all dark: near-black screens, charcoal cards, light-violet buttons). |
+| `theme.preset` | The look. `aurora` (all dark: a night background with cyan, violet and teal glows, frosted glass cards, cyan-to-violet buttons; Zynalive's default), `glass-sky` (sky-blue background, frosted cards, deep-blue buttons; navy live rooms) or `midnight` (all dark: near-black screens, charcoal cards, light-violet buttons). |
 | `theme.primary` | Optional `#RRGGBB`. Replaces the main colour (buttons, links, selected states) and works out the lighter/darker shades; the rest of the preset stays. |
 | `features.*` | Turn off `partyRooms`, `pkBattles`, `agencies`, `events`, `videos`, `rankings`, `frames`. Off features disappear from tabs, menus, banners and notifications, and their screens can't be opened. |
 
@@ -52,5 +52,5 @@ edited in their Owner command center.
 
 - Feature switches hide features in the app only; the server doesn't block them yet (a client who
   turns a feature off should also leave it unused in their command center).
-- Two looks (`midnight`, `glass-sky`); more presets can be added in `PRESETS` in `src/lib/theme.ts` (each says whether everyday screens are light or dark). A dark preset also gets a dark splash and status bar (`app.config.ts`, `appIsDark`).
+- Three looks (`aurora`, `midnight`, `glass-sky`); more presets can be added in `PRESETS` in `src/lib/theme.ts` (each says whether everyday screens are light or dark). A dark preset also gets a dark splash and status bar (`app.config.ts` `darkBackdrops`, `appIsDark`).
 - The marketing website (`site/`) and the Edge Functions' email/notification wording still say Zynalive.

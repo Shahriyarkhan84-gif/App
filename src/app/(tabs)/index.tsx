@@ -1,4 +1,5 @@
 import { useAuth } from '@clerk/clerk-expo';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { RefreshControl, ScrollView, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
@@ -11,14 +12,14 @@ import { LiveBell } from '@/components/FollowingLive';
 import { useTabBarSpace } from '@/components/Menus';
 import { FadeIn, PressScale, stagger } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { glassShadow, IconButton, Row, Screen, Text } from '@/components/ui';
+import { Avatar, glassShadow, IconButton, Row, Screen, Text } from '@/components/ui';
 import { hasFeature } from '@/lib/brand';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
 import { useContentWidth } from '@/lib/layout';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { fonts, useTheme } from '@/lib/theme';
-import { CATEGORIES, categoryLabel, normalizeRooms, ROOM_SELECT, type Room, roomHref } from '@/lib/types';
+import { CATEGORIES, categoryLabel, displayName, normalizeRooms, ROOM_SELECT, type Room, roomHref } from '@/lib/types';
 
 /** Live rooms fetched for Home; Popular, Following, Nearby and New are all cut from this list. */
 const LIVE_LIMIT = 200;
@@ -189,7 +190,9 @@ export default function HomeScreen() {
             </View>
           ) : (
             <>
-              {/* The chips lead straight into the grid; the event and PK banners sit after the first two rows. */}
+              {/* Aurora dark: a row of who's live, each in a glowing ring, above the grid. */}
+              {rooms.length > 2 && <LiveStories rooms={allRooms.slice(0, 12)} />}
+              {/* The chips lead into the grid; the event and PK banners sit after the first two rows. */}
               {grid(rooms.slice(0, columns * 2), 0)}
               {showBanners && (
                 <>
@@ -209,6 +212,28 @@ export default function HomeScreen() {
         </ScrollView>
       </StateView>
     </Screen>
+  );
+}
+
+/** Hosts who are live now, as a sideways row of photos in cyan-to-violet rings; tap to watch. */
+function LiveStories({ rooms }: { rooms: Room[] }) {
+  const { c } = useTheme();
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14, paddingHorizontal: 4, paddingBottom: 6 }}>
+      {rooms.map((r) => {
+        const name = displayName(r.host);
+        return (
+          <PressScale key={r.id} onPress={() => router.push(roomHref(r))} accessibilityRole="button" accessibilityLabel={`Watch ${name}, live`} scaleTo={0.94} style={{ alignItems: 'center', gap: 4, width: 64 }}>
+            <View style={{ borderRadius: 32, shadowColor: c.primary, shadowOpacity: 0.4, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } }}>
+              <LinearGradient colors={c.accentGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 2.5, borderRadius: 32 }}>
+                <Avatar uri={r.host?.avatar_url} name={name} size={56} ring={c.background} />
+              </LinearGradient>
+            </View>
+            <Text variant="caption" color={c.textMuted} numberOfLines={1}>{name}</Text>
+          </PressScale>
+        );
+      })}
+    </ScrollView>
   );
 }
 
@@ -278,7 +303,7 @@ function SmallChip({ label, selected, onPress }: { label: string; selected: bool
   const { c } = useTheme();
   return (
     <PressScale onPress={onPress} accessibilityRole="button" accessibilityState={{ selected }} scaleTo={0.94} hitSlop={{ top: 7, bottom: 7 }}
-      style={{ height: 30, paddingHorizontal: 12, borderRadius: 6, justifyContent: 'center', backgroundColor: selected ? c.primary : c.surfaceRaised }}>
+      style={{ height: 30, paddingHorizontal: 14, borderRadius: 15, justifyContent: 'center', backgroundColor: selected ? c.primary : c.glassFill, borderWidth: 1, borderColor: selected ? c.primary : c.glassEdge }}>
       <Text variant="caption" color={selected ? c.primaryText : c.textMuted} style={{ fontSize: 13, fontWeight: selected ? '700' : '500' }}>{label}</Text>
     </PressScale>
   );

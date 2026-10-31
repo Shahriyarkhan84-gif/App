@@ -4,14 +4,14 @@ import { StatusBar } from 'expo-status-bar';
 import { Children, isValidElement, type ReactNode } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTabBarSpace } from '@/components/Menus';
 import { StateView } from '@/components/StateView';
 import { FadeIn, PressScale } from '@/components/Motion';
 import { FramedAvatar } from '@/components/FramedAvatar';
-import { AgencyOwnerBadge, Card, compactNumber, glassShadow, GlassSheen, HostBadge, IconButton, Row, Screen, Text, type IconName } from '@/components/ui';
+import { AgencyOwnerBadge, compactNumber, glassShadow, GlassSheen, HostBadge, IconButton, Row, Screen, SkyBackground, Text, type IconName } from '@/components/ui';
 import { hasFeature, U } from '@/lib/brand';
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
@@ -60,11 +60,10 @@ export default function ProfileScreen() {
   const isAgencyOwner = profile?.role === 'AGENCY_ADMIN';
   const isAgencyStaff = isAgencyOwner || profile?.role === 'AGENCY_MEMBER';
 
-  // Me (Figma "App glass kit" → Me): edit and settings up top, a compact profile card, then glass menu groups.
+  // Me (Figma "Page options" → Me, Aurora dark): edit and settings up top, a centred glowing photo, then glass menu groups.
   return (
-    <View style={{ flex: 1, backgroundColor: d.background }}>
+    <SkyBackground>
       {focused && <StatusBar style={appIsDark ? 'light' : 'dark'} />}
-      <LinearGradient colors={d.sky} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} pointerEvents="none" />
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace + 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
           <Row style={{ justifyContent: 'space-between', paddingTop: 4 }}>
@@ -72,37 +71,39 @@ export default function ProfileScreen() {
             <IconButton icon="settings-outline" label="Settings" onPress={() => router.push('/settings')} />
           </Row>
 
+          {/* Aurora dark: a centred photo in a cyan-to-violet glowing ring, then the name and ID. */}
           <FadeIn>
-            <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 }}>
+            <View style={{ alignItems: 'center', gap: 6 }}>
               <View>
-                <Pressable onPress={() => router.push({ pathname: '/user/[id]', params: { id: profile.id } })} accessibilityRole="button" accessibilityLabel="View your profile">
-                  <FramedAvatar uri={profile.avatar_url} name={displayName(profile)} size={76} ring={d.primary} frameId={profile.active_frame_id} />
+                <Pressable onPress={() => router.push({ pathname: '/user/[id]', params: { id: profile.id } })} accessibilityRole="button" accessibilityLabel="View your profile"
+                  style={{ borderRadius: 60, shadowColor: d.primary, shadowOpacity: 0.45, shadowRadius: 18, shadowOffset: { width: 0, height: 0 } }}>
+                  <LinearGradient colors={d.accentGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 3, borderRadius: 60 }}>
+                    <FramedAvatar uri={profile.avatar_url} name={displayName(profile)} size={96} ring={d.background} frameId={profile.active_frame_id} />
+                  </LinearGradient>
                 </Pressable>
                 {/* Frame button on the photo: opens the frames shop to pick or change a frame. */}
                 {hasFeature('frames') && (
                   <Pressable onPress={() => router.push('/frames')} accessibilityRole="button" accessibilityLabel="Profile frame" hitSlop={8}
-                    style={{ position: 'absolute', right: -4, bottom: -4, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: d.primary, borderWidth: 2, borderColor: d.surfaceRaised }}>
-                    <Ionicons name="sparkles" size={13} color={d.primaryText} />
+                    style={{ position: 'absolute', right: 0, bottom: 0, width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: d.primary, borderWidth: 2, borderColor: d.background }}>
+                    <Ionicons name="sparkles" size={14} color={d.primaryText} />
                   </Pressable>
                 )}
               </View>
-              <View style={{ flex: 1, gap: 4 }}>
-                <Row gap={6}>
-                  <Text variant="h1" color={d.text} numberOfLines={1} style={{ flexShrink: 1 }}>{displayName(profile)}</Text>
-                  {verified && <HostBadge />}
+              <Row gap={6} style={{ justifyContent: 'center', maxWidth: '100%' }}>
+                <Text variant="h1" color={d.text} numberOfLines={1} style={{ flexShrink: 1 }}>{displayName(profile)}</Text>
+                {verified && <HostBadge />}
+              </Row>
+              <Text variant="bodySmall" color={d.textMuted} selectable accessibilityLabel={`Your ID ${String(profile.user_number).split('').join(' ')}`}>ID {profile.user_number}</Text>
+              {(isAgencyOwner || (host && !verified)) && (
+                <Row gap={6} style={{ flexWrap: 'wrap', justifyContent: 'center' }}>
+                  {host && !verified && <Badge label={host.verification_status === 'declined' ? 'Verification declined' : host.verification_status === 'unverified' ? 'Not verified' : 'Verification pending'} />}
+                  {isAgencyOwner && <AgencyOwnerBadge small />}
                 </Row>
-                <Text variant="bodySmall" color={d.textMuted} selectable accessibilityLabel={`Your ID ${String(profile.user_number).split('').join(' ')}`}>ID {profile.user_number}</Text>
-                {(isAgencyOwner || (host && !verified)) && (
-                  <Row gap={6} style={{ flexWrap: 'wrap' }}>
-                    {host && !verified && <Badge label={host.verification_status === 'declined' ? 'Verification declined' : host.verification_status === 'unverified' ? 'Not verified' : 'Verification pending'} />}
-                    {isAgencyOwner && <AgencyOwnerBadge small />}
-                  </Row>
-                )}
-                <Pressable onPress={() => router.push({ pathname: '/user/[id]', params: { id: profile.id } })} accessibilityRole="link" hitSlop={8}>
-                  <Text variant="label" color={d.primary}>View profile ›</Text>
-                </Pressable>
-              </View>
-            </Card>
+              )}
+              <Pressable onPress={() => router.push({ pathname: '/user/[id]', params: { id: profile.id } })} accessibilityRole="link" hitSlop={8}>
+                <Text variant="label" color={d.primary}>View profile ›</Text>
+              </Pressable>
+            </View>
           </FadeIn>
 
           {profile.status !== 'active' && (
@@ -153,7 +154,7 @@ export default function ProfileScreen() {
           </FadeIn>
         </ScrollView>
       </SafeAreaView>
-    </View>
+    </SkyBackground>
   );
 }
 

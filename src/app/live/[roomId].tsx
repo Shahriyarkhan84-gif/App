@@ -1,6 +1,7 @@
 import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, useWindowDimensions, View } from 'react-native';
@@ -296,11 +297,15 @@ export default function LiveRoomScreen() {
           <Pressable onPress={() => setMenuOpen(true)} accessibilityRole="button" accessibilityLabel="More: message, share, join, report" style={roundButton('rgba(20,24,30,0.78)')}>
             <Ionicons name="menu" size={24} color={c.text} />
           </Pressable>
-          <Pressable onPress={reactions.like} accessibilityRole="button" accessibilityLabel="Send a heart" style={roundButton('rgba(56,189,248,0.92)')}>
+          <Pressable onPress={reactions.like} accessibilityRole="button" accessibilityLabel="Send a heart" style={[roundButton(c.glassFill), { borderWidth: 1, borderColor: c.glassEdge }]}>
             <Ionicons name="heart" size={22} color="#fff" />
           </Pressable>
-          <Pressable onPress={() => setGiftOpen(true)} accessibilityRole="button" accessibilityLabel="Send a gift" style={roundButton(c.gold)}>
-            <Ionicons name="gift" size={22} color={c.onGold} />
+          {/* Aurora dark: the gift button is the glowing cyan-to-violet one. */}
+          <Pressable onPress={() => setGiftOpen(true)} accessibilityRole="button" accessibilityLabel="Send a gift"
+            style={{ borderRadius: 25, shadowColor: c.violet, shadowOpacity: 0.6, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, elevation: 6 }}>
+            <LinearGradient colors={c.accentGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={roundButton('transparent')}>
+              <Ionicons name="gift" size={22} color={c.primaryText} />
+            </LinearGradient>
           </Pressable>
         </>
       }

@@ -107,6 +107,8 @@ const dark = {
   accentGradient: ['#38BDF8', '#5CC8FA', '#7DD3FC'] as Gradient,
   goldGradient: ['#FFD877', '#FFC24B', '#F5A524'] as Gradient,
   dangerGradient: ['#F43F5E', '#E11D48', '#BE123C'] as Gradient,
+  /** Aurora glows over the screen background (top-left, right, bottom); null on presets without them. */
+  aurora: null as Gradient | null,
 };
 
 // `surface` is frosted white over the sky; `surfaceRaised` is solid white (inputs, sheets).
@@ -148,6 +150,7 @@ const light: typeof dark = {
   accentGradient: ['#075985', '#0369A1', '#0EA5E9'] as Gradient,
   goldGradient: ['#FFD877', '#FFC24B', '#F5A524'] as Gradient,
   dangerGradient: ['#F43F5E', '#E11D48', '#BE123C'] as Gradient,
+  aurora: null,
 };
 
 export type Palette = typeof dark;
@@ -192,6 +195,50 @@ const midnight: Palette = {
   accentGradient: ['#B69CFB', '#A78BFA', '#9B7BF7'] as Gradient,
   goldGradient: ['#FFD877', '#FFC24B', '#F5A524'] as Gradient,
   dangerGradient: ['#FF6B72', '#FF5A61', '#E11D48'] as Gradient,
+  aurora: null,
+};
+
+// Aurora dark (Figma "Page options", option B): a deep night background lit by cyan, violet and
+// teal glows, frosted glass cards with bright hairline edges, and cyan-to-violet actions with
+// near-black text on them (6:1 or better across the blend). Live video screens use the same palette.
+const aurora: Palette = {
+  background: '#070B14',
+  surface: 'rgba(255,255,255,0.07)',
+  surfaceRaised: '#141D30',
+  border: 'rgba(255,255,255,0.14)',
+  divider: 'rgba(255,255,255,0.08)',
+  tabBar: '#0B1220',
+  text: '#FFFFFF',
+  textMuted: '#B6C2D9',
+  textFaint: '#8E9BB4',
+  primary: '#67E8F9',
+  primaryText: '#06121F',
+  accent: '#67E8F9',
+  live: '#E11D48',
+  gold: '#FFC24B',
+  onGold: '#2A1A00',
+  goldSurface: 'rgba(255,194,75,0.12)',
+  goldBorder: 'rgba(255,194,75,0.35)',
+  goldText: '#FFE3A3',
+  violet: '#A78BFA',
+  violetSurface: 'rgba(167,139,250,0.14)',
+  violetBorder: 'rgba(167,139,250,0.4)',
+  violetText: '#E4DAFF',
+  success: '#34C789',
+  warning: '#FFC24B',
+  danger: '#FF5A61',
+  overlay: 'rgba(0,0,0,0.7)',
+  gradient: ['#38BDF8', '#818CF8', '#A78BFA'] as Gradient,
+  glow: 'rgba(103,232,249,0.35)',
+  sky: ['#0B2A3C', '#0A1424', '#070B14'] as Gradient,
+  glassBorder: 'rgba(255,255,255,0.14)',
+  glassFill: 'rgba(255,255,255,0.06)',
+  glassSheen: ['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.02)', 'rgba(255,255,255,0)'] as Gradient,
+  glassEdge: 'rgba(255,255,255,0.16)',
+  accentGradient: ['#38BDF8', '#818CF8', '#A78BFA'] as Gradient,
+  goldGradient: ['#FFD877', '#FFC24B', '#F5A524'] as Gradient,
+  dangerGradient: ['#FF6B72', '#FF5A61', '#E11D48'] as Gradient,
+  aurora: ['rgba(34,211,238,0.30)', 'rgba(139,92,246,0.30)', 'rgba(20,184,166,0.24)'] as Gradient,
 };
 
 /** `light` is the palette for everyday screens, `dark` for live video; `appearance` says which one everyday screens look like. */
@@ -199,6 +246,7 @@ type Preset = { light: Palette; dark: Palette; appearance: 'light' | 'dark' };
 const PRESETS: Record<ThemePreset, Preset> = {
   'glass-sky': { light, dark, appearance: 'light' },
   midnight: { light: midnight, dark: midnight, appearance: 'dark' },
+  aurora: { light: aurora, dark: aurora, appearance: 'dark' },
 };
 
 /** Mixes a #RRGGBB colour toward black (amount < 0) or white (amount > 0). */

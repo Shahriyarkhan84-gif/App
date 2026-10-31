@@ -67,7 +67,20 @@ export function SkyBackground({ children, style }: { children: ReactNode; style?
   return (
     <View style={[{ flex: 1, backgroundColor: c.background }, style]}>
       <LinearGradient colors={c.sky} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} pointerEvents="none" />
+      {c.aurora && <AuroraGlows colors={c.aurora} />}
       {children}
+    </View>
+  );
+}
+
+/** Aurora dark: cyan light from the top left, violet from the right, teal rising from the bottom. */
+function AuroraGlows({ colors: [cyan, violet, teal] }: { colors: readonly [string, string, string] }) {
+  const clear = 'rgba(0,0,0,0)';
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <LinearGradient colors={[cyan, clear]} start={{ x: 0, y: 0 }} end={{ x: 0.75, y: 0.45 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[violet, clear]} start={{ x: 1, y: 0.3 }} end={{ x: 0.35, y: 0.55 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={[clear, teal]} start={{ x: 0.5, y: 0.6 }} end={{ x: 0.5, y: 1 }} style={StyleSheet.absoluteFill} />
     </View>
   );
 }

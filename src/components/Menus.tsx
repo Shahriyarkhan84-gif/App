@@ -43,8 +43,8 @@ export function MenuGrid({ items, columns = 2, style }: { items: MenuItem[]; col
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={{ aspectRatio: 1, borderRadius: radius[20], alignItems: 'center', justifyContent: 'center', gap: 8, opacity: item.disabled ? 0.5 : 1 }}
             >
-              <Ionicons name={item.icon} size={32} color="#fff" />
-              <Text variant="label" color="#fff">{item.label}</Text>
+              <Ionicons name={item.icon} size={32} color={item.destructive ? '#fff' : c.primaryText} />
+              <Text variant="label" color={item.destructive ? '#fff' : c.primaryText}>{item.label}</Text>
             </LinearGradient>
           </PressScale>
         </Pop>

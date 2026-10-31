@@ -7,29 +7,30 @@ import { appIsDark, brandPalettes, liveColors, useTheme } from '../theme';
 const PINK = ['#F48FB8', '#D62872', '#FF7AA2', '#C98CF5', '#9B2FE0'];
 
 describe('useTheme', () => {
-  it('is always the brand look (Glass & sky, light), whatever the phone setting', async () => {
-    jest.spyOn(RN, 'useColorScheme').mockReturnValue('dark');
+  it('is always the brand look (Aurora dark), whatever the phone setting', async () => {
+    jest.spyOn(RN, 'useColorScheme').mockReturnValue('light');
     const { result } = await renderHook(() => useTheme());
-    expect(result.current.scheme).toBe('light');
-    expect(appIsDark).toBe(false);
-    expect(result.current.c.sky).toEqual(['#BAE6FD', '#E0F2FE', '#F0F9FF']);
-    expect(result.current.c.primary).toBe('#0369A1');
+    expect(result.current.scheme).toBe('dark');
+    expect(appIsDark).toBe(true);
+    expect(result.current.c.background).toBe('#070B14');
+    expect(result.current.c.aurora).not.toBeNull();
+    expect(result.current.c.primary).toBe('#67E8F9');
   });
 
-  it('uses deep-blue buttons with white text', async () => {
+  it('uses cyan-to-violet buttons with near-black text', async () => {
     const { result } = await renderHook(() => useTheme());
-    expect(result.current.c.gradient).toEqual(['#075985', '#0369A1', '#0279BB']);
-    expect(result.current.c.primaryText).toBe('#FFFFFF');
+    expect(result.current.c.gradient).toEqual(['#38BDF8', '#818CF8', '#A78BFA']);
+    expect(result.current.c.primaryText).toBe('#06121F');
   });
 
-  it('keeps live video screens dark navy, with the same red LIVE tag', async () => {
+  it('uses the same night palette and red LIVE tag in live video screens', async () => {
     const { result } = await renderHook(() => useTheme());
-    expect(liveColors.background).toBe('#061826');
+    expect(liveColors.background).toBe('#070B14');
     expect(result.current.c.live).toBe(liveColors.live);
   });
 
   it('has no pink in any preset', () => {
-    for (const preset of ['glass-sky', 'midnight'] as const) {
+    for (const preset of ['glass-sky', 'midnight', 'aurora'] as const) {
       const { light, dark } = brandPalettes({ preset });
       const colours = JSON.stringify([light, dark]).toUpperCase();
       for (const pink of PINK) expect(colours).not.toContain(pink);
@@ -38,12 +39,20 @@ describe('useTheme', () => {
 });
 
 describe('brand', () => {
-  it('defaults to Zynalive on the Glass & sky preset, with videos switched off', () => {
+  it('defaults to Zynalive on the Aurora dark preset, with videos switched off', () => {
     expect(brand.name).toBe('Zynalive');
-    expect(brand.theme.preset).toBe('glass-sky');
+    expect(brand.theme.preset).toBe('aurora');
     expect(hasFeature('partyRooms')).toBe(true);
     expect(hasFeature('pkBattles')).toBe(true);
     expect(hasFeature('videos')).toBe(false);
+  });
+
+  it('keeps Glass & sky light, with navy live rooms, for other brands', () => {
+    const sky = brandPalettes({ preset: 'glass-sky' });
+    expect(sky.appearance).toBe('light');
+    expect(sky.light.primary).toBe('#0369A1');
+    expect(sky.light.aurora).toBeNull();
+    expect(sky.dark.background).toBe('#061826');
   });
 
   it('keeps Midnight available as a dark preset for other brands', () => {

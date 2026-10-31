@@ -1,6 +1,6 @@
 // Shape of brands/<id>/brand.json. Kept free of app imports so app.config.ts can use it at build time.
 
-export type ThemePreset = 'glass-sky' | 'midnight';
+export type ThemePreset = 'glass-sky' | 'midnight' | 'aurora';
 
 export type Feature = 'partyRooms' | 'pkBattles' | 'agencies' | 'events' | 'videos' | 'rankings' | 'frames';
 

@@ -37,7 +37,7 @@
     "androidMonochrome": "./assets/android-icon-monochrome.png"
   },
   "theme": {
-    "preset": "glass-sky"
+    "preset": "aurora"
   },
   "features": {
     "partyRooms": true,
