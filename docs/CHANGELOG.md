@@ -9,6 +9,7 @@
 - Party: taken seats glow in cyan-to-violet rings that brighten while that person talks. The host's ring is gold.
 - Text on cyan buttons and chips uses the theme's near-black, never hard-coded white. This affects Messages tiles, the quick menu, the verify-form checkbox and the dashboard Live pill.
 - The splash and native controls are dark (`#070B14`).
+- The floating tab bar and the computer sidebar are smoked glass on dark presets, not white. Sheets over live video stay solid, and the welcome screen's status bar follows the theme.
 
 ## 0.12.5 — Spotlight profile
 

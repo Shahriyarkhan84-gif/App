@@ -448,10 +448,12 @@ export function Sheet({ visible, onClose, title, children, tone = 'light' }: { v
   // Frosted only where the backdrop blur exists (iOS, web); the dark Midnight preset gets dark frost.
   const frost = tone === 'light' && Platform.OS !== 'android';
   const frostFill = scheme === 'dark' ? 'rgba(20,20,24,0.78)' : 'rgba(255,255,255,0.78)';
+  // Over video the sheet must be solid: presets whose surface is see-through glass (Aurora) use the tab-bar colour.
+  const liveSheetFill = c.surface.startsWith('#') ? c.surface : c.tabBar;
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={{ flex: 1, backgroundColor: c.overlay }} onPress={onClose} accessibilityLabel="Close" />
-      <SafeAreaView edges={['bottom']} style={{ backgroundColor: tone === 'live' ? c.surface : frost ? frostFill : c.tabBar, borderTopLeftRadius: radius[24] + 4, borderTopRightRadius: radius[24] + 4, borderWidth: 1, borderColor: tone === 'live' ? c.border : light.glassEdge, padding: 20, gap: 12, maxHeight: '80%', overflow: 'hidden' }}>
+      <SafeAreaView edges={['bottom']} style={{ backgroundColor: tone === 'live' ? liveSheetFill : frost ? frostFill : c.tabBar, borderTopLeftRadius: radius[24] + 4, borderTopRightRadius: radius[24] + 4, borderWidth: 1, borderColor: tone === 'live' ? c.border : light.glassEdge, padding: 20, gap: 12, maxHeight: '80%', overflow: 'hidden' }}>
         {frost && <GlassBlur intensity={60} tint={scheme === 'dark' ? 'dark' : 'light'} />}
         {tone === 'light' && <GlassSheen radius={radius[24] + 4} />}
         <View style={{ alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: c.border }} />

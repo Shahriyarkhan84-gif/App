@@ -9,10 +9,10 @@ import { PENDING_TASK_MESSAGE, SocialButtons } from '@/components/AuthForm';
 import { Float, FadeIn } from '@/components/Motion';
 import { Button, SkyBackground, Text } from '@/components/ui';
 import { brand } from '@/lib/brand';
-import { fonts, useTheme } from '@/lib/theme';
+import { appIsDark, fonts, useTheme } from '@/lib/theme';
 
 /**
- * First screen after the loading page (Glass & sky): the brand mark on the sky background, a blue
+ * First screen after the loading page: the brand mark on the brand background, the main
  * "Create account" button, a frosted "I have an account", then Google/Apple.
  */
 export default function WelcomeScreen() {
@@ -26,7 +26,7 @@ export default function WelcomeScreen() {
   );
   return (
     <SkyBackground>
-      <StatusBar style="dark" />
+      <StatusBar style={appIsDark ? 'light' : 'dark'} />
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingTop: 72, paddingBottom: 24, maxWidth: 480, width: '100%', alignSelf: 'center' }}>
           <View style={{ gap: 14 }}>

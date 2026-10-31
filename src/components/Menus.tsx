@@ -192,18 +192,23 @@ export function useTabBarStyle(): ViewStyle {
 
 /** `tabBarBackground` for the glass dock. */
 export function TabBarGlass() {
+  const { c, scheme } = useTheme();
+  const dark = scheme === 'dark';
+  // Dark presets (Aurora, Midnight) get a smoked-glass dock; Glass & sky keeps the white one.
+  const fill = dark ? (Platform.OS === 'ios' ? 'rgba(14,20,36,0.6)' : 'rgba(14,20,36,0.9)') : Platform.OS === 'ios' ? 'rgba(255,255,255,0.62)' : 'rgba(255,255,255,0.88)';
+  const sheen: readonly [string, string, string] = dark ? c.glassSheen : ['rgba(255,255,255,0.6)', 'rgba(255,255,255,0.2)', 'rgba(2,119,189,0.05)'];
   return (
     <View style={{
       position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: DOCK_HEIGHT / 2,
-      shadowColor: '#0B0F14', shadowOpacity: 0.12, shadowRadius: 22, shadowOffset: { width: 0, height: 10 },
+      shadowColor: '#0B0F14', shadowOpacity: dark ? 0.4 : 0.12, shadowRadius: 22, shadowOffset: { width: 0, height: 10 },
     }}>
       <View style={[
         // iPhone gets a real backdrop blur, so the dock can be more see-through; the web blurs with CSS.
-        { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: DOCK_HEIGHT / 2, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', backgroundColor: Platform.OS === 'ios' ? 'rgba(255,255,255,0.62)' : 'rgba(255,255,255,0.88)' },
+        { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: DOCK_HEIGHT / 2, overflow: 'hidden', borderWidth: 1, borderColor: dark ? c.glassEdge : 'rgba(255,255,255,0.9)', backgroundColor: fill },
         Platform.OS === 'web' ? ({ backdropFilter: 'blur(22px) saturate(170%)', WebkitBackdropFilter: 'blur(22px) saturate(170%)' } as object) : null,
       ]}>
-        {Platform.OS === 'ios' && <GlassBlur intensity={50} />}
-        <LinearGradient colors={['rgba(255,255,255,0.6)', 'rgba(255,255,255,0.2)', 'rgba(2,119,189,0.05)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
+        {Platform.OS === 'ios' && <GlassBlur intensity={50} tint={dark ? 'dark' : 'light'} />}
+        <LinearGradient colors={sheen} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
       </View>
     </View>
   );
@@ -227,7 +232,7 @@ export type SidebarProps = { state: { index: number; routes: { key: string; name
  * the tabs with labels, a Go live button, and shortcuts to pages that phones reach from Me.
  */
 export function DesktopSidebar({ state, navigation, tabs, goLive }: SidebarProps & { tabs: SidebarTab[]; goLive: { name: string; label: string } }) {
-  const { c } = useTheme();
+  const { c, scheme } = useTheme();
   const current = state.routes[state.index]?.name;
   const links: MenuItem[] = [
     { key: 'wallet', icon: 'diamond-outline', label: U.Spend, onPress: () => router.push('/wallet') },
@@ -237,7 +242,7 @@ export function DesktopSidebar({ state, navigation, tabs, goLive }: SidebarProps
   ];
   return (
     <View accessibilityRole="tablist" style={[
-      { width: SIDEBAR_WIDTH, height: '100%', paddingHorizontal: 16, paddingVertical: 20, gap: 6, borderRightWidth: 1, borderColor: c.glassBorder, backgroundColor: 'rgba(255,255,255,0.6)' },
+      { width: SIDEBAR_WIDTH, height: '100%', paddingHorizontal: 16, paddingVertical: 20, gap: 6, borderRightWidth: 1, borderColor: c.glassBorder, backgroundColor: scheme === 'dark' ? 'rgba(11,18,32,0.72)' : 'rgba(255,255,255,0.6)' },
       Platform.OS === 'web' ? ({ backdropFilter: 'blur(22px) saturate(170%)', WebkitBackdropFilter: 'blur(22px) saturate(170%)' } as object) : null,
     ]}>
       <Pressable onPress={() => navigation.navigate(state.routes[0].name)} accessibilityRole="link" accessibilityLabel={`${brand.name} home`} style={{ paddingHorizontal: 8, paddingBottom: 18 }}>
