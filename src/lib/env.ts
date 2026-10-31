@@ -14,7 +14,13 @@ export const env = {
   // Not in missingRequiredEnv yet: nothing reads this until screens are
   // repointed off Supabase/Clerk one at a time.
   apiUrl: process.env.EXPO_PUBLIC_API_URL ?? '',
+  // 'store' in Google Play / App Store builds (eas.json production). Store rules don't allow
+  // pointing buyers of diamonds to other ways to pay, so the reseller list is hidden there.
+  distribution: process.env.EXPO_PUBLIC_DISTRIBUTION ?? '',
 };
+
+/** Official resellers (JazzCash / Easypaisa) are shown on the website and the downloadable APK only. */
+export const showResellers = env.distribution !== 'store';
 
 export const missingRequiredEnv = (
   [

@@ -1,7 +1,7 @@
 import { useAuth } from '@clerk/clerk-expo';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
-import { Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, View } from 'react-native';
@@ -13,6 +13,7 @@ import { Button, Coin, glassShadow, Row, Screen, Sheet, Text } from '@/component
 import { Alert } from '@/lib/alert';
 import { useAnalytics } from '@/lib/analytics';
 import { reconcilePayments, startCoinCheckout } from '@/lib/api';
+import { showResellers } from '@/lib/env';
 import { useStoreBilling } from '@/lib/storeBilling';
 import { errorDetail, friendlyError } from '@/lib/errors';
 import { useFocusedAsync, useOffline, useRealtime } from '@/lib/hooks';
@@ -238,6 +239,19 @@ export default function WalletScreen() {
                 <Text variant="caption" faint>{store.available ? 'Your store account · receipt by email' : 'Secure checkout · Stripe'}</Text>
               </Row>
               <Text variant="caption" faint>{U.Spend} are added only after the payment is confirmed.</Text>
+              {showResellers && (
+                <PressScale scaleTo={0.98} onPress={() => router.push('/resellers')} accessibilityRole="button" accessibilityLabel="Pay with JazzCash or Easypaisa through an official reseller, 30% off">
+                  <Row gap={12} style={{ padding: 14, borderRadius: 16, backgroundColor: c.violetSurface, borderWidth: 1, borderColor: c.violetBorder }}>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Text variant="label">Pay with JazzCash or Easypaisa</Text>
+                      <Text variant="caption" muted>Through an official reseller on WhatsApp · 30% off</Text>
+                    </View>
+                    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: c.live }}>
+                      <Text variant="caption" color="#fff" style={{ fontWeight: '700' }}>30% off</Text>
+                    </View>
+                  </Row>
+                </PressScale>
+              )}
 
             </ScrollView>
             <Sheet visible={historyOpen} onClose={() => setHistoryOpen(false)} title={`${U.SpendOne} history`}>

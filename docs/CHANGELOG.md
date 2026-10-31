@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.4 — JazzCash / Easypaisa through official resellers
+
+- No JazzCash/Easypaisa integration. Instead the Wallet has **"Pay with JazzCash or Easypaisa · 30% off"**: a list of official resellers (photo, ID, note, discount) with a **Message on WhatsApp** button that sends the user's Zynalive ID. The reseller takes the payment and sends the diamonds.
+- Admin → **Resellers**: add or update by 8-digit ID + WhatsApp number, set the discount (30% by default), hide or remove. Banned accounts drop off the list.
+- Shown on the website and the downloadable APK; hidden in Google Play / App Store builds (`EXPO_PUBLIC_DISTRIBUTION=store`), because store rules don't allow sending buyers to other ways to pay.
+- New: `20261031010000_resellers.sql` with must-pass tests.
+
 ## 0.11.3 — Hosts cash out on their own
 
 - **Automatic payouts**: a host's withdrawal is approved and sent with no admin when it's small (up to Rs 25,000, Rs 100,000 a day), goes to a JazzCash / Easypaisa / bank account that was already paid once, and the host isn't under review. The Earnings screen shows "Sending" then "Paid"; the first payout to a new account is still checked by the owner.

@@ -170,6 +170,7 @@ function RootNavigator() {
         <Stack.Screen name="user/[id]" options={{ title: '' }} />
         <Stack.Screen name="chat/[userId]" options={{ title: 'Chat' }} />
         <Stack.Screen name="wallet" options={{ title: U.Spend }} />
+        <Stack.Screen name="resellers" options={{ title: 'Official resellers' }} />
         <Stack.Protected guard={hasFeature('frames')}>
           <Stack.Screen name="frames" options={{ title: 'Profile frames' }} />
         </Stack.Protected>

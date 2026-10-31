@@ -1340,4 +1340,40 @@ select tests.ok(tests.balance('rc_buyer') = (select coins from public.coin_packa
 select tests.ok((select amount > 0 from public.platform_ledger l join public.payments p on l.ref_id = p.id::text where p.provider_ref = 'cs_recharge_1' and l.bucket = 'agency_margin'), 'the agency''s margin is recorded');
 drop table rc;
 
+
+-- Official resellers (JazzCash / Easypaisa at a discount): only the owner lists them; everyone sees
+-- the active ones through list_resellers(), never the table itself.
+insert into public.profiles (id, username, display_name, signup_country) values ('rs_a', 'rs_a', 'Reseller A', 'PK'), ('rs_b', 'rs_b', 'Reseller B', 'PK');
+create temp table rs as select (select user_number from public.profiles where id = 'rs_a') as a, (select user_number from public.profiles where id = 'rs_b') as b;
+grant select on rs to authenticated;
+select set_config('request.jwt.claims', '{"sub":"alice"}', false);
+set role authenticated;
+select tests.fails($$select public.set_reseller((select a from rs), '03001234567', 'x')$$, '%forbidden%', 'users cannot make themselves resellers');
+select tests.fails($$select * from public.resellers$$, '%permission denied%', 'the reseller table is not readable directly');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select tests.fails($$select public.set_reseller((select a from rs), '12345', 'x')$$, '%invalid_whatsapp%', 'a WhatsApp number is required');
+select public.set_reseller((select a from rs), '0300 1234567', 'Lahore');
+select public.set_reseller((select b from rs), '+923331234567', 'Karachi', 30, false);
+select tests.ok((select whatsapp = '923001234567' and discount_pct = 30 from public.list_resellers() where user_number = (select a from rs)), 'local numbers are stored in international form');
+select tests.ok((select count(*) from public.list_resellers() where user_number in ((select a from rs), (select b from rs))) = 2, 'owners also see inactive resellers');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"alice"}', false);
+set role authenticated;
+select tests.ok((select count(*) from public.list_resellers()) = 1 and (select display_name from public.list_resellers()) = 'Reseller A', 'users see only active resellers');
+reset role;
+update public.profiles set status = 'banned' where id = 'rs_a';
+select set_config('request.jwt.claims', '{"sub":"alice"}', false);
+set role authenticated;
+select tests.ok((select count(*) from public.list_resellers()) = 0, 'a banned reseller is no longer listed');
+reset role;
+update public.profiles set status = 'active' where id = 'rs_a';
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select public.remove_reseller((select a from rs));
+select tests.fails($$select public.remove_reseller((select a from rs))$$, '%not_found%', 'a removed reseller is gone');
+reset role;
+drop table rs;
+
 drop schema tests cascade;

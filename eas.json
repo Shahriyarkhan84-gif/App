@@ -42,7 +42,8 @@
         "image": "latest"
       },
       "env": {
-        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
+        "EXPO_PUBLIC_DISTRIBUTION": "store"
       },
       "ios": {
         "image": "latest"

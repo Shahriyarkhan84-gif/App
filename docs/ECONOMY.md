@@ -134,6 +134,12 @@ records the shortfall and flags the account.
 
 - `zynalive.com/recharge` sells the same region packages by card for any Zynalive ID (the recipient's region decides the packages and prices).
 - An agency's link (`?a=<agency code>`, shown in the Agency portal) puts the agency on the payment, so the purchase split records its margin (`agency_margin` bucket, `purchase_split.agency_margin_bps`, 13.33% today) before the platform's share. How that margin is paid out to agencies is still a manual step.
+- **JazzCash / Easypaisa: through official resellers** (no JazzCash/Easypaisa integration). The Wallet
+  shows "Pay with JazzCash or Easypaisa · 30% off", which lists the owner's official resellers
+  (`public.resellers`, read with `list_resellers()`, managed in Admin → Resellers). Users message a
+  reseller on WhatsApp, pay them, and the reseller sends the diamonds; nothing is credited by the app.
+  Hidden in Google Play / App Store builds (`EXPO_PUBLIC_DISTRIBUTION=store`), whose rules forbid
+  pointing buyers to other ways to pay; shown on the website and in the downloadable APK.
 
 ## In-app purchases (Google Play, App Store)
 

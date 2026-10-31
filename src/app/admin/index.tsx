@@ -28,7 +28,7 @@ type Briefing = {
   };
 };
 
-const SECTIONS = ['Briefing', 'Host applications', 'Agencies', 'Events', 'AI proposals', 'Reports', 'Withdrawals', 'Settings'] as const;
+const SECTIONS = ['Briefing', 'Host applications', 'Agencies', 'Resellers', 'Events', 'AI proposals', 'Reports', 'Withdrawals', 'Settings'] as const;
 const DOMAIN_TITLES: Record<string, string> = { finance_ai: '💰 Finance AI', economy_ai: '🎁 Economy AI', streaming_ai: '📡 Streaming AI' };
 
 /** Owner command center: AI CEO output + the human-approval queue. */
@@ -44,6 +44,7 @@ export default function AdminScreen() {
       {section === 'Briefing' && <BriefingSection />}
       {section === 'Host applications' && <HostApplicationsSection />}
       {section === 'Agencies' && <AgenciesSection />}
+      {section === 'Resellers' && <ResellersSection />}
       {section === 'Events' && <EventsSection />}
       {section === 'AI proposals' && <ProposalsSection />}
       {section === 'Reports' && <ReportsSection />}
@@ -397,6 +398,56 @@ function SettingsSection() {
           <Text muted>Gift split: {JSON.stringify(data?.gift_split)}</Text>
           <Text muted>Purchase split (bps): {JSON.stringify(data?.purchase_split)}</Text>
         </Card>
+      </ScrollView>
+    </StateView>
+  );
+}
+
+type ResellerRow = { user_number: number; display_name: string; whatsapp: string; note: string | null; discount_pct: number; active: boolean };
+
+/** Official resellers users contact to pay with JazzCash / Easypaisa (listed in the Wallet, outside store builds). */
+function ResellersSection() {
+  const supabase = useSupabase();
+  const offline = useOffline();
+  const act = useAct();
+  const [id, setId] = useState('');
+  const [phone, setPhone] = useState('');
+  const [note, setNote] = useState('');
+  const [discount, setDiscount] = useState('30');
+  const { data, error, loading, reload } = useFocusedAsync(async () => {
+    const { data, error } = await supabase.rpc('list_resellers');
+    if (error) throw error;
+    return (data ?? []) as ResellerRow[];
+  }, []);
+  const pct = Number(discount);
+  const canSave = /^[1-9]\d{7}$/.test(id) && phone.replace(/\D/g, '').length >= 10 && Number.isInteger(pct) && pct >= 1 && pct <= 90;
+  const save = (r: { user_number: number; whatsapp: string; note: string | null; discount_pct: number }, active: boolean, done?: () => void) =>
+    act('set_reseller', { p_user_number: r.user_number, p_whatsapp: r.whatsapp, p_note: r.note, p_discount_pct: r.discount_pct, p_active: active }, () => { done?.(); void reload(); });
+  return (
+    <StateView state={resolveState({ offline, loading, error, data, onRetry: reload })}>
+      <ScrollView contentContainerStyle={listStyle}>
+        <Card>
+          <Text variant="h3">Add or update a reseller</Text>
+          <Input value={id} onChangeText={(v) => setId(v.replace(/\D/g, '').slice(0, 8))} placeholder="Reseller's 8-digit user ID" keyboardType="number-pad" />
+          <Input value={phone} onChangeText={setPhone} placeholder="WhatsApp number (0300 1234567)" keyboardType="phone-pad" />
+          <Input value={note} onChangeText={setNote} placeholder="Note, e.g. Lahore · 9am to midnight" maxLength={80} />
+          <Input label="Discount (%)" value={discount} onChangeText={(v) => setDiscount(v.replace(/\D/g, '').slice(0, 2))} keyboardType="number-pad" />
+          <Button title="Save reseller" disabled={!canSave || offline}
+            onPress={() => save({ user_number: Number(id), whatsapp: phone, note: note.trim() || null, discount_pct: pct }, true, () => { setId(''); setPhone(''); setNote(''); setDiscount('30'); })} />
+          <Text variant="caption" muted>Users see active resellers in the Wallet (website and downloadable app; hidden in Google Play and App Store builds) and message them on WhatsApp. Payment and {U.spend} are handled by the reseller.</Text>
+        </Card>
+        {(data ?? []).length === 0 && <Text muted style={{ textAlign: 'center' }}>No resellers yet.</Text>}
+        {(data ?? []).map((r) => (
+          <Card key={r.user_number}>
+            <Text variant="h3">{r.display_name} · {r.discount_pct}% off{r.active ? '' : ' · hidden'}</Text>
+            <Text muted>ID {r.user_number} · WhatsApp +{r.whatsapp}{r.note ? ` · ${r.note}` : ''}</Text>
+            <Row>
+              <Button title={r.active ? 'Hide' : 'Show'} size="sm" variant="secondary" onPress={() => save(r, !r.active)} />
+              <Button title="Remove" size="sm" variant="secondary"
+                onPress={() => confirmThen('Remove reseller?', `${r.display_name} will no longer be listed.`, 'Remove', () => act('remove_reseller', { p_user_number: r.user_number }, reload))} />
+            </Row>
+          </Card>
+        ))}
       </ScrollView>
     </StateView>
   );
