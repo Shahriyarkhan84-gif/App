@@ -138,7 +138,8 @@ records the shortfall and flags the account.
   shows "Pay with JazzCash or Easypaisa · 30% off", which lists the owner's official resellers
   (`public.resellers`, read with `list_resellers()`, managed in Admin → Resellers). Users message a
   reseller on WhatsApp, pay them, and the reseller sends the diamonds; nothing is credited by the app.
-  Hidden in Google Play / App Store builds (`EXPO_PUBLIC_DISTRIBUTION=store`), whose rules forbid
+  Hidden in Google Play / App Store builds (`EXPO_PUBLIC_DISTRIBUTION=store`, the `production`
+  update channel, and every iPhone build), whose rules forbid
   pointing buyers to other ways to pay; shown on the website and in the downloadable APK.
 
 ## In-app purchases (Google Play, App Store)
@@ -175,7 +176,8 @@ a withdrawal is approved and sent with no owner when it is at most `payouts.max_
 account that was already paid once, the host has no `account_review` in the last 30 days and their
 wallet isn't frozen. Anything else waits for the owner as before. `payouts-send` asks the provider;
 a temporary failure is retried (up to `max_attempts`), a refusal or repeated failure goes to the
-owner (Retry payout, or reject / pay by hand if the provider never got it). Hosts see "Sending",
+owner (Retry payout, or reject / pay by hand if the provider never got it). A payout stuck
+in 'sending' after the last try, or one queued while no provider is connected, also goes to the owner. Hosts see "Sending",
 then "Paid".
 
 **Open question (from the architecture):** the coin → PKR rate that bridges

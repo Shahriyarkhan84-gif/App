@@ -18,15 +18,15 @@ Deno.serve(
     }
 
     const provider = payoutProvider();
-    if (!provider) return json({ sent: 0, failed: 0, reason: 'no_provider' });
-
     const db = adminClient();
-    const { data, error } = await db.rpc('internal_claim_payouts', { p_secret: secret, p_host: host, p_limit: 20 });
+    // Small batches: each provider call can take seconds, and the function has a time limit.
+    const { data, error } = await db.rpc('internal_claim_payouts', { p_secret: secret, p_host: host, p_limit: 5 });
     if (error) throw new HttpError(error.message === 'forbidden' ? 403 : 500, error.message === 'forbidden' ? 'forbidden' : 'payout_queue_failed');
 
     let sent = 0, failed = 0;
     for (const w of data ?? []) {
-      const outcome = await sendPayout(provider, w);
+      // Turned on without a connected provider: nothing is sent; each payout goes to the owner.
+      const outcome = provider ? await sendPayout(provider, w) : { ok: false as const, retry: false, error: 'payout_provider_not_connected' };
       const { error: saveError } = await db.rpc('internal_payout_result', {
         p_id: w.id,
         p_ok: outcome.ok,

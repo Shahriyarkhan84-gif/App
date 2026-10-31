@@ -66,7 +66,8 @@ begin
   -- A new payout account is checked by a person once; after one paid withdrawal it's trusted.
   if not exists (select 1 from public.withdrawals where host_id = p_host and status = 'paid'
                    and payout_method ->> 'type' = p_method ->> 'type'
-                   and payout_method ->> 'account' = p_method ->> 'account') then
+                   and upper(regexp_replace(payout_method ->> 'account', '[\s-]', '', 'g'))
+                     = upper(regexp_replace(p_method ->> 'account', '[\s-]', '', 'g'))) then
     return 'new_account';
   end if;
   if exists (select 1 from public.moderation_actions where target_user_id = p_host
@@ -124,6 +125,11 @@ begin
   if p_secret is not null and not exists (select 1 from private.payout_config where secret = p_secret) then
     raise exception 'forbidden';
   end if;
+  -- Stuck in 'sending' after the last try: never taken again automatically; the owner retries it.
+  update public.withdrawals
+     set status = 'approved', auto = false, payout_error = 'no_answer_from_provider', sending_since = null, updated_at = now()
+   where auto and status = 'sending' and sending_since < now() - interval '15 minutes' and payout_attempts >= v_max
+     and (p_host is null or host_id = p_host);
   return query
   update public.withdrawals w
      set status = 'sending', payout_attempts = w.payout_attempts + 1, sending_since = now(), updated_at = now()
@@ -131,7 +137,7 @@ begin
      select q.id from public.withdrawals q
       where q.auto and (p_host is null or q.host_id = p_host)
         and ((q.status = 'approved' and q.payout_attempts < v_max)
-             or (q.status = 'sending' and q.sending_since < now() - interval '15 minutes'))
+             or (q.status = 'sending' and q.sending_since < now() - interval '15 minutes' and q.payout_attempts < v_max))
       order by q.created_at
       limit greatest(1, least(coalesce(p_limit, 20), 50))
       for update skip locked)
@@ -159,10 +165,11 @@ begin
     update public.withdrawals set status = 'approved', payout_error = left(p_error, 300), sending_since = null, updated_at = now()
       where id = v.id returning * into v;
   else
-    -- A refusal (p_retry false: nothing was sent) clears the attempts, so the owner may also pay by
-    -- hand or reject. After unanswered tries the provider may still pay, so only a retry (same id) is allowed.
+    -- A refusal on the first try (nothing was ever sent) clears the attempts, so the owner may also
+    -- pay by hand or reject. After an unanswered try the provider may still pay, so only a retry
+    -- (same id) is allowed.
     update public.withdrawals set status = 'approved', auto = false, payout_error = left(coalesce(p_error, 'payout_failed'), 300),
-      payout_attempts = case when p_retry then payout_attempts else 0 end,
+      payout_attempts = case when p_retry or payout_attempts > 1 then payout_attempts else 0 end,
       sending_since = null, updated_at = now() where id = v.id returning * into v;
     perform private.audit('withdrawal_payout_failed', 'withdrawal', v.id::text,
       jsonb_build_object('error', v.payout_error, 'attempts', v.payout_attempts), 'system');

@@ -37,6 +37,7 @@ begin
   select id into v_user from public.profiles where user_number = p_user_number;
   if v_user is null then raise exception 'user_not_found'; end if;
   if v_phone ~ '^03[0-9]{9}$' then v_phone := '92' || substr(v_phone, 2); end if; -- 0300… → 92300…
+  if v_phone ~ '^3[0-9]{9}$' then v_phone := '92' || v_phone; end if;              -- 300… → 92300…
   if v_phone !~ '^[1-9][0-9]{9,14}$' then raise exception 'invalid_whatsapp'; end if;
   insert into public.resellers (user_id, whatsapp, note, discount_pct, active)
     values (v_user, v_phone, nullif(btrim(p_note), ''), coalesce(p_discount_pct, 30), coalesce(p_active, true))

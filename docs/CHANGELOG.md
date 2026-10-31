@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.11.5 — Fixes from review (payouts, resellers)
+
+- `payouts-send` is reachable (gateway JWT check off, like the other functions); payouts queued with no provider connected go to the owner instead of showing "Sending" forever; batches of 5.
+- A payout refused after an unanswered try can only be retried, never rejected or paid by hand (no double payment); a payout stuck after its last try goes to the owner instead of being taken again forever.
+- The same payout account typed with spaces or dashes counts as the known account.
+- Admin → Withdrawals: a refused payout can be marked paid by hand (with a reference).
+- Earnings wakes a waiting payout once per visit and refreshes when it's sent.
+- Resellers: hidden in store builds even after an OTA update (update channel / iPhone), local WhatsApp numbers without the 0 are stored correctly, the list shows the real top discount.
+
 ## 0.11.4 — JazzCash / Easypaisa through official resellers
 
 - No JazzCash/Easypaisa integration. Instead the Wallet has **"Pay with JazzCash or Easypaisa · 30% off"**: a list of official resellers (photo, ID, note, discount) with a **Message on WhatsApp** button that sends the user's Zynalive ID. The reseller takes the payment and sends the diamonds.

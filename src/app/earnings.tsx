@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@clerk/clerk-expo';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 
 import { U, units } from '@/lib/brand';
@@ -60,8 +60,6 @@ export default function EarningsScreen() {
     // A failed load must show an error, not a zero balance.
     if (earnings.error) throw earnings.error;
     if (withdrawals.error) throw withdrawals.error;
-    // An automatic payout still waiting to go out: wake the sender (the server only sends this host's own).
-    if ((withdrawals.data ?? []).some((w) => w.auto && (w.status === 'approved' || w.status === 'sending'))) void sendMyPayouts(supabase);
     const cfg = settings.data?.value as { pkr_per_coin: number | null; min_coins: number } | undefined;
     return {
       earnings: earnings.data ?? { balance: 0, held: 0, lifetime: 0 },
@@ -71,6 +69,16 @@ export default function EarningsScreen() {
       withdrawable: withdrawable.error ? null : Number(withdrawable.data ?? 0),
     };
   }, [userId], 'earnings');
+
+  // An automatic payout still waiting to go out: wake the sender once per visit (the server only sends
+  // this host's own), then show the result.
+  const woke = useRef(false);
+  const waiting = !!data?.withdrawals.some((w) => w.auto && (w.status === 'approved' || w.status === 'sending'));
+  useEffect(() => {
+    if (!waiting || woke.current) return;
+    woke.current = true;
+    void sendMyPayouts(supabase).then((r) => { if (r && r.sent + r.failed > 0) reload(); });
+  }, [waiting, supabase, reload]);
 
   const amount = Number.parseInt(coins, 10);
   const max = data ? data.withdrawable ?? data.earnings.balance : 0;

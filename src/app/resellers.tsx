@@ -61,7 +61,7 @@ export default function ResellersScreen() {
             <Text variant="h3">Pay with JazzCash or Easypaisa</Text>
             <Text muted>
               Message an official reseller on WhatsApp, pay them with JazzCash or Easypaisa, and they add the {U.spend} to your
-              Zynalive ID {profile?.user_number ? profile.user_number : ''}. Resellers give you up to {Math.max(30, ...(data ?? []).map((r) => r.discount_pct))}% off.
+              Zynalive ID {profile?.user_number ? profile.user_number : ''}. Resellers give you up to {Math.max(0, ...(data ?? []).map((r) => r.discount_pct))}% off.
             </Text>
           </View>
           {(data ?? []).map((r) => (

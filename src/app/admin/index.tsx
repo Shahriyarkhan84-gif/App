@@ -324,6 +324,7 @@ function WithdrawalsSection() {
             {w.status === 'sending' || (w.auto && w.payout_attempts > 0) ? (
               <Text variant="caption" muted>Being sent automatically.</Text>
             ) : w.payout_error ? (
+              <>
               <Row>
                 <Button title="Retry payout" size="sm" onPress={() => act('retry_payout', { p_withdrawal_id: w.id }, reload)} />
                 {/* After unanswered tries the provider may still pay it: only a retry (same id) is safe. */}
@@ -331,6 +332,15 @@ function WithdrawalsSection() {
                   <Button title="Reject" size="sm" variant="secondary" onPress={() => confirmThen('Reject withdrawal?', `The ${U.earn} go back to the host's balance.`, 'Reject', () => act('review_withdrawal', { p_withdrawal_id: w.id, p_approve: false, p_note: 'Payout account refused' }, reload))} />
                 )}
               </Row>
+              {w.payout_attempts === 0 && (
+                <Row>
+                  <View style={{ flex: 1 }}>
+                    <Input placeholder="Paid another way? Payout reference" value={refs[w.id] ?? ''} onChangeText={(t) => setRefs((r) => ({ ...r, [w.id]: t }))} />
+                  </View>
+                  <Button title="Mark paid" size="sm" disabled={!refs[w.id]} onPress={() => act('mark_withdrawal_paid', { p_withdrawal_id: w.id, p_payout_ref: refs[w.id] }, reload)} />
+                </Row>
+              )}
+              </>
             ) : w.status === 'requested' ? (
               <Row>
                 <Button title="Approve" size="sm" onPress={() => confirmThen('Approve withdrawal?', `${formatMoney(w.amount_minor, w.currency)} to ${w.payout_method.type} ${w.payout_method.account ?? ''}. Send the payout, then mark it paid.`, 'Approve', () => act('review_withdrawal', { p_withdrawal_id: w.id, p_approve: true }, reload))} />

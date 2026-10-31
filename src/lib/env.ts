@@ -1,3 +1,6 @@
+import * as Updates from 'expo-updates';
+import { Platform } from 'react-native';
+
 // Public, client-side configuration (EXPO_PUBLIC_* only — never secrets).
 // LiveKit's URL is returned by the livekit-token function; its API secret
 // lives only in Supabase function secrets.
@@ -19,8 +22,13 @@ export const env = {
   distribution: process.env.EXPO_PUBLIC_DISTRIBUTION ?? '',
 };
 
-/** Official resellers (JazzCash / Easypaisa) are shown on the website and the downloadable APK only. */
-export const showResellers = env.distribution !== 'store';
+/**
+ * Official resellers (JazzCash / Easypaisa) are shown on the website and the downloadable APK only.
+ * Store builds are recognised by their update channel too (baked into the binary, so an OTA update
+ * bundled without EXPO_PUBLIC_DISTRIBUTION can't turn the list back on); iPhone apps only come from the App Store.
+ */
+export const showResellers = Platform.OS === 'web'
+  || (Platform.OS === 'android' && env.distribution !== 'store' && Updates.channel !== 'production');
 
 export const missingRequiredEnv = (
   [

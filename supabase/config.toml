@@ -49,3 +49,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.recharge]
 verify_jwt = false
+[functions.payouts-send]
+verify_jwt = false
