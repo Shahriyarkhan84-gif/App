@@ -49,6 +49,11 @@ exception when others then
   null; -- the host's Earnings screen and the owner's retry wake it again
 end $$;
 
+-- One spelling per account: no spaces or dashes, upper case, mobile numbers as 03XXXXXXXXX.
+create or replace function private.payout_account_key(p text)
+returns text language sql immutable set search_path = ''
+as $$ select regexp_replace(upper(regexp_replace(coalesce(p, ''), '[\s-]', '', 'g')), '^\+?92(3[0-9]{9})$', '0\1') $$;
+
 -- Why a withdrawal can't be paid automatically (null = it can).
 create or replace function private.auto_payout_block(p_host text, p_amount_minor bigint, p_method jsonb)
 returns text language plpgsql stable security definer set search_path = ''
@@ -66,8 +71,8 @@ begin
   -- A new payout account is checked by a person once; after one paid withdrawal it's trusted.
   if not exists (select 1 from public.withdrawals where host_id = p_host and status = 'paid'
                    and payout_method ->> 'type' = p_method ->> 'type'
-                   and upper(regexp_replace(payout_method ->> 'account', '[\s-]', '', 'g'))
-                     = upper(regexp_replace(p_method ->> 'account', '[\s-]', '', 'g'))) then
+                   and private.payout_account_key(payout_method ->> 'account')
+                     = private.payout_account_key(p_method ->> 'account')) then
     return 'new_account';
   end if;
   if exists (select 1 from public.moderation_actions where target_user_id = p_host
@@ -119,17 +124,26 @@ create trigger withdrawal_dispatch after insert or update of auto on public.with
 create or replace function public.internal_claim_payouts(p_secret text, p_host text, p_limit int default 20)
 returns setof public.withdrawals language plpgsql security definer set search_path = ''
 as $$
-declare v_max int := coalesce((private.setting('payouts') ->> 'max_attempts')::int, 3);
+-- At least 2 tries: a retried payout keeps 1 attempt on record and must still be takeable.
+declare v_max int := greatest(coalesce((private.setting('payouts') ->> 'max_attempts')::int, 3), 2); v_stuck public.withdrawals;
 begin
   if p_secret is null and p_host is null then raise exception 'forbidden'; end if;
   if p_secret is not null and not exists (select 1 from private.payout_config where secret = p_secret) then
     raise exception 'forbidden';
   end if;
   -- Stuck in 'sending' after the last try: never taken again automatically; the owner retries it.
-  update public.withdrawals
-     set status = 'approved', auto = false, payout_error = 'no_answer_from_provider', sending_since = null, updated_at = now()
-   where auto and status = 'sending' and sending_since < now() - interval '15 minutes' and payout_attempts >= v_max
-     and (p_host is null or host_id = p_host);
+  for v_stuck in
+    update public.withdrawals
+       set status = 'approved', auto = false, payout_error = 'no_answer_from_provider', sending_since = null, updated_at = now()
+     where auto and status = 'sending' and sending_since < now() - interval '15 minutes' and payout_attempts >= v_max
+       and (p_host is null or host_id = p_host)
+    returning *
+  loop
+    perform private.audit('withdrawal_payout_failed', 'withdrawal', v_stuck.id::text,
+      jsonb_build_object('error', v_stuck.payout_error, 'attempts', v_stuck.payout_attempts), 'system');
+    perform private.notify(v_stuck.host_id, 'withdrawal', 'Withdrawal delayed',
+      'Your payout needs a quick check by our team. Your beans are safe.', jsonb_build_object('withdrawal_id', v_stuck.id));
+  end loop;
   return query
   update public.withdrawals w
      set status = 'sending', payout_attempts = w.payout_attempts + 1, sending_since = now(), updated_at = now()
@@ -149,7 +163,7 @@ end $$;
 create or replace function public.internal_payout_result(p_id uuid, p_ok boolean, p_ref text, p_error text, p_retry boolean)
 returns public.withdrawals language plpgsql security definer set search_path = ''
 as $$
-declare v public.withdrawals; v_max int := coalesce((private.setting('payouts') ->> 'max_attempts')::int, 3);
+declare v public.withdrawals; v_max int := greatest(coalesce((private.setting('payouts') ->> 'max_attempts')::int, 3), 2);
 begin
   select * into v from public.withdrawals where id = p_id and status = 'sending' for update;
   if not found then raise exception 'not_found'; end if;
@@ -195,16 +209,18 @@ begin
   return v;
 end $$;
 
--- An owner can pay by hand or reject an automatic payout only before the provider was first asked
--- (a payout the provider may still complete must not be paid twice or have its beans returned).
+-- An owner pays by hand or rejects only payouts out of the automatic queue that the provider was
+-- never asked about (a payout the sender may still pay, or the provider may still complete, must
+-- not be paid twice or have its beans returned).
 create or replace function public.mark_withdrawal_paid(p_withdrawal_id uuid, p_payout_ref text)
 returns public.withdrawals language plpgsql security definer set search_path = ''
 as $$
 declare v public.withdrawals;
 begin
   if not public.is_platform_admin() then raise exception 'forbidden'; end if;
-  update public.withdrawals set status = 'paid', payout_ref = p_payout_ref, payout_error = null, auto = false, updated_at = now()
-    where id = p_withdrawal_id and status = 'approved' and payout_attempts = 0 returning * into v;
+  if coalesce(btrim(p_payout_ref), '') = '' then raise exception 'invalid_ref'; end if;
+  update public.withdrawals set status = 'paid', payout_ref = left(btrim(p_payout_ref), 200), payout_error = null, updated_at = now()
+    where id = p_withdrawal_id and status = 'approved' and not auto and payout_attempts = 0 returning * into v;
   if not found then raise exception 'not_found'; end if;
   insert into public.earning_entries (host_id, delta, kind, ref_id) values (v.host_id, 0, 'withdrawal_paid', v.id::text);
   perform private.audit('withdrawal_paid', 'withdrawal', v.id::text, jsonb_build_object('payout_ref', p_payout_ref));
@@ -219,7 +235,7 @@ declare v public.withdrawals; v_was text;
 begin
   if not public.is_platform_admin() then raise exception 'forbidden'; end if;
   select * into v from public.withdrawals where id = p_withdrawal_id
-    and (status = 'requested' or (status = 'approved' and payout_attempts = 0 and not p_approve)) for update;
+    and (status = 'requested' or (status = 'approved' and not auto and payout_attempts = 0 and not p_approve)) for update;
   if not found then raise exception 'not_found'; end if;
   v_was := v.status;
   perform 1 from public.creator_earnings where host_id = v.host_id for update;

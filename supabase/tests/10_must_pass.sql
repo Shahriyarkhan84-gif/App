@@ -459,6 +459,7 @@ reset role;
 select set_config('request.jwt.claims', '{"sub":"owner"}', false);
 set role authenticated;
 select public.review_withdrawal(tests.bob_w('requested'), true);
+select tests.fails($$select public.mark_withdrawal_paid(tests.bob_w('approved'), '  ')$$, '%invalid_ref%', 'a payout needs a real reference');
 select public.mark_withdrawal_paid(tests.bob_w('approved'), 'manual-1');
 reset role;
 -- Same account again: approved automatically, beans leave the balance at once.
@@ -570,6 +571,40 @@ select public.review_withdrawal(tests.bob_w('requested'), false, 'test');
 select public.set_platform_setting('payouts', '{"auto": false, "provider": null, "max_auto_pkr": 25000, "daily_auto_pkr": 100000, "max_attempts": 3}');
 reset role;
 delete from public.moderation_actions where target_user_id = 'bob' and reason = 'test';
+-- A payout still queued for automatic sending can't also be paid by hand or rejected; one stuck
+-- after its last try goes to the owner (audited, host told) and is never taken again by itself.
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select public.set_platform_setting('payouts', '{"auto": true, "provider": "test", "max_auto_pkr": 25000, "daily_auto_pkr": 100000, "max_attempts": 2}');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"bob"}', false);
+set role authenticated;
+select tests.ok((public.request_withdrawal(1000, '{"type":"easypaisa","account":"+92 300 1234567"}')).auto, 'the known account with +92 is still trusted');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select tests.fails($$select public.mark_withdrawal_paid(tests.bob_w('approved'), 'x')$$, '%not_found%', 'a queued automatic payout cannot be paid by hand');
+select tests.fails($$select public.review_withdrawal(tests.bob_w('approved'), false)$$, '%not_found%', 'a queued automatic payout cannot be rejected');
+reset role;
+update public.withdrawals set status = 'sending', payout_attempts = 2, sending_since = now() - interval '1 hour' where id = tests.bob_w('approved');
+set role service_role;
+select tests.ok((select count(*) from public.internal_claim_payouts('test-payout-secret-0123456789abcdef', null)) = 0, 'a payout stuck after its last try is not taken again');
+reset role;
+select tests.ok((select status = 'approved' and not auto and payout_error = 'no_answer_from_provider' from public.withdrawals where id = tests.bob_w('approved')), 'it goes to the owner');
+select tests.ok(exists (select 1 from public.audit_logs where action = 'withdrawal_payout_failed' and target_id = tests.bob_w('approved')::text and details ->> 'error' = 'no_answer_from_provider'), 'the hand-over is audited');
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select tests.fails($$select public.review_withdrawal(tests.bob_w('approved'), false)$$, '%not_found%', 'an unanswered payout cannot be rejected');
+select public.retry_payout(tests.bob_w('approved'));
+reset role;
+set role service_role;
+select tests.ok((select count(*) from public.internal_claim_payouts('test-payout-secret-0123456789abcdef', null)) = 1, 'a retried payout is taken again');
+select public.internal_payout_result(tests.bob_w('sending'), true, 'prov-4', null, false);
+reset role;
+select set_config('request.jwt.claims', '{"sub":"owner"}', false);
+set role authenticated;
+select public.set_platform_setting('payouts', '{"auto": false, "provider": null, "max_auto_pkr": 25000, "daily_auto_pkr": 100000, "max_attempts": 3}');
+reset role;
 
 ---------------------------------------------------------------------------------------
 -- AI trust boundary: proposals need owner approval
@@ -1346,7 +1381,7 @@ delete from private.push_config;
 -- payment; a payment through an agency's link carries the agency, so its margin is recorded.
 insert into public.profiles (id, username, display_name, signup_country) values ('rc_buyer', 'rc_buyer', 'Recharge Buyer', 'PK'), ('rc_banned', 'rc_banned', 'Gone', 'PK'), ('rc_minor', 'rc_minor', 'Kid', 'PK');
 update public.profiles set age_check = 'minor' where id = 'rc_minor';
-insert into public.agencies (name, status) values ('Reseller Agency', 'active');
+insert into public.agencies (name, status, code) values ('Reseller Agency', 'active', '7319'); -- fixed code: a random one could collide with other test files' fixed codes
 update public.profiles set status = 'banned' where id = 'rc_banned';
 create temp table rc as select (select user_number from public.profiles where id = 'rc_buyer') as num,
   (select code from public.agencies where name = 'Reseller Agency') as code,

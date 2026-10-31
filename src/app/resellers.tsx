@@ -29,6 +29,8 @@ export default function ResellersScreen() {
     return (data ?? []) as Reseller[];
   }, []);
 
+  const topDiscount = Math.max(0, ...(data ?? []).map((r) => r.discount_pct));
+
   const contact = async (r: Reseller) => {
     const text = `Hi, I want to buy Zynalive ${U.spend} with JazzCash/Easypaisa. My Zynalive ID is ${profile?.user_number ?? ''}.`;
     const url = `https://wa.me/${r.whatsapp}?text=${encodeURIComponent(text)}`;
@@ -61,7 +63,7 @@ export default function ResellersScreen() {
             <Text variant="h3">Pay with JazzCash or Easypaisa</Text>
             <Text muted>
               Message an official reseller on WhatsApp, pay them with JazzCash or Easypaisa, and they add the {U.spend} to your
-              Zynalive ID {profile?.user_number ? profile.user_number : ''}. Resellers give you up to {Math.max(0, ...(data ?? []).map((r) => r.discount_pct))}% off.
+              Zynalive ID {profile?.user_number ? profile.user_number : ''}.{topDiscount > 0 ? ` Up to ${topDiscount}% off.` : ''}
             </Text>
           </View>
           {(data ?? []).map((r) => (

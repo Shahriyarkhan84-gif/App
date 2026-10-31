@@ -7,6 +7,7 @@
 - The same payout account typed with spaces or dashes counts as the known account.
 - Admin → Withdrawals: a refused payout can be marked paid by hand (with a reference).
 - Earnings wakes a waiting payout once per visit and refreshes when it's sent.
+- Second pass: a payout queued for automatic sending can't also be paid by hand or rejected; a stuck payout handed to the owner is audited and the host told; at least 2 tries so a retried payout is always taken; `+92 300…`, `92300…` and `0300…` count as the same account; a payout reference can't be blank; Earnings checks a "Sending" payout again every 20 s.
 - Resellers: hidden in store builds even after an OTA update (update channel / iPhone), local WhatsApp numbers without the 0 are stored correctly, the list shows the real top discount.
 
 ## 0.11.4 — JazzCash / Easypaisa through official resellers

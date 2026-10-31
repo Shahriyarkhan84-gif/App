@@ -70,15 +70,19 @@ export default function EarningsScreen() {
     };
   }, [userId], 'earnings');
 
-  // An automatic payout still waiting to go out: wake the sender once per visit (the server only sends
-  // this host's own), then show the result.
-  const woke = useRef(false);
+  // An automatic payout still waiting to go out: wake the sender (the server only sends this host's
+  // own; at most every 30 s), and check again shortly so "Sending" turns into "Paid" on screen.
+  const lastWake = useRef(0);
   const waiting = !!data?.withdrawals.some((w) => w.auto && (w.status === 'approved' || w.status === 'sending'));
   useEffect(() => {
-    if (!waiting || woke.current) return;
-    woke.current = true;
-    void sendMyPayouts(supabase).then((r) => { if (r && r.sent + r.failed > 0) reload(); });
-  }, [waiting, supabase, reload]);
+    if (!waiting) return;
+    if (Date.now() - lastWake.current > 30_000) {
+      lastWake.current = Date.now();
+      void sendMyPayouts(supabase).then((r) => { if (r && r.sent + r.failed > 0) reload(); });
+    }
+    const t = setTimeout(reload, 20_000);
+    return () => clearTimeout(t);
+  }, [waiting, data, supabase, reload]);
 
   const amount = Number.parseInt(coins, 10);
   const max = data ? data.withdrawable ?? data.earnings.balance : 0;

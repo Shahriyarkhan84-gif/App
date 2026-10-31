@@ -303,6 +303,23 @@ type Withdrawal = {
   status: string; auto: boolean; payout_attempts: number; payout_error: string | null; created_at: string;
 };
 
+/** Records a payout the owner sent by hand (the reference is required). */
+function MarkPaidRow({ id, placeholder, refs, setRefs, onPaid }: {
+  id: string; placeholder: string; refs: Record<string, string>;
+  setRefs: (f: (r: Record<string, string>) => Record<string, string>) => void; onPaid: () => void;
+}) {
+  const act = useAct();
+  const ref = (refs[id] ?? '').trim();
+  return (
+    <Row>
+      <View style={{ flex: 1 }}>
+        <Input placeholder={placeholder} value={refs[id] ?? ''} onChangeText={(t) => setRefs((r) => ({ ...r, [id]: t }))} />
+      </View>
+      <Button title="Mark paid" size="sm" disabled={!ref} onPress={() => act('mark_withdrawal_paid', { p_withdrawal_id: id, p_payout_ref: ref }, onPaid)} />
+    </Row>
+  );
+}
+
 function WithdrawalsSection() {
   const supabase = useSupabase();
   const offline = useOffline();
@@ -321,7 +338,7 @@ function WithdrawalsSection() {
             <Text variant="h3">{formatMoney(w.amount_minor, w.currency)} · {w.coins.toLocaleString()} coins</Text>
             <Text muted>Host {w.host_id} · {w.payout_method.type} {w.payout_method.account ?? ''} · {w.auto ? 'automatic · ' : ''}{w.status}</Text>
             {w.payout_error && <Text variant="caption" muted>Payout failed: {w.payout_error}</Text>}
-            {w.status === 'sending' || (w.auto && w.payout_attempts > 0) ? (
+            {w.status === 'sending' || w.auto ? (
               <Text variant="caption" muted>Being sent automatically.</Text>
             ) : w.payout_error ? (
               <>
@@ -332,14 +349,7 @@ function WithdrawalsSection() {
                   <Button title="Reject" size="sm" variant="secondary" onPress={() => confirmThen('Reject withdrawal?', `The ${U.earn} go back to the host's balance.`, 'Reject', () => act('review_withdrawal', { p_withdrawal_id: w.id, p_approve: false, p_note: 'Payout account refused' }, reload))} />
                 )}
               </Row>
-              {w.payout_attempts === 0 && (
-                <Row>
-                  <View style={{ flex: 1 }}>
-                    <Input placeholder="Paid another way? Payout reference" value={refs[w.id] ?? ''} onChangeText={(t) => setRefs((r) => ({ ...r, [w.id]: t }))} />
-                  </View>
-                  <Button title="Mark paid" size="sm" disabled={!refs[w.id]} onPress={() => act('mark_withdrawal_paid', { p_withdrawal_id: w.id, p_payout_ref: refs[w.id] }, reload)} />
-                </Row>
-              )}
+              {w.payout_attempts === 0 && <MarkPaidRow id={w.id} placeholder="Paid another way? Payout reference" refs={refs} setRefs={setRefs} onPaid={reload} />}
               </>
             ) : w.status === 'requested' ? (
               <Row>
@@ -347,12 +357,7 @@ function WithdrawalsSection() {
                 <Button title="Reject" size="sm" variant="secondary" onPress={() => confirmThen('Reject withdrawal?', `The ${U.earn} go back to the host's balance.`, 'Reject', () => act('review_withdrawal', { p_withdrawal_id: w.id, p_approve: false, p_note: 'Rejected by owner' }, reload))} />
               </Row>
             ) : (
-              <Row>
-                <View style={{ flex: 1 }}>
-                  <Input placeholder="Payout reference" value={refs[w.id] ?? ''} onChangeText={(t) => setRefs((r) => ({ ...r, [w.id]: t }))} />
-                </View>
-                <Button title="Mark paid" size="sm" disabled={!refs[w.id]} onPress={() => act('mark_withdrawal_paid', { p_withdrawal_id: w.id, p_payout_ref: refs[w.id] }, reload)} />
-              </Row>
+              <MarkPaidRow id={w.id} placeholder="Payout reference" refs={refs} setRefs={setRefs} onPaid={reload} />
             )}
           </Card>
         ))}
