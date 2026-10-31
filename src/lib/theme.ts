@@ -99,6 +99,14 @@ const dark = {
   sky: ['#0C4A6E', '#082F49', '#061826'] as Gradient,
   /** Edge of a frosted card. */
   glassBorder: '#1E4566',
+  /** Glass kit (Figma "App glass kit"): frosted fill, top-down sheen and bright hairline edge. */
+  glassFill: 'rgba(255,255,255,0.06)',
+  glassSheen: ['rgba(255,255,255,0.14)', 'rgba(255,255,255,0.03)', 'rgba(255,255,255,0)'] as Gradient,
+  glassEdge: 'rgba(255,255,255,0.16)',
+  /** Selected chips, tabs and toggles. */
+  accentGradient: ['#38BDF8', '#5CC8FA', '#7DD3FC'] as Gradient,
+  goldGradient: ['#FFD877', '#FFC24B', '#F5A524'] as Gradient,
+  dangerGradient: ['#F43F5E', '#E11D48', '#BE123C'] as Gradient,
 };
 
 // `surface` is frosted white over the sky; `surfaceRaised` is solid white (inputs, sheets).
@@ -134,6 +142,12 @@ const light: typeof dark = {
   glow: 'rgba(3,105,161,0.28)',
   sky: ['#BAE6FD', '#E0F2FE', '#F0F9FF'] as Gradient,
   glassBorder: 'rgba(255,255,255,0.9)',
+  glassFill: 'rgba(255,255,255,0.58)',
+  glassSheen: ['rgba(255,255,255,0.65)', 'rgba(255,255,255,0.08)', 'rgba(224,242,254,0.12)'] as Gradient,
+  glassEdge: 'rgba(255,255,255,0.95)',
+  accentGradient: ['#075985', '#0369A1', '#0EA5E9'] as Gradient,
+  goldGradient: ['#FFD877', '#FFC24B', '#F5A524'] as Gradient,
+  dangerGradient: ['#F43F5E', '#E11D48', '#BE123C'] as Gradient,
 };
 
 export type Palette = typeof dark;
@@ -172,6 +186,12 @@ const midnight: Palette = {
   glow: 'rgba(167,139,250,0.35)',
   sky: ['#16161A', '#111114', '#0E0E10'] as Gradient,
   glassBorder: '#2A2A30',
+  glassFill: 'rgba(255,255,255,0.05)',
+  glassSheen: ['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.02)', 'rgba(255,255,255,0)'] as Gradient,
+  glassEdge: 'rgba(255,255,255,0.12)',
+  accentGradient: ['#B69CFB', '#A78BFA', '#9B7BF7'] as Gradient,
+  goldGradient: ['#FFD877', '#FFC24B', '#F5A524'] as Gradient,
+  dangerGradient: ['#FF6B72', '#FF5A61', '#E11D48'] as Gradient,
 };
 
 /** `light` is the palette for everyday screens, `dark` for live video; `appearance` says which one everyday screens look like. */
@@ -196,12 +216,12 @@ export function brandPalettes(theme: Brand['theme']): Preset {
   if (!p || !/^#[0-9A-Fa-f]{6}$/.test(p)) return base;
   const night = shade(p, 0.55);
   // On a dark palette the brand colour is lightened so near-black text on it stays readable.
-  const onDark = (pal: Palette): Palette => ({ ...pal, primary: night, violet: night, accent: night, gradient: [shade(p, 0.35), shade(p, 0.45), night], glow: `${night}59` });
+  const onDark = (pal: Palette): Palette => ({ ...pal, primary: night, violet: night, accent: night, gradient: [shade(p, 0.35), shade(p, 0.45), night], accentGradient: [shade(p, 0.35), shade(p, 0.45), night], glow: `${night}59` });
   return {
     appearance: base.appearance,
     light: base.appearance === 'dark'
       ? onDark(base.light)
-      : { ...base.light, primary: p, violet: p, violetText: shade(p, -0.3), violetBorder: shade(p, 0.7), violetSurface: shade(p, 0.93), gradient: [shade(p, -0.2), p, shade(p, 0.12)], glow: `${p}47` },
+      : { ...base.light, primary: p, violet: p, violetText: shade(p, -0.3), violetBorder: shade(p, 0.7), violetSurface: shade(p, 0.93), gradient: [shade(p, -0.2), p, shade(p, 0.12)], accentGradient: [shade(p, -0.2), p, shade(p, 0.2)], glow: `${p}47` },
     dark: onDark(base.dark),
   };
 }

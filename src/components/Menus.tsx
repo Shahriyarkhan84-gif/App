@@ -6,7 +6,7 @@ import { Animated, Modal, Platform, Pressable, ScrollView, StyleSheet, View, use
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Pop, PressScale } from '@/components/Motion';
-import { Button, Sheet, Text, Wordmark, type IconName } from '@/components/ui';
+import { Button, GlassBlur, Sheet, Text, Wordmark, type IconName } from '@/components/ui';
 import { brand, U } from '@/lib/brand';
 import { SIDEBAR_WIDTH, useIsDesktop } from '@/lib/layout';
 import { useI18n } from '@/lib/i18n';
@@ -198,9 +198,11 @@ export function TabBarGlass() {
       shadowColor: '#0B0F14', shadowOpacity: 0.12, shadowRadius: 22, shadowOffset: { width: 0, height: 10 },
     }}>
       <View style={[
-        { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: DOCK_HEIGHT / 2, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(11,15,20,0.08)', backgroundColor: 'rgba(255,255,255,0.88)' },
+        // iPhone gets a real backdrop blur, so the dock can be more see-through; the web blurs with CSS.
+        { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: DOCK_HEIGHT / 2, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', backgroundColor: Platform.OS === 'ios' ? 'rgba(255,255,255,0.62)' : 'rgba(255,255,255,0.88)' },
         Platform.OS === 'web' ? ({ backdropFilter: 'blur(22px) saturate(170%)', WebkitBackdropFilter: 'blur(22px) saturate(170%)' } as object) : null,
       ]}>
+        {Platform.OS === 'ios' && <GlassBlur intensity={50} />}
         <LinearGradient colors={['rgba(255,255,255,0.6)', 'rgba(255,255,255,0.2)', 'rgba(2,119,189,0.05)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
       </View>
     </View>

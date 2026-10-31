@@ -1,10 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import type { ComponentProps, ReactNode } from 'react';
+import { useState, type ComponentProps, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Modal,
+  Platform,
   Pressable,
   Text as RNText,
   StyleSheet,
@@ -73,6 +75,24 @@ export function SkyBackground({ children, style }: { children: ReactNode; style?
 /** Soft shadow under frosted cards. */
 export const glassShadow: ViewStyle = { shadowColor: '#0C4A6E', shadowOpacity: 0.1, shadowRadius: 24, shadowOffset: { width: 0, height: 10 }, elevation: 2 };
 
+// Glass kit (Figma page "App glass kit"): a frosted fill, a top-down sheen, a bright hairline edge
+// and a soft sky shadow. Lists of cards use the sheen only (cheap); floating chrome (tab dock,
+// sheets) also gets a real backdrop blur where the platform does it natively (iOS, web).
+
+/** The top-down light that makes a surface read as glass. Put it first inside the surface. */
+export function GlassSheen({ radius: r, colors }: { radius: number; colors?: readonly [string, string, string] }) {
+  const { c } = useTheme();
+  return <LinearGradient pointerEvents="none" colors={colors ?? c.glassSheen} locations={[0, 0.55, 1]} style={[StyleSheet.absoluteFill, { borderRadius: r }]} />;
+}
+
+/** Real backdrop blur on iOS and web; Android keeps the frosted tint (its blur needs every screen wrapped in a blur target). */
+export function GlassBlur({ intensity = 40, tint = 'light' }: { intensity?: number; tint?: 'light' | 'dark' }) {
+  if (Platform.OS === 'android') return null;
+  return <BlurView pointerEvents="none" intensity={intensity} tint={tint} style={StyleSheet.absoluteFill} />;
+}
+
+const BUTTON_SHEEN = ['rgba(255,255,255,0.28)', 'rgba(255,255,255,0)', 'rgba(255,255,255,0)'] as const;
+
 type ButtonProps = Omit<PressableProps, 'style'> & {
   title: string;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'gold' | 'outline';
@@ -84,11 +104,12 @@ type ButtonProps = Omit<PressableProps, 'style'> & {
 
 export function Button({ title, variant = 'primary', size = 'md', loading, icon, disabled, style, ...rest }: ButtonProps) {
   const { c, radius } = useTheme();
-  const bg = { primary: c.primary, secondary: c.surfaceRaised, ghost: 'transparent', danger: c.danger, gold: c.gold, outline: 'transparent' }[variant];
+  const bg = { primary: c.primary, secondary: c.glassFill, ghost: 'transparent', danger: c.danger, gold: c.gold, outline: 'transparent' }[variant];
+  const fill = variant === 'primary' ? c.gradient : variant === 'gold' ? c.goldGradient : variant === 'danger' ? c.dangerGradient : null;
   const fg = {
     primary: c.primaryText, danger: c.primaryText, gold: c.onGold, secondary: c.text, ghost: c.textMuted, outline: c.violetText,
   }[variant];
-  const border = variant === 'secondary' ? c.violetBorder : variant === 'outline' ? c.violetBorder : 'transparent';
+  const border = variant === 'secondary' ? c.glassEdge : variant === 'outline' ? c.violetBorder : 'transparent';
   const button = (
     <PressScale
       accessibilityRole="button"
@@ -100,7 +121,7 @@ export function Button({ title, variant = 'primary', size = 'md', loading, icon,
           minHeight: size === 'md' ? 52 : 40,
           paddingHorizontal: size === 'md' ? 22 : 16,
           borderRadius: radius.pill,
-          backgroundColor: variant === 'primary' ? 'transparent' : bg,
+          backgroundColor: fill ? 'transparent' : bg,
           alignItems: 'center',
           justifyContent: 'center',
           flexDirection: 'row',
@@ -114,9 +135,9 @@ export function Button({ title, variant = 'primary', size = 'md', loading, icon,
       ]}
       {...rest}
     >
-      {variant === 'primary' && (
-        <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-      )}
+      {fill && <LinearGradient colors={fill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />}
+      {fill && <GlassSheen radius={radius.pill} colors={BUTTON_SHEEN} />}
+      {variant === 'secondary' && <GlassSheen radius={radius.pill} />}
       {loading ? <ActivityIndicator color={fg} /> : icon}
       {!loading && <Text variant="label" color={fg} style={{ fontSize: size === 'md' ? 16 : 14 }}>{title}</Text>}
     </PressScale>
@@ -142,18 +163,24 @@ export function IconButton({ icon, label, onPress, color, badge, bg }: { icon: I
       accessibilityLabel={label}
       scaleTo={0.9}
       haptic
-      style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: bg ?? c.surfaceRaised, alignItems: 'center', justifyContent: 'center' }}
+      style={[
+        { width: 44, height: 44, borderRadius: 22, backgroundColor: bg ?? c.glassFill, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: bg ? 'rgba(255,255,255,0.22)' : c.glassEdge },
+        bg ? null : { shadowColor: '#0C4A6E', shadowOpacity: 0.1, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } },
+      ]}
     >
+      {!bg && <GlassSheen radius={22} />}
       <Ionicons name={icon} size={20} color={color ?? c.text} />
-      {badge && <View style={{ position: 'absolute', top: 10, right: 11, width: 8, height: 8, borderRadius: 4, backgroundColor: c.primary }} />}
+      {badge && <View style={{ position: 'absolute', top: 9, right: 10, width: 9, height: 9, borderRadius: 5, backgroundColor: c.live, borderWidth: 1.5, borderColor: '#FFFFFF' }} />}
     </PressScale>
   );
 }
 
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const { c, radius } = useTheme();
+  const r = (StyleSheet.flatten(style)?.borderRadius as number | undefined) ?? radius[24];
   return (
-    <View style={[{ backgroundColor: c.surface, borderRadius: radius[24], borderWidth: 1, borderColor: c.glassBorder, padding: 16, gap: 8 }, glassShadow, style]}>
+    <View style={[{ backgroundColor: c.glassFill, borderRadius: radius[24], borderWidth: 1, borderColor: c.glassEdge, padding: 16, gap: 8 }, glassShadow, style]}>
+      <GlassSheen radius={r} />
       {children}
     </View>
   );
@@ -191,11 +218,14 @@ export function Chip({ label, selected, onPress }: { label: string; selected?: b
         justifyContent: 'center',
         paddingHorizontal: 16,
         borderRadius: radius.pill,
-        backgroundColor: selected ? c.primary : c.surface,
+        backgroundColor: selected ? c.primary : c.glassFill,
         borderWidth: 1,
-        borderColor: selected ? c.primary : c.glassBorder,
+        borderColor: selected ? 'transparent' : c.glassEdge,
       }}
     >
+      {selected
+        ? <LinearGradient colors={c.accentGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />
+        : <GlassSheen radius={radius.pill} />}
       <Text variant="label" color={selected ? c.primaryText : c.textMuted} style={{ fontWeight: selected ? '700' : '500' }}>{label}</Text>
     </PressScale>
   );
@@ -205,7 +235,8 @@ export function Chip({ label, selected, onPress }: { label: string; selected?: b
 export function Segmented<T extends string>({ options, value, onChange }: { options: readonly { id: T; label: string }[]; value: T; onChange: (id: T) => void }) {
   const { c, radius } = useTheme();
   return (
-    <View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: 6, padding: 4, borderRadius: radius.pill, backgroundColor: c.surface, borderWidth: 1, borderColor: c.glassBorder }}>
+    <View accessibilityRole="tablist" style={{ flexDirection: 'row', gap: 6, padding: 4, borderRadius: radius.pill, backgroundColor: c.glassFill, borderWidth: 1, borderColor: c.glassEdge }}>
+      <GlassSheen radius={radius.pill} />
       {options.map((o) => {
         const on = o.id === value;
         return (
@@ -214,8 +245,9 @@ export function Segmented<T extends string>({ options, value, onChange }: { opti
             onPress={() => onChange(o.id)}
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
-            style={{ flex: 1, minHeight: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? c.primary : 'transparent' }}
+            style={{ flex: 1, minHeight: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' }}
           >
+            {on && <LinearGradient colors={c.accentGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />}
             <Text variant="label" color={on ? c.primaryText : c.textMuted} style={{ fontSize: 13 }}>{o.label}</Text>
           </Pressable>
         );
@@ -251,10 +283,10 @@ export function LiveBadge({ viewers }: { viewers?: number }) {
   const { c } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-      <View style={{ borderRadius: 6, backgroundColor: c.live, paddingHorizontal: 8, paddingVertical: 3, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+      <LinearGradient colors={['#F43F5E', c.live]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 7, paddingHorizontal: 8, paddingVertical: 3, flexDirection: 'row', alignItems: 'center', gap: 5 }}>
         <Pulse min={0.6} max={1.15} period={1100}><View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#FFFFFF' }} /></Pulse>
         <Text variant="caption" color="#FFFFFF" style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.6 }}>LIVE</Text>
-      </View>
+      </LinearGradient>
       {viewers !== undefined && <ViewerCount count={viewers} />}
     </View>
   );
@@ -262,7 +294,7 @@ export function LiveBadge({ viewers }: { viewers?: number }) {
 
 export function ViewerCount({ count }: { count: number }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }} accessibilityLabel={`${count} watching`}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(6,24,38,0.5)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 7 }} accessibilityLabel={`${count} watching`}>
       <Ionicons name="eye-outline" size={13} color="#fff" />
       <Text variant="caption" color="#fff">{compactNumber(count)}</Text>
     </View>
@@ -273,13 +305,16 @@ export function ViewerCount({ count }: { count: number }) {
 export function HostBadge({ small }: { small?: boolean }) {
   const { c } = useTheme();
   return (
-    <View
+    <LinearGradient
+      colors={c.accentGradient}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
       accessibilityLabel="Verified host"
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: c.primary, borderRadius: 6, paddingHorizontal: small ? 5 : 8, paddingVertical: small ? 1 : 3 }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: 7, paddingHorizontal: small ? 5 : 8, paddingVertical: small ? 1 : 3 }}
     >
       <Ionicons name="shield-checkmark" size={small ? 10 : 12} color={c.primaryText} />
       <Text variant="caption" color={c.primaryText} style={{ fontSize: small ? 10 : 11, fontWeight: '700' }}>Host</Text>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -287,13 +322,16 @@ export function HostBadge({ small }: { small?: boolean }) {
 export function AgencyOwnerBadge({ small }: { small?: boolean }) {
   const { c } = useTheme();
   return (
-    <View
+    <LinearGradient
+      colors={c.goldGradient}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
       accessibilityLabel="Agency owner"
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: c.gold, borderRadius: 6, paddingHorizontal: small ? 5 : 8, paddingVertical: small ? 1 : 3 }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: 7, paddingHorizontal: small ? 5 : 8, paddingVertical: small ? 1 : 3 }}
     >
       <Ionicons name="business" size={small ? 10 : 12} color={c.onGold} />
       <Text variant="caption" color={c.onGold} style={{ fontSize: small ? 10 : 11, fontWeight: '700' }}>Agency owner</Text>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -334,8 +372,9 @@ export function compactNumber(n: number) {
   return String(n);
 }
 
-export function Input({ label, error, style, ...props }: TextInputProps & { label?: string; error?: string | null }) {
+export function Input({ label, error, style, onFocus, onBlur, ...props }: TextInputProps & { label?: string; error?: string | null }) {
   const { c, radius, type } = useTheme();
+  const [focused, setFocused] = useState(false);
   return (
     <View style={{ gap: 6 }}>
       {label && <Text variant="bodySmall" muted style={{ fontWeight: '500' }}>{label}</Text>}
@@ -344,9 +383,12 @@ export function Input({ label, error, style, ...props }: TextInputProps & { labe
         placeholderTextColor={c.textFaint}
         style={[
           type.body as TextStyle,
-          { fontFamily: fonts.regular, backgroundColor: c.surfaceRaised, color: c.text, borderColor: error ? c.danger : c.violetBorder, borderWidth: 1, borderRadius: radius[12] + 2, paddingHorizontal: 16, minHeight: 52 },
+          { fontFamily: fonts.regular, backgroundColor: c.surfaceRaised, color: c.text, borderColor: error ? c.danger : focused ? c.primary : c.violetBorder, borderWidth: 1, borderRadius: radius[12] + 2, paddingHorizontal: 16, minHeight: 52 },
+          focused && !error ? { shadowColor: c.primary, shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } } : null,
           style,
         ]}
+        onFocus={(e) => { setFocused(true); onFocus?.(e); }}
+        onBlur={(e) => { setFocused(false); onBlur?.(e); }}
         {...props}
       />
       {error && <Text variant="bodySmall" color={c.danger}>{error}</Text>}
@@ -377,12 +419,17 @@ export function ListRow({ icon, label, onPress, color, last, value }: { icon: Ic
 /** Bottom sheet built on Modal (no extra native deps). */
 /** `tone="live"` gives the dark navy sheet used over live video (gifts). */
 export function Sheet({ visible, onClose, title, children, tone = 'light' }: { visible: boolean; onClose: () => void; title?: string; children: ReactNode; tone?: 'light' | 'live' }) {
-  const { c: light, radius } = useTheme();
+  const { c: light, radius, scheme } = useTheme();
   const c = tone === 'live' ? liveColors : light;
+  // Frosted only where the backdrop blur exists (iOS, web); the dark Midnight preset gets dark frost.
+  const frost = tone === 'light' && Platform.OS !== 'android';
+  const frostFill = scheme === 'dark' ? 'rgba(20,20,24,0.78)' : 'rgba(255,255,255,0.78)';
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={{ flex: 1, backgroundColor: c.overlay }} onPress={onClose} accessibilityLabel="Close" />
-      <SafeAreaView edges={['bottom']} style={{ backgroundColor: tone === 'live' ? c.surface : c.tabBar, borderTopLeftRadius: radius[24] + 4, borderTopRightRadius: radius[24] + 4, borderWidth: tone === 'live' ? 1 : 0, borderColor: c.border, padding: 20, gap: 12, maxHeight: '80%' }}>
+      <SafeAreaView edges={['bottom']} style={{ backgroundColor: tone === 'live' ? c.surface : frost ? frostFill : c.tabBar, borderTopLeftRadius: radius[24] + 4, borderTopRightRadius: radius[24] + 4, borderWidth: 1, borderColor: tone === 'live' ? c.border : light.glassEdge, padding: 20, gap: 12, maxHeight: '80%', overflow: 'hidden' }}>
+        {frost && <GlassBlur intensity={60} tint={scheme === 'dark' ? 'dark' : 'light'} />}
+        {tone === 'light' && <GlassSheen radius={radius[24] + 4} />}
         <View style={{ alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: c.border }} />
         {title && <Text variant="h2" color={c.text}>{title}</Text>}
         {children}

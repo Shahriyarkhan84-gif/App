@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.0 — Glass components (needs app build 1.2.0)
+
+- New Figma page **App glass kit**: buttons (Primary, Glass, Gold, Danger, Ghost × md/sm), icon buttons, chips, segmented control, inputs (default / focus / error), toggles, LIVE / viewers / Host / Agency owner / balance badges, card, list row + group, room card, diamond pack tiles, gift tiles, floating tab dock, bottom sheet, avatar ring, 16 icons, plus Wallet and Me screens built only from the kit.
+- The app's shared components (`src/components/ui.tsx`) follow it: frosted fill, top-down sheen and bright hairline edge on cards, chips, segmented controls, icon buttons and glass buttons; gradient selected states; gradient Gold / Danger buttons and badges; a focus ring on inputs.
+- Real backdrop blur (`expo-blur`) on the tab dock and bottom sheets on iPhone (and web, as before for the dock). Android keeps the frosted tint: its blur needs every screen wrapped in a blur target and costs performance on older phones.
+- New theme tokens: `glassFill`, `glassSheen`, `glassEdge`, `accentGradient`, `goldGradient`, `dangerGradient` (per preset, so Midnight and white-label brands stay right).
+
 ## 0.11.5 — Fixes from review (payouts, resellers)
 
 - `payouts-send` is reachable (gateway JWT check off, like the other functions); payouts queued with no provider connected go to the owner instead of showing "Sending" forever; batches of 5.
