@@ -3,6 +3,7 @@ import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { Image } from 'expo-image';
 import { Linking, Platform, ScrollView, View } from 'react-native';
 
 import { brand } from '@/lib/brand';
@@ -12,7 +13,7 @@ import { Avatar, Button, Card, Chip, Input, Screen, Text } from '@/components/ui
 import { Alert } from '@/lib/alert';
 import { env } from '@/lib/env';
 import { friendlyError } from '@/lib/errors';
-import { useOffline } from '@/lib/hooks';
+import { useAsync, useOffline } from '@/lib/hooks';
 import { useProfile } from '@/lib/profile';
 import { useSupabase } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
@@ -49,26 +50,11 @@ function EditProfileForm() {
   // Photos go to avatars/<your id>/ (storage policy: own folder only), resized to 512px.
   const changePhoto = async () => {
     if (!profile) return;
-    let picked: ImagePicker.ImagePickerResult;
-    try {
-      picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 1 });
-    } catch {
-      // Older phones ask for photo access; if it was refused, say how to allow it.
-      Alert.alert('Photo access is off', `Allow ${brand.name} to use your photos in your phone's settings, then try again.`, [
-        { text: 'Not now', style: 'cancel' },
-        ...(Platform.OS === 'web' ? [] : [{ text: 'Open settings', onPress: () => void Linking.openSettings() }]),
-      ]);
-      return;
-    }
-    if (picked.canceled || !picked.assets[0]) return;
+    const asset = await pickPhoto([1, 1]);
+    if (!asset) return;
     setUploading(true);
     try {
-      const ref = await ImageManipulator.manipulate(picked.assets[0].uri).resize({ width: 512 }).renderAsync();
-      const out = await ref.saveAsync({ compress: 0.8, format: SaveFormat.JPEG });
-      const body = await (await fetch(out.uri)).arrayBuffer();
-      const path = `${profile.id}/avatar-${Date.now()}.jpg`;
-      const { error: upErr } = await supabase.storage.from('avatars').upload(path, body, { contentType: 'image/jpeg' });
-      if (upErr) throw upErr;
+      const path = await uploadPhoto(supabase, profile.id, asset, 512, 'avatar');
       // The server checks the picture is in your own folder and sets the public address (set_avatar).
       // Until 20261019010000_bug_fixes.sql is applied the function doesn't exist yet: write the
       // address directly as before (that column grant is removed by the same migration).
@@ -116,7 +102,8 @@ function EditProfileForm() {
 
   return (
     <Screen edges={['bottom']}>
-      <ScrollView contentContainerStyle={{ padding: 16, maxWidth: 560, width: '100%', alignSelf: 'center' }}>
+      <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 560, width: '100%', alignSelf: 'center' }}>
+        <ProfilePhotos userId={profile!.id} />
         <Card style={{ padding: 20, gap: 16, borderRadius: 28 }}>
           <View style={{ alignItems: 'center', gap: 8, paddingVertical: 8 }}>
             <PressScale onPress={changePhoto} disabled={uploading || offline} accessibilityRole="button" accessibilityLabel="Change photo" scaleTo={0.95}>
@@ -150,5 +137,106 @@ function EditProfileForm() {
         </Card>
       </ScrollView>
     </Screen>
+  );
+}
+
+type Supabase = ReturnType<typeof useSupabase>;
+
+/** Picks one picture from the library, cropped to `aspect`; null if cancelled or photo access is off. */
+async function pickPhoto(aspect: [number, number]) {
+  let picked: ImagePicker.ImagePickerResult;
+  try {
+    picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect, quality: 1 });
+  } catch {
+    // Older phones ask for photo access; if it was refused, say how to allow it.
+    Alert.alert('Photo access is off', `Allow ${brand.name} to use your photos in your phone's settings, then try again.`, [
+      { text: 'Not now', style: 'cancel' },
+      ...(Platform.OS === 'web' ? [] : [{ text: 'Open settings', onPress: () => void Linking.openSettings() }]),
+    ]);
+    return null;
+  }
+  return picked.canceled ? null : picked.assets[0] ?? null;
+}
+
+/** Resizes to `width`, uploads to avatars/<user>/ and returns the storage path. */
+async function uploadPhoto(supabase: Supabase, userId: string, asset: ImagePicker.ImagePickerAsset, width: number, prefix: string) {
+  const ref = await ImageManipulator.manipulate(asset.uri).resize({ width }).renderAsync();
+  const out = await ref.saveAsync({ compress: 0.8, format: SaveFormat.JPEG });
+  const body = await (await fetch(out.uri)).arrayBuffer();
+  const path = `${userId}/${prefix}-${Date.now()}.jpg`;
+  const { error } = await supabase.storage.from('avatars').upload(path, body, { contentType: 'image/jpeg' });
+  if (error) throw error;
+  return path;
+}
+
+type Photo = { id: number; url: string };
+
+/** Profile photos (up to 6): the first one is the big cover on your profile. Tap one to make it the cover or remove it. */
+function ProfilePhotos({ userId }: { userId: string }) {
+  const supabase = useSupabase();
+  const { c } = useTheme();
+  const offline = useOffline();
+  const [busy, setBusy] = useState(false);
+  // Empty until 20261031020000_social_profile.sql is applied (the table doesn't exist yet).
+  const { data: photos, reload: load } = useAsync(async () => {
+    const { data, error } = await supabase.from('profile_photos').select('id,url').eq('user_id', userId).order('position').order('id');
+    return error ? [] : (data as Photo[]);
+  }, [userId]);
+
+  const run = async (work: () => Promise<unknown>, failTitle: string) => {
+    setBusy(true);
+    try {
+      await work();
+      await load();
+    } catch (e) {
+      Alert.alert(failTitle, friendlyError(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const add = async () => {
+    const asset = await pickPhoto([3, 4]);
+    if (!asset) return;
+    await run(async () => {
+      const path = await uploadPhoto(supabase, userId, asset, 1080, 'photo');
+      const { error } = await supabase.rpc('add_profile_photo', { p_path: path });
+      if (error) throw new Error(error.message);
+    }, 'Could not add photo');
+  };
+  const manage = (p: Photo, i: number) =>
+    Alert.alert('Profile photo', undefined, [
+      ...(i > 0 ? [{ text: 'Make cover', onPress: () => void run(async () => { const { error } = await supabase.rpc('set_cover_photo', { p_id: p.id }); if (error) throw new Error(error.message); }, 'Could not change cover') }] : []),
+      { text: 'Remove', style: 'destructive' as const, onPress: () => void run(async () => { const { error } = await supabase.rpc('remove_profile_photo', { p_id: p.id }); if (error) throw new Error(error.message); }, 'Could not remove photo') },
+      { text: 'Cancel', style: 'cancel' as const },
+    ]);
+
+  const list = photos ?? [];
+  return (
+    <Card style={{ padding: 16, gap: 12, borderRadius: 28 }}>
+      <View style={{ gap: 2 }}>
+        <Text variant="h3">Profile photos</Text>
+        <Text variant="caption" muted>Up to 6. The first one is the big cover on your profile.</Text>
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {list.map((p, i) => (
+          <PressScale key={p.id} onPress={() => manage(p, i)} disabled={busy} scaleTo={0.96} accessibilityRole="button" accessibilityLabel={i === 0 ? 'Cover photo' : `Photo ${i + 1}`}
+            style={{ width: '31.5%', aspectRatio: 3 / 4, borderRadius: 16, overflow: 'hidden', borderWidth: i === 0 ? 2 : 1, borderColor: i === 0 ? c.primary : c.glassEdge }}>
+            <Image source={p.url} contentFit="cover" style={{ width: '100%', height: '100%' }} />
+            {i === 0 && (
+              <View style={{ position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 7, backgroundColor: c.primary }}>
+                <Text variant="caption" color={c.primaryText} style={{ fontSize: 11, fontWeight: '700' }}>Cover</Text>
+              </View>
+            )}
+          </PressScale>
+        ))}
+        {photos && list.length < 6 && (
+          <PressScale onPress={add} disabled={busy || offline} scaleTo={0.96} accessibilityRole="button" accessibilityLabel="Add a photo"
+            style={{ width: '31.5%', aspectRatio: 3 / 4, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: c.violetBorder, backgroundColor: c.glassFill, alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+            <Ionicons name={busy ? 'hourglass-outline' : 'add'} size={26} color={c.primary} />
+            <Text variant="caption" color={c.primary} style={{ fontWeight: '700' }}>{busy ? 'Uploading…' : 'Add photo'}</Text>
+          </PressScale>
+        )}
+      </View>
+    </Card>
   );
 }

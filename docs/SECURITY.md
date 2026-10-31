@@ -32,6 +32,10 @@
   `host-application` is rate-limited (5/day per user), which limits code guessing. Rate limits use Upstash when it is configured and otherwise a Postgres counter (`internal_rate_limit`), so they never silently switch off.
 - Host ID check: Didit checks the document, matches the face on the "holding CNIC" photo against the card, and runs passive liveness on that photo (a gallery, printed or on-screen photo fails it). Auto-approval needs all three Approved; anything else waits for a person.
 
+## Social profile
+
+- Gallery photos only through `add_profile_photo` (same own-folder and file-exists checks as `set_avatar`, max 6). Who visited a profile is never readable; only the count comes back from `profile_card`. A profile shows totals (beans received, diamonds sent, VIP level from diamonds bought), never balances.
+
 ## Financial trust boundary
 
 - Clients have no INSERT/UPDATE on `wallets`, `coin_transactions`, `payments`,

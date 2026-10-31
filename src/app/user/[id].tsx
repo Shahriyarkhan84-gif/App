@@ -2,11 +2,13 @@ import { useAuth } from '@clerk/clerk-expo';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { brand, hasFeature } from '@/lib/brand';
+import { brand, hasFeature, U } from '@/lib/brand';
+import { svipProgress } from '@/lib/svip';
 import { ContributionsCard } from '@/components/Contributions';
 import { FanClubCard } from '@/components/FanClub';
 import { LiveAvatar } from '@/components/FollowingLive';
@@ -36,12 +38,14 @@ export default function UserProfileScreen() {
   const track = useAnalytics();
   const offline = useOffline();
   const [following, setFollowing] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<'videos' | 'replays' | 'about'>('videos');
+  const [tab, setTab] = useState<'profile' | 'videos' | 'replays'>('profile');
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
   const { data, error, loading, reload } = useAsync(async () => {
-    const [profile, host, room, followers, follow, followingList, pin, hideLocation] = await Promise.all([
-      supabase.from('profiles').select('id,user_number,verified_at,owner_verified_at,username,display_name,avatar_url,bio,country,signup_country,language,role,status,status_until,deleted_at,active_frame_id').eq('id', id).maybeSingle(),
+    const [profile, host, room, followers, follow, followingList, pin, hideLocation, card, photos] = await Promise.all([
+      supabase.from('profiles').select('id,user_number,verified_at,owner_verified_at,username,display_name,avatar_url,bio,country,signup_country,language,role,status,status_until,deleted_at,active_frame_id,created_at').eq('id', id).maybeSingle(),
       supabase.from('hosts').select('host_code,total_live_seconds').eq('user_id', id).maybeSingle(),
       supabase.from('rooms').select('id,status,title,viewer_count').eq('host_id', id).maybeSingle(),
       supabase.from('follows').select('*', { count: 'exact', head: true }).eq('followee_id', id),
@@ -49,6 +53,9 @@ export default function UserProfileScreen() {
       supabase.from('follows').select('followee_id', { count: 'exact' }).eq('follower_id', id).limit(1000),
       supabase.from('pinned_profiles').select('user_id').eq('user_id', id).maybeSingle(),
       id === userId ? Promise.resolve(false) : hidesLocation(supabase, id),
+      // Beans, diamonds, VIP, visitors and agency name (null until 20261031020000_social_profile.sql is applied).
+      supabase.rpc('profile_card', { p_user: id }),
+      supabase.from('profile_photos').select('id,url').eq('user_id', id).order('position').order('id'),
     ]);
     if (profile.error) throw profile.error;
     if (!profile.data || (profile.data as { deleted_at?: string | null }).deleted_at) return null; // unknown or removed user
@@ -60,10 +67,16 @@ export default function UserProfileScreen() {
     return {
       profile: profile.data as Profile, host: host.data, room: room.data, followers: followers.count ?? 0, follows: !!follow.data,
       following: followingList.count ?? 0, friends, pinned: !!pin.data, hideLocation,
+      card: (card.error ? null : card.data) as ProfileCardData | null,
+      photos: (photos.error ? [] : photos.data ?? []) as { id: number; url: string }[],
     };
   }, [id, userId], `user:${id}`);
 
   const isMe = id === userId;
+  // Counts one visit per viewer per day (never your own).
+  useEffect(() => {
+    if (id && !isMe) void supabase.rpc('record_profile_view', { p_user: id });
+  }, [id, isMe, supabase]);
   const { isPlatformAdmin } = useProfile();
   const [ownerBusy, setOwnerBusy] = useState(false);
   // Shown at once after a change (the refetch catches up), so buttons never show a stale title.
@@ -139,8 +152,8 @@ export default function UserProfileScreen() {
     ]);
 
   const tabs = [
+    { id: 'profile' as const, label: 'Profile' },
     ...(hasFeature('videos') ? [{ id: 'videos' as const, label: 'Videos' }, { id: 'replays' as const, label: 'Lives' }] : []),
-    { id: 'about' as const, label: 'About' },
   ];
   const activeTab = tabs.some((t) => t.id === tab) ? tab : tabs[0].id;
 
@@ -151,63 +164,104 @@ export default function UserProfileScreen() {
       <StateView state={resolveState({ offline, loading, error, data, onRetry: reload, isEmpty: (d) => d === null, empty: { title: "This account doesn't exist", body: "It may have been deleted." } })}>
         {data && (
           <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
-            {/* Cover: their own photo, blurred, fading into the sky. */}
-            <View style={{ height: insets.top + 150 }}>
-              {data.profile.avatar_url
-                ? <Image source={data.profile.avatar_url} blurRadius={40} contentFit="cover" style={StyleSheet.absoluteFill} />
-                : <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />}
-              <LinearGradient colors={['rgba(12,35,64,0.18)', 'rgba(186,230,253,0.35)', c.sky[0]]} locations={[0, 0.55, 1]} style={[StyleSheet.absoluteFill, { top: 0, bottom: -1 }]} />
-            </View>
-          <View style={{ paddingHorizontal: 16, gap: 16, marginTop: -40, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
-            {/* Social profile: photo, name, counts, actions, then their videos, lives and about. */}
-            <Card style={{ paddingTop: 0, paddingHorizontal: 16, paddingBottom: 18, gap: 8, borderRadius: 28, alignItems: 'center', marginTop: 54 }}>
-              <View style={{ marginTop: -54, alignItems: 'center' }}>
+            {/* Cover: their own photos, full width; thumbnails switch between them, visitors on the right. */}
+            {(() => {
+              const pics = data.photos.length ? data.photos.map((p) => p.url) : data.profile.avatar_url ? [data.profile.avatar_url] : [];
+              const shown = pics[Math.min(photoIndex, pics.length - 1)];
+              const coverH = Math.min(width, 640) * 1.05;
+              return (
+                <View style={{ height: coverH }}>
+                  {shown
+                    ? <Image source={shown} contentFit="cover" transition={150} style={StyleSheet.absoluteFill} accessibilityLabel={`${displayName(data.profile)}'s photo`} />
+                    : <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />}
+                  <LinearGradient colors={['rgba(6,24,38,0.35)', 'rgba(6,24,38,0)', 'rgba(6,24,38,0)', c.sky[0]]} locations={[0, 0.22, 0.72, 1]} style={StyleSheet.absoluteFill} pointerEvents="none" />
+                  <View style={{ position: 'absolute', left: 16, right: 16, bottom: 56, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                    <Row gap={8}>
+                      {pics.length > 1 && pics.map((u, i) => (
+                        <PressScale key={u} onPress={() => setPhotoIndex(i)} scaleTo={0.92} accessibilityRole="button" accessibilityLabel={`Photo ${i + 1} of ${pics.length}`}
+                          style={{ width: 46, height: 46, borderRadius: 12, overflow: 'hidden', borderWidth: 2, borderColor: i === photoIndex ? '#FFFFFF' : 'rgba(255,255,255,0.35)' }}>
+                          <Image source={u} contentFit="cover" style={{ width: '100%', height: '100%' }} />
+                        </PressScale>
+                      ))}
+                    </Row>
+                    {data.card && (
+                      <Row gap={6} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(6,24,38,0.45)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)' }}>
+                        <Ionicons name="eye-outline" size={15} color="#FFFFFF" />
+                        <Text variant="caption" color="#FFFFFF" style={{ fontWeight: '700' }}>{compactNumber(data.card.visitors)} visitors</Text>
+                      </Row>
+                    )}
+                  </View>
+                </View>
+              );
+            })()}
+          <View style={{ paddingHorizontal: 16, gap: 14, marginTop: -40, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
+            {/* Name, ID, numbers, level and the two actions on one glass card. */}
+            <Card style={{ padding: 18, gap: 10, borderRadius: 28 }}>
+              <Row gap={10}>
                 {data.room?.status === 'live' ? (
-                  <PressScale
-                    scaleTo={0.94}
-                    onPress={() => router.push({ pathname: '/live/[roomId]', params: { roomId: data.room!.id } })}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${displayName(data.profile)} is live, ${data.room.viewer_count} watching. Watch`}
-                  >
-                    <LiveAvatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={108} />
+                  <PressScale scaleTo={0.94} onPress={() => router.push({ pathname: '/live/[roomId]', params: { roomId: data.room!.id } })}
+                    accessibilityRole="button" accessibilityLabel={`${displayName(data.profile)} is live, ${data.room.viewer_count} watching. Watch`}>
+                    <LiveAvatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={52} />
                   </PressScale>
                 ) : (
-                  <FramedAvatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={100} ring={c.surfaceRaised} frameId={data.profile.active_frame_id} />
+                  <FramedAvatar uri={data.profile.avatar_url} name={displayName(data.profile)} size={52} ring={c.surfaceRaised} frameId={data.profile.active_frame_id} />
                 )}
-              </View>
-              <Row gap={6}>
-                <Text variant="h1" numberOfLines={1} style={{ maxWidth: 260 }}>{displayName(data.profile)}</Text>
-                <RoleBadges profile={data.profile} />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Row gap={6}>
+                    <Text variant="h1" numberOfLines={1} style={{ flexShrink: 1 }}>{displayName(data.profile)}</Text>
+                    <RoleBadges profile={data.profile} />
+                  </Row>
+                  <Text variant="caption" faint selectable numberOfLines={1}>ID {data.profile.user_number}{data.profile.username ? ` · @${data.profile.username}` : ''}</Text>
+                </View>
               </Row>
-              <Text variant="caption" faint selectable style={{ textAlign: 'center' }}>
-                ID {data.profile.user_number}{data.profile.username ? ` · @${data.profile.username}` : ''}{data.profile.signup_country && !data.hideLocation ? ` · ${flag(data.profile.signup_country)} ${countryName(data.profile.signup_country)}` : ''}
-              </Text>
-              {data.profile.bio && <Text muted style={{ textAlign: 'center' }}>{data.profile.bio}</Text>}
-              <Row gap={0} style={{ alignSelf: 'stretch', paddingVertical: 6 }}>
+              {data.card && (
+                <Row gap={6} style={{ flexWrap: 'wrap' }}>
+                  {svipProgress(data.card.diamonds_bought).current && <LevelChip label={`VIP ${svipProgress(data.card.diamonds_bought).current!.level}`} colors={svipProgress(data.card.diamonds_bought).current!.colors} icon="diamond" />}
+                  {data.card.is_host && <LevelChip label="Host" colors={c.accentGradient} icon="mic" />}
+                </Row>
+              )}
+              <Row gap={0} style={{ paddingVertical: 4 }}>
                 {[
                   // Moves with the Follow button at once, before the refetch.
-                  { label: 'Followers', value: data.followers + (isFollowing === data.follows ? 0 : isFollowing ? 1 : -1) },
+                  { label: 'Fans', value: data.followers + (isFollowing === data.follows ? 0 : isFollowing ? 1 : -1) },
                   { label: 'Following', value: data.following },
-                  { label: 'Friends', value: data.friends },
-                ].map((s, i) => (
-                  <View key={s.label} style={{ flex: 1, alignItems: 'center', borderLeftWidth: i ? 1 : 0, borderLeftColor: c.divider }}>
-                    <Text variant="h2">{compactNumber(s.value)}</Text>
-                    <Text variant="caption" muted>{s.label}</Text>
+                  ...(data.card ? [
+                    ...(data.card.is_host ? [{ label: U.Earn, value: data.card.beans }] : []),
+                    { label: U.Spend, value: data.card.diamonds_sent },
+                  ] : [{ label: 'Friends', value: data.friends }]),
+                ].map((st, i) => (
+                  <View key={st.label} style={{ flex: 1, alignItems: 'center', borderLeftWidth: i ? 1 : 0, borderLeftColor: c.divider }}>
+                    <Text variant="h2">{compactNumber(st.value)}</Text>
+                    <Text variant="caption" muted numberOfLines={1}>{st.label}</Text>
                   </View>
                 ))}
               </Row>
               {isMe ? (
-                <Row style={{ alignSelf: 'stretch' }}>
+                <Row>
                   <Button title="Edit profile" variant="secondary" onPress={() => router.push('/profile-edit')} style={{ flex: 1 }} />
                   <Button title="Share" variant="secondary" onPress={shareProfile} style={{ flex: 1 }} />
                 </Row>
               ) : (
-                <Row style={{ alignSelf: 'stretch' }}>
+                <Row>
                   <Button title={isFollowing ? 'Following' : 'Follow'} variant={isFollowing ? 'secondary' : 'primary'} onPress={toggleFollow} style={{ flex: 1.2 }} />
                   <Button title="Message" variant="secondary" onPress={() => router.push({ pathname: '/chat/[userId]', params: { userId: id } })} style={{ flex: 1 }} />
                 </Row>
               )}
             </Card>
+
+            {/* The host's agency (by name) and their top gifters. */}
+            {data.card?.agency && (
+              <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}>
+                <LinearGradient colors={c.goldGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="business" size={20} color={c.onGold} />
+                </LinearGradient>
+                <View style={{ flex: 1 }}>
+                  <Text variant="label" numberOfLines={1}>{data.card.agency}</Text>
+                  <Text variant="caption" muted>Agency</Text>
+                </View>
+              </Card>
+            )}
+            {data.host && <ContributionsCard hostId={id!} />}
 
             {data.room?.status === 'live' && (
               <PressScale onPress={() => router.push({ pathname: '/live/[roomId]', params: { roomId: data.room!.id } })} accessibilityRole="button" scaleTo={0.98}>
@@ -253,10 +307,18 @@ export default function UserProfileScreen() {
             {tabs.length > 1 && <Segmented options={tabs} value={activeTab} onChange={setTab} />}
             {activeTab === 'videos' && <ProfileMedia userId={id!} kind="upload" isMe={isMe} />}
             {activeTab === 'replays' && <ProfileMedia userId={id!} kind="live_recording" isMe={isMe} />}
-            {activeTab === 'about' && (
+            {activeTab === 'profile' && (
               <View style={{ gap: 12 }}>
+                {data.profile.bio && <Card><Text variant="label">About</Text><Text muted>{data.profile.bio}</Text></Card>}
+                <View style={{ gap: 8 }}>
+                  <Text variant="h3">Basic information</Text>
+                  <Row gap={8} style={{ flexWrap: 'wrap' }}>
+                    {data.profile.signup_country && !data.hideLocation && <InfoChip icon="location-outline" label={`${countryName(data.profile.signup_country)} ${flag(data.profile.signup_country)}`} />}
+                    {data.profile.language && <InfoChip icon="language-outline" label={languageName(data.profile.language)} />}
+                    {data.profile.created_at && <InfoChip icon="calendar-outline" label={`Joined ${new Date(data.profile.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}`} />}
+                  </Row>
+                </View>
                 {data.host && <FanClubCard hostId={id} isFollowing={isFollowing} />}
-                {data.host && <ContributionsCard hostId={id} />}
               </View>
             )}
           </View>
@@ -277,4 +339,32 @@ export default function UserProfileScreen() {
       </View>
     </Screen>
   );
+}
+
+type ProfileCardData = { fans: number; following: number; friends: number; beans: number; diamonds_sent: number; diamonds_bought: number; visitors: number; is_host: boolean; agency: string | null };
+
+/** Small gradient chip for levels (VIP, Host). */
+function LevelChip({ label, colors, icon }: { label: string; colors: readonly [string, string, ...string[]]; icon: 'diamond' | 'mic' }) {
+  return (
+    <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999 }}>
+      <Ionicons name={icon} size={12} color="#FFFFFF" />
+      <Text variant="caption" color="#FFFFFF" style={{ fontWeight: '700' }}>{label}</Text>
+    </LinearGradient>
+  );
+}
+
+/** Glass pill with an icon (Basic information). */
+function InfoChip({ icon, label }: { icon: 'location-outline' | 'language-outline' | 'calendar-outline'; label: string }) {
+  const { c } = useTheme();
+  return (
+    <Row gap={8} style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999, backgroundColor: c.glassFill, borderWidth: 1, borderColor: c.glassEdge }}>
+      <Ionicons name={icon} size={16} color={c.textMuted} />
+      <Text>{label}</Text>
+    </Row>
+  );
+}
+
+const LANGUAGES: Record<string, string> = { en: 'English', ur: 'اردو Urdu', hi: 'Hindi', bn: 'Bangla', ar: 'Arabic', id: 'Indonesian', ms: 'Malay', tr: 'Turkish', ne: 'Nepali', tl: 'Filipino' };
+function languageName(code: string) {
+  return LANGUAGES[code.slice(0, 2).toLowerCase()] ?? code.toUpperCase();
 }

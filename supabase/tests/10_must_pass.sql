@@ -1442,4 +1442,44 @@ select tests.fails($$select public.remove_reseller((select a from rs))$$, '%not_
 reset role;
 drop table rs;
 
+
+-- Social profile: gallery only through the RPCs (own folder, max 6), visitors counted once per
+-- viewer per day and never readable, and the profile card shows the host's agency by name.
+insert into public.profiles (id, username, signup_country) values ('sp_host', 'sp_host', 'PK'), ('sp_fan', 'sp_fan', 'PK'), ('sp_fan2', 'sp_fan2', 'PK');
+insert into public.agencies (name, status, code) values ('Zentro', 'active', '6402');
+insert into public.hosts (user_id, agency_id) values ('sp_host', (select id from public.agencies where name = 'Zentro'));
+update public.platform_settings set value = value || '{"avatars_base": "https://cdn.test/avatars"}' where key = 'media';
+select set_config('request.jwt.claims', '{"sub":"sp_host"}', false);
+set role authenticated;
+select tests.fails($$insert into public.profile_photos (user_id, path, url) values ('sp_host', 'sp_host/a.jpg', 'https://evil.example/a.jpg')$$, '%permission denied%', 'clients cannot write gallery rows');
+select tests.fails($$select public.add_profile_photo('sp_fan/a.jpg')$$, '%invalid_photo%', 'photos only from your own folder');
+select public.add_profile_photo('sp_host/p' || g || '.jpg') from generate_series(1, 6) g;
+select tests.fails($$select public.add_profile_photo('sp_host/p7.jpg')$$, '%photo_limit%', 'at most 6 photos');
+select public.set_cover_photo((select id from public.profile_photos where path = 'sp_host/p4.jpg'));
+select tests.ok((select path from public.profile_photos where user_id = 'sp_host' order by position, id limit 1) = 'sp_host/p4.jpg', 'the chosen photo becomes the cover');
+select tests.ok((public.profile_card('sp_host') ->> 'agency') = 'Zentro', 'the profile shows the host''s agency by name');
+select public.record_profile_view('sp_host');
+select tests.ok((public.profile_card('sp_host') ->> 'visitors')::int = 0, 'your own visits do not count');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"sp_fan"}', false);
+set role authenticated;
+select tests.fails($$select public.remove_profile_photo((select id from public.profile_photos where path = 'sp_host/p1.jpg'))$$, '%not_found%', 'you cannot remove someone else''s photo');
+select public.record_profile_view('sp_host');
+select public.record_profile_view('sp_host');
+select tests.fails($$select * from public.profile_views$$, '%permission denied%', 'who visited is private');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"sp_fan2"}', false);
+set role authenticated;
+select public.record_profile_view('sp_host');
+select tests.ok((public.profile_card('sp_host') ->> 'visitors')::int = 2, 'one visit per viewer per day');
+select tests.ok(public.profile_card('nobody_here') is null, 'unknown profiles have no card');
+reset role;
+update public.agencies set status = 'suspended' where name = 'Zentro';
+select set_config('request.jwt.claims', '{"sub":"sp_fan"}', false);
+set role authenticated;
+select tests.ok((public.profile_card('sp_host') ->> 'agency') is null, 'a suspended agency is not shown');
+reset role;
+update public.profiles set deleted_at = now() where id = 'sp_host';
+select tests.ok(not exists (select 1 from public.profile_photos where user_id = 'sp_host') and not exists (select 1 from public.profile_views where user_id = 'sp_host'), 'a deleted account''s photos and visits are removed');
+
 drop schema tests cascade;

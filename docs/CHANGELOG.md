@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.12.4 — Social profile
+
+- **Photo gallery**: up to 6 profile photos (Edit profile → Profile photos; tap one to make it the cover or remove it). The first fills the top of the profile; thumbnails switch between them.
+- **Visitors**: "608 visitors" on the cover (one visit per person per day; who visited stays private).
+- Numbers: **Fans · Following · Beans** (received, hosts) **· Diamonds** (sent), plus **VIP** level and **Host** chips.
+- **Agency card** with the host's agency name (e.g. "Zentro"), and the **Contributions** card (top gifters) under the profile card.
+- Tabs **Profile · Videos · Lives**; Profile shows the bio and **Basic information** (country unless hidden, language, joined date) and the fan club.
+- New `20261031020000_social_profile.sql` with must-pass tests. Figma: App glass kit → Public profile.
+
 ## 0.12.3 — Public profile in glass
 
 - The profile others see: their own photo, blurred, as the cover fading into the sky; floating glass Back, Share and More (or Edit, on your own) buttons instead of the system header.

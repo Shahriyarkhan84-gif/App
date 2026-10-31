@@ -22,6 +22,8 @@ export type Profile = {
   status_until: string | null;
   /** Profile frame being worn (bought with coins; see frame_catalog). */
   active_frame_id?: string | null;
+  /** When the account was created (shown as "Joined" on the profile). */
+  created_at?: string;
   /** Settings → Privacy: who may start a direct message (enforced by send_direct_message). */
   who_can_message?: 'everyone' | 'followers' | 'nobody';
   /** Settings → Privacy: keep this person's lives out of other people's Nearby feed. */
