@@ -300,7 +300,7 @@ export default function CreateScreen() {
                 return (
                   <Pressable key={m.key} onPress={() => void changeMode(m.key)} disabled={busy || on} accessibilityRole="tab" accessibilityState={{ selected: on }} hitSlop={8} style={{ alignItems: 'center', gap: 6, minHeight: 44, justifyContent: 'center' }}>
                     <Text color={on ? '#fff' : 'rgba(255,255,255,0.55)'} style={{ fontWeight: '700', fontSize: on ? 17 : 15 }}>{m.label}</Text>
-                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: on ? '#fff' : 'transparent' }} />
+                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: on ? lc.primary : 'transparent' }} />
                   </Pressable>
                 );
               })}

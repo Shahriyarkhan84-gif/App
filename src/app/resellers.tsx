@@ -1,8 +1,11 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Linking from 'expo-linking';
 import { ScrollView, View } from 'react-native';
 
+import { PressScale } from '@/components/Motion';
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Button, Card, Row, Screen, Text, VerifiedTick } from '@/components/ui';
+import { Avatar, Card, Row, Screen, Text, VerifiedTick } from '@/components/ui';
 import { Alert } from '@/lib/alert';
 import { U } from '@/lib/brand';
 import { showResellers } from '@/lib/env';
@@ -76,11 +79,19 @@ export default function ResellersScreen() {
                   </Row>
                   <Text variant="caption" muted>ID {r.user_number}{r.note ? ` · ${r.note}` : ''}</Text>
                 </View>
-                <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: c.violetSurface }}>
+                <View style={{ paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12, backgroundColor: c.violetSurface, borderWidth: 1, borderColor: c.violetBorder }}>
                   <Text variant="caption" color={c.violetText} style={{ fontWeight: '700' }}>{r.discount_pct}% off</Text>
                 </View>
               </Row>
-              <Button title="Message on WhatsApp" icon="logo-whatsapp" disabled={offline} onPress={() => contact(r)} />
+              {/* WhatsApp green, so it reads as "opens WhatsApp". */}
+              <PressScale onPress={() => contact(r)} disabled={offline} accessibilityRole="button" accessibilityLabel={`Message ${r.display_name} on WhatsApp`} scaleTo={0.98}
+                style={{ borderRadius: 24, overflow: 'hidden', opacity: offline ? 0.5 : 1 }}>
+                <LinearGradient colors={['#25D366', '#14B8A6']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                  style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <Ionicons name="logo-whatsapp" size={20} color="#04210F" />
+                  <Text variant="label" color="#04210F">Message on WhatsApp</Text>
+                </LinearGradient>
+              </PressScale>
             </Card>
           ))}
           <Text variant="caption" faint>

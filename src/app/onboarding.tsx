@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useClerk } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
@@ -86,9 +87,9 @@ export default function OnboardingScreen() {
                 <Button title="Sign out" variant="secondary" onPress={() => void unregisterPush(supabase).then(() => signOut()).then(() => router.replace('/'))} />
               </Card>
             ) : step === 'birthday' ? (
-              <Card style={{ padding: 22, gap: 14, borderRadius: 28 }}>
-                <Ionicons name="calendar-outline" size={30} color={c.primary} />
-                <Text variant="h2" accessibilityRole="header">When is your birthday?</Text>
+              <View style={{ gap: 14 }}>
+                <StepBar step={1} />
+                <Text variant="display" accessibilityRole="header">When is your birthday?</Text>
                 <Text muted>{`${brand.name} is for people 18 and over. Your birthday isn't shown to anyone.`}</Text>
                 <Row gap={10}>
                   <View style={{ flex: 1 }}><Input label="Day" placeholder="DD" keyboardType="number-pad" maxLength={2} value={day} onChangeText={setDay} /></View>
@@ -98,11 +99,11 @@ export default function OnboardingScreen() {
                 <Text variant="caption" faint>You can&apos;t change this later, so check it&apos;s right.</Text>
                 {error && <Text variant="caption" color={c.danger} accessibilityRole="alert">{error}</Text>}
                 <Button title="Continue" onPress={() => void saveBirthday()} loading={busy} disabled={year.length < 4 || !day || !month} />
-              </Card>
+              </View>
             ) : (
-              <Card style={{ padding: 22, gap: 14, borderRadius: 28 }}>
-                <Ionicons name="sparkles-outline" size={30} color={c.primary} />
-                <Text variant="h2" accessibilityRole="header">What do you like to watch?</Text>
+              <View style={{ gap: 14 }}>
+                <StepBar step={2} />
+                <Text variant="display" accessibilityRole="header">What do you love watching?</Text>
                 <Text muted>Pick a few. Lives you&apos;ll like come first on Discover.</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {CATEGORIES.map((cat) => <Chip key={cat} label={categoryLabel(cat)} selected={picked.includes(cat)} onPress={() => toggle(cat)} />)}
@@ -110,11 +111,24 @@ export default function OnboardingScreen() {
                 {error && <Text variant="caption" color={c.danger} accessibilityRole="alert">{error}</Text>}
                 <Button title={picked.length ? `Continue (${picked.length})` : 'Continue'} onPress={() => void finish(true)} loading={busy} disabled={picked.length === 0} />
                 <Button title="Skip for now" variant="ghost" onPress={() => void finish(false)} disabled={busy} />
-              </Card>
+              </View>
             )}
           </FadeIn>
         </ScrollView>
       </SafeAreaView>
     </SkyBackground>
+  );
+}
+
+/** "Step n of 2" over a cyan-to-violet progress bar (Aurora dark onboarding). */
+function StepBar({ step }: { step: 1 | 2 }) {
+  const { c } = useTheme();
+  return (
+    <View style={{ gap: 8 }} accessibilityLabel={`Step ${step} of 2`}>
+      <Text variant="caption" color={c.primary} style={{ fontWeight: '700' }}>Step {step} of 2</Text>
+      <View style={{ height: 6, borderRadius: 3, backgroundColor: c.divider, overflow: 'hidden' }}>
+        <LinearGradient colors={c.accentGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ width: step === 1 ? '50%' : '100%', height: '100%' }} />
+      </View>
+    </View>
   );
 }

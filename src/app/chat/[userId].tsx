@@ -1,12 +1,13 @@
 import { useAuth } from '@clerk/clerk-expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useRef, useState } from 'react';
-import { FlatList, KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
+import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { resolveState, StateView } from '@/components/StateView';
-import { Avatar, Button, Input, Row, Screen, Text } from '@/components/ui';
+import { Avatar, Input, Row, Screen, Text } from '@/components/ui';
 import { Alert, confirmAction } from '@/lib/alert';
 import { rpc } from '@/lib/api';
 import { friendlyError } from '@/lib/errors';
@@ -144,6 +145,7 @@ export default function ChatScreen() {
               return (
                 <Row gap={8} style={{ justifyContent: mine ? 'flex-end' : 'flex-start', marginTop: showAvatar || mine ? 10 : 2 }}>
                   {!mine && (showAvatar ? <Avatar uri={data?.other?.avatar_url} name={displayName(data?.other)} size={26} /> : <View style={{ width: 26 }} />)}
+                  {/* Aurora dark: your messages on the cyan-to-violet gradient, theirs on glass. */}
                   <View
                     style={{
                       maxWidth: '75%',
@@ -155,8 +157,10 @@ export default function ChatScreen() {
                       borderBottomLeftRadius: mine ? radius[20] : 6,
                       paddingHorizontal: 14,
                       paddingVertical: 9,
+                      overflow: 'hidden',
                     }}
                   >
+                    {mine && <LinearGradient colors={c.accentGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />}
                     <Text color={mine ? c.primaryText : c.text}>{item.body}</Text>
                   </View>
                 </Row>
@@ -165,11 +169,16 @@ export default function ChatScreen() {
           />
         </StateView>
         {cantSend && <Text variant="bodySmall" muted style={{ paddingHorizontal: 16, paddingTop: 8 }}>{cantSend}</Text>}
-        <Row style={{ padding: 12 }}>
+        <Row gap={8} style={{ padding: 12 }}>
           <View style={{ flex: 1 }}>
-            <Input editable={!cantSend} value={draft} onChangeText={setDraft} placeholder="Message…" maxLength={1000} onSubmitEditing={send} />
+            <Input editable={!cantSend} value={draft} onChangeText={setDraft} placeholder="Message…" maxLength={1000} onSubmitEditing={send}
+              style={{ borderRadius: 26, backgroundColor: c.glassFill, borderColor: c.glassEdge }} />
           </View>
-          <Button title="Send" onPress={send} loading={sending} disabled={!draft.trim() || offline || !!cantSend} />
+          <Pressable onPress={send} disabled={sending || !draft.trim() || offline || !!cantSend} accessibilityRole="button" accessibilityLabel="Send"
+            style={{ width: 48, height: 48, borderRadius: 24, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', opacity: !draft.trim() || offline || cantSend ? 0.5 : 1 }}>
+            <LinearGradient colors={c.accentGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+            {sending ? <ActivityIndicator color={c.primaryText} /> : <Ionicons name="send" size={19} color={c.primaryText} />}
+          </Pressable>
         </Row>
       </KeyboardAvoidingView>
     </Screen>

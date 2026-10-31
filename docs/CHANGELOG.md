@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.13.1 — Aurora page layouts
+
+Screens follow the Figma page "Aurora · All pages".
+- **Sign in, sign up and reset password:**
+  - A glass back button.
+  - The form sits straight on the background, with no card.
+  - Full-width "Continue with Google/Apple" buttons. On Sign in they come after the email form, under an "or" line.
+- **Onboarding:**
+  - "Step n of 2" with a cyan-to-violet progress bar and big titles. No card.
+- **Chat:**
+  - Your messages sit on the cyan-to-violet gradient.
+  - A round gradient send button, and a glass message field.
+- **Rankings:**
+  - The top 3 stand on the background in glowing rings (gold for 1st).
+  - Glass rows, with amounts in gold. Contributions amounts are gold too.
+- **Events:**
+  - The event running now is a big rose-to-violet card with a LIVE NOW tag and a Join button.
+  - Other events get gradient icon tiles.
+- **Stream ended:** a glowing check over a big centred title.
+- **Earnings and Agency:** the balance and agency code sit on a warm amber-to-violet card with white text.
+- **Resellers:** a WhatsApp-green "Message on WhatsApp" button and an outlined discount tag.
+- **Settings rows:** each row gets a softly tinted icon tile.
+- **Go live:** the selected mode's dot is cyan.
+- **Party rooms:** the LIVE / VOICE / VIDEO tag text is white.
+
 ## 0.13.0 — Aurora dark
 
 - The whole app now uses the chosen **Aurora dark** look (Figma: Page options → option B). A deep night background with cyan, violet and teal glows; frosted glass cards with bright edges; cyan-to-violet buttons with near-black text. It's a new theme preset, `aurora`, now Zynalive's default. Glass & sky and Midnight stay available for other brands.

@@ -57,7 +57,7 @@ export default function ContributionsScreen() {
                       </View>
                       <Text variant="label" numberOfLines={1} style={{ marginTop: 6 }}>{contributorName(r)}</Text>
                       {first && <Text variant="caption" color={c.goldText}>{period === 'overall' ? 'Overall top 1' : 'Top 1'}</Text>}
-                      <Row gap={4}><Coin size={12} /><Text variant="caption" color={c.primary} style={{ fontWeight: '700' }}>{compactNumber(r.coins)}</Text></Row>
+                      <Row gap={4}><Coin size={12} /><Text variant="caption" color={c.goldText} style={{ fontWeight: '700' }}>{compactNumber(r.coins)}</Text></Row>
                       <GrowBar height={first ? 64 : r.rank === 2 ? 44 : 30} delay={350 + r.rank * 100} style={{ alignSelf: 'stretch', borderTopLeftRadius: 12, borderTopRightRadius: 12, backgroundColor: first ? c.gold : c.violetSurface }} />
                     </PressScale>
                   </FadeIn>
@@ -75,7 +75,7 @@ export default function ContributionsScreen() {
                   <Text variant="label" numberOfLines={1}>{contributorName(item)}</Text>
                   <Text variant="caption" faint>ID {item.user_number}</Text>
                 </View>
-                <Row gap={4}><Coin size={14} /><Text variant="label">{compactNumber(item.coins)}</Text></Row>
+                <Row gap={4}><Coin size={14} /><Text variant="label" color={c.goldText}>{compactNumber(item.coins)}</Text></Row>
               </PressScale>
             </FadeIn>
           )}

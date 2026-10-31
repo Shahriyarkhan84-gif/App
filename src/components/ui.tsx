@@ -430,9 +430,13 @@ export function ListRow({ icon, label, onPress, color, last, value }: { icon: Ic
   const { c } = useTheme();
   return (
     <PressScale onPress={onPress} accessibilityRole="button" accessibilityHint={value} scaleTo={0.98}>
-      <Row style={{ minHeight: 52, paddingHorizontal: 16, borderBottomWidth: last ? 0 : 1, borderBottomColor: c.divider }}>
-        <Ionicons name={icon} size={20} color={color ?? c.text} />
-        <Text style={{ flex: 1 }} color={color}>{label}</Text>
+      <Row gap={12} style={{ minHeight: 56, paddingHorizontal: 12, borderBottomWidth: last ? 0 : 1, borderBottomColor: c.divider }}>
+        {/* Aurora dark: a softly tinted icon tile (danger rows keep their own colour). */}
+        <LinearGradient colors={color ? [`${color}22`, `${color}22`] : [c.violetSurface, c.violetBorder]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={{ width: 34, height: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name={icon} size={18} color={color ?? c.primary} />
+        </LinearGradient>
+        <Text style={{ flex: 1, fontWeight: '500' }} color={color}>{label}</Text>
         {value ? <Text variant="caption" muted numberOfLines={1} style={{ maxWidth: 150 }}>{value}</Text> : null}
         <Ionicons name="chevron-forward" size={18} color={c.textFaint} />
       </Row>

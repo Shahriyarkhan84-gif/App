@@ -61,27 +61,27 @@ export default function AgencyPortalScreen() {
             </FadeIn>
 
             <FadeIn delay={60}>
-              {/* Redesign v2: the code on a brand-colour card, white digits. */}
-              <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ gap: 12, padding: 18, borderRadius: 24 }}>
+              {/* Aurora dark: the code on a warm amber-to-violet card, white digits. */}
+              <LinearGradient colors={['#B45309', '#9A3412', '#6D28D9']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ gap: 12, padding: 18, borderRadius: 24 }}>
                 <Row style={{ justifyContent: 'space-between' }}>
-                  <Text variant="label" color={c.primaryText}>Your agency code</Text>
-                  <Row gap={4}><Ionicons name="lock-closed" size={12} color={c.primaryText} /><Text variant="caption" color={c.primaryText}>Permanent</Text></Row>
+                  <Text variant="label" color="#FFFFFF">Your agency code</Text>
+                  <Row gap={4}><Ionicons name="lock-closed" size={12} color="#FFFFFF" /><Text variant="caption" color="#FFFFFF">Permanent</Text></Row>
                 </Row>
                 <View accessible accessibilityLabel={`Agency code ${data.agency.code.split('').join(' ')}`} style={{ flexDirection: 'row', gap: 8, justifyContent: 'center' }}>
                   {data.agency.code.split('').map((d, i) => (
                     <Pop key={`${i}-${d}`} delay={200 + i * 90} from={0.5}>
                       <View style={{ width: 58, height: 68, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' }}>
-                        <Text variant="display" selectable color={c.primaryText} style={{ fontSize: 36, lineHeight: 44 }}>{d}</Text>
+                        <Text variant="display" selectable color="#FFFFFF" style={{ fontSize: 36, lineHeight: 44 }}>{d}</Text>
                       </View>
                     </Pop>
                   ))}
                 </View>
-                <Text variant="bodySmall" color={c.primaryText} style={{ opacity: 0.92 }}>New hosts enter this code in “Verify with Didit”. Once they pass, they join your agency automatically. This code is yours for good — it never changes.</Text>
+                <Text variant="bodySmall" color="#FFFFFF" style={{ opacity: 0.92 }}>New hosts enter this code in “Verify with Didit”. Once they pass, they join your agency automatically. This code is yours for good — it never changes.</Text>
                 {data.agency.status === 'active' && (
                   <PressScale onPress={() => void shareCode(data)} accessibilityRole="button" accessibilityLabel="Share code"
                     style={{ alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, minHeight: 40, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.22)' }}>
-                    <Ionicons name="share-social-outline" size={16} color={c.primaryText} />
-                    <Text variant="label" color={c.primaryText}>Share code</Text>
+                    <Ionicons name="share-social-outline" size={16} color="#FFFFFF" />
+                    <Text variant="label" color="#FFFFFF">Share code</Text>
                   </PressScale>
                 )}
               </LinearGradient>

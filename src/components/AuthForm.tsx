@@ -5,7 +5,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState, type ReactNode } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View, type TextInputProps } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View, type TextInputProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { brand } from '@/lib/brand';
@@ -13,7 +13,7 @@ import { errorCode, friendlyError } from '@/lib/errors';
 import { useTheme } from '@/lib/theme';
 
 import { FadeIn, Float } from './Motion';
-import { Button, Card, glassShadow, Input, SkyBackground, Text, Wordmark } from './ui';
+import { Button, glassShadow, IconButton, Input, SkyBackground, Text, Wordmark } from './ui';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -94,31 +94,22 @@ export function AuthTerms() {
   );
 }
 
-/** Sign-in / sign-up frame (Glass & sky): back button and logo tile, big title, then the form on a frosted card. */
+/** Sign-in / sign-up frame (Aurora dark): a glass back button, big title and subtitle, then the form straight on the background. */
 export function AuthShell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
-  const { c } = useTheme();
   return (
     <SkyBackground>
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-              <Pressable
-                onPress={() => (router.canGoBack() ? router.back() : router.replace('/welcome'))}
-                accessibilityRole="button"
-                accessibilityLabel="Back"
-                style={[{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' }]}
-              >
-                <Ionicons name="chevron-back" size={22} color={c.text} />
-              </Pressable>
-              <LogoTile />
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
+              <IconButton icon="chevron-back" label="Back" onPress={() => (router.canGoBack() ? router.back() : router.replace('/welcome'))} />
             </View>
             <FadeIn>
               <Text variant="display" accessibilityRole="header">{title}</Text>
-              <Text variant="bodyLarge" muted style={{ marginTop: 6, marginBottom: 20 }}>{subtitle}</Text>
+              <Text variant="bodyLarge" muted style={{ marginTop: 6, marginBottom: 24 }}>{subtitle}</Text>
             </FadeIn>
             <FadeIn delay={120}>
-              <Card style={{ padding: 20, gap: 14, borderRadius: 28 }}>{children}</Card>
+              <View style={{ gap: 14 }}>{children}</View>
             </FadeIn>
             <AuthTerms />
           </ScrollView>
@@ -149,7 +140,8 @@ export function FormError({ message }: { message: string | null }) {
 }
 
 /** Google / Apple sign-in through Clerk's SSO flow. */
-export function SocialButtons({ onError, divider = true }: { onError: (message: string) => void; divider?: boolean }) {
+/** `divider`: an "or" line below the buttons (default), above them, or none. */
+export function SocialButtons({ onError, divider = true }: { onError: (message: string) => void; divider?: boolean | 'above' | 'below' }) {
   const { c } = useTheme();
   useWarmUpBrowser();
   useRedirectWhenSignedIn();
@@ -196,28 +188,32 @@ export function SocialButtons({ onError, divider = true }: { onError: (message: 
     }
   };
 
+  const buttons = (
+    <View style={{ gap: 10 }}>
+      <Button title="Continue with Google" accessibilityLabel="Continue with Google" variant="secondary" loading={pending === 'oauth_google'} onPress={() => start('oauth_google')}
+        icon={<Ionicons name="logo-google" size={18} color={c.text} />} />
+      {Platform.OS !== 'android' && (
+        <Button title="Continue with Apple" accessibilityLabel="Continue with Apple" variant="secondary" loading={pending === 'oauth_apple'} onPress={() => start('oauth_apple')}
+          icon={<Ionicons name="logo-apple" size={19} color={c.text} />} />
+      )}
+    </View>
+  );
   return (
-    <View style={{ gap: 12 }}>
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Button title="Google" accessibilityLabel="Continue with Google" variant="secondary" loading={pending === 'oauth_google'} onPress={() => start('oauth_google')}
-          icon={<Ionicons name="logo-google" size={18} color="#4285F4" />} style={{ flex: 1, backgroundColor: c.surfaceRaised, borderColor: c.violetBorder }} />
-        {Platform.OS !== 'android' && (
-          <Button title="Apple" accessibilityLabel="Continue with Apple" variant="secondary" loading={pending === 'oauth_apple'} onPress={() => start('oauth_apple')}
-            icon={<Ionicons name="logo-apple" size={19} color={c.text} />} style={{ flex: 1, backgroundColor: c.surfaceRaised, borderColor: c.violetBorder }} />
-        )}
-      </View>
-      {divider && <OrDivider />}
+    <View style={{ gap: 14 }}>
+      {divider === 'above' && <OrDivider label="or" />}
+      {buttons}
+      {(divider === true || divider === 'below') && <OrDivider />}
     </View>
   );
 }
 
-export function OrDivider() {
+export function OrDivider({ label = 'or use email' }: { label?: string }) {
   const { c } = useTheme();
   return (
     <View style={styles.dividerRow}>
-      <View style={[styles.divider, { backgroundColor: c.violetBorder }]} />
-      <Text variant="caption" faint>or use email</Text>
-      <View style={[styles.divider, { backgroundColor: c.violetBorder }]} />
+      <View style={[styles.divider, { backgroundColor: c.divider }]} />
+      <Text variant="caption" faint>{label}</Text>
+      <View style={[styles.divider, { backgroundColor: c.divider }]} />
     </View>
   );
 }

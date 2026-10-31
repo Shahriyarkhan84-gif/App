@@ -55,14 +55,15 @@ export default function StreamSummaryScreen() {
         : offline ? { kind: 'offline', onRetry: stream.reload }
         : stream.error ? { kind: 'error', error: stream.error, onRetry: stream.reload } : { kind: 'loading' }}>
         <ScrollView contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 32, maxWidth: 560, width: '100%', alignSelf: 'center' }}>
-          <FadeIn style={{ borderRadius: 22, overflow: 'hidden' }}>
-            <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, gap: 4 }}>
-              <Row gap={8}>
-                <Ionicons name="checkmark-circle" size={22} color={c.primaryText} />
-                <Text variant="h1" color={c.primaryText}>Stream ended</Text>
-              </Row>
-              <Text color={c.primaryText}>{s?.title ? `${s.title} · ` : ''}{minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes}m`}</Text>
-            </LinearGradient>
+          {/* Aurora dark: a glowing check over a big centred title. */}
+          <FadeIn style={{ alignItems: 'center', gap: 6, paddingTop: 8 }}>
+            <View style={{ borderRadius: 42, shadowColor: c.primary, shadowOpacity: 0.6, shadowRadius: 22, shadowOffset: { width: 0, height: 0 } }}>
+              <LinearGradient colors={c.accentGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 84, height: 84, borderRadius: 42, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="checkmark" size={42} color={c.primaryText} />
+              </LinearGradient>
+            </View>
+            <Text variant="display" style={{ marginTop: 8 }}>Stream ended</Text>
+            <Text muted style={{ textAlign: 'center' }}>{s?.title ? `${s.title} · ` : ''}{minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m` : `${minutes}m`}</Text>
           </FadeIn>
 
           <FadeIn delay={80} style={{ flexDirection: 'row', gap: 10 }}>

@@ -217,7 +217,7 @@ function PartyRow({ room, mode, rank }: { room: Room; mode: Mode; rank?: number 
       <View style={{ width: 80, height: 80, borderRadius: radius[16], backgroundColor: c.violetSurface, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
         {cover ? <Image source={cover} style={{ width: '100%', height: '100%' }} contentFit="cover" /> : <Text variant="display" color={c.textFaint} style={{ fontSize: 44, lineHeight: 50 }}>{host.slice(0, 1).toUpperCase()}</Text>}
         <View style={{ position: 'absolute', left: 6, top: 6, backgroundColor: c.live, borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 }}>
-          <Text variant="caption" color={c.primaryText} style={{ fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>{mode === 'voice' ? 'VOICE' : mode === 'video' ? 'VIDEO' : 'LIVE'}</Text>
+          <Text variant="caption" color="#FFFFFF" style={{ fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }}>{mode === 'voice' ? 'VOICE' : mode === 'video' ? 'VIDEO' : 'LIVE'}</Text>
         </View>
         {rank !== undefined && (
           <View style={{ position: 'absolute', left: 6, bottom: 6, flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: c.gold, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999 }}>

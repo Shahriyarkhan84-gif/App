@@ -115,12 +115,13 @@ export default function EarningsScreen() {
         {data && (
           <ScrollView contentContainerStyle={{ padding: 16, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
             <FadeIn>
-              <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, borderRadius: 22, gap: 10 }}>
-                <Text variant="bodySmall" color={c.primaryText}>Available {U.earn}</Text>
-                <Row gap={10}><Bean size={24} /><Text variant="display" color={c.primaryText} accessibilityLiveRegion="polite">{data.earnings.balance.toLocaleString()}</Text></Row>
+              {/* Aurora dark: earnings sit on a warm amber-to-violet card, white text. */}
+              <LinearGradient colors={['#B45309', '#9A3412', '#7C3AED']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 20, borderRadius: 22, gap: 10 }}>
+                <Text variant="bodySmall" color="#FFFFFF">Available {U.earn}</Text>
+                <Row gap={10}><Bean size={24} /><Text variant="display" color="#FFFFFF" accessibilityLiveRegion="polite">{data.earnings.balance.toLocaleString()}</Text></Row>
                 <Row gap={24}>
-                  <View><Text variant="label" color={c.primaryText}>{data.earnings.held.toLocaleString()}</Text><Text variant="caption" color={c.primaryText}>In review</Text></View>
-                  <View><Text variant="label" color={c.primaryText}>{data.earnings.lifetime.toLocaleString()}</Text><Text variant="caption" color={c.primaryText}>Lifetime</Text></View>
+                  <View><Text variant="label" color="#FFFFFF">{data.earnings.held.toLocaleString()}</Text><Text variant="caption" color="#FFFFFF">In review</Text></View>
+                  <View><Text variant="label" color="#FFFFFF">{data.earnings.lifetime.toLocaleString()}</Text><Text variant="caption" color="#FFFFFF">Lifetime</Text></View>
                 </Row>
               </LinearGradient>
             </FadeIn>

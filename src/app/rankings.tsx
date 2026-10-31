@@ -70,37 +70,38 @@ export default function RankingsScreen() {
           keyExtractor={(r) => `${r.rank}-${r.subject_id}`}
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           ListHeaderComponent={
-            // Redesign v2: the top 3 stand on a brand-colour card, white text.
-            <LinearGradient colors={c.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 16, paddingHorizontal: 8, borderRadius: 24, marginBottom: 12, overflow: 'hidden' }}>
+            // Aurora dark: the top 3 stand straight on the background, each photo in a glowing ring (gold for 1st).
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingTop: 20, paddingHorizontal: 4, marginBottom: 16 }}>
               {podium.map((r, i) => {
                 const first = r.rank === 1;
                 const size = first ? 84 : 68;
                 return (
                   <FadeIn key={`${kind}-${r.subject_id}`} delay={[150, 0, 300][i] ?? 0} from={40} style={{ flex: 1 }}>
                   <PressScale onPress={() => open(r)} disabled={kind === 'country'} style={{ alignItems: 'center', gap: 6 }} accessibilityLabel={`Rank ${r.rank}, ${r.label}, ${score(r)}`}>
-                    <View>
-                      <Avatar uri={kind === 'country' ? null : r.avatar_url} name={r.label} size={size} ring={MEDALS[r.rank - 1]} />
+                    <View style={{ shadowColor: first ? c.gold : c.primary, shadowOpacity: 0.55, shadowRadius: 16, shadowOffset: { width: 0, height: 0 } }}>
+                      <LinearGradient colors={first ? c.goldGradient : c.accentGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 3, borderRadius: size }}>
+                        <Avatar uri={kind === 'country' ? null : r.avatar_url} name={r.label} size={size} ring={c.background} />
+                      </LinearGradient>
                       <View style={{ position: 'absolute', alignSelf: 'center', bottom: -8, width: 22, height: 22, borderRadius: 11, backgroundColor: MEDALS[r.rank - 1], alignItems: 'center', justifyContent: 'center' }}>
                         <Text variant="caption" color="#1A1206" style={{ fontWeight: '700' }}>{r.rank}</Text>
                       </View>
                     </View>
-                    <Text variant="label" color={c.primaryText} numberOfLines={1} style={{ marginTop: 6 }}>{r.label}</Text>
-                    <Row gap={4}>{kind !== 'live' && <Coin size={12} />}<Text variant="caption" color={c.primaryText} style={{ fontWeight: '700' }}>{score(r)}</Text></Row>
-                    <GrowBar height={first ? 56 : 36} delay={350 + i * 120} style={{ alignSelf: 'stretch', borderTopLeftRadius: 12, borderTopRightRadius: 12, backgroundColor: 'rgba(255,255,255,0.22)' }} />
+                    <Text variant="label" numberOfLines={1} style={{ marginTop: 6 }}>{r.label}</Text>
+                    <Row gap={4}>{kind !== 'live' && <Coin size={12} />}<Text variant="caption" color={c.goldText} style={{ fontWeight: '700' }}>{score(r)}</Text></Row>
+                    <GrowBar height={first ? 56 : 36} delay={350 + i * 120} style={{ alignSelf: 'stretch', borderTopLeftRadius: 12, borderTopRightRadius: 12, backgroundColor: c.glassFill, borderWidth: 1, borderBottomWidth: 0, borderColor: c.glassEdge }} />
                   </PressScale>
                   </FadeIn>
                 );
               })}
-            </LinearGradient>
+            </View>
           }
           renderItem={({ item }) => (
-            <Pressable onPress={() => open(item)} disabled={kind === 'country'}>
-              <Row style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.divider }}>
+            <Pressable onPress={() => open(item)} disabled={kind === 'country'} style={{ marginBottom: 8 }}>
+              <Row style={{ paddingVertical: 10, paddingHorizontal: 12, borderRadius: 18, backgroundColor: c.glassFill, borderWidth: 1, borderColor: c.glassEdge }}>
                 <Text variant="label" faint style={{ width: 24, textAlign: 'center' }}>{item.rank}</Text>
-                <Avatar uri={kind === 'country' ? null : item.avatar_url} name={item.label} />
-                <Text style={{ flex: 1, fontWeight: '500' }} numberOfLines={1}>{item.label}</Text>
-                <Row gap={4}>{kind !== 'live' && <Coin size={12} />}<Text variant="label">{score(item)}</Text></Row>
+                <Avatar uri={kind === 'country' ? null : item.avatar_url} name={item.label} size={44} />
+                <Text style={{ flex: 1, fontWeight: '700' }} numberOfLines={1}>{item.label}</Text>
+                <Row gap={4}>{kind !== 'live' && <Coin size={12} />}<Text variant="label" color={c.goldText}>{score(item)}</Text></Row>
               </Row>
             </Pressable>
           )}
