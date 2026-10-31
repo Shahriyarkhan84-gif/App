@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.2 — New Me tab
+
+- Edit profile on the top left, Settings on the top right (glass icon buttons).
+- Compact glass profile card: photo with frame button, name with the blue tick, ID, "View profile". The Friends / Following / Fans counts and the four tiles are gone.
+- Menu in frosted glass groups with tinted icon tiles: **Creator Center** (or "Become a host") and **Event Center** · **Wallet** (diamond balance), **Earnings** (hosts, bean balance), **Item bag**, **Post** (share a video) · **SVIP**, **Task center**, **Fans group**, **Rankings**, **Videos** · Help, feedback, agency portal or "Join an agency", admin.
+- The Figma App glass kit's Me screen matches.
+
 ## 0.12.1 — Blue tick for verified hosts
 
 - A host who passed the ID check (Didit) now shows a **blue verified tick** next to their name instead of the "Host" pill: profiles, room cards, party rooms, the profile card, agency host lists and pinned profiles. The Hosting, verification-result and Me screens show the tick with "Verified host".
