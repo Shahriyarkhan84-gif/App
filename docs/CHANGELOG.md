@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.2 — Aurora loading screen
+
+- The loading page sits on the Aurora background. The Kitty logo, unchanged, is inside a cyan-to-violet ring that slowly breathes, with three loading dots in cyan, violet and gold.
+- The name is written in by a widening clip instead of a cover box, so no dark band shows over the glows.
+
 ## 0.13.1 — Aurora page layouts
 
 Screens follow the Figma page "Aurora · All pages".
